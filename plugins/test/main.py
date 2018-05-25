@@ -2,15 +2,19 @@ import __hpx__ as hpx
 import pprint
 import sys
 
-print(hpx)
-
 log = hpx.get_logger(__name__)
 
 @hpx.subscribe("InitApplication.init")
+def appinit():
+    log.info("Application startup")
+
+@hpx.subscribe("init")
 def init():
-    log.info("init")
-    log.info(hpx.PluginState)
-    log.info("saving config: {}".format(hpx.save_config({'name': 'test'})))
+    log.info("initiating plugin")
+
+@hpx.subscribe("disable")
+def disable():
+    log.info("disabling plugin")
 
 def main():
     log.info("hi")

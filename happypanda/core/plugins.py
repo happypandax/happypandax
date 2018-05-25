@@ -8,6 +8,7 @@ import json
 import glob
 import logging
 import attr
+import itertools
 
 from packaging.requirements import Requirement, InvalidRequirement
 from packaging.specifiers import Specifier, InvalidSpecifier
@@ -353,19 +354,32 @@ class HandlerValue:
         for n, h in self._handlers:
             self._add_capture_handler(h, n)
 
-    def default(self):
+    def default(self, error=True):
         "Calls the default handler"
         if not self.default_handler:
-            raise self._raise_default_error()
-
+            return self._raise_default_error() if error else None
+        log.d(f"Calling default handler for '{self.name}'")
         return self.default_handler(*self.args, **self.kwargs)
 
-    def default_capture(self, token):
+    def default_capture(self, token, idx, error=True):
         "Calls the default capture handler"
-        raise NotImplementedError
+        log.d(f"Calling default capture handler for '{self.name}' (idx={idx}) [{token}]")
+        token_handler_d = self._get_capture_handlers(token, True)
+
+        if token_handler_d:
+            r = []
+            if idx is not None:
+                return token_handler_d[0](*self.args, **self.kwargs)
+            else:
+                for y in token_handler_d:
+                    r.append(y(*self.args, **self.kwargs))
+            return tuple(r)
+        else:
+            return self._raise_default_error() if error else None
 
     def all(self, default=False):
         "Calls all handlers, returns tuple"
+        log.d(f"Calling all handlers (default: {default}) for '{self.name}' [capture={self.capture}]")
         if self.capture:
             r = self._call_capture(None, False, default)
             if r is None:
@@ -374,15 +388,24 @@ class HandlerValue:
         else:
             r = []
             for n, h in self._handlers:
-                x = self._call_handler(n, h)
-                if x is not None:
+                with self._unhandled_exception(n):
+                    x = self._call_handler(n, h)
                     r.append(x)
 
-            if (not r and self.default_handler) or (
-                    default and self.default_handler):
-                r.append(self.default_handler(*self.args, **self.kwargs))
+            if default and self.default_handler:
+                r.append(self.default())
 
             return tuple(r)
+
+    def all_or_default(self):
+        log.d(f"Calling all handlers or default for '{self.name}' [capture={self.capture}]")
+        r = self.all()
+        if not r:
+            if self.capture:
+                r = self.default_capture(self.capture_token, None)
+            else:
+                r = (self.default(),)
+        return r
 
     def get_handlers(self):
         return tuple(x[1] for x in self._handlers)
@@ -392,27 +415,39 @@ class HandlerValue:
 
     def first(self):
         "Calls first handler, raises error if there is no handler"
+        log.d(f"Calling first handler for '{self.name}'")
         return self._call_node_idx(0, True)
 
     def first_or_default(self):
         ""
-        raise NotImplementedError
+        log.d(f"Calling first handler or default for '{self.name}'")
+        return self._call_node_idx(0, True, default=True)
 
-    def first_or_none(self):
+    def first_or_none(self, default=False):
         "Calls first handler, return None if there is no handler"
-        return self._call_node_idx(0, False)
+        log.d(f"Calling first handler or return None for '{self.name}'")
+        return self._call_node_idx(0, False, default=default)
 
     def last(self):
         "Calls last handler, raises error if there is no handler"
+        log.d(f"Calling last handler for '{self.name}'")
         return self._call_node_idx(-1, True)
 
     def last_or_default(self):
         ""
-        raise NotImplementedError
+        log.d(f"Calling last handler or default for '{self.name}'")
+        return self._call_node_idx(-1, True, default=True)
 
-    def last_or_none(self):
+    def last_or_none(self, default=False):
         "Calls last handler, return None if there is no handler"
-        return self._call_node_idx(-1, False)
+        log.d(f"Calling first handler or return None for '{self.name}'")
+        return self._call_node_idx(-1, False, default=default)
+
+    def _get_capture_handlers(self, token, default=False):
+        if default:
+            return self.default_capture_handlers.get(token, [])
+        else:
+            return self._capture_handlers.get(token, [])
 
     def _add_capture_handler(self, handler, node=None):
         assert callable(handler)
@@ -426,13 +461,16 @@ class HandlerValue:
 
         if 'capture' in sig.parameters:
             cap = sig.parameters['capture'].default
-
             if not cap == inspect._empty:
 
                 if not isinstance(cap, (list, tuple)):
                     cap = (cap,)
 
                 for c in cap:
+                    if node:
+                        log.d(f"Adding capture handler '{handler}' for token '{c}' from plugin", node.format())
+                    else:
+                        log.d(f"Adding capture handler '{handler}' for token '{c}'")
                     if c not in capture_dict:
                         capture_dict[c] = []
 
@@ -443,40 +481,29 @@ class HandlerValue:
 
     def _raise_error(self):
         raise exceptions.CoreError(
-            self.name,
+            self.name+'handler',
             "No handler is connected to this command: {} (capture token: {})".format(self.name, self.capture_token))
 
     def _raise_default_error(self):
         raise exceptions.CoreError(
-            self.name,
+            self.name+'handler',
             "No default handler is connected to this command: {} (capture token: {})".format(self.name, self.capture_token))
 
     def _call_capture(self, idx, error, default):
         if not self._capture_handlers and not self.default_capture_handlers:
             if error:
                 self._raise_error()
+            log.d(f"Calling capture handlers but no plugin handlers nor default handlers has been added for '{self.name}'")
             return None
 
-        token_exists = self.capture_token in self._capture_handlers
-        token_exists_d = self.capture_token in self.default_capture_handlers
+        token_handler = self._get_capture_handlers(self.capture_token)
 
-        if not token_exists and not token_exists_d:
-            if error:
-                self._raise_error()
-            return None
-
-        token_handler = None
-        token_handler_d = None
-
-        if token_exists:
-            token_handler = self._capture_handlers[self.capture_token]
-
-        if token_exists_d:
-            token_handler_d = self.default_capture_handlers[self.capture_token]
+        token_handler_d = self._get_capture_handlers(self.capture_token, True)
 
         if not token_handler and not token_handler_d:
             if error:
                 self._raise_error()
+            log.d(f"Calling capture handlers but no plugin handlers nor default handlers has been added for token '{self.capture_token}' in '{self.name}'")
             return None
 
         r = []
@@ -485,60 +512,89 @@ class HandlerValue:
             if idx is not None:
                 return self._call_handler(*token_handler[idx])
             else:
-                tuple(r.append(self._call_handler(*y)) for y in token_handler)
+                for y in token_handler:
+                    with self._unhandled_exception(y[0]) as err:
+                        r.append(self._call_handler(*y)) 
 
-        if token_handler_d:
+        if token_handler_d and default:
             if idx is not None:
                 return token_handler_d[0](*self.args, **self.kwargs)
             else:
-                if default or not token_handler:
-                    tuple(r.append(y(*self.args, **self.kwargs))
-                          for y in token_handler_d)
+                for y in token_handler_d:
+                    r.append(y(*self.args, **self.kwargs))
+        elif not token_handler and error and default:
+            self._raise_default_error()
 
         return tuple(x for x in r if x is not None)
 
-    def _call_node_idx(self, idx, error=False, until_result=False):
-        try:
-            if self.capture:
-                return self._call_capture(idx, error, False)
-            else:
-                if not self._handlers:
-                    if self.default_handler:
-                        return self.default_handler(*self.args, **self.kwargs)
-                    if error:
+    def _call_node_idx(self, idx, error=False, until_result=True, default=False):
+        handlers = []
+        if self.capture:
+            handlers = self._get_capture_handlers(self.capture_token)
+        else:
+            handlers = self._handlers
+
+        # traverse all items in a list from any idx, e.g: [0, 1, 2, 3] -> (from 2) [2, 3, 0, 1]
+        # does not work with negative indexes
+        if handlers:
+            handlers_idx_list = list(range(len(handlers)))
+            idx = handlers_idx_list[idx] if idx < 0 else idx
+            handlers_idx = list(itertools.islice(itertools.cycle(handlers_idx_list), len(handlers)*2))
+            handlers_idx = handlers_idx[idx:-1*len(handlers)+idx]
+        else:
+            handlers_idx = handlers_idx = (idx,)
+        for i in handlers_idx:
+            with self._unhandled_exception(handlers[i][0] if i <= len(handlers)-1 else None) as err:
+                u_err = err
+                if self.capture:
+                    return self._call_capture(i, error, default)
+                else:
+                    if not self._handlers and default:
+                        return self.default(error)
+                    elif not self._handlers and error:
                         self._raise_error()
-                    return None
-                return self._call_handler(*self._handlers[idx])
-        except BaseException:
-            raise NotImplementedError()
-            if until_result:
-                n_idx = idx + 1 if idx >= 0 else idx - 1 # noqa: F841
+                    elif not self._handlers:
+                        return None
+                    return self._call_handler(*self._handlers[i])
+            if until_result and u_err.raised_error:
+                continue
+            break
 
-    def _call_handler(self, node, handler):
-        err = None
+    @contextmanager
+    def _unhandled_exception(self, node):
+        assert isinstance(node, PluginNode) or node is None
+        @attr.s
+        class ErrorInfo:
+            raised_error = attr.ib(False)
+            exception = attr.ib(None)
+
+        err_info = ErrorInfo()
+
         try:
-            r = node.call_handler(self.name, handler, self.args, self.kwargs)
-
-            if self.expected_type is not None:
-                if not isinstance(r, self.expected_type):
-                    err = exceptions.PluginHandlerError(
-                        node,
-                        "On command '{}' expected type '{}', but got '{}' by plugin handler '{}'".format(
-                            self.name, str(type(self.expected_type)), str(type(r)), node.format()))
+            yield err_info
         except Exception as e:
+            if isinstance(e, exceptions.CoreError) and e.where == self.name+'handler':
+                raise
             self.failed[node] = e
             node.logger.exception(
-                "An unhandled exception was raised by plugin handler on command '{}'".format(
+                f"An unhandled exception '{e.__class__.__name__}' was raised by plugin handler on command '{self.name}'".format(
                     self.name))
             get_plugin_context_logger(
                 node.logger.name).w(
-                "An unhandled exception was raised by plugin handler on command '{}' by",
+                f"An unhandled exception '{e.__class__.__name__}' was raised by plugin handler on command '{self.name}' by",
                 node.format())
-            raise
-        if err:
-            self.failed[node] = err
-            node.logger.error("{}: {}".format(err.__class__.__name__, err.msg))
-            raise err
+            err_info.raised_error = True
+            err_info.exception = e
+
+    def _call_handler(self, node, handler):
+        r = node.call_handler(self.name, handler, self.args, self.kwargs)
+
+        if self.expected_type is not None:
+            if not isinstance(r, self.expected_type):
+                raise exceptions.PluginHandlerError(
+                    node,
+                    "Command handler '{}' expected type '{}', but got '{}' by plugin '{}'".format(
+                        self.name, str(type(self.expected_type)), str(type(r)), node.format()))
         return r
 
 
@@ -557,6 +613,7 @@ class PluginNode:
         self._evaluation = None
         self.status = ""
         self.logger = get_plugin_logger(self.info.shortname, *create_plugin_logger(self.info.path))
+        self._special_handlers = {}
 
     def init(self):
         log.i("Initiating plugin -", self.format())
@@ -570,7 +627,7 @@ class PluginNode:
                     exec(f.read(), i.plugin_globals)
             except Exception as e:
                 err = e
-                self.logger.exception("An unhandled exception was raised during plugin initialization")
+                self.logger.exception(f"An unhandled exception '{e.__class__.__name__}' was raised during plugin initialization")
                 get_plugin_context_logger(self.logger.name).w(
                     "An unhandled exception was raised during plugin initialization by {}: {}: {}".format(self.format(), e.__class__.__name__, str(e)))
 
@@ -584,7 +641,10 @@ class PluginNode:
     def add_event_handler(self, command, handler):
         log.d("Adding command event handler to", command, "-", self.format())
         self.logger.info("Adding command event handler to '{}'".format(command))
-        self.commands['event'][command] = handler
+        if command in self.special_events():
+            self._special_handlers[command] = handler
+        else:
+            self.commands['event'][command] = handler
 
     def call_handler(self, commandname, handler, args, kwargs):
         log.d("Calling command handler for '{}' -".format(commandname), self.format())
@@ -592,12 +652,28 @@ class PluginNode:
         with self._isolate:
             return handler(*args, *kwargs)
 
+    def call_special_handler(self, event_name):
+        assert event_name in self.special_events()
+        handler = self._special_handlers.get(event_name)
+        if handler:
+            log.d("Calling handler for '{}' -".format(event_name), self.format())
+            self.logger.info("Calling '{}' handler".format(event_name))
+            try:
+                with self._isolate:
+                    handler()
+            except Exception as e:
+                self.logger.exception(f"An unhandled exception '{e.__class__.__name__}' was raised in the plugin '{event_name}' handler")
+                get_plugin_context_logger(self.logger.name).w(
+                    "An unhandled exception was raised in the '{}' handler by plugin {}: {}: {}".format(event_name, self.format(), e.__class__.__name__, str(e)))
+
     def update_state(self, state):
         assert isinstance(state, enums.PluginState)
         self.state = state
         ps = constants.internaldb.plugins_state.get({})
         ps[self.info.id] = self.state.value
         constants.internaldb.plugins_state.set(ps)
+        if state == enums.PluginState.Disabled:
+            self.call_special_handler("disable")
 
     def unload(self, reason=""):
         if self.state == enums.PluginState.Unloaded:
@@ -633,6 +709,10 @@ class PluginNode:
     def format(self):
         return format_plugin(self)
 
+    @classmethod
+    def special_events(cls):
+        return ("init", "remove", "disable")
+
 
 class PluginManager:
     ""
@@ -667,6 +747,7 @@ class PluginManager:
                     if n not in sorted_nodes:
                         sorted_nodes.append(n)
 
+            enabled_nodes = []
             auto_install = config.auto_install_plugin_dependency.value
             for node in sorted_nodes:
                 if node.state == enums.PluginState.Installed:
@@ -679,7 +760,10 @@ class PluginManager:
                     if node.state != enums.PluginState.Unloaded:
                         node.init()
                         node.update_state(enums.PluginState.Enabled)
+                        enabled_nodes.append(node)
 
+            for node in enabled_nodes:
+                node.call_special_handler("init")
             self._event.clear()
 
     def _collect_dependencies(self, node):
@@ -781,6 +865,7 @@ class PluginManager:
         self.disable_plugin(node_or_id)
         self._node_registry.pop(node.info.shortname)
         self._node_registry.pop(node.info.id)
+        node.call_special_handler("remove")
 
         # TODO: disable dependents
 
@@ -826,17 +911,22 @@ class PluginManager:
         node = self.get_node(node_or_id)
         log.d("Subscribing plugin handler to event '{}' -".format(event_name), node.format())
         node.logger.debug("Subscribing handler to event '{}'".format(event_name))
-        if event_name not in constants.available_commands['event']:
+
+        if event_name in constants.available_commands['event'] or event_name in PluginNode.special_events():
+
+            if not callable(handler):
+                raise exceptions.PluginCommandError(
+                    node, "Command event handler should be callable for command event '{}'".format(event_name))
+
+            # TODO: check signature
+
+            node.add_event_handler(event_name, handler)
+            if event_name not in PluginNode.special_events():
+                self._commands['event'].setdefault(event_name, set()).add(node)
+
+        else:
             raise exceptions.PluginCommandError(
                 node, "Command event '{}' does not exist".format(event_name))
-        if not callable(handler):
-            raise exceptions.PluginCommandError(
-                node, "Command event handler should be callable for command event '{}'".format(event_name))
-
-        # TODO: check signature
-
-        node.add_event_handler(event_name, handler)
-        self._commands['event'].setdefault(event_name, set()).add(node)
 
     def get_plugin_logger(self, node_or_id, name):
         node = self.get_node(node_or_id)
@@ -894,7 +984,6 @@ class PluginConstants:
     - tumbnail_path: path to the thumbnails folder
     - translation_path: path to the translations folder
     """
-    
     version = attr.ib(constants.version)
     database_version = attr.ib(constants.version_db)
     webclient_version = attr.ib(constants.version_web)

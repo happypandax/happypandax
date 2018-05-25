@@ -324,7 +324,7 @@ class PartialModelFilter(Command):
         model_count = sess.query(model).count()
 
         with self.match_model.call_capture(model_name, model_name, model_name, self.term, options) as plg:
-            for i in plg.all():
+            for i in plg.all_or_default():
                 self.matched_ids.update(i)
                 if len(self.matched_ids) == model_count:
                     break
@@ -333,7 +333,7 @@ class PartialModelFilter(Command):
         for m in related_models:
             if m in self._supported_models:
                 with self.match_model.call_capture(db.model_name(m), model_name, db.model_name(m), self.term, options) as plg:
-                    for i in plg.all():
+                    for i in plg.all_or_default():
                         self.matched_ids.update(i)
                         if len(self.matched_ids) == model_count:
                             has_all = True
@@ -584,7 +584,7 @@ class ModelFilter(Command):
                                    )
     include: set = CommandEntry("include",
                                 CParam("model_name", str, "name of a database model"),
-                                CParam("pieces", tuple, "a tuple of terms"),
+                                CParam("pieces", set, "a set of terms"),
                                 CParam("options", ChainMap, "search options"),
                                 __doc="""
                                 Called to match database items of the given model to include in the final results
@@ -595,7 +595,7 @@ class ModelFilter(Command):
                                 )
     exclude: set = CommandEntry("exclude",
                                 CParam("model_name", str, "name of a database model"),
-                                CParam("pieces", tuple, "a tuple of terms"),
+                                CParam("pieces", set, "a set of terms"),
                                 CParam("options", ChainMap, "search options"),
                                 __doc="""
                                 Called to match database items of the given model to exclude in the final results
@@ -653,7 +653,7 @@ class ModelFilter(Command):
 
             with self.separate.call(pieces) as plg:
 
-                for p in plg.all():
+                for p in plg.all(True):
                     if len(p) == 2:
                         include.update(p[0])
                         exclude.update(p[1])
@@ -661,7 +661,7 @@ class ModelFilter(Command):
             if options.get("all"):
                 for n, p in enumerate(include):
                     with self.include.call(model_name, {p}, options) as plg:
-                        for i in plg.all():
+                        for i in plg.all_or_default():
                             if n != 0:
                                 self.included_ids.intersection_update(i)
                             else:
@@ -669,14 +669,14 @@ class ModelFilter(Command):
             else:
                 with self.include.call(model_name, include, options) as plg:
 
-                    for n, i in enumerate(plg.all()):
+                    for n, i in enumerate(plg.all_or_default()):
                         self.included_ids.update(i)
 
             self.included.emit(model_name, self.included_ids)
 
             with self.exclude.call(model_name, exclude, options) as plg:
 
-                for i in plg.all():
+                for i in plg.all_or_default():
                     self.excluded_ids.update(i)
 
             self.excluded.emit(self._model.__name__, self.excluded_ids)
@@ -687,7 +687,7 @@ class ModelFilter(Command):
         else:
 
             with self.empty.call(model_name) as plg:
-                for i in plg.all():
+                for i in plg.all_or_default():
                     self.matched_ids.update(i)
 
         self.matched.emit(self._model.__name__, self.matched_ids)

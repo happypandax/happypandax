@@ -188,7 +188,7 @@ class OpenGallery(Command):
         opened = False
         if self.gallery.pages.count():
             with self._resolve.call(self.gallery, number) as plg:
-                r = plg.first()
+                r = plg.first_or_default()
                 if len(r) == 2:
                     self.path, self.first_file = r
 
@@ -196,7 +196,7 @@ class OpenGallery(Command):
 
             with self._open.call(self.path, self.first_file, self.gallery, args) as plg:
                 try:
-                    opened = plg.first()
+                    opened = plg.first_or_default()
                 except OSError as e:
                     raise exceptions.CommandError(utils.this_command(self),
                                                   "Failed to open gallery with external viewer: {}".format(e.args[1]))

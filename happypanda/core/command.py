@@ -477,8 +477,7 @@ class _CommandPlugin:
         tr.append(all(isinstance(kwargs[x], self._kwargs_types[x]) or self._ensure_class(kwargs[x], self._kwargs_types[x])
                       for x in kwargs if x in self._kwargs_types))
         if not all(tr):
-            raise exceptions.CommandError(
-                utils.this_function(),
+            raise AssertionError(
                 "Wrong types were used for command '{}'. Types used {}, types expected {}".format(
                     self.qualifiedname(),
                     self._stringify_args(args, kwargs),
@@ -508,6 +507,7 @@ class CommandEvent(_CommandPlugin):
 
     def emit(self, *args, **kwargs):
         "emit this event with *args and **kwargs"
+        log.d(f"Emitting event '{self.qualifiedname()}' with args '{args}' - '{kwargs}'")
         self.invoke_on_plugins("event", *args, **kwargs)
         for h in self._handlers:
             h(*args, **kwargs)

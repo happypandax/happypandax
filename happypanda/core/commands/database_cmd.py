@@ -77,9 +77,9 @@ class GetModelImage(AsyncCommand):
                                 """)
 
     cover_event = CommandEvent('cover',
-                               CParam("profile_item", db.Profile, "database item with the generated image"),
+                               CParam("profile_item", object, "database item with the generated image"),
                                __doc="""
-                               Emitted at the end of the process
+                               Emitted at the end of the process with :class:`.db.Profile` database item or ``None``
                                """)
 
     def main(self, model: db.Base, item_id: int,
@@ -125,7 +125,7 @@ class GetModelImage(AsyncCommand):
         if not generate:
             model_name = db.model_name(model)
             with self.invalidate.call_capture(model_name, model_name, item_id, image_size) as plg:
-                if plg.first():
+                if plg.first_or_default():
                     generate = True
 
         self.next_progress()
@@ -253,7 +253,7 @@ class GetModelImage(AsyncCommand):
         if generate:
             log.d("Generating new profile", image_size, "for database item", model)
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
-                p = plg.first()
+                p = plg.first_or_default()
                 if not p:
                     p = ""
                 cover.path = p
@@ -589,7 +589,7 @@ class GetModelItems(Command):
 
     count = CommandEvent("count",
                         CParam("model_name", str, "name of a database model"),
-                        CParam("item_count", str, "count of items"),
+                        CParam("item_count", int, "count of items"),
                         __doc="""
                         Emitted when query was successful
                         """)

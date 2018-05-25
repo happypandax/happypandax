@@ -663,7 +663,7 @@ class Archive(CoreCommand):
 
         try:
             with self._init.call_capture(self._ext, self._path) as plg:
-                self._archive = plg.first_or_none()
+                self._archive = plg.first_or_none(True)
 
             if not self._archive:
                 raise exceptions.CoreError(
@@ -672,7 +672,7 @@ class Archive(CoreCommand):
                         self._ext))
 
             with self._path_sep.call_capture(self._ext, self._archive) as plg:
-                p = plg.first_or_none()
+                p = plg.first_or_none(True)
                 self.path_separator = p if p else '/'
         except BaseException:
             if self._archive:
@@ -772,7 +772,7 @@ class Archive(CoreCommand):
 
     def test(self):
         with self._test_corrupt.call_capture(self._ext, self._archive) as plg:
-            r = plg.first_or_none()
+            r = plg.first_or_none(True)
             if r is not None and r:
                 raise exceptions.ArchiveCorruptError(str(self._path))
 
@@ -784,7 +784,7 @@ class Archive(CoreCommand):
     def namelist(self):
         ""
         with self._namelist.call_capture(self._ext, self._archive) as plg:
-            return plg.first()
+            return plg.first_or_default()
 
     def is_dir(self, filename):
         """
@@ -792,7 +792,7 @@ class Archive(CoreCommand):
         """
         filename = self._normalize_filename(filename)
         with self._is_dir.call_capture(self._ext, self._archive, filename) as plg:
-            return plg.first()
+            return plg.first_or_default()
 
     def extract(self, filename, target):
         """
@@ -806,7 +806,7 @@ class Archive(CoreCommand):
             raise exceptions.ArchiveExtractError("Target path does not exist: '{}'".format(str(p)))
 
         with self._extract.call_capture(self._ext, self._archive, filename, p) as plg:
-            extract_path = plg.first()
+            extract_path = plg.first_or_default()
 
         return pathlib.Path(extract_path)
 
@@ -820,7 +820,7 @@ class Archive(CoreCommand):
             raise exceptions.ArchiveExtractError("Target path does not exist: '{}'".format(str(p)))
 
         with self._extract_all.call_capture(self._ext, self._archive, p) as plg:
-            extract_path = plg.first()
+            extract_path = plg.first_or_default()
 
         return pathlib.Path(extract_path)
 
@@ -830,7 +830,7 @@ class Archive(CoreCommand):
         """
         filename = self._normalize_filename(filename)
         with self._open.call_capture(self._ext, self._archive, filename, args, kwargs) as plg:
-            r = plg.first()
+            r = plg.first_or_default()
             if not hasattr(r, 'read') or not hasattr(r, 'write'):
                 raise exceptions.PluginHandlerError(plg.get_node(0), "Expected a file-like object from archive.open")
             return r
@@ -840,7 +840,7 @@ class Archive(CoreCommand):
         Close archive, releases all open resources
         """
         with self._close.call_capture(self._ext, self._archive) as plg:
-            plg.first()
+            plg.first_or_default()
 
 
 class GalleryFS(CoreCommand):
