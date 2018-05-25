@@ -8,6 +8,17 @@ Plugin API
 Commands
 ----------------------------------------
 
+Besides the command entries and events listed here, HPX also provides some plug-in meta events that are specific for each plug-in.
+These events are emitted on plug-in state changes. See :class:`.PluginState` for the different kinds of plug-in states.
+
+* ``init`` -- this event is emitted for a plug-in after it has initialized and *after* all its dependendencies has been initialized.
+    It is therefore ideal to put the plug-in's own initialization on this event.
+* ``disable`` -- this event is emitted when a plug-in has been disabled, either manually by the user or because of some other cause.
+    The plug-in should listen to this event to terminate any on-going process it has running.
+* ``remove`` -- this event is emitted just before a plug-in is to be removed. HPX will handle the deletion of the plug-in folder.
+    The ``disable`` event will always be emitted before this event. The plug-in should listen to this event to remove any produced items
+    that would still be lingering even after its folder has been deleted.
+
 .. exec::
 
     def command_doc(module):
@@ -17,7 +28,7 @@ Commands
         from sphinx.ext.napoleon import Config, docstring
         from happypanda.core import command
         import inspect
-        import happypanda
+        import happypanda, collections
 
         mod = importlib.import_module(module)
 
@@ -66,7 +77,7 @@ Commands
             return docstr
 
         for name, obj in inspect.getmembers(mod, inspect.isclass):
-            if obj.__module__ == mod.__name__ and issubclass(obj, command.CoreCommand):
+            if not obj.__name__.startswith('_') and obj.__module__ == mod.__name__ and issubclass(obj, command.CoreCommand):
                 if getattr(obj, 'main', False):
                     objfunc = obj.main
                 else:
@@ -80,8 +91,11 @@ Commands
                 for x, e in sorted(obj._entries.items()):
                     esig = sinspect.Signature(objfunc)
                     esig.signature = e.signature
-                    ex_local = {}
-                    exec("def e_objfunc{}:None".format(esig.signature), globals(), ex_local)
+
+                    ex_local = {'happypanda': happypanda, 'collections': collections}
+                    ex_local.update(mod.__dict__)
+                    ex_local.update(globals())
+                    exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
                     e_objfunc = ex_local['e_objfunc']
 
                     entries.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
@@ -90,10 +104,11 @@ Commands
 
                     esig = sinspect.Signature(objfunc)
                     esig.signature = e.signature
-                    esig.signature = esig.signature.replace(return_annotation=inspect.Signature.empty)
 
-                    ex_local = {'happypanda': happypanda}
-                    exec("def e_objfunc{}:None".format(esig.signature), globals(), ex_local)
+                    ex_local = {'happypanda': happypanda, 'collections': collections}
+                    ex_local.update(mod.__dict__)
+                    ex_local.update(globals())
+                    exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
                     e_objfunc = ex_local['e_objfunc']
 
                     events.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))

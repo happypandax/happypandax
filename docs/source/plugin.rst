@@ -127,6 +127,7 @@ You can see if the plugin has been registered successfully if it appears on the 
 
     It is recommended that you run HPX with the ``--debug`` and ``--dev`` commandline switches so that you can see what's going on when your plug-in is being loaded and in use.
     See :ref:`Command-Line Arguments`.
+    You can also disable all loggers except the plug-in logger by adding them to the setting ``advanced.disabled_loggers`` to filter out all noise.
 
 Writing a plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,20 +179,24 @@ HPX gives this flexibility and freedom to its plug-ins.
 The contents of the ``__hpx__`` module can be found at :ref:`Plugin API`, however, the most important methods from the module which we will cover here are
 :meth:`attach <happypanda.core.plugin_interface.attach>` and :meth:`subscribe <happypanda.core.plugin_interface.subscribe>`.
 
-The main point of a HPX plug-in is to use these methods and extend HPX.
+The main point of a HPX plug-in is to use these methods to extend what HPX is capable of.
 
 Just like previously mentioned, HPX provides many **commands** that defines different entrypoints and events that we can use.
 The method :meth:`subscribe <happypanda.core.plugin_interface.subscribe>` subscribes a handler function that we define to a command event.
-HPX defines the command :class:`InitApplication <happypanda.core.commands.meta_cmd.InitApplication>` that has provided the event ``init`` that we can listen to.
-We can use this event to initialize our stuff::
+HPX defines the plugin events ``init`` and ``disable`` that we can listen to.
+We can use these events to initialize/terminate our stuff::
 
     import __hpx__ as hpx
 
     logger = hpx.get_logger(__name__)
 
-    @hpx.subscribe("InitApplication.init")
+    @hpx.subscribe("init")
     def init():
         log.info("Initialized")
+
+    @hpx.subscribe("disable")
+    def init():
+        log.info("disabled")
 
     def main():
         logger.info("Emilia is best girl")
@@ -200,13 +205,28 @@ We can use this event to initialize our stuff::
     if __name__ == '__main__':
         main()
 
-While it is true that we could also initialize on the module level, it is safer to do it on the ``Init`` event.
+While it is true that we could also initialize on the module level, it is safer to do it on the ``Init`` event reasons explained at :ref:`Commands`.
+
+.. todo::
+    
+    commands and capture tokens
 
 Logging and errors
 ****************************************
 
+HPX has created a logging facility for plug-ins.
 
+When a plug-in has been registered a folder called ``logs`` is created in its folder. In this folder will reside ``plugin.log`` and ``plugin_debug.log``.
+It is **strongly** recommended that you use this logging facility, instead of rolling your own or using the ``logging`` module directly.
+The HPX logging facility has been set up very intricately to make sense of the logs produced. 
+Failing to use it will mess up how things are logged unless done properly.
+This can produce logs that are very confusing and useless to especially other users.
 
+``plugin.log`` is the normal log produced with a log level of ``INFO`` or less.
+``plugin_debug.log`` is a debug log produced only when the setting :ref:`debug <Settings>` has been set to true. The log level is ``DEBUG`` (basically everything) or less.
+
+These two files contain logs pertaining to the plug-in in question.
+HPX also has its own ``plugin.log`` found at ``[HPX]/logs/plugin.log`` that contain logs produced by all plug-ins (basically a combination of every plug-in's exclusive log).
 
 Debugging
 ****************************************
@@ -225,6 +245,10 @@ Testing
 About thread safety
 ****************************************
 
+.. todo::
+    
+    gevent and etc.
+
 How to not break stuff
 ****************************************
 
@@ -238,6 +262,7 @@ Here are some **DO**'s and **DON'T**'s that should ensure that everything plays 
 
 * **DO** always prefer the :ref:`Plugin API` instead of rolling your own thing. If you think the API is limited and doesn't allow doing what you want to, consider opening a PR on Github instead.
 * **DO** always prefer using the **commands** that HPX provides, especially because it allows other things that are beyond your control a chance to run.
+* **DO** keep everything you produce in the plugin's own folder when possible. Use ``__hpx__.constants.current_dir`` to retrieve the path to the plugin's folder.
 
 Available packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

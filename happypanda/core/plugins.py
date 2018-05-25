@@ -983,6 +983,7 @@ class PluginConstants:
     - download_path: path to the downloads folder
     - tumbnail_path: path to the thumbnails folder
     - translation_path: path to the translations folder
+    - current_dir: path to the plugin's folder
     """
     version = attr.ib(constants.version)
     database_version = attr.ib(constants.version_db)
@@ -997,6 +998,7 @@ class PluginConstants:
     download_path = attr.ib(constants.dir_download)
     thumbnail_path = attr.ib(constants.dir_thumbs)
     translation_path = attr.ib(constants.dir_translations)
+    current_dir = attr.ib("")
 
 class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
@@ -1064,7 +1066,7 @@ class PluginIsolate:
             plug_interface.__plugin_id__ = self.node.info.id
             plug_interface.__manager__ = self.node.manager
             plug_interface.__package__ = constants.plugin_interface_name
-            plug_interface.constants = PluginConstants()
+            plug_interface.constants = PluginConstants(current_dir=self.working_dir)
         finally:
             sys.modules[o_plug_interface.__name__] = o_plug_interface
 
