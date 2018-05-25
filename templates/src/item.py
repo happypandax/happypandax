@@ -112,6 +112,7 @@ def on_search_change(e, d):
 
 
 def on_search(e, d):
+    e.preventDefault()
     if e is not None:
         d = this.search_data
     if this.props.query and this.props.history:
