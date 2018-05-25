@@ -1,5 +1,5 @@
 """
-Database CMD
+.Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoattribute:: happypanda.core.commands.database_cmd.GetDatabaseSort.SortTuple

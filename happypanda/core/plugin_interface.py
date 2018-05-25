@@ -26,7 +26,7 @@ The object ``command`` is available on the module-level and provides access to t
     command.CheckUpdate()
 
 
-See :ref:`Commands` for more information.
+See :ref:`Commands` for all the various commands available information.
 
 -----------------------------------------------------------------------
 

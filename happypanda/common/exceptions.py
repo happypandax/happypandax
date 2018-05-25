@@ -115,22 +115,21 @@ class PluginError(CoreError):
 
 
 @_error_code(201)
-class PluginMethodError(PluginError, AttributeError):
-    """Plugin Method Error."""
-    pass
-
-
-@_error_code(202)
-class PluginAttributeError(PluginError):
+class PluginAttributeError(PluginError, AttributeError):
     """Plugin Attribute Error."""
 
     pass
 
 
-@_error_code(203)
+@_error_code(202)
 class PluginCommandError(PluginError):
     """Plugin Command Error."""
 
+    pass
+
+@_error_code(203)
+class PluginCommandNotFoundError(PluginCommandError):
+    """Plugin Command Not Found Error."""
     pass
 
 

@@ -1,5 +1,5 @@
 """
-Network CMD
+.Network
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: happypanda.core.commands.network_cmd.Method

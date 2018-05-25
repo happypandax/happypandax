@@ -1,5 +1,5 @@
 """
-Search CMD
+.Search
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autodata:: happypanda.core.commands.search_cmd.Term

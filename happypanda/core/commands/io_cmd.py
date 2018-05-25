@@ -1,5 +1,5 @@
 """
-I/O CMD
+.I/O
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: happypanda.core.commands.io_cmd.ImageProperties

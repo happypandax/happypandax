@@ -21,7 +21,7 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 def get_available_commands():
-    subs = utils.all_subclasses(Command)
+    subs = utils.all_subclasses(CoreCommand)
     commands = {'entry': set(), 'event': set(), 'class': {}}
     for c in subs:
         c._get_commands()

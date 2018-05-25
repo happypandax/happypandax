@@ -15,7 +15,7 @@ from packaging.specifiers import Specifier, InvalidSpecifier
 from packaging import markers
 from packaging.version import Version, InvalidVersion
 from gevent.event import Event
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from logging.handlers import RotatingFileHandler
 from contextlib import contextmanager
 
@@ -1000,6 +1000,54 @@ class PluginConstants:
     translation_path = attr.ib(constants.dir_translations)
     current_dir = attr.ib("")
 
+class PluginCommands:
+
+    def __init__(self, node_id):
+        self.__node_id = node_id
+
+    def __getattr__(self, attr):
+        node = constants.plugin_manager.get_node(self.__node_id)
+        get_plugin_context_logger(node.info.shortname).d(f"Getting command '{attr}' -", node.format())
+        node.logger.debug(f"Getting command '{attr}'")
+        cmd_cls = constants.available_commands['class'].get(attr)
+        if not cmd_cls:
+            raise exceptions.PluginCommandNotFoundError(node, f"Invalid command name '{attr}'")
+
+        class PluginCommand:
+            def __init__(self):
+                self.__cmd = None
+
+            def __call__(self, *args, **kwargs):
+                get_plugin_context_logger(node.info.shortname).d(f"Initiating command '{attr}' -", node.format())
+                node.logger.debug(f"Initiating command '{attr}'")
+                main_func = getattr(cmd_cls, 'main', False)
+                if main_func:
+                    cmd = cmd_cls()
+                    return cmd.main(*args, **kwargs)
+                else:
+                    cmd = cmd_cls(*args, **kwargs)
+                self.__cmd = cmd
+                return self
+
+            def __repr__(self):
+                if self.__cmd:
+                    return self.__cmd.__repr__()
+                return super().__repr__()
+
+            def __str__(self):
+                if self.__cmd:
+                    return self.__cmd.__str__()
+                return super().__str__()
+
+            def __getattr__(self, cmd_attr):
+                if self.__cmd:
+                    if not cmd_attr.startswith('_'):
+                        return getattr(self.__cmd, cmd_attr)
+                raise AttributeError(f"AttributeError: '{attr}' object has no attribute '{cmd_attr}'") 
+
+        return PluginCommand()
+
+
 class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
     def __init__(self, module_spec_cls, modules={}):
@@ -1050,7 +1098,7 @@ class PluginIsolate:
         self._sys_metapath = []
         self._sys_path = []
         self._plugin_sys_path = []
-        self.in_context = False
+        self._in_context = deque()
 
         if self.base_sys_modules is None:
             PluginIsolate.base_sys_modules = sys.modules.copy()
@@ -1067,6 +1115,7 @@ class PluginIsolate:
             plug_interface.__manager__ = self.node.manager
             plug_interface.__package__ = constants.plugin_interface_name
             plug_interface.constants = PluginConstants(current_dir=self.working_dir)
+            plug_interface.command = PluginCommands(node.info.id)
         finally:
             sys.modules[o_plug_interface.__name__] = o_plug_interface
 
@@ -1099,7 +1148,7 @@ class PluginIsolate:
                 sys.path.remove(p)
 
     def __enter__(self):
-        self.in_context = True
+        self._in_context.append(True)
         log.d("Entering isolation mode for plugin", self.node.format())
 
         self._sys_metapath = sys.meta_path[:]
@@ -1114,7 +1163,9 @@ class PluginIsolate:
         return self
 
     def __exit__(self, *_):
-        if not self.in_context:
+        try:
+            self._in_context.pop()
+        except IndexError:
             raise RuntimeError('context not entered')
         self.in_context = False
 

@@ -173,14 +173,11 @@ class ClientContext(dict):
 class ClientHandler:
     "Handles clients"
 
-    api = None
+    api = list_api()
 
     contexts = weakref.WeakValueDictionary()  # session_id : context
 
     def __init__(self, client, address):
-        if not ClientHandler.api:
-            ClientHandler.api = list_api()
-            self.api = ClientHandler.api
         self.errors = []
         self._client = client
         self._address = address
