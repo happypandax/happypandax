@@ -513,7 +513,6 @@ def is_elevated():
 
 def run_with_privileges(func, *args):
     if is_elevated():
-        print("hi")
         import time
         time.sleep(10)
     else:

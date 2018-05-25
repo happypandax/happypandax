@@ -448,6 +448,7 @@ class ClientHandler:
                             assert isinstance(msg, message.CoreMessage) or msg is None
                             func_msg.set_data(msg)
                         except exceptions.CoreError as e:
+                            log.w(f"Error on func '{func.__name__}':", e)
                             func_msg.set_error(message.Error(e.code, e.msg))
                         function_list.append(func_msg)
 
@@ -463,7 +464,7 @@ class ClientHandler:
                 else:
                     self.on_wait()
             except exceptions.CoreError as e:
-                log.d("Sending exception to client:", e)
+                log.w("Sending exception to client:", e)
                 self.on_error(e)
 
             except Exception as e:

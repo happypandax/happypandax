@@ -8,15 +8,15 @@ Plugin API
 Commands
 ----------------------------------------
 
-Besides the command entries and events listed here, HPX also provides some plug-in meta events that are specific for each plug-in.
-These events are emitted on plug-in state changes. See :class:`.PluginState` for the different kinds of plug-in states.
+Besides the command entries and events listed here, HPX also provides some plugin meta events that are specific for each plugin.
+These events are emitted on plugin state changes. See :class:`.PluginState` for the different kinds of plugin states.
 
-* ``init`` -- this event is emitted for a plug-in after it has initialized and *after* all its dependendencies has been initialized.
-    It is therefore ideal to put the plug-in's own initialization on this event.
-* ``disable`` -- this event is emitted when a plug-in has been disabled, either manually by the user or because of some other cause.
-    The plug-in should listen to this event to terminate any on-going process it has running.
-* ``remove`` -- this event is emitted just before a plug-in is to be removed. HPX will handle the deletion of the plug-in folder.
-    The ``disable`` event will always be emitted before this event. The plug-in should listen to this event to remove any produced items
+* ``init`` -- this event is emitted for a plugin after it has initialized and *after* all its dependendencies has been initialized.
+    It is therefore ideal to put the plugin's own initialization on this event.
+* ``disable`` -- this event is emitted when a plugin has been disabled, either manually by the user or because of some other cause.
+    The plugin should listen to this event to terminate any on-going process it has running.
+* ``remove`` -- this event is emitted just before a plugin is to be removed. HPX will handle the deletion of the plugin folder.
+    The ``disable`` event will always be emitted before this event. The plugin should listen to this event to remove any produced items
     that would still be lingering even after its folder has been deleted.
 
 .. exec::

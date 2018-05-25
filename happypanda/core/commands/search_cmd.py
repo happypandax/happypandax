@@ -98,7 +98,6 @@ class ParseTerm(Command):
             operator = 'less'
         elif tag.startswith('>'):
             operator = 'great'
-
         return (ns, tag, operator)
 
     def main(self, term: str) -> Term:
@@ -108,7 +107,8 @@ class ParseTerm(Command):
         with self.parse.call(self.filter) as plg:
             t = plg.first_or_default()
             if not len(t) == 3:
-                self.term = Term(*t)
+                t = plg.default()
+            self.term = Term(*t)
 
         self.parsed.emit(self.term)
 
@@ -539,7 +539,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_namemixin(parent_model, child_model, term, options,
-                         capture=[db.model_name(x) for x in _models() if issubclass(x, db.NameMixin)]):
+                         capture=[db.model_name(x) for x in _models() if issubclass(x, (db.NameMixin, db.Url))]):
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
