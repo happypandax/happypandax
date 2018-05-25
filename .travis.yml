@@ -8,6 +8,8 @@ env:
         - GH_USER=Twiddly
         - GH_MAIL=pew@pewpew.moe
         - REPO=happypandax/happypandax
+        - DOCS_REPO=happypandax/happypandax.github.io
+        - DOCS_DIR=docs/
         - CHECKSUM_REPO=happypandax/updates
         - CHECKSUM_FILE=checksums.txt
         - CHECKSUM_FILE_READ=dist/sha256.txt
@@ -70,9 +72,7 @@ deploy:
         branch: master
 
 after_deploy:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then "python3 ./bootstrap.py build --docs"; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git commit -am "update docs and webclient $VERSION_TAG"; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git push --quiet "https://$GITHUB_TOKEN@github.com/$REPO.git" > /dev/null 2>&1 || echo  "Failed to update webclient and docs"; fi
+    - CWD=$(pwd)
 
     - git clone https://github.com/$CHECKSUM_REPO.git ../_travis_checksum_repo
     - echo \n$(<"$CHECKSUM_FILE_READ") >> ../_travis_checksum_repo/$CHECKSUM_FILE
@@ -83,3 +83,14 @@ after_deploy:
     - git add $CHECKSUM_FILE
     - git commit -m "added $VERSION_TAG $TRAVIS_OS_NAME"
     - git push --quiet "https://$GITHUB_TOKEN@github.com/$CHECKSUM_REPO.git" master > /dev/null 2>&1
+
+    - cd $CWD
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$DOCS_REPO.git ../_docs_repo; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then "python3 ./bootstrap.py build --docs"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv $DOCS_DIR* ../_docs_repo -f; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd ../_docs_repo; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git config --local user.name "$GH_USER"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git config --local user.email "$GH_MAIL"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git add *; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git commit -am "update docs for $VERSION_TAG"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git push --quiet "https://$GITHUB_TOKEN@github.com/$DOCS_REPO.git" > /dev/null 2>&1 || echo  "Failed to update docs"; fi
