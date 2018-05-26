@@ -1,7 +1,7 @@
 Plugins
 ========================================
 
-HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease with plug-ins.
+HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease with plugins.
 
 Plug-ins can be written in ``Python 3`` up to``Python 3.6``.
 Note that you don't need to be running HPX from source to develop a plugin.
@@ -67,7 +67,7 @@ A manifest file is a file describing a plugin. Inside ``hplugin.json`` is::
         ]
     }
 
-* ``id``: A UUID4 string. Unique across all plug-ins. This attribute is required to be present.
+* ``id``: A UUID4 string. Unique across all plugins. This attribute is required to be present.
 * ``entry``: Path to the entry python file. Path is relative to this folder and must exist. This attribute is required to be present.
 * ``shortname``: Your plugin name in short form. Must be all lowercase and cannot exceed ``20`` characters nor contain any whitespace. This attribute is required to be present.
 * ``name``: Name of your plugin. This attribute is required to be present.
@@ -81,11 +81,11 @@ A manifest file is a file describing a plugin. Inside ``hplugin.json`` is::
 * ``description``: A description of your plugin. This attribute is required to be present.
 * ``test``: Path to the entry file for tests. Path is relative to this folder and must exist. This attribute is optional.
 * ``website``: A url to a website for the plugin, author, etc. This attribute is optional.
-* ``require``: A list of strings defining other plug-ins as dependencies. This attribute is optional.
+* ``require``: A list of strings defining other plugins as dependencies. This attribute is optional.
 
     A requirement must conform :pep:`508` with a few exceptions.
 
-    Other plug-ins can be referred to by their id or shortname.
+    Other plugins can be referred to by their id or shortname.
 
     Examples of requirements that conforms :pep:`508`::
 
@@ -113,8 +113,8 @@ After creating and defining a manifest file and create the entry files our final
         - main.py
         - test.py
 
-And that's it! We can now have HPX load our plugin. To do that, place the plugin folder into one of the locations where HPX looks for plug-ins.
-The default location is the ``plugins`` folder that exists inside the HPX root folder. It is also possible to define an additional location where to also look for plug-ins
+And that's it! We can now have HPX load our plugin. To do that, place the plugin folder into one of the locations where HPX looks for plugins.
+The default location is the ``plugins`` folder that exists inside the HPX root folder. It is also possible to define an additional location where to also look for plugins
 through the setting ``plugin.plugin_dir``.
 
 .. note::
@@ -140,7 +140,7 @@ These are the different kind of states a plugin can be in: :class:`PluginState <
 Interfacing with HPX
 ****************************************
 
-HPX plug-ins in a special environment with a special module named ``__hpx__`` to interface with HPX.
+HPX plugins in a special environment with a special module named ``__hpx__`` to interface with HPX.
 
 After a plugin has been registered, it can be installed. Installation has to be manually done by the user unless either of the two settings ``plugin.auto_install_plugin`` and ``plugin.auto_install_plugin_dependency``
 are true.
@@ -174,7 +174,7 @@ With all this in mind, we can now write code to interface with HPX. In the ``mai
         main()
 
 As you can see, we can write our code just like how we would write any regular Python program.
-HPX gives this flexibility and freedom to its plug-ins.
+HPX gives this flexibility and freedom to its plugins.
 
 The contents of the ``__hpx__`` module can be found at :ref:`Plugin API`, however, the most important methods from the module which we will cover here are
 :meth:`attach <happypanda.core.plugin_interface.attach>` and :meth:`subscribe <happypanda.core.plugin_interface.subscribe>`.
@@ -214,7 +214,7 @@ While it is true that we could also initialize on the module level, it is safer 
 Logging and errors
 ****************************************
 
-HPX provides a logging facility for its plug-ins.
+HPX provides a logging facility for its plugins.
 
 When a plugin has been registered, a folder called ``logs`` is created in the plugin's folder. In this folder will reside ``plugin.log`` and ``plugin_debug.log``.
 
@@ -228,7 +228,7 @@ This can produce logs that are very confusing and useless to others.
 The ``plugin_debug.log`` is also special in that its contents will be reset on every run.
 
 These two files contain logs pertaining to the plugin in question.
-HPX also has its own ``plugin.log`` found at ``[HPX]/logs/plugin.log`` that contain logs produced by all plug-ins (basically a combination of every plugin's exclusive log).
+HPX also has its own ``plugin.log`` found at ``[HPX]/logs/plugin.log`` that contain logs produced by all plugins (basically a combination of every plugin's exclusive log).
 
 Debugging
 ****************************************
@@ -254,9 +254,9 @@ About thread safety
 How to not break stuff
 ****************************************
 
-While HPX provides plug-ins lots of freedom, this can sometimes lead to plug-ins being able to disrupt the flow of the program and/or create inexplicable bugs,
+While HPX provides plugins lots of freedom, this can sometimes lead to plugins being able to disrupt the flow of the program and/or create inexplicable bugs,
 and generally make it so things are not working as intended.
-Which is why care must be taken when writing plug-ins.
+Which is why care must be taken when writing plugins.
 
 Here are some **DO**'s and **DON'T**'s that should ensure that everything plays nicely together.
 
