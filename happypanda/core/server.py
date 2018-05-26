@@ -474,7 +474,7 @@ class ClientHandler:
                         self.on_error(exceptions.HappypandaError(str(e)))
                     else:
                         self.on_error(exceptions.HappypandaError(
-                            "An unhandled critical error has occurred"))
+                            f"An unhandled critical error has occurred: {e.__class__.__name__}"))
                 else:
                     log.exception("An unhandled critical error has occurred")
                     raise

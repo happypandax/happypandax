@@ -86,9 +86,8 @@ def check_release(silent=True, cmd=None):
             r = SimpleGETRequest(
                 "https://api.github.com/repos/{}/{}/tags".format(repo_owner, repo_name)).merge(cmd).run()
             data = r.json
-            with utils.intertnal_db() as db:
-                tags = [x['name'] for x in data] if data else []
-                db['release_tags'] = tags
+            tags = [x['name'] for x in data] if data else []
+            constants.internaldb.release_tags.set(tags)
 
             new_rel = None
             new_version = tuple()

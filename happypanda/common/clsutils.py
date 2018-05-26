@@ -76,6 +76,7 @@ class InternalDatabase:
         def __call__(self, default=None):
             return self.get(default)
 
+    release_tags = GetSet("release_tags")
     latest_release = GetSet("latest_release")
     update_info = GetSet(constants.updater_key)
     network_session = GetSet("network_session")

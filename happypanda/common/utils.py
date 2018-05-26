@@ -669,7 +669,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     cert.get_subject().L = "HappyPanda X"
     cert.get_subject().O = "HappyPanda X"
     cert.get_subject().OU = "Twiddly Inc"
-    cert.get_subject().CN = socket.gethostname()
+    cert.get_subject().CN = "localhost"
     cert.set_serial_number(1000)
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
@@ -679,13 +679,21 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     san_list = ["DNS:localhost",
                 "DNS:happypanda.local",
                 "DNS:happypandax.local",
-                "IP:127.0.0.1"]
+                "IP:127.0.0.1",
+                "IP:::1", # IPv6
+                ]
     l_ip = get_local_ip()
     if l_ip != "127.0.0.1":
         san_list.append("IP:{}".format(l_ip))
 
+    usage_list = ["digitalSignature", "keyEncipherment"]
+    ex_usage_list = ["serverAuth", "clientAuth"]
+
     cert.add_extensions([
-        OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode())
+        #OpenSSL.crypto.X509Extension(b"basicConstraints", False, "CA:TRUE".encode()),
+        OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode()),
+        OpenSSL.crypto.X509Extension(b"keyUsage", False, ", ".join(usage_list).encode()),
+        OpenSSL.crypto.X509Extension(b"extendedKeyUsage", False, ", ".join(ex_usage_list).encode())
     ])
 
     cert.sign(k, 'sha256')
