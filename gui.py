@@ -655,8 +655,8 @@ if __name__ == "__main__":
         toggle_start_on_boot(None, config.gui_start_on_boot.value)
     config.gui_start_on_boot.add_trigger(toggle_start_on_boot)
 
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
+    app.setAttribute(Qt.AA_EnableHighDpiScaling)
     app.setWindowIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
     app.setApplicationDisplayName("HappyPanda X")
     app.setApplicationName("HappyPanda X")

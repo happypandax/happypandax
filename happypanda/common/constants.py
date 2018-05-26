@@ -5,7 +5,7 @@ import enum
 
 rarfile.PATH_SEP = '/'
 
-preview = True
+preview = False
 dev = False
 dev_db = False
 is_installed = os.path.exists(".installed")  # user installed with installer

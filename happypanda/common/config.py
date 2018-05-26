@@ -516,34 +516,34 @@ with config.namespace(db_ns):
         db_ns,
         "name",
         constants.db_name,
-        "Database name")
+        "Database name. This setting does not apply when the SQLite dialect is used")
 
     db_username = config.create(
         db_ns,
         "username",
         None,
-        "Database user name",
+        "Database user name. This setting does not apply when the SQLite dialect is used",
         type_=str)
 
     db_password = config.create(
         db_ns,
         "password",
         None,
-        "Database password",
+        "Database password. This setting does not apply when the SQLite dialect is used",
         type_=str)
 
     db_host = config.create(
         db_ns,
         "host",
         None,
-        "Database host",
+        "Database host. This setting does not apply when the SQLite dialect is used",
         type_=str)
 
     db_port = config.create(
         db_ns,
         "port",
         None,
-        "Database port",
+        "Database port. This setting does not apply when the SQLite dialect is used",
         type_=int)
 
     db_query = config.create(
