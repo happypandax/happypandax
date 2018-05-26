@@ -89,8 +89,9 @@ after_deploy:
 
     - cd $CWD
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$DOCS_REPO.git ../_docs_repo; fi
+    - pwd
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then "python3 ./bootstrap.py build --docs"; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv $DOCS_DIR* ../_docs_repo -f; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then rsync -a $DOCS_DIR ../_docs_repo/; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd ../_docs_repo; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git config --local user.name "$GH_USER"; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git config --local user.email "$GH_MAIL"; fi
