@@ -686,14 +686,9 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     if l_ip != "127.0.0.1":
         san_list.append("IP:{}".format(l_ip))
 
-    usage_list = ["digitalSignature", "keyEncipherment"]
-    ex_usage_list = ["serverAuth", "clientAuth"]
-
     cert.add_extensions([
-        #OpenSSL.crypto.X509Extension(b"basicConstraints", False, "CA:TRUE".encode()),
+        OpenSSL.crypto.X509Extension(b"basicConstraints", False, "CA:TRUE, pathlen:0".encode()),
         OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode()),
-        OpenSSL.crypto.X509Extension(b"keyUsage", False, ", ".join(usage_list).encode()),
-        OpenSSL.crypto.X509Extension(b"extendedKeyUsage", False, ", ".join(ex_usage_list).encode())
     ])
 
     cert.sign(k, 'sha256')
