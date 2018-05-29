@@ -621,7 +621,7 @@ class HPServer:
 
     def broadcast(self, msg):
         ""
-        for c in self._clients:
+        for c in self._clients.copy():
             c.send(message.finalize(msg, session_id=c.session.id if c.session else ""))
 
     def restart(self):

@@ -235,10 +235,10 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
                 item_id))
     p = p[0]
     if item_type == enums.ItemType.Page:
-        kwargs['gallery_id'] = p[0]
+        kwargs['gallery_or_id'] = p[0]
         kwargs['number'] = p[1]
     else:
-        kwargs["gallery"] = p
+        kwargs["gallery_or_id"] = p
 
     if viewer_args:
         kwargs['args'] = tuple(x.strip() for x in viewer_args.split())

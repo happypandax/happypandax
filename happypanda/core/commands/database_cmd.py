@@ -565,9 +565,9 @@ class GetModelItems(Command):
 
     Args:
         model: a database model item
-        ids: a set of item ids
+        ids: fetch items in this set of item ids or set ``None`` to fetch all
         columns: a tuple of database item columns to fetch
-        limit: amount to limit the results
+        limit: amount to limit the results, set ``None`` for no limit
         offset: amount to offset the results
         count: only return the count of items
         filter: either a textual SQL criterion or a database criterion expression (can also be a tuple)
@@ -602,7 +602,10 @@ class GetModelItems(Command):
         if offset:
             q = q.offset(offset)
 
-        return q.limit(limit).all()
+        if limit:
+            q = q.limit(limit)
+
+        return q.all()
 
     def _get_sql(self, expr):
         if isinstance(expr, str):
@@ -672,6 +675,8 @@ class GetModelItems(Command):
                     fetched_list = [x for x in q.all() if x[0] in ids]
                 else:
                     fetched_list = [x for x in q.all() if x.id in ids]
+                    if not limit:
+                        limit = len(fetched_list)
                     fetched_list = fetched_list[offset:][:limit]
 
                 self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
