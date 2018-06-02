@@ -5,7 +5,7 @@ import enum
 
 rarfile.PATH_SEP = '/'
 
-preview = False
+preview = True
 dev = False
 dev_db = False
 is_installed = os.path.exists(".installed")  # user installed with installer
@@ -33,8 +33,8 @@ updater_name = "happyupd"  # windows will make it require escalted priv. if name
 updater_key = "updater"
 
 ## VERSIONING ##
-build = 127
-version = (0, 0, 14)
+build = 128
+version = (0, 0, 15)
 version_db = (0, 0, 5)
 version_web = (0, 0, 13)
 version_str = ".".join(str(x) for x in version)
