@@ -19,5 +19,5 @@
   "autoInstall": true,
   "rtl": "both",
   "components": ["reset", "site", "button", "container", "divider", "flag", "header", "icon", "image", "input", "label", "list", "loader", "rail", "reveal", "segment", "step", "breadcrumb", "form", "grid", "menu", "message", "table", "ad", "card", "comment", "feed", "item", "statistic", "accordion", "checkbox", "dimmer", "dropdown", "embed", "modal", "nag", "popup", "progress", "rating", "search", "shape", "sidebar", "sticky", "tab", "transition", "api", "form", "state", "visibility"],
-  "version": "2.2.14"
+  "version": "2.3.1"
 }

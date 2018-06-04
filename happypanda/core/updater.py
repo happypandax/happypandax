@@ -77,6 +77,10 @@ def check_release(silent=True, cmd=None):
     if config.check_new_releases.value:
         if constants.dev or next_check and next_check > arrow.now():
             log.d("Skipping release check, still within interval")
+            log.d("Checking local")
+            latest_rel = constants.internaldb.latest_release.get()
+            if latest_rel and latest_rel['version'] > constants.version:
+                return latest_rel
             return None
         next_check = arrow.now().replace(minutes=+max(config.check_release_interval.value, 5))
         log.d("Checking for new release with interval set to", config.check_release_interval.value, "minutes")

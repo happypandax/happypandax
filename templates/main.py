@@ -182,7 +182,6 @@ def app_will_mount():
 
 
 def app_did_mount():
-    tr(None, "ui.t-changelog-location", "")
     utils.interval_func(this.server_notifications, 5000)
     document.body.appendChild(this.state.portal_el)
 
