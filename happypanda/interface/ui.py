@@ -247,6 +247,39 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
                 raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
     return message.Identity("translation", trs)
 
+def get_translations(locale: str = None):
+    """
+    Get all translations for given locale
+
+    You can find more about translations :ref:`here <Translations>`.
+
+    Args:
+        locale: locale to get translations from (will override default locale)
+
+    Returns:
+        .. code-block:: guess
+
+            {
+                'namespace.translation_id' : string
+            }
+
+    .. seealso::
+
+        :func:`.get_locales`
+    """
+    trs = {}
+    locale = helpers._get_locale(locale).lower()
+    container = i18n.translations.container
+    if locale in container:
+        trs = container[locale].copy()
+    else:
+        try:
+            translate("general.locale")
+            trs = container[locale].copy()
+        except exceptions.APIError:
+            pass
+    return message.Identity("translations", trs)
+
 
 def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, locale: str=None):
     """

@@ -314,6 +314,7 @@ class Client(Base):
                 self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
                 self.call_func("get_locales", self._set_locales)
                 self.call_func("check_update", push=True)
+                self.get_translations()
         else:
             if state['app']:
                 state['app'].on_login(state['accepted'])
@@ -421,6 +422,14 @@ class Client(Base):
         a, b = l.split('_')
         l = "{}-{}".format(a, b.upper())
         utils.moment.locale(l)
+
+    __pragma__("kwargs")
+    def get_translations(self, data=None, error=None):
+        if data is not None and not error:
+            state['translations'] = data
+        else:
+            self.call_func("get_translations", self.get_translations)
+    __pragma__("nokwargs")
 
     def _set_debug(self, data):
         state.debug = data['core.debug']

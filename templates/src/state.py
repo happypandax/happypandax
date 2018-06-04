@@ -15,4 +15,5 @@ state = {
     'locales': {},  # locales from server
     'untranslated_text': False,
     'translation_id_error': False,
+    'translations': None,
 }
