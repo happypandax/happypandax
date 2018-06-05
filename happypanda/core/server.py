@@ -35,7 +35,6 @@ def list_api():
         all_functions.extend(getmembers(m, isfunction))
     funcs = {x[0]: x[1] for x in all_functions if not x[0]
              in _special_functions and not x[0].startswith('_')}
-    log.d("Loaded Interface functions:\n\t", list(funcs))
     return funcs
 
 

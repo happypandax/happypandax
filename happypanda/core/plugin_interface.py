@@ -2,7 +2,7 @@
 Interface
 ----------------------------------------
 
-The plugin interface module named ``__hpx__``.
+The plugin interface module is named ``__hpx__``.
 Import it in your plugin to access the methods and classes defined by the module::
 
     import __hpx__ as hpx

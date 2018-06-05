@@ -752,7 +752,11 @@ class Life(Base):
 class MetaTag(NameMixin, Base):
     __tablename__ = 'metatag'
 
-    names = clsutils.AttributeList("favorite", "inbox", "readlater", "trash")
+    names = clsutils.AttributeList("favorite",
+                                   "inbox",
+                                   "readlater",
+                                   "trash",
+                                   "read")
     tags = {}
 
     @classmethod
