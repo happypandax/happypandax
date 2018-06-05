@@ -549,9 +549,13 @@ def item_view_render():
                                        on_blur=this.on_blur,
                                        )
 
+    el_items = [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
+              for n, x in enumerate(items)]
+    if len(el_items) == 0:
+        el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x) for x in range(30)]
+
     return e(ItemViewBase,
-             [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
-              for n, x in enumerate(items)],
+             el_items,
              config_suffix=this.config_suffix(),
              history=this.props.history,
              location=this.props.location,

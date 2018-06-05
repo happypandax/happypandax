@@ -52,6 +52,7 @@ def Slider(props):
                         dots=True,
                         dotsClass="slick-dots",
                         draggable=True,
+                        variableWidth=True,
                         infinite=False if not utils.defined(props.infinite) else props.infinite,
                         centerMode=False,
                         accessibility=True,

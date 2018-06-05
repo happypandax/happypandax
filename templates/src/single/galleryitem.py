@@ -95,7 +95,7 @@ def gallery_render():
                                    e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="bookmark outline"), tr(this, "ui.b-save-later", "Save for later"), size="tiny") if not inbox else
                                      e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to library"), color="green", size="tiny")),
                                    ),
-                                 minWidth=1000,
+                                 minWidth=900,
                                  ),
                        inverted=True),
               )

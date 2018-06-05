@@ -80,6 +80,13 @@ def get_item(data=None, error=None):
                              item_id=data.id, limit=30)
             this.setState({"similar_gallery_loading": True})
 
+        this.setState({'same_artist_data': []})
+        if len(data.artists):
+            for a in list(data.artists)[:5]:
+                client.call_func("get_related_items", this.get_same_artist_data,
+                                 related_type=ItemType.Gallery, item_id=a.id, item_type=ItemType.Artist,
+                                 limit=10 if len(data.artists) > 1 else 30)
+
         if data.id:
             inbox = data.metatags.inbox
             trash = data.metatags.trash
@@ -186,6 +193,24 @@ def get_collection_data(data=None, error=None):
         this.setState({"collection_count": len(data), 'collection_data': data})
     elif error:
         state.app.notif("Failed to fetch collection data ({})".format(this.state.id), level="error")
+
+
+def get_same_artist_data(data=None, error=None):
+    if data is not None and not error:
+        g_id = this.state.data.id or 0
+        items = [x for x in data if x.id != g_id]
+        a_data = this.state.same_artist_data
+        [items.append(x) for x in a_data if x.id != g_id]
+        g_ids = []
+        g_items = []
+        for x in [x for x in items]:
+            if x.id in g_ids:
+                continue
+            g_ids.append(x.id)
+            g_items.append(x)
+        this.setState({'same_artist_data': g_items})
+    elif error:
+        state.app.notif("Failed to fetch same artist data ({})".format(this.state.id), level="error")
 
 
 __pragma__("tconv")
@@ -406,6 +431,18 @@ def page_render():
                                   ],
                                   ))
 
+    series_accordion = []
+    if len(series_data) > 1:
+        series_accordion.append(e(ui.Grid.Row, e(ui.Grid.Column,
+                                  e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
+                                    loading=this.state.loading_group,
+                                    basic=False,
+                                    secondary=True,
+                                    sildesToShow=4,
+                                    color="blue",
+                                    label=tr(this, "ui.t-series", "Series")),
+                                  )))
+
     collection_accordion = []
 
     if this.state.collection_count:
@@ -423,6 +460,27 @@ def page_render():
                                                    count=this.state.collection_count),
                                           color="teal",
                                           cfg_suffix=this.cfg_suffix + 'collection',
+                                          default_open=True
+                                          )
+                                        )
+                                      )
+                                    )
+
+    same_artist_accordion = []
+
+    same_artist_data = this.state.same_artist_data
+    if len(same_artist_data) > 1:
+        same_artist_accordion.append(e(ui.Grid.Row,
+                                      e(ui.Grid.Column,
+                                        e(LabelAccordion,
+                                          e(Slider,
+                                            *[e(galleryitem.Gallery, data=x, className="small-size")
+                                                for x in same_artist_data],
+                                            secondary=True,
+                                            sildesToShow=4),
+                                          label=tr(this, "ui.h-more-same-artist", "More from same artist", count=len(this.state.data.artists)),
+                                          color="teal",
+                                          cfg_suffix=this.cfg_suffix + 'same_artist',
                                           default_open=True
                                           )
                                         )
@@ -487,8 +545,8 @@ def page_render():
                e(ui.Grid.Column,
                  e(ui.Grid,
                    e(ui.Grid.Row,
-                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive",
-                                         rating=fav), floated="right", className="no-margins"),
+                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav),
+                      floated="right", className="no-margins"),
                      e(ui.Grid.Column, *indicators, floated="right", textAlign="right", className="no-margins"),
                      columns=2,
                      verticalAlign="middle",
@@ -530,15 +588,8 @@ def page_render():
                  textAlign="center"),
                columns=3
                ),
-             e(ui.Grid.Row, e(ui.Grid.Column,
-                              e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
-                                loading=this.state.loading_group,
-                                basic=False,
-                                secondary=True,
-                                sildesToShow=4,
-                                color="blue",
-                                label=tr(this, "ui.t-series", "Series")),
-                              )),
+             *series_accordion,
+             *same_artist_accordion,
              *collection_accordion,
              *similar_galleries,
              e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
@@ -588,6 +639,7 @@ Page = createReactClass({
                                 'similar_gallery_progress': {},
                                 'similar_gallery_loading': True,
                                 'similar_gallery_data': [],
+                                'same_artist_data': [],
                                 },
 
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
@@ -602,6 +654,7 @@ Page = createReactClass({
     'get_similar_value': get_similar_value,
     'get_similar_progress': get_similar_progress,
     'get_collection_data': get_collection_data,
+    'get_same_artist_data': get_same_artist_data,
     'get_config': get_config,
     'open_external': galleryitem.open_external,
 

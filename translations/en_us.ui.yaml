@@ -188,6 +188,9 @@ h-appears-in-collection:
     one: Appears in %{count} collection
     many: Appears in %{count} collections
 h-more-like-this: More like this
+h-more-same-artist:
+    one: More from same artist
+    many: More from same artists
 
 # Collection Page
 t-inboxed-collection: This collection is in your inbox
