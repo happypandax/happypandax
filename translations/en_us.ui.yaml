@@ -217,7 +217,7 @@ t-infinite-scroll: Infinite Scroll
 t-group-galleries: Gallery Series
 t-items-per-page: Items per page
 t-blur: Blur
-t-default-sort: Default sorting
+t-default-sort: Default sort
 
 # Misc
 t-showing-count: Showing %{from}-%{to} of %{all}

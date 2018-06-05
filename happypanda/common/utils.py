@@ -629,8 +629,11 @@ def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_
         certfile = os.path.join(constants.dir_certs, "happypandax.crt")
         keyfile = os.path.join(constants.dir_certs, "happypandax.key")
         pemfile = os.path.join(constants.dir_certs, "happypandax.pem")
+        pfxfile = os.path.join(constants.dir_certs, "happypandax.pfx")
         if not os.path.exists(certfile):
-            create_self_signed_cert(certfile, keyfile, pemfile)
+            create_self_signed_cert(certfile, keyfile, pemfile, pfxfile)
+        if not os.path.exists(pfxfile):
+            export_cert_to_pfx(pfxfile, certfile, keyfile)
         log.i("Certs not provided, using self-signed certificate", stdout=True)
     else:
         if not os.path.exists(certfile) and not (os.path.exists(keyfile) if keyfile else False):
@@ -652,7 +655,7 @@ def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_
     return c
 
 
-def create_self_signed_cert(cert_file, key_file, pem_file=None):
+def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
     """
     self-signed cert
     """
@@ -703,6 +706,20 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     if pem_file:
         with open(pem_file, "wb") as f:
             f.write(cert_pem + key_pem)
+
+    if pfx_file:
+        export_cert_to_pfx(pfx_file, cert_file, key_file)
+
+def export_cert_to_pfx(pfx_file, cert_file, key_file):
+    with open(cert_file, "rb") as f:
+        c = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, f.read())
+    with open(key_file, "rb") as f:
+        k = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, f.read())
+    pfx = OpenSSL.crypto.PKCS12Type()
+    pfx.set_certificate(c)
+    pfx.set_privatekey(k)
+    with open(pfx_file, "wb") as f:
+        f.write(pfx.export()) # pfx.export("password")
 
 
 def log_exception(f=None, log=log):

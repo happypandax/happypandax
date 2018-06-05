@@ -70,6 +70,7 @@ def collection_render():
                            className="card-item bottom right above-dimmer",
                            inverted=True),
                  hoverable=True,
+                 hideOnScroll=True,
                  on="click",
                  position="right center",
                  ),

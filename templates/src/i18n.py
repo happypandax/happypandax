@@ -45,7 +45,6 @@ def tr(that, t_id, default_txt, placeholder=None, count=None):
     elif placeholder is None and count is None and state.translations is not None:
         if state.translations[t_id]:
             return state.translations[t_id]
-    print(t_id)
     t_txt = None
     curr_locale = utils.storage.get("locale", "unknown")
     ctx = {'t_id': t_id,

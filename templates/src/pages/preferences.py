@@ -62,7 +62,8 @@ def pref_view(props):
                            label=tr(props.tab, "ui.t-language", "Language"),
                            onChange=lambda e, d: all((utils.storage.set("locale", d.value),
                                                       props.upd("client.translation_locale", d.value),
-                                                      client.set_locale(d.value))),
+                                                      client.set_locale(d.value),
+                                                      client.get_translations(locale=d.value))),
                            ))
             items.append(h("p", h("a", tr(props.tab, "ui.t-help-translate",
                                           "Not satisfied with the translation? Consider helping out"),

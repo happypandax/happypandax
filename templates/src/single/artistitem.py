@@ -38,6 +38,7 @@ def artistlbl_render():
                        **lbl_args,
                        ),
              hoverable=True,
+             hideOnScroll=True,
              wide="very",
              on="click",
              position="top center"

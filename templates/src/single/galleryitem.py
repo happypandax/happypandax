@@ -168,6 +168,7 @@ def gallery_render():
                          on_tags=this.on_tags,
                          size="small"),
                hoverable=True,
+               hideOnScroll=True,
                position="bottom center",
                wide="very",
                on="click",

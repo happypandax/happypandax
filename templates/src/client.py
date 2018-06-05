@@ -424,11 +424,11 @@ class Client(Base):
         utils.moment.locale(l)
 
     __pragma__("kwargs")
-    def get_translations(self, data=None, error=None):
+    def get_translations(self, data=None, error=None, locale=None):
         if data is not None and not error:
             state['translations'] = data
         else:
-            self.call_func("get_translations", self.get_translations)
+            self.call_func("get_translations", self.get_translations, locale=locale)
     __pragma__("nokwargs")
 
     def _set_debug(self, data):
