@@ -101,4 +101,4 @@ Collection = createReactClass({
     'componentDidUpdate': collection_on_update,
 
     'render': collection_render
-})
+}, pure=True)

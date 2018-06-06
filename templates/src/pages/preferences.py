@@ -453,4 +453,4 @@ PrefTab = createReactClass({
                                          location.reload(False) if this.state.refresh else None)),
 
     'render': preftab_render
-})
+}, pure=True)

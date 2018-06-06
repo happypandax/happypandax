@@ -48,4 +48,4 @@ CircleLabel = createReactClass({
     },
 
     'render': circlelbl_render
-})
+}, pure=True)

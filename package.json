@@ -20,6 +20,7 @@
     "npm": "^6.1.0",
     "query-string": "^5.1.1",
     "react": "^16.4.0",
+    "react-addons-shallow-compare": "^15.6.2",
     "react-dom": "^16.4.0",
     "react-lazyload": "^2.3.0",
     "react-router-dom": "^4.2.2",

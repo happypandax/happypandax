@@ -108,4 +108,4 @@ Page = createReactClass({
     'on_handshake': on_handshake,
 
     'render': page_render
-})
+}, pure=True)

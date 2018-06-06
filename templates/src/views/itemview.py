@@ -121,7 +121,7 @@ def Itemviewvonfig_render():
 ItemViewConfig = createReactClass({
     'displayName': 'ItemViewConfig',
     'render': Itemviewvonfig_render
-})
+}, pure=True)
 
 
 def itemviewbase_render():
@@ -659,7 +659,7 @@ ItemView = createReactClass({
     'componentDidUpdate': item_view_on_update,
 
     'render': item_view_render
-})
+}, pure=True)
 
 
 def simpleview_render():

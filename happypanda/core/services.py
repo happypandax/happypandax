@@ -2,6 +2,7 @@ import gevent
 import weakref
 import functools
 import itertools
+import arrow
 
 from gevent import pool, queue
 from apscheduler.schedulers.gevent import GeventScheduler
@@ -45,27 +46,27 @@ class Service:
             return cls._all_commands[cmd_id]
         return None
 
-#@attr.s
-# class Trigger:
-#    ""
-#    _start = attr.ib(None)
-#    _every = attr.ib(None)
-#    _day = attr.ib(None)
-#    _year = attr.ib(None)
-#    _month = attr.ib(None)
-#    _hour = attr.ib(None)
-#    _minute = attr.ib(None)
-#    _second = attr.ib(None)
-#    _monday = attr.ib(None)
-#    _tuesday = attr.ib(None)
-#    _wednesday = attr.ib(None)
-#    _thursday = attr.ib(None)
-#    _friday = attr.ib(None)
-#    _saturday = attr.ib(None)
-#    _sunday = attr.ib(None)
+class TaskService(Service):
+    
+    _asyncresults = {}
 
-#    def __attrs_post_init__(self):
+    def __call__(self, x):
+        pass
+
+#class Trigger:
+#    """
+#    [start.[every/at].[time/day/month...].[at]]
+#    """
+
+#    def __init__(self, start=None):
+#        self._reset()
+#        self._start = start
 #        self._committed = False
+#        self._at_1_date = None
+#        self._at_2_date = None
+#        self._on = None
+#        self._repeat = None
+
 
 #    @property
 #    def _d(self):
@@ -78,14 +79,37 @@ class Service:
 #        t = list(attr.astuple(self))
 #        return tuple(l[1:])
 
+#    def _reset(self):
+#        self._every = None
+#        self._day = None
+#        self._year = None
+#        self._month = None
+#        self._hour = None
+#        self._minute = None
+#        self._second = None
+#        self._monday = None
+#        self._tuesday = None
+#        self._wednesday = None
+#        self._thursday = None
+#        self._friday = None
+#        self._saturday = None
+#        self._sunday = None
+
 #    def at(self, date):
 #        ""
+#        assert isinstance(date, (arrow.Arrow, ))
+#        if self._on is None:
+#            self._at_1_date = date
+#        else:
+#            self._at_2_date = date
+
 #        return self
 
 #    def every(self, interval):
-#        assert self._every is None, "Cannot call every twice"
+#        assert self._every, "Cannot call every twice"
 #        ""
-#        self._every = interval
+#        self.every = True
+#        self._repeat = interval
 #        return self
 
 #    @property
@@ -102,16 +126,19 @@ class Service:
 
 #    @property
 #    def hour(self):
+#        assert self._hour is None, "Can only call hour once"
 #        self._hour = True
 #        return self
 
 #    @property
 #    def day(self):
+#        assert self._day is None, "Can only call day once"
 #        self._day = True
 #        return self
 
 #    @property
 #    def month(self):
+#        assert self._month is None, "Can only call month once"
 #        self._month = True
 #        return self
 
@@ -154,6 +181,24 @@ class Service:
 #    def sunday(self):
 #        self._sunday = True
 #        return self
+
+#    def _compile(self):
+#        if self._day:
+#            pass
+#        self._year = None
+#        self._month = None
+#        self._hour = None
+#        self._minute = None
+#        self._second = None
+
+
+#        self._monday = None
+#        self._tuesday = None
+#        self._wednesday = None
+#        self._thursday = None
+#        self._friday = None
+#        self._saturday = None
+#        self._sunday = None
 
 
 class Scheduler(Service):
@@ -393,7 +438,6 @@ class ImageService(AsyncService):
 
     def __init__(self, name):
         super().__init__(name, pool.Pool(config.concurrent_image_tasks.value))
-
 
 def init_generic_services():
     Scheduler.generic = Scheduler("generic")

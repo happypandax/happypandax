@@ -27,4 +27,4 @@ Page = createReactClass({
     'displayName': 'LibraryPage',
 
     'render': page_render
-})
+}, pure=True)

@@ -26,4 +26,4 @@ Page = createReactClass({
     'displayName': 'FavoritesPage',
 
     'render': page_render
-})
+}, pure=True)

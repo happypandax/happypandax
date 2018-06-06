@@ -2,7 +2,7 @@ from src.react_utils import (h,
                              e,
                              createReactClass)
 from src.ui import ui
-from src.client import (client, ItemType)
+from src.client import (client, ItemType, ViewType)
 from src.i18n import tr
 from src.state import state
 from src import utils
@@ -213,6 +213,7 @@ def itembuttons_render():
                primary=True,
                basic=this.props.value == ItemType.Gallery,
                ),
+             e(ViewDropdown, button=True, basic=True),
              toggle=True,
              basic=True
              )
@@ -346,4 +347,48 @@ FilterDropdown = createReactClass({
     'componentDidMount': lambda: this.get_items(),
 
     'render': filterdropdown_render
+})
+
+
+def viewdropdown_change(e, d):
+    if this.props.query:
+        utils.go_to(this.props.history, query={'view_type': d.value}, push=False)
+    if this.props.on_change:
+        this.props.on_change(e, d)
+
+def viewdropdown_render():
+    item_options = [
+        {'text': tr(this, "ui.mi-all", "All"),
+         'value': 0,
+        },
+        {'text': tr(this, "ui.mi-library", "Library"),
+         'value': ViewType.Library,
+        },
+        {'text': tr(this, "ui.mi-inbox", "Inbox"),
+         'value': ViewType.Inbox,
+        },
+        ]
+
+    return e(ui.Dropdown,
+             options=item_options,
+             value=this.props.value if this.props.value else js_undefined,
+             defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
+             onChange=this.item_change,
+             selectOnBlur=False,
+             pointing=this.props.pointing,
+             labeled=this.props.labeled,
+             inline=this.props.inline,
+             compact=this.props.compact,
+             button=this.props.button,
+             item=this.props.item,
+             selection=this.props.selection,
+             basic=this.props.basic
+             )
+
+
+ViewDropdown = createReactClass({
+    'displayName': 'ViewDropdown',
+
+    'item_change': viewdropdown_change,
+    'render': viewdropdown_render
 })

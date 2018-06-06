@@ -25,6 +25,8 @@ class AttributeList(UserList):
 
 class Invalidator:
     """
+    An invalidation implementation.
+    Acts like a switch that turns to false on subsequent access
     """
 
     def __init__(self, parent=None, value=False):

@@ -62,4 +62,4 @@ ArtistLabel = createReactClass({
     'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
 
     'render': artistlbl_render
-})
+}, pure=True)

@@ -49,4 +49,4 @@ ParodyLabel = createReactClass({
     },
 
     'render': parodylbl_render
-})
+}, pure=True)

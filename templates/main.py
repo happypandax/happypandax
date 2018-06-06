@@ -87,7 +87,7 @@ PathChange = createReactClass({
     'componentDidMount': on_path_mount,
 
     'render': lambda: None
-})
+}, pure=True)
 
 __pragma__("kwargs")
 
@@ -386,7 +386,7 @@ App = createReactClass({
     'activity_page': lambda p: e(activity.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
-})
+}, pure=True)
 
 vkeys = utils.visibility_keys()
 

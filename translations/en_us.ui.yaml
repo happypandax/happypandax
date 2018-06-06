@@ -31,6 +31,7 @@ mi-activity: Activity
 mi-downloads: Downloads
 mi-preferences: Preferences
 mi-about: About
+mi-all: All
 
 # Login Page
 t-login: Login

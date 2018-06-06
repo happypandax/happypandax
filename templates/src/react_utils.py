@@ -12,7 +12,8 @@ __pragma__('noskip')
 
 React = require("react")
 ReactDOM = require("react-dom")
-createReactClass = require('create-react-class')
+createReactClass_ = require('create-react-class')
+shallowCompare = require('react-addons-shallow-compare')
 Router = require("react-router-dom").BrowserRouter
 Link = require("react-router-dom").Link
 NavLink = require("react-router-dom").NavLink
@@ -23,6 +24,10 @@ Redirect = require("react-router-dom").Redirect
 
 __pragma__("kwargs")
 
+def createReactClass(obj, pure=True):
+    if pure:
+        obj['shouldComponentUpdate'] = lambda np, ns: shallowCompare(this, np, ns)
+    return createReactClass_(obj)
 
 def e(elm_type, *args, **props):
     props.pop("constructor")
@@ -90,3 +95,4 @@ ScrollToTop = withRouter(createReactClass({
 
     'render': lambda: this.props.children
 }))
+

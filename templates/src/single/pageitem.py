@@ -101,4 +101,4 @@ Page = createReactClass({
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': page_on_update,
     'render': page_render
-})
+}, pure=True)

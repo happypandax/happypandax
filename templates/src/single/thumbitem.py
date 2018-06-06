@@ -147,4 +147,4 @@ Thumbnail = createReactClass({
     'componentDidUpdate': thumbnail_on_update,
 
     'render': thumbnail_render
-})
+}, pure=True)

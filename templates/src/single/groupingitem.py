@@ -66,4 +66,4 @@ Grouping = createReactClass({
     'componentWillMount': lambda: this.setState({'data': this.props.data, 'id': 0}),
 
     'render': grouping_render
-})
+}, pure=True)

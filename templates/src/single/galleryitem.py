@@ -199,4 +199,4 @@ Gallery = createReactClass({
     'componentDidUpdate': gallery_on_update,
 
     'render': gallery_render
-})
+}, pure=True)

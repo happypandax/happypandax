@@ -263,7 +263,7 @@ Pagination = createReactClass({
     'componentWillReceiveProps': pagination_receive_props,
 
     'render': pagination_render
-})
+}, pure=True)
 
 
 ToggleIcon = createReactClass({
@@ -280,7 +280,7 @@ ToggleIcon = createReactClass({
                         onClick=this.toggle,
                         link=True,
                         )
-})
+}, pure=True)
 
 
 def connectstatus_render():
@@ -302,7 +302,7 @@ ConnectStatus = createReactClass({
                            this.props.on_toggle(not this.state.toggled) if this.props.on_toggle else None)),
 
     'render': connectstatus_render,
-})
+}, pure=True)
 
 LabelAccordion = createReactClass({
     'displayName': 'LabelAccordion',
@@ -330,7 +330,7 @@ LabelAccordion = createReactClass({
                         basic=this.props.basic if utils.defined(this.props.basic) else True,
                         className="small-padding-segment",
                         ),
-})
+}, pure=True)
 
 
 def datelbl_render():
@@ -364,7 +364,7 @@ DateLabel = createReactClass({
     'toggle': lambda: this.setState({'toggled': not this.state.toggled}),
 
     'render': datelbl_render,
-})
+}, pure=True)
 
 
 def TitleChange(props):
@@ -381,4 +381,4 @@ TR = createReactClass({
 
 
     'render': tr_render,
-})
+}, pure=True)

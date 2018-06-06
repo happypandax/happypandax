@@ -86,4 +86,4 @@ TagView = createReactClass({
     'componentDidUpdate': tag_on_update,
 
     'render': tag_render
-})
+}, pure=True)

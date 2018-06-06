@@ -465,6 +465,6 @@ Page = createReactClass({
     )),
 
     'render': page_render
-})
+}, pure=True)
 __pragma__("notconv")
 __pragma__("nojsiter")

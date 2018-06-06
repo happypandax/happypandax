@@ -362,4 +362,4 @@ AboutTab = createReactClass({
                                       )),
 
     'render': abouttab_render
-})
+}, pure=True)

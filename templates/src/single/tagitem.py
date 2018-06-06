@@ -65,4 +65,4 @@ TagLabel = createReactClass({
     },
 
     'render': taglbl_render
-})
+}, pure=True)
