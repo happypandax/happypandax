@@ -41,7 +41,6 @@ def sidebar_nav_render():
             icon="grid layout",
             url="/library",
             handler=this.props["toggler"]))
-    items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox", handler=this.props["toggler"]))
     items.append(
         MenuItem(
             "directory",

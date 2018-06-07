@@ -8,13 +8,14 @@ from src.react_utils import (h,
                              Router,
                              Route,
                              Redirect,
+                             withRouter,
                              )
 from src.ui import ui, Alert, Notif, TitleChange
 from src.nav import (sidebar, menu)
 from src.i18n import tr
 from src.pages import (api, collection, gallery,
-                       dashboard, favorites, inbox,
-                       library, page, directory,
+                       dashboard, favorites,library,
+                       page, directory,
                        activity, login)
 from src.client import pushclient, PushID
 from src import utils
@@ -209,11 +210,13 @@ def app_render():
 
     if this.state.logged_in:
         sidebar_args = {
+            'location': this.props.location,
             'toggler': this.toggle_sidebar,
-            'toggled': this.state["sidebar_toggled"]
+            'toggled': this.state["sidebar_toggled"],
         }
 
         menu_args = {
+            'location': this.props.location,
             'toggler': this.toggle_sidebar,
             'contents': this.state["menu_nav_contents"],
             'menu_args': this.state["menu_nav_args"]
@@ -264,8 +267,7 @@ def app_render():
         if this.state.debug:
             api_route.append(e(Route, path="/api", component=this.api_page))
 
-        el = e(Router,
-               h("div",
+        el = h("div",
                  e(ui.Responsive,
                    #e(ConnectStatus, context=this.state.root_ref),
                    e(sidebar.SideBar, **sidebar_args), minWidth=767),
@@ -287,7 +289,6 @@ def app_render():
                        e(Route, path="/dashboard", component=this.dashboard_page),
                        e(Route, path="/library", component=this.library_page),
                        e(Route, path="/favorite", component=this.favorites_page),
-                       e(Route, path="/inbox", component=this.inbox_page),
                        e(Route, path="/directory", component=this.directory_page),
                        e(Route, path="/activity", component=this.activity_page),
                        e(Route, path="/item/gallery", component=this.gallery_page),
@@ -309,9 +310,8 @@ def app_render():
                      ),
                    innerRef=this.get_context_ref,
                    ),
+                    key="1",
                  ),
-               key="1",
-               )
     elif not utils.defined(this.state.logged_in):
         el = e(ui.Segment,
                e(ui.Dimmer,
@@ -378,7 +378,6 @@ App = createReactClass({
     'dashboard_page': lambda p: e(dashboard.Page, menu=this.set_menu_contents, **p),
     'library_page': lambda p: e(library.Page, menu=this.set_menu_contents, **p),
     'favorites_page': lambda p: e(favorites.Page, menu=this.set_menu_contents, **p),
-    'inbox_page': lambda p: e(inbox.Page, menu=this.set_menu_contents, **p),
     'page_page': lambda p: e(page.Page, menu=this.set_menu_contents, **p),
     'gallery_page': lambda p: e(gallery.Page, menu=this.set_menu_contents, **p),
     'collection_page': lambda p: e(collection.Page, menu=this.set_menu_contents, **p),
@@ -386,7 +385,7 @@ App = createReactClass({
     'activity_page': lambda p: e(activity.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
-}, pure=True)
+})
 
 vkeys = utils.visibility_keys()
 
@@ -401,4 +400,4 @@ def visibility_change():
 # todo: check support
 document.addEventListener(vkeys['visibilitychange'], visibility_change, False)
 
-render(e(App), 'root')
+render(e(Router, e(withRouter(App))), 'root')

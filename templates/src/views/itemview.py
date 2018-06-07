@@ -28,6 +28,7 @@ def Itemviewvonfig_render():
     group_gallery_cfg = "group_gallery"
     blur_cfg = "blur"
     default_sort_cfg = "def_sort_idx"
+    default_view_cfg = "def_view_type"
 
     item_count_options = [
         {'key': 10, 'text': '10', 'value': 10},
@@ -80,6 +81,21 @@ def Itemviewvonfig_render():
           ),
     )
 
+    view_el = []
+    view_el.append(
+        e(ui.Form.Field,
+            h("label", tr(this, "ui.t-default-view", "Default view")),
+            e(item.ViewDropdown,
+              query=False,
+              view_type=props.view_type,
+              value=utils.storage.get(default_view_cfg + cfg_suffix),
+              item=True,
+              selection=True,
+              on_change=lambda e, d: utils.storage.set(default_view_cfg + cfg_suffix, d.value)
+              )
+          ),
+    )
+
     return e(ui.Sidebar,
              e(ui.Form,
                *grp_gallery_el,
@@ -106,6 +122,7 @@ def Itemviewvonfig_render():
                            item_count_cfg + cfg_suffix, d.value))),
                    ),
                  *sort_el,
+                 *view_el,
                  e(ui.Form.Field, tr(this, "ui.b-close", "Close"), control=ui.Button),
                  onSubmit=props.on_close,
                ),
@@ -382,7 +399,7 @@ def get_items(data=None, error=None):
                    'page': max(int(this.state.page) - 1, 0),
                    'limit': this.props.limit or this.state.limit}
         if utils.defined(this.props.view_filter):
-            func_kw['view_filter'] = this.props.view_filter
+            func_kw['view_filter'] = this.props.view_filter or None
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
         if sort_by:
@@ -419,7 +436,7 @@ def get_items_count(data=None, error=None):
 
         func_kw = {'item_type': item}
         if this.props.view_filter:
-            func_kw['view_filter'] = this.props.view_filter
+            func_kw['view_filter'] = this.props.view_filter or None
         if filter_id:
             func_kw['filter_id'] = filter_id
         if this.state.search_query:
@@ -532,10 +549,12 @@ def item_view_render():
     limit = this.props.limit or this.state.limit
     size_type = this.props.size_type
     blur = this.state.blur
+    count = this.state.item_count
     if not el:
         return e(Error, content="An error occured. No valid element available.")
     ext_viewer = this.props.external_viewer if utils.defined(this.props.external_viewer) else this.state.external_viewer
     cfg_el = this.props.config_el or e(ItemViewConfig,
+                                       view_type=this.props.view_filter,
                                        item_type=this.props.related_type or this.props.item_type or this.state.item_type,
                                        on_close=this.props.toggle_config or this.toggle_config,
                                        visible=this.props.visible_config if utils.defined(
@@ -551,8 +570,8 @@ def item_view_render():
 
     el_items = [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
               for n, x in enumerate(items)]
-    if len(el_items) == 0:
-        el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x) for x in range(30)]
+    if len(el_items) == 0 and count > 0:
+        el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x) for x in range(min(limit, 30))]
 
     return e(ItemViewBase,
              el_items,
@@ -604,7 +623,9 @@ ItemView = createReactClass({
     'config_suffix': lambda: this.props.config_suffix or "",
     'query': lambda: this.props.query if utils.defined(this.props.query) else True,
 
-    'getInitialState': lambda: {'page': 1,
+    'getDefaultProps': lambda: {'query': True},
+
+    'getInitialState': lambda: {'page': utils.get_query("page", 1) if this.query() else 1,
                                 'prev_page': 0,
                                 'infinite_scroll': utils.storage.get("infinite_scroll" + this.config_suffix(), this.props.infinite_scroll),
                                 'limit': utils.storage.get("item_count" + this.config_suffix(),
@@ -613,7 +634,7 @@ ItemView = createReactClass({
                                 "element": None,
                                 "loading": True,
                                 "loading_more": False,
-                                'item_count': 1,
+                                'item_count': -1,
                                 'visible_config': False,
                                 'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
                                 'group_gallery': utils.storage.get("group_gallery" + this.config_suffix(), False),
@@ -644,7 +665,7 @@ ItemView = createReactClass({
     'on_search': lambda s, o: all((this.setState({'search_query': s if s else '', 'search_options': o}),
                                    utils.storage.set("search_options", o))),
 
-    'reset_page': lambda p: all((this.setState({'page': 1}), utils.go_to(this.props.history, query={'page': 1}, push=False))),
+    'reset_page': lambda p: all((utils.go_to(this.props.history, query={'page': 1}, push=False), this.setState({'page': 1}), )),
     'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),
 
     'on_blur': lambda e, d: this.setState({'blur': d.checked}),

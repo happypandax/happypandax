@@ -82,7 +82,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         metatag_name = db.MetaTag.names.favorite
     elif view_filter == enums.ViewType.Inbox:
         metatag_name = db.MetaTag.names.inbox
-    elif view_filter == enums.ViewType.Inbox:
+    elif view_filter == enums.ViewType.Trash:
         metatag_name = db.MetaTag.names.trash
 
     if metatag_name:
@@ -102,6 +102,8 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         filter_op = db.and_op(*filter_op)
     elif filter_op:
         filter_op = filter_op[0]
+    else:
+        filter_op = None
 
     return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 

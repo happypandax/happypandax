@@ -61,15 +61,15 @@ class _APIEnum(enum.Enum):
 
 
 class ViewType(_APIEnum):
-    #: Library
+    #: Contains all items except items in Inbox and Trash
     Library = 1
-    #: Favourite
+    #: Contains all favourite items (mutually exclusive with items in Inbox)
     Favorite = 2
-    #: Inbox
+    #: Contains only items in Inbox
     Inbox = 3
-    #: Trash
+    #: Contains only items in Trash
     Trash = 4
-    #: Read Later
+    #: Contains only items in ReadLater
     ReadLater = 5
 
 

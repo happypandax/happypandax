@@ -50,21 +50,21 @@ def gallery_render():
     inbox = False
     data = this.props.data or this.state.data
 
-    if this.state.data:
-        rating = this.state.data.rating
-        title = this.state.data.titles[0].js_name
-        inbox = this.state.data.metatags.inbox
+    if data:
+        rating = data.rating
+        title = data.titles[0].js_name
+        inbox = data.metatags.inbox
 
-        if this.state.data.metatags.favorite:
+        if data.metatags.favorite:
             fav = 1
         if not item_id:
-            item_id = this.state.data.id
+            item_id = data.id
 
-        for a in this.state.data.artists:
+        for a in data.artists:
             if len(a.names) > 0:
                 artist_names.append(a.names[0].js_name)
 
-        for u in this.state.data.urls:
+        for u in data.urls:
             urls.append(u.js_name)
 
     add_cls = this.props.className or ""

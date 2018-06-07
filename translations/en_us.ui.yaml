@@ -222,6 +222,7 @@ t-group-galleries: Gallery Series
 t-items-per-page: Items per page
 t-blur: Blur
 t-default-sort: Default sort
+t-default-view: Default view
 
 # Misc
 t-showing-count: Showing %{from}-%{to} of %{all}

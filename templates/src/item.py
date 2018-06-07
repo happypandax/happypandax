@@ -200,7 +200,11 @@ def itembuttons_change(e, d):
 
 
 def itembuttons_render():
+    ch = this.props.children
+    if not isinstance(ch, list):
+        ch = [ch]
     return e(ui.Button.Group,
+             *ch,
              e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
                value=ItemType.Collection,
                onClick=this.item_change,
@@ -213,7 +217,6 @@ def itembuttons_render():
                primary=True,
                basic=this.props.value == ItemType.Gallery,
                ),
-             e(ViewDropdown, button=True, basic=True),
              toggle=True,
              basic=True
              )
@@ -260,8 +263,8 @@ def sortdropdown_render():
     return e(ui.Dropdown,
              placeholder=tr(this, "ui.t-sortdropdown-placeholder", "Sort by"),
              options=item_options,
-             value=this.props.value if this.props.value else js_undefined,
-             defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
+             value=this.props.value,
+             defaultValue=this.props.defaultValue,
              onChange=this.item_change,
              loading=this.state.loading,
              selectOnBlur=False,
@@ -321,8 +324,8 @@ def filterdropdown_render():
              options=item_options,
              search=True,
              allowAdditions=True,
-             value=this.props.value if this.props.value else js_undefined,
-             defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
+             value=this.props.value,
+             defaultValue=this.props.defaultValue,
              onChange=this.item_change,
              loading=this.state.loading,
              selectOnBlur=False,
@@ -369,10 +372,23 @@ def viewdropdown_render():
         },
         ]
 
+
+    if this.props.view_type == ViewType.Favorite:
+        item_options = [
+            {'text': tr(this, "ui.mi-favorites", "Favorites"),
+                'value': this.props.view_type,
+            },
+            ]
+    elif this.props.view_type != None:
+        for x in item_options:
+            if x['value'] == this.props.view_type:
+                item_options = [x]
+                break
+
     return e(ui.Dropdown,
              options=item_options,
-             value=this.props.value if this.props.value else js_undefined,
-             defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
+             value=this.props.value,
+             defaultValue=this.props.defaultValue,
              onChange=this.item_change,
              selectOnBlur=False,
              pointing=this.props.pointing,
@@ -382,7 +398,10 @@ def viewdropdown_render():
              button=this.props.button,
              item=this.props.item,
              selection=this.props.selection,
-             basic=this.props.basic
+             basic=this.props.basic,
+             className=this.props.className,
+             disabled=True if this.props.view_type != None else js_undefined,
+             icon=None if this.props.view_type else js_undefined
              )
 
 

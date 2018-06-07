@@ -85,4 +85,4 @@ Menu = createReactClass({
     'render': menu_nav_render,
 
     'toggle_fixed': lambda: this.setState({'fixed': not this.state.fixed})
-})
+}, pure=False)

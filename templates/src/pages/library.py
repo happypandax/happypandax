@@ -17,7 +17,6 @@ __pragma__('noskip')
 def page_render():
     return [e(TitleChange, title=tr(this, "ui.mi-library", "Library"), key=1),
             e(pages.ItemViewPage,
-              view_type=ViewType.Library,
               history=this.props.history,
               location=this.props.location,
               key=2)]
