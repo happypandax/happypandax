@@ -44,7 +44,7 @@ class HappypandaError(RuntimeError):
     def __init__(self, msg):
         """init func."""
         super().__init__(msg)
-        self.msg = "[{}]{}: {}".format(self.code, self.__class__.__name__, msg)
+        self.msg = "[{}] {}: {}".format(self.code, self.__class__.__name__, msg)
 
 # ## CORE -- CODE: 100+ ##
 

@@ -365,15 +365,22 @@ class Client(Base):
                 self.socket.emit("server_call", serv_msg._msg)
                 return
             if serv_msg.func_name and serv_data:
-                for func in serv_data.data:
-                    err = None
-                    if 'error' in func:
-                        err = func['error']
-                        self.flash_error(err)
-                    if func['fname'] == serv_msg.func_name:
-                        if serv_msg.callback:
-                            serv_msg.call_callback(func['data'], err)
-                        break
+                if serv_data.data != None: # noqa: E711
+                    for func in serv_data.data:
+                        err = None
+                        if 'error' in func:
+                            err = func['error']
+                            self.flash_error(err)
+                        if func['fname'] == serv_msg.func_name:
+                            if serv_msg.callback:
+                                serv_msg.call_callback(func['data'], err)
+                            break
+                else:
+                    if serv_msg.callback:
+                        err = None
+                        if serv_data['error']:
+                            err = serv_data['error']
+                        serv_msg.call_callback(None, err)
             else:
                 if serv_msg.callback:
                     serv_msg.call_callback(serv_data, None)

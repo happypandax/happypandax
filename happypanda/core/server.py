@@ -469,7 +469,7 @@ class ClientHandler:
             except Exception as e:
                 if not constants.dev:
                     log.exception("An unhandled critical error has occurred")
-                    if isinstance(e, PermissionError, FileNotFoundError):
+                    if isinstance(e, (PermissionError, FileNotFoundError)):
                         self.on_error(exceptions.HappypandaError(str(e)))
                     else:
                         self.on_error(exceptions.HappypandaError(
