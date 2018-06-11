@@ -276,6 +276,7 @@ class Command(CoreCommand, metaclass=ABCMeta):
 
     def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
+        self.state = CommandState.out_of_service
         self._main = self.main
         self.main = self._main_wrap
 
@@ -328,7 +329,6 @@ class AsyncCommand(Command):
         self._service = service
         self._args = None
         self._kwargs = None
-        self.state = CommandState.out_of_service
         self.exception = None
 
         if self._service:

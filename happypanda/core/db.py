@@ -7,6 +7,8 @@ import warnings
 import functools
 import gevent
 import threading
+import pathlib
+import langcodes
 import inspect as pyinspect
 
 from contextlib import contextmanager
@@ -452,7 +454,7 @@ class NameMixin(UniqueMixin):
         return query.filter(cls.name == name)
 
     def exists(self, obj=False, strict=False):
-        "obj: queries for the full object and returns it"
+        "obj: if true queries for the full object and returns it"
         if not constants.db_session:
             return self
         sess = constants.db_session()
@@ -756,6 +758,7 @@ class MetaTag(NameMixin, Base):
                                    "inbox",
                                    "readlater",
                                    "trash",
+                                   "follow",
                                    "read")
     tags = {}
 
@@ -1152,6 +1155,21 @@ class Language(NameMixin, UserMixin, Base):
         lazy='dynamic',
         back_populates='language')
 
+    @validates("name")
+    def validate_name(self, key, name):
+        try:
+            l = langcodes.find(name)
+            name = utils.capitalize_text(l.autonym())
+            self.code = l.language
+        except LookupError:
+            pass
+        return name
+
+    @validates("code")
+    def validate_code(self, key, code):
+        return utils.get_language_code(code)
+
+
 
 @generic_repr
 class Category(NameMixin, UserMixin, Base):
@@ -1305,6 +1323,20 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         for t in self.titles:
             if t.language and t.language.code == language_code:
                 return t
+
+    def get_sources(self):
+        ""
+        p_paths = []
+        if self.id:
+            db = ensure_in_session(self)
+            if self.gallery.single_source:
+                        p_path = constants.db_session().query(Page.path).filter(Page.gallery_id==self.id,
+                                                                               Page.number==1)
+                        if p_path:
+                            p_paths.append(str(pathlib.Path(p_path).parent))
+            else:
+                raise NotImplementedError
+        return tuple(p_paths)
 
     # def exists(self, obj=False, strict=False):
     #    """Checks if gallery exists by path
@@ -1903,6 +1935,7 @@ def ensure_in_session(item):
             return item
         except exc.InvalidRequestError:
             return constants.db_session().merge(item)
+    return item
 
 
 @contextmanager

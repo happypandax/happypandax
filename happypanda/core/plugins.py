@@ -576,16 +576,18 @@ class HandlerValue:
         try:
             yield err_info
         except Exception as e:
-            if isinstance(e, exceptions.CoreError) and e.where == self.name + 'handler':
+            if node is None or (isinstance(e, exceptions.CoreError) and e.where == self.name + 'handler'):
                 raise
-            self.failed[node] = e
-            node.logger.exception(
-                f"An unhandled exception '{e.__class__.__name__}' was raised by plugin handler on command '{self.name}'".format(
-                    self.name))
-            get_plugin_context_logger(
-                node.logger.name).w(
-                f"An unhandled exception '{e.__class__.__name__}' was raised by plugin handler on command '{self.name}' by",
-                node.format())
+            if node:
+                self.failed[node] = e
+                node.logger.exception(
+                    f"An unhandled exception '{e.__class__.__name__}' was raised by plugin handler on command '{self.name}'".format(
+                        self.name))
+                get_plugin_context_logger(
+                    node.logger.name).w(
+                    f"An unhandled exception '{e.__class__.__name__}' was raised by plugin handler on command '{self.name}' by",
+                    node.format())
+
             err_info.raised_error = True
             err_info.exception = e
 

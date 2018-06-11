@@ -23,6 +23,7 @@ import logging
 import regex
 import OpenSSL
 import errno
+import langcodes
 
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
@@ -760,3 +761,15 @@ def check_signature():
     #        var_pos = True
     #    elif sig.parameters[a].kind == inspect.Parameter.VAR_KEYWORD:
     #        var_key = True
+
+
+def language_to_code(language_name):
+    """
+    """
+    code = ""
+    try:
+        l = langcodes.find(language_name)
+        code = l.language
+    except LookupError:
+        pass
+    return code

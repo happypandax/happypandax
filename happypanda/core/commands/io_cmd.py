@@ -15,6 +15,7 @@ import attr
 import subprocess
 import imghdr
 import errno
+import typing
 
 from io import BytesIO
 from PIL import Image
@@ -23,6 +24,8 @@ from rarfile import RarFile
 from tarfile import TarFile
 from contextlib import contextmanager
 from gevent import fileobject
+from natsort import natsorted
+from ordered_set import OrderedSet
 
 from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand, Command, CParam
@@ -259,6 +262,7 @@ class CoreFS(CoreCommand):
         self._filetype = None
         self._archive = archive
         self._extacted_file = None
+        self._ext = None
         self._resolve_path(path)
 
     @_archive_formats.default()
@@ -329,6 +333,11 @@ class CoreFS(CoreCommand):
         return ""
 
     @property
+    def parent(self):
+        "Get path to parent folder or file as string"
+        return str(self._path.parent)
+
+    @property
     def is_file(self):
         "Check if path is pointed to a file"
         return not self.is_dir
@@ -388,6 +397,8 @@ class CoreFS(CoreCommand):
     @property
     def ext(self):
         "Get file extension. An empty string is returned if path is a directory"
+        if self._ext is not None:
+            return self._ext
         suffixes = self._path.suffixes
         while suffixes:
             s = "".join(suffixes)
@@ -397,7 +408,8 @@ class CoreFS(CoreCommand):
         else:
             s = self._path.suffix
 
-        return s.lower()
+        self._ext = s.lower()
+        return self._ext
 
     @property
     def count(self):
@@ -405,8 +417,8 @@ class CoreFS(CoreCommand):
         raise NotImplementedError
         return self._path.suffix.lower()
 
-    def contents(self, corefs=True):
-        "If this is an archive or folder, return a tuple of CoreFS objects else return None"
+    def contents(self, corefs=True) -> typing.Tuple[typing.Union[str, object]]:
+        "If this is an archive or folder, return a tuple of CoreFS/str objects"
         if self.is_archive:
             self._init_archive()
             root = self._archive.path_separator.join(self._path.parts)
@@ -415,7 +427,7 @@ class CoreFS(CoreCommand):
             if self.inside_archive:
                 raise NotImplementedError
             else:
-                l = tuple(x for x in self._path.iterdir())
+                l = tuple(str(x) for x in self._path.iterdir())
         if corefs:
             l = tuple(CoreFS(x) for x in l)
         return l
@@ -854,83 +866,248 @@ class GalleryFS(CoreCommand):
         path_or_dbitem: path to a valid gallery archive/folder or a :class:`.db.Gallery` database item
     """
 
-    def __init__(self, path_or_dbitem: str):
-        assert isinstance(path_or_dbitem, (str, CoreFS, db.Gallery, pathlib.Path))
+    _filter_pages: tuple = CommandEntry("filter_pages",
+                                CParam("pages", tuple, "a tuple of pages"),
+                                __doc="""
+                                Called to filter out files not to be regarded as pages
+                                """,
+                                __doc_return="""
+                                a tuple of strings of all the pages that should NOT be included in the gallery
+                                """)
 
-        self.gallery = None
+    _parse_metadata_file: bool = CommandEntry("parse_metadata_file",
+                                CParam("path", str, "path to the gallery source, note that this can also be inside of an archive"),
+                                CParam("gallery", db.Gallery, "gallery db item"),
+                                __doc="""
+                                Called to read and apply metadata from an identified metadata file accompanying a gallery
+                                """,
+                                __doc_return="""
+                                a bool indicating whether a file was identified and data was applied
+                                """)
+
+    def __init__(self, path_or_dbitem: typing.Union[db.Gallery, str, CoreFS, pathlib.Path]):
+        assert isinstance(path_or_dbitem, (str, CoreFS, db.Gallery, pathlib.Path))
         self.path = None
-        self.name = ''
-        self.title = ''
-        self.artists = []
-        self.language = ''
-        self.convention = ''
-        self.pages = {}  # number : CoreFS
 
         if isinstance(path_or_dbitem, db.Gallery):
             self.gallery = path_or_dbitem
         else:
+            self.gallery = db.Gallery()
             self.path = CoreFS(path_or_dbitem)
 
-    # def load(self):
-    #    "Extracts gallery data"
-    #    _, self.name = os.path.split(self.path)
-    #    info = GalleryScan.name_parser(self.path)
-    #    self.title = info['title']
-    #    self.artists.append(info['artist'])
-    #    self.language = info['language']
-    #    self.convention = info['convention']
-    #    if self.gallery_type == utils.PathType.Directoy:
-    #        self.pages = self._get_folder_pages()
-    #    elif self.gallery_type == utils.PathType.Archive:
-    #        self.pages = self._get_archive_pages()
-    #    else:
-    #        assert False, "this shouldnt happen... ({})".format(self.path)
+        self.pages = {} # number : db.Page
+        self._sources = None
 
-    def get_gallery(self):
-        "Creates/Updates database gallery"
-        if not self.gallery:
-            self.gallery = db.Gallery()
+    def load_metadata(self, update=True):
+        """
+        """
+        sources = self.get_sources(only_single=True)
+        if not update and self.gallery.id:
+            self.gallery = db.ensure_in_session(self.gallery)
+        for p in sources:
+            with self._parse_metadata_file.call(p, self.gallery) as plg:
+                from_file_data = any(plg.all(default=True)) # TODO: stop at first handler that returns true
 
-        t = db.Title(name=self.title)
-        # TODO: add language to title
-        for x in self.gallery.titles:
-            if x.name == t.name:
-                t = x
-                break
-        self.gallery.titles.append(t)
-        [self.gallery.artists.append(
-            db.Artist(name=x).exists(True, True)) for x in self.artists]
-        db_pages = self.gallery.pages.count()
-        if db_pages != len(self.pages):
-            if db_pages:
+            if not from_file_data: # TODO: only set missing data
+                n = NameParser(p, self.gallery)
+                langs = []
+                for l in n.extract_language():
+                    dblang = db.Language()
+                    dblang.name = l
+                    langs.append(dblang.exists(True))
+                lang = None
+                if langs:
+                    self.gallery.language = lang = langs[0]
+                if not update:
+                    self.gallery.titles.clear()
+                for t in n.extract_title():
+                    dbtitle = db.Title()
+                    dbtitle.name = t
+                    if lang:
+                        dbtitle.language = lang
+                    self.gallery.titles.append(dbtitle)
+
+                for t in n.extract_artist():
+                    dbartist = db.Artist()
+                    dbartistname = db.AliasName()
+                    dbartistname.name = t
+                    if lang:
+                        dbartistname.language = lang
+                    dbartist.names.append(dbartistname)
+
+    def load_pages(self, delete_existing=True):
+        """
+        """
+        if delete_existing:
+            self.pages.clear()
+            if self.gallery.id:
+                self.gallery = db.ensure_in_session(self.gallery)
                 self.gallery.pages.delete()
-            [self.gallery.pages.append(
-                db.Page(path=x[1], number=x[0])) for x in self.pages]
 
+        n = 0
+        for s in sorted(self.get_sources()):
+            fs = CoreFS(s)
+            c = fs.contents(corefs=False)
+            real_pages = OrderedSet(c)
+
+            with self._filter_pages.call(c) as plg:
+                for x in plg.all():
+                    real_pages.difference_update(x)
+
+            for p in natsorted(real_pages):
+                n += 1
+                dbpage = db.Page()
+                dbpage.path = p
+                dbpage.number = n
+                self.gallery.pages.append(dbpage)
+                self.pages[n] = p
+
+    def get_gallery(self, load=True, update=True):
+        self.load_metadata(update=update)
+        self.load_pages()
         return self.gallery
 
-    def _get_folder_pages(self):
+    def get_sources(self, only_single=False):
         ""
-        pages = []
-        dir_images = [
-            x.path for x in os.scandir(
-                self.path) if not x.is_dir() and x.name.endswith(
-                CoreFS.image_formats())]
-        for n, x in enumerate(sorted(dir_images), 1):
-            pages.append((n, os.path.abspath(x)))
-        return pages
+        if only_single:
+            if not self.gallery.single_source:
+                raise NotImplementedError("Loading metadata for a gallery with multiple sources is not supported")
 
-    def _get_archive_pages(self):
-        ""
-        raise NotImplementedError
+        if self.path:
+            return (self.path,)
+        if self._sources is not None:
+            return self._sources
+
+        paths = []
+        if self.gallery.id:
+            if self.pages:
+                if self.gallery.single_source:
+                    p_path = self.pages[1].path
+                    paths.append(CoreFS(p_path).parent)
+                else:
+                    for p in self.pages.values():
+                        p_path = CoreFS(p.path).parent
+                        if p_path not in paths:
+                            paths.append(p_path)
+            else:
+                paths = self.gallery.get_sources()
+
+        return tuple(paths)
 
 
-class NameParser(Command):
+class NameParser(CoreCommand):
     """
+    Extract several components from a gallery name (usually a filename)
+
+    Args:
+        name: the string to parse
+
     """
 
-    #parse = CommandEntry("rename", None, str, str)
+    _extract_title: tuple = CommandEntry("extract_title",
+                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                __doc="""
+                                Called to extract the title from ``name``
+                                """,
+                                __doc_return="""
+                                a tuple of strings of all the extracted titles
+                                """)
 
-    def __init__(self):
+    _extract_artist: tuple = CommandEntry("extract_artist",
+                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                __doc="""
+                                Called to extract the artist from ``name``
+                                """,
+                                __doc_return="""
+                                a tuple of strings of all the extracted artists
+                                """)
+
+    _extract_convention: tuple = CommandEntry("extract_convention",
+                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                __doc="""
+                                Called to extract the convention from ``name``
+                                """,
+                                __doc_return="""
+                                a tuple of strings of all the extracted conventions
+                                """)
+
+    _extract_language: tuple = CommandEntry("extract_language",
+                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                __doc="""
+                                Called to extract the language from ``name``
+                                """,
+                                __doc_return="""
+                                a tuple of strings of all the extracted languages
+                                """)
+
+    _extract_circle: tuple = CommandEntry("extract_circle",
+                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                __doc="""
+                                Called to extract the language from ``name``
+                                """,
+                                __doc_return="""
+                                a tuple of strings of all the extracted languages
+                                """)
+
+    def __init__(self, name: str):
         super().__init__()
-        self.parsed = {}
+        self.titles = tuple()
+        self.artists = tuple()
+        self.conventions = tuple()
+        self.languages = tuple()
+
+        fs = CoreFS(name)
+        if fs.ext:
+            self.name = name[:-len(fs.ext)] # remove ext
+        else:
+            self.name = name
+
+    def extract_title(self) -> typing.Tuple[str]:
+        if self.titles:
+            return self.titles
+
+        with self._extract_title.call(self.name) as plg:
+            ts = tuple()
+            for t in plg.all(default=True):
+                if t:
+                    ts += t
+            self.titles = tuple(x for x in ts if x)
+        return self.titles
+
+
+    def extract_artist(self) -> typing.Tuple[str]:
+        if self.artists:
+            return self.artists
+
+        with self._extract_artist.call(self.name) as plg:
+            ts = tuple()
+            for t in plg.all(default=True):
+                if t:
+                    ts += t
+            self.artists = tuple(x for x in ts if x)
+        return self.artists
+
+    def extract_convention(self) -> typing.Tuple[str]:
+        if self.conventions:
+            return self.conventions
+
+        with self._extract_convention.call(self.name) as plg:
+            ts = tuple()
+            for t in plg.all(default=True):
+                if t:
+                    ts += t
+            self.conventions = tuple(x for x in ts if x)
+        return self.conventions
+
+    def extract_language(self) -> typing.Tuple[str]:
+        if self.languages:
+            return self.languages
+
+        with self._extract_language.call(self.name) as plg:
+            ts = tuple()
+            for t in plg.all(default=True):
+                if t:
+                    ts += t
+            self.languages = tuple(x for x in ts if x)
+        return self.languages
+
