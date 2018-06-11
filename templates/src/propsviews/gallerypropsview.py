@@ -159,7 +159,10 @@ def galleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
+                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green",
+                                                                                                                       "ongoing": "orange",
+                                                                                                                       "unreleased": "red",
+                                                                                                                       "unknown": "grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),

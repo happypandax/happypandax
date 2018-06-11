@@ -912,7 +912,6 @@ def main(args=sys.argv[1:]):
         dst_circles = {}
         dst_parodies = {}
         dst_categories = {}
-        dst_status = {}
         dst_namespace = {}
         dst_tag = {}
         dst_nstagmapping = {}
@@ -999,12 +998,19 @@ def main(args=sys.argv[1:]):
                         gallery_ns = dst_grouping.get(gallery_ns.name, gallery_ns)
                         dst_grouping[gallery_ns.name] = gallery_ns
                         gallery_ns.galleries.append(gallery)
+
                         if g.status and g.status.lower() != "unknown":
-                            gstatus = db.Status()
-                            gstatus.name = g.status
-                            gstatus = dst_status.get(gstatus.name, gstatus)
-                            gallery_ns.status = gstatus
-                            dst_status[gstatus.name] = gstatus
+                            if g.status.lower() == "completed":
+                                gstatus = db.Status.as_unique(session=sess, name=db.Status.names.completed)
+                            elif g.status.lower() == "ongoing":
+                                gstatus = db.Status.as_unique(session=sess, name=db.Status.names.ongoing)
+                            else:
+                                gstatus = db.Status.as_unique(session=sess, name=g.status)
+                        else:
+                            gstatus = db.Status.as_unique(session=sess, name=db.Status.names.unknown)
+
+                        gallery_ns.status = gstatus
+
                     gallery.number = ch.number
 
                     lang = g.language.lower() if g.language else None
@@ -1150,7 +1156,7 @@ def main(args=sys.argv[1:]):
                     gallery.times_read = g.times_read
 
                     if gallery.last_read and gallery.times_read:
-                        gallery.metatags.append(db.MetaTag.names.read)
+                        gallery.metatags.append(db.MetaTag.as_unique(session=sess, name=db.MetaTag.names.read))
 
                     galleries.append(gallery)
                     if not g.id in gallery_mixmap:
@@ -1293,8 +1299,6 @@ def main(args=sys.argv[1:]):
         # items.extend(dst_artists.values())
         #print("Adding gallery types...")
         # items.extend(dst_gtype.values())
-        #print("Adding gallery status...")
-        # items.extend(dst_status.values())
         #print("Adding gallery namespaces...")
         # items.extend(dst_namespace.values())
         #print("Adding gallery tags...")
@@ -1317,8 +1321,6 @@ def main(args=sys.argv[1:]):
         s.add_all(dst_artists.values())
         print("Adding gallery types...")
         s.add_all(dst_categories.values())
-        print("Adding gallery status...")
-        s.add_all(dst_status.values())
         print("Adding gallery namespaces...")
         s.add_all(dst_namespace.values())
         print("Adding gallery tags...")

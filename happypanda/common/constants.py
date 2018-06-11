@@ -68,6 +68,7 @@ db_name_dev = "happypanda_dev"
 db_path = os.path.join(dir_root, dir_data, db_name + '.db')
 db_path_dev = os.path.join(dir_root, dir_data, db_name_dev + '.db')
 internal_db_path = os.path.join(dir_data, "internals")
+favicon_path = os.path.join(dir_static, "favicon", "favicon.ico")
 
 thumbs_view = "/thumb"
 link_ext = '.link'

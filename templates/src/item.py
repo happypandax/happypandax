@@ -324,7 +324,7 @@ def filterdropdown_render():
              options=item_options,
              search=True,
              allowAdditions=True,
-             value=this.props.value,
+             value=this.props.value or js_undefined,
              defaultValue=this.props.defaultValue,
              onChange=this.item_change,
              loading=this.state.loading,

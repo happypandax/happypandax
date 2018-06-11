@@ -204,8 +204,7 @@ class ConvertHP(QDialog):
         self._archive = False
         self._delete = True
         self._dev = False
-        self._args_label = QLabel()
-        self._args_label.setWordWrap(True)
+        self._args_edit = QLineEdit(self)
         self.args = []
         self.create_ui()
         self.setMinimumWidth(500)
@@ -237,7 +236,7 @@ class ConvertHP(QDialog):
         dev_box.setChecked(constants.dev_db)
         lf.addRow(t("gui.t-dev-mode", default="Dev Mode") + ':', dev_box)
 
-        lf.addRow(t("gui.t-command", default="Command") + ':', self._args_label)
+        lf.addRow(t("gui.t-command", default="Command") + ':', self._args_edit)
         convert_btn = QPushButton(t("gui.b-convert", default="Convert"))
         convert_btn.clicked.connect(self.convert)
         lf.addRow(convert_btn)
@@ -281,7 +280,7 @@ class ConvertHP(QDialog):
         if self._delete:
             self.args .append("--delete-target")
 
-        self._args_label.setText(" ".join(self.args))
+        self._args_edit.setText(" ".join(self.args))
         self.adjustSize()
 
     def convert(self):
@@ -414,7 +413,7 @@ class Window(QMainWindow):
         self.client_started = False
         self.output_tab_idx = 0
         self.force_kill = False
-        self.start_ico = QIcon(os.path.join(constants.dir_static, "favicon.ico")
+        self.start_ico = QIcon(constants.favicon_path
                                )  # qta.icon("fa.play", color="#41f46b")
         self.stop_ico = qta.icon("fa.stop", color="#f45f42")
         self.server_process = None
@@ -499,7 +498,7 @@ class Window(QMainWindow):
         main_layout.addWidget(buttons)
         self.setCentralWidget(w)
 
-        self.tray.setIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
+        self.tray.setIcon(QIcon(constants.favicon_path))
         self.tray.activated.connect(self.tray_activated)
         tray_menu = QMenu()
         tray_menu.addAction(t("gui.t-show", default="Show"), lambda: all((self.showNormal(), self.activateWindow())))
@@ -657,7 +656,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
-    app.setWindowIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
+    app.setWindowIcon(QIcon(constants.favicon_path))
     app.setApplicationDisplayName("HappyPanda X")
     app.setApplicationName("HappyPanda X")
     app.setApplicationVersion(".".join(str(x) for x in constants.version))

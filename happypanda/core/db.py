@@ -414,6 +414,7 @@ def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
             q = session.query(cls)
             q = queryfunc(q, *arg, **kw)
             obj = q.first()
+            #import pdb; pdb.set_trace();
             if not obj:
                 obj = constructor(*arg, **kw)
                 session.add(obj)
@@ -431,9 +432,9 @@ class UniqueMixin:
         raise NotImplementedError()
 
     @classmethod
-    def as_unique(cls, *arg, **kw):
+    def as_unique(cls, *arg, session=None, **kw):
         return _unique(
-            constants.db_session(),
+            session or constants.db_session(),
             cls,
             cls.unique_hash,
             cls.unique_filter,
@@ -453,11 +454,11 @@ class NameMixin(UniqueMixin):
     def unique_filter(cls, query, name):
         return query.filter(cls.name == name)
 
-    def exists(self, obj=False, strict=False):
+    def exists(self, obj=False, strict=False, session=None):
         "obj: if true queries for the full object and returns it"
-        if not constants.db_session:
+        if not session and not constants.db_session:
             return self
-        sess = constants.db_session()
+        sess = session or constants.db_session()
         if obj:
             if strict:
                 e = sess.query(
@@ -1118,6 +1119,13 @@ class GalleryFilter(UserMixin, NameMixin, Base):
 class Status(NameMixin, UserMixin, Base):
     __tablename__ = 'status'
 
+    names = clsutils.AttributeDict({
+        'completed':'Completed',
+        'ongoing':'Ongoing',
+        'unreleased':'Unreleased',
+        'unknown':'Unknown',
+        })
+
     groupings = relationship(
         "Grouping",
         lazy='dynamic',
@@ -1622,9 +1630,8 @@ def engine_connect(dbapi_connection, connection_record):
         cursor.close()
 
 
-def init_defaults(sess):
+def init_defaults(sess, first_time=True):
     "Initializes default items"
-
     # init default user
     duser = sess.query(User).filter(
         User.role == User.Role.default).one_or_none()
@@ -1642,6 +1649,14 @@ def init_defaults(sess):
             sess.commit()
         MetaTag.tags[t] = t_d
 
+    # init status
+    if first_time:
+        for s in Status.names.values():
+            db_st = Status()
+            db_st.name = s
+            if not db_st.exists(session=sess):
+                sess.add(db_st)
+                sess.commit()
 
 def create_user(role, name=None, password=None):
     """
@@ -1748,7 +1763,7 @@ def check_db_version(sess):
         idb[db_key] = life.times_opened
 
     sess.add(Event(Event.Action.app_start, life))
-    init_defaults(sess)
+    init_defaults(sess, life.times_opened==1)
     sess.commit()
     log.d("Succesfully initiated database")
     log.d("Using DB Version: {}".format(life.version))
