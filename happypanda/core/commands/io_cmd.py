@@ -34,7 +34,6 @@ from happypanda.core import db
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
-
 @attr.s
 class ImageProperties:
     #: size of image, a :data:`.utils.ImageSize` object
@@ -1111,3 +1110,51 @@ class NameParser(CoreCommand):
             self.languages = tuple(x for x in ts if x)
         return self.languages
 
+class CacheCleaner(Command):
+    """
+    Clean the provided folder
+
+    Args:
+        cache_path: path to cache directory
+        size: only clean if directory size exceeds this number in MB
+        silent: ignore any errors
+
+    Returns:
+        bool indicating whether the folder was cleaned or not
+    """
+
+    def _calculate_size(self, path):
+        "in bytes"
+        total = 0
+        for entry in os.scandir(path):
+            if entry.is_file():
+                total += entry.stat().st_size
+            elif entry.is_dir():
+                total += self._calculate_size(entry.path)
+        return total
+
+    def _clean_contents(self, path, silent, size):
+
+        # delete old files first
+        files =  list(sorted(os.scandir(path), key=lambda x: x.stat().st_ctime))
+        for f in files[:int(len(files)/2)]:
+            try:
+                if f.is_file():
+                    os.unlink(f.path)
+                elif f.is_dir():
+                    shutil.rmtree(f.path)
+            except Exception:
+                if not silent:
+                    raise
+
+        while float(self._calculate_size(path)) > size:
+            self._clean_contents(self, path, silent, size)
+
+
+    def main(self, cache_path: typing.Union[CoreFS, str], size: float=0.0, silent: bool=False) -> bool:
+        p = CoreFS(cache_path)
+        size = float(size)*1048576 # 1048576 bytes = 1 mb
+        if p.exists and float(self._calculate_size(p.path)) > size:
+            self._clean_contents(p.path, silent, size)
+            return True
+        return False

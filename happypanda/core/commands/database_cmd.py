@@ -130,6 +130,7 @@ class GetModelImage(AsyncCommand):
 
         self.next_progress()
         if generate:
+            constants.task_command.thumbnail_cleaner.wake_up()
             self.cover = self.run_native(self._generate_and_add, img_hash, old_img_hash, generate,
                                          model, item_id, image_size, profile_size).get()
         self.cover_event.emit(self.cover)

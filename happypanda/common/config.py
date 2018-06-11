@@ -449,6 +449,13 @@ with config.namespace(core_ns):
         os.path.join(constants.dir_bin, "unrar.exe") if constants.is_win else "unrar",
         "Path to unrar tool. On Windows the default path is 'bin/win32/unrar.exe'. On Unix the default path is 'unrar'")
 
+    auto_thumb_clean_size = config.create(
+        core_ns,
+        "auto_thumb_clean_size",
+        400,
+        "Maximum size in megabytes to which the thumbnail folder will automatically get emptied when exceeded")
+
+
 plugin_ns = 'plugin'
 
 with config.namespace(plugin_ns):

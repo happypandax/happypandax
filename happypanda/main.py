@@ -93,6 +93,17 @@ def cmd_commands(args):
             print("{}\t{}".format(u.name, u.role.value))
         return True
 
+def init_commands(args):
+    if not args.only_web:
+        upd_int = config.check_release_interval.value or config.check_release_interval.default
+        upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
+                                                        IntervalTrigger(minutes=upd_int))
+        log.i("Initiating background", meta_cmd.CheckUpdate.__name__)
+        services.Scheduler.generic.start_command(upd_id, push=True)
+
+        log.i("Initiating background thumbnail", io_cmd.CacheCleaner.__name__)
+        thumb_id = services.TaskService.generic.add_command(io_cmd.CacheCleaner())
+        constants.task_command.thumbnail_cleaner = services.TaskService.generic.start_command(thumb_id, constants.dir_thumbs, size=config.auto_thumb_clean_size.value, silent=True)
 
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 6), "Python 3.6 and up is required"
@@ -151,13 +162,10 @@ def start(argv=None, db_kwargs={}):
 
             constants.notification = server.ClientNotifications()
 
-            if not args.only_web:
-                upd_int = config.check_release_interval.value or config.check_release_interval.default
-                upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
-                                                                IntervalTrigger(minutes=upd_int))
-                services.Scheduler.generic.start_command(upd_id, push=True)
             # starting stuff
             services.Scheduler.generic.start()
+            init_commands(args)
+
             log.i("Starting webserver... ({}:{})".format(config.host_web.value, config.port_web.value), stdout=True)
             web_args = (config.host_web.value, config.port_web.value, constants.dev if args.only_web else False)
             if args.only_web:

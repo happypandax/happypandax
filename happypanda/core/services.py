@@ -8,7 +8,7 @@ from gevent import pool, queue, event
 from apscheduler.schedulers.gevent import GeventScheduler
 from cachetools import LRUCache
 
-from happypanda.common import hlogger, constants, config, exceptions, utils
+from happypanda.common import hlogger, constants, config, exceptions, utils, clsutils
 from happypanda.core import command, async_utils, db
 from happypanda.interface.enums import CommandState
 
@@ -437,7 +437,24 @@ class TaskService(Service):
     A task service where tasks only run when woken up
     Results only reset when a task is woken up again
     """
+
+    class TaskCommand:
+
+        def __init__(self, cmd_id, service):
+            self.command_id = cmd_id
+            self.service = service
+
+        def wake_up(self):
+            self.service(self.command_id)
+
+        def get(self, block=True, timeout=None):
+            self.service.get_command_value(block=block, timeout=timeout)
     
+
+    constants.task_command = clsutils.AttributeDict({
+        "thumbnail_cleaner": None,
+        })
+
     def __init__(self, name):
         super().__init__(name)
         self._commands = {}  # cmd_id : command
@@ -450,7 +467,7 @@ class TaskService(Service):
 
         self._result_greenlet = self._group.start(async_utils.Greenlet(self._get_results))
 
-    def add_command(self, cmd, decorator):
+    def add_command(self, cmd, decorator=None):
         "Add a command to this service and return a command id"
         gevent.idle(constants.Priority.Normal.value)
         assert isinstance(cmd, command.Command)
@@ -478,6 +495,7 @@ class TaskService(Service):
     def start_command(self, cmd_id, *args, **kwargs):
         """
         Start running a specific command by its command id
+        Returns a TaskCommand
         """
         assert isinstance(cmd_id, int)
         gevent.idle(constants.Priority.Normal.value)
@@ -492,6 +510,7 @@ class TaskService(Service):
                     ),args, kwargs)
 
         self._group.start(self._greenlets[cmd_id])
+        return TaskService.TaskCommand(cmd_id, self)
 
     def _get_results(self):
         while True:
@@ -500,10 +519,11 @@ class TaskService(Service):
                 self._values[cmd_id] = event.AsyncResult()
             self._values[cmd_id].set(r)
 
-    def _command_wrapper(self, cmd_id, cmd, wake_obj, result_queue, args, kwargs):
+    def _command_wrapper(self, cmd_id, cmd_main, wake_obj, result_queue, args, kwargs):
         while wake_obj.wait():
             try:
-                result_queue.put((cmd_id, cmd.main(*args, **kwargs)))
+                r = cmd_main(*args, **kwargs)
+                result_queue.put((cmd_id, r))
             except Exception as e:
                 result_queue.put((cmd_id, e))
             wake_obj.clear()
@@ -527,6 +547,7 @@ class TaskService(Service):
         if self._values[cmd_id] is None or self._values[cmd_id].ready():
             self._values[cmd_id] = event.AsyncResult()
         self._wake_objects[cmd_id].set()
+        log.d("Waking up command", f"{cmd_id}:{self._commands[cmd_id].__class__.__name__}", "in", self.name, "service")
 
     def __call__(self, cmd_id):
         self.wake_up_command(cmd_id)

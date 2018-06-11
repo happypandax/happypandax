@@ -99,6 +99,7 @@ log_ns_network = '[network].'
 log_ns_search = '[search].'
 log_ns_misc = '[misc].'
 
+task_command = None # TaskService.TaskList of TaskService commands
 
 class Dialect:
     SQLITE = "sqlite"

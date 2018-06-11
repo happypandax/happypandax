@@ -22,6 +22,26 @@ class AttributeList(UserList):
             return self._names[key]
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
 
+class AttributeDict(dict):
+    """
+    l = AttributeDict()
+    l.one = "yes"
+    l['one'] == 'yes'
+    l.one == "yes"
+    'one' in l
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        raise AttributeError("AttributeError: no attribute named '{}'".format(key))
+
 
 class Invalidator:
     """
