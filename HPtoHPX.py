@@ -16,6 +16,7 @@ import regex
 
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from multiprocessing import Process, Queue, Pipe
+from natsort import natsorted
 
 from happypanda.core import db, plugins
 from happypanda.core.commands import io_cmd
@@ -753,7 +754,7 @@ def _page_gen(items):
                         afs = io_cmd.CoreFS(path)
                         contents = afs.contents(corefs=False)
                     n = 1
-                    for c in sorted(contents):
+                    for c in natsorted(contents):
                         if c.endswith(img_formats):
                             if constants.is_win:
                                 c = c.replace('/', '\\')
@@ -767,7 +768,7 @@ def _page_gen(items):
                 dir_images = [
                     x.path for x in os.scandir(ch_path) if not x.is_dir() and x.name.endswith(
                         img_formats)]
-                for n, x in enumerate(sorted(dir_images), 1):
+                for n, x in enumerate(natsorted(dir_images), 1):
                     x = io_cmd.CoreFS(x)
                     pages.append((x.name, x.path, n, False))
         except NotImplementedError:
@@ -1145,7 +1146,11 @@ def main(args=sys.argv[1:]):
                     gallery.pub_date = g.pub_date
                     gallery.timestamp = g.date_added
                     gallery.last_read = g.last_read
+
                     gallery.times_read = g.times_read
+
+                    if gallery.last_read and gallery.times_read:
+                        gallery.metatags.append(db.MetaTag.names.read)
 
                     galleries.append(gallery)
                     if not g.id in gallery_mixmap:
