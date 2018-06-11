@@ -4,11 +4,11 @@ import functools
 import itertools
 import arrow
 
-from gevent import pool, queue
+from gevent import pool, queue, event
 from apscheduler.schedulers.gevent import GeventScheduler
 from cachetools import LRUCache
 
-from happypanda.common import hlogger, constants, config
+from happypanda.common import hlogger, constants, config, exceptions, utils
 from happypanda.core import command, async_utils, db
 from happypanda.interface.enums import CommandState
 
@@ -45,13 +45,6 @@ class Service:
         if cmd_id in cls._all_commands:
             return cls._all_commands[cmd_id]
         return None
-
-class TaskService(Service):
-    
-    _asyncresults = {}
-
-    def __call__(self, x):
-        pass
 
 #class Trigger:
 #    """
@@ -298,16 +291,16 @@ class AsyncService(Service):
         log.d("Service is waiting for all tasks")
         return self._group.join(timeout)
 
-    def add_command(self, cmd, decorater=None):
+    def add_command(self, cmd, decorator=None):
         "Add a command to this service and return a command id"
         gevent.idle(constants.Priority.Normal.value)
         assert isinstance(cmd, command.AsyncCommand)
-        assert callable(decorater) or decorater is None
+        assert callable(decorator) or decorator is None
         if cmd not in self._commands.values():
             command_id = super().add_command(cmd)
             self._commands[command_id] = cmd
-            if decorater:
-                self._decorators[command_id] = decorater
+            if decorator:
+                self._decorators[command_id] = decorator
             log.d(
                 "Service ({})".format(
                     self.name),
@@ -439,9 +432,127 @@ class ImageService(AsyncService):
     def __init__(self, name):
         super().__init__(name, pool.Pool(config.concurrent_image_tasks.value))
 
-def init_generic_services():
-    Scheduler.generic = Scheduler("generic")
-    AsyncService.generic = AsyncService("generic")
+class TaskService(Service):
+    """
+    A task service where tasks only run when woken up
+    Results only reset when a task is woken up again
+    """
+    
+    def __init__(self, name):
+        super().__init__(name)
+        self._commands = {}  # cmd_id : command
+        self._wake_objects = {}  # cmd_id : obj
+        self._greenlets = {}  # cmd_id : greenlet
+        self._values = {}  # cmd_id : values
+        self._decorators = {}  # cmd_id : callable
+        self._group = pool.Group()
+        self._result_queue = queue.Queue()
+
+        self._result_greenlet = self._group.start(async_utils.Greenlet(self._get_results))
+
+    def add_command(self, cmd, decorator):
+        "Add a command to this service and return a command id"
+        gevent.idle(constants.Priority.Normal.value)
+        assert isinstance(cmd, command.Command)
+        assert callable(decorator) or decorator is None
+        if cmd not in self._commands.values():
+            command_id = super().add_command(cmd)
+            self._commands[command_id] = cmd
+            self._values[command_id] = None
+            self._wake_objects[command_id] = event.Event()
+            if decorator:
+                self._decorators[command_id] = decorator
+            log.d(
+                "Service ({})".format(
+                    self.name),
+                "added command:",
+                cmd.__class__.__name__,
+                "({})".format(command_id))
+            cmd.state = CommandState.in_service
+            return command_id
+        else:  # TODO: abit nonsensical? raise error instead maybe
+            for c_id in self._commands:
+                if self._commands[c_id] == cmd:
+                    return c_id
+
+    def start_command(self, cmd_id, *args, **kwargs):
+        """
+        Start running a specific command by its command id
+        """
+        assert isinstance(cmd_id, int)
+        gevent.idle(constants.Priority.Normal.value)
+        if cmd_id not in self._greenlets:
+            self._greenlets[cmd_id] = async_utils.Greenlet(
+                functools.partial(
+                    self._command_wrapper,
+                    cmd_id,
+                    db.cleanup_session_wrap(self._commands[cmd_id].main),
+                    self._wake_objects[cmd_id],
+                    self._result_queue,
+                    ),args, kwargs)
+
+        self._group.start(self._greenlets[cmd_id])
+
+    def _get_results(self):
+        while True:
+            cmd_id, r = self._result_queue.get()
+            if self._values[cmd_id] is None:
+                self._values[cmd_id] = event.AsyncResult()
+            self._values[cmd_id].set(r)
+
+    def _command_wrapper(self, cmd_id, cmd, wake_obj, result_queue, args, kwargs):
+        while wake_obj.wait():
+            try:
+                result_queue.put((cmd_id, cmd.main(*args, **kwargs)))
+            except Exception as e:
+                result_queue.put((cmd_id, e))
+            wake_obj.clear()
+
+
+    def stop_command(self, cmd_id):
+        """
+        Stop running a specific command by its command id
+        """
+        assert isinstance(cmd_id, int)
+        gevent.idle(constants.Priority.Normal.value)
+        if cmd_id in self._greenlets:
+            if cmd_id in self._commands:
+                self._commands[cmd_id].kill()
+            if cmd_id in self._greenlets:
+                self._greenlets[cmd_id].kill()
+
+    def wake_up_command(self, cmd_id):
+        """
+        """
+        if self._values[cmd_id] is None or self._values[cmd_id].ready():
+            self._values[cmd_id] = event.AsyncResult()
+        self._wake_objects[cmd_id].set()
+
+    def __call__(self, cmd_id):
+        self.wake_up_command(cmd_id)
+
+    def get_command_value(self, cmd_id, block=True, timeout=None):
+        """
+        Get returned value of command by its command id
+        Timeout in seconds
+        """
+        assert isinstance(cmd_id, int)
+        gevent.idle(constants.Priority.Normal.value)
+        if self._values[cmd_id] is None:
+            raise RuntimeError("Command hasn't been started yet")
+
+        try:
+            r = self._values[cmd_id].get(block=block, timeout=timeout)
+        except gevent.Timeout as e:
+            r = e
+        if isinstance(r, gevent.Timeout):
+            raise exceptions.TimeoutError(utils.this_function(), "Command value retrieval timed out")
+        return r
+
+def setup_generic_services():
+    Scheduler.generic = Scheduler("scheduler")
+    AsyncService.generic = AsyncService("async")
     NetworkService.generic = NetworkService("network")
     DownloadService.generic = DownloadService("download")
     ImageService.generic = ImageService("image")
+    TaskService.generic = TaskService("task")

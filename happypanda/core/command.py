@@ -582,5 +582,5 @@ class CParam:
         self.__doc__ = inspect.cleandoc(__doc__)
 
 
-def init_commands():
+def setup_commands():
     CoreCommand._native_pool = ThreadPool(constants.maximum_native_workers)

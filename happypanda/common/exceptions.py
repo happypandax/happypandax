@@ -64,6 +64,12 @@ class CoreError(HappypandaError):
         self.where = where
         self.msg = message
 
+@_error_code(102)
+class TimeoutError(CoreError):
+    """
+    Timed out
+    """
+    pass
 
 @_error_code(110)
 class SettingsError(CoreError):

@@ -117,7 +117,7 @@ def start(argv=None, db_kwargs={}):
 
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
-            command.init_commands()
+            command.setup_commands()
         else:
             db_inited = True
 
@@ -140,7 +140,7 @@ def start(argv=None, db_kwargs={}):
             if not args.only_web:
                 constants.available_commands = command.get_available_commands()
 
-                services.init_generic_services()
+                services.setup_generic_services()
 
                 constants.plugin_manager = plugins.PluginManager()
 
