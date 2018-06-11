@@ -1,3 +1,8 @@
+import pdb
+import sys
+import os
+import __main__
+
 from collections import UserList
 
 from happypanda.common import constants, hlogger, utils
@@ -110,3 +115,28 @@ class InternalDatabase:
 
 
 constants.internaldb = internaldb = InternalDatabase()
+
+in_repl = not hasattr(__main__, '__file__')
+
+class ForkablePdb(pdb.Pdb):
+
+    if not in_repl:
+        _original_stdin_fd = sys.stdin.fileno()
+        _original_stdin = None
+
+    def __init__(self):
+        pdb.Pdb.__init__(self, nosigint=True)
+
+    def _cmdloop(self):
+        current_stdin = sys.stdin
+        try:
+            if not self._original_stdin:
+                self._original_stdin = os.fdopen(self._original_stdin_fd)
+            sys.stdin = self._original_stdin
+            self.cmdloop()
+        finally:
+            sys.stdin = current_stdin
+
+if not in_repl and __name__ == '__mp_main__' or (__name__ == '__main__' and len(
+        sys.argv) >= 2 and sys.argv[1] == '--multiprocessing-fork'):
+    pdb.set_trace = ForkablePdb().set_trace

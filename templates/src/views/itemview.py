@@ -2,7 +2,7 @@ import math
 from src.react_utils import (e, h,
                              createReactClass)
 from src.ui import ui, Error, Pagination, ToggleIcon
-from src.client import (client, ItemType)
+from src.client import (client, ItemType, ViewType)
 from src.i18n import tr
 from src.state import state
 from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
@@ -75,7 +75,7 @@ def Itemviewvonfig_render():
             e(item.SortDropdown,
               query=False,
               item_type=props.item_type,
-              value=utils.storage.get(default_sort_cfg + props.item_type + cfg_suffix),
+              defaultValue=utils.storage.get(default_sort_cfg + props.item_type + cfg_suffix),
               on_change=lambda e, d: utils.storage.set(default_sort_cfg + props.item_type + cfg_suffix, d.value)
               )
           ),
@@ -87,8 +87,8 @@ def Itemviewvonfig_render():
             h("label", tr(this, "ui.t-default-view", "Default view")),
             e(item.ViewDropdown,
               query=False,
-              view_type=props.view_type,
-              value=utils.storage.get(default_view_cfg + cfg_suffix),
+              view_type=props.view_type if props.view_type == ViewType.Favorite else js_undefined,
+              defaultValue=utils.storage.get(default_view_cfg + cfg_suffix),
               item=True,
               selection=True,
               on_change=lambda e, d: utils.storage.set(default_view_cfg + cfg_suffix, d.value)

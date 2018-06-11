@@ -16,10 +16,11 @@ import subprocess
 import imghdr
 import errno
 import typing
+import io
 
 from io import BytesIO
 from PIL import Image
-from zipfile import ZipFile
+from zipfile import ZipFile, ZipExtFile
 from rarfile import RarFile
 from tarfile import TarFile
 from contextlib import contextmanager
@@ -121,24 +122,23 @@ class ImageItem(AsyncCommand):
         self.set_progress(1)
         size = self.properties.size
         fs = None
-        if isinstance(self._image, str):
+        if isinstance(self._image, (str, CoreFS)):
             fs = CoreFS(self._image)
             if not fs.exists:
                 log.d("Image file does not exists")
                 return ""
-            self._image = fs.get()
+        fs_bytes = None
         im = None
         image_path = ""
         try:
-            if isinstance(self._image, str):
-                _, ext = os.path.splitext(self._image)
+            if isinstance(self._image, (str, CoreFS)):
+                fs_bytes = fs.open("rb")
+                _, ext = os.path.splitext(fs.path)
                 if self._retrying:
-                    ext = '.' + imghdr.what(self._image)
+                    ext = '.' + imghdr.what(None, h=fs_bytes)
             else:
-                ext = '.' + imghdr.what("", self._image)
-
-            im = Image.open(self._image)
-            im = self._convert(im, img_ext=ext)
+                fs_bytes = self._image
+                ext = '.' + imghdr.what(None, h=fs_bytes)
 
             if self.properties.output_path:
                 image_path = self.properties.output_path
@@ -159,24 +159,23 @@ class ImageItem(AsyncCommand):
 
             save_image = True
             if size.width and size.height:
+                im = Image.open(fs_bytes)
+                im = self._convert(im, img_ext=ext)
+
                 if ext.lower().endswith(".gif"):
                     new_frame = Image.new('RGBA', im.size)
                     new_frame.paste(im, (0, 0), im.convert('RGBA'))
                     im.close()
                     im = new_frame
                 im.thumbnail((size.width, size.height), Image.ANTIALIAS)
-
             else:
                 if self.properties.create_symlink and isinstance(image_path, str):
-                    if fs and fs.inside_archive:
-                        pathlib.Path(self._image).rename(image_path)
-                    else:
-                        image_path = image_path + constants.link_ext
-                        with open(image_path, 'w', encoding='utf-8') as f:
-                            f.write(self._image)
+                    image_path = image_path + constants.link_ext
+                    with open(image_path, 'w', encoding='utf-8') as f:
+                        f.write(fs.path)
                     save_image = False
 
-            if save_image:
+            if save_image and im:
                 im.save(image_path)
         except (OSError, KeyError) as e:
             if not self._retrying:
@@ -190,6 +189,8 @@ class ImageItem(AsyncCommand):
         finally:
             if im:
                 im.close()
+            if fs_bytes:
+                fs_bytes.close()
         log.d("Generated image path:", image_path)
         return image_path
 
@@ -251,6 +252,24 @@ class CoreFS(CoreCommand):
                                          __doc_return="""
                                          a tuple of image formats
                                          """)
+
+    class _File:
+        def __init__(self, corefs, mode="r", *args, **kwargs):
+            self.corefs = corefs
+            self.args = (mode, *args)
+            self.kwargs = kwargs
+            self.fp = self.corefs._open(*self.args, *self.kwargs)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            if self.fp:
+                self.fp.close()
+
+        def __getattr__(self, key):
+            return getattr(self.fp, key)
+
 
     def __init__(self, path: str=pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
@@ -360,15 +379,15 @@ class CoreFS(CoreCommand):
     @property
     def inside_archive(self):
         "Check if path is pointed to an object inside an archive"
-        log.d("Checking if path is inside archive", self._path)
+        #log.d("Checking if path is inside archive", self._path)
         parts = list(self._path.parents)
 
         while parts:
             p = parts.pop()
             if p.is_file() and p.suffix.lower() in self.archive_formats():
-                log.d("Path is inside an archive", self._path)
+                #log.d("Path is inside an archive", self._path)
                 return True
-        log.d("Path is not inside an archive", self._path)
+        #log.d("Path is not inside an archive", self._path)
         return False
 
     @property
@@ -384,7 +403,7 @@ class CoreFS(CoreCommand):
         try:
             if self.inside_archive:
                 self._init_archive()
-                log.d("Checking for archive path", self.archive_name, "in archive", self.path)
+                #log.d("Checking for archive path", self.archive_name, "in archive", self.path)
                 return self.archive_name in self._archive.namelist()
             else:
                 return self._path.exists()
@@ -459,22 +478,24 @@ class CoreFS(CoreCommand):
             else:
                 raise
 
-    @contextmanager  # TODO: Make usable without contextmanager too
-    def open(self, *args, **kwargs):
+    def _open(self, mode="r", *args, **kwargs):
         ""
+        #import pdb; pdb.set_trace()
         try:
             if self.inside_archive:
                 self._init_archive()
-                f = self._archive.open(self.archive_name, *args, **kwargs)
+                f = self._archive.open(self.archive_name, mode, *args, **kwargs)
             else:
-                f = open(self.get(), *args, **kwargs)
+                f = open(self.get(), mode, *args, **kwargs)
             f = fileobject.FileObjectThread(f, mode=f.mode)
         except PermissionError:
             if self.is_dir:
                 raise exceptions.CoreError(utils.this_function(), "Tried to open a folder which is not possible")
             raise
-        yield f
-        f.close()
+        return f
+
+    def open(self, mode="r", *args, **kwargs):
+        return self._File(self, mode, *args, *kwargs)
 
     @staticmethod
     def open_with_default(path):
@@ -511,6 +532,7 @@ class CoreFS(CoreCommand):
         if self._archive:
 
             if not target:
+                constants.task_command.temp_cleaner.wake_up()
                 target = pathlib.Path(utils.create_temp_dir().name)
 
             if filename:
@@ -648,7 +670,7 @@ class Archive(CoreCommand):
                                      "additional keyword-arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
                                  __capture=(str, "file extension"),
                                  __doc="""
-                                Called to open a file inside the archive.
+                                Called to open a file inside the archive. Please note that mode='r' refers to binary mode
                                 """,
                                  __doc_return="""
                                 a file-like object
@@ -844,7 +866,14 @@ class Archive(CoreCommand):
         Open file in archive, returns a file-like object.
         """
         filename = self._normalize_filename(filename)
-        with self._open.call_capture(self._ext, self._archive, filename, args, kwargs) as plg:
+        try:
+            mode = args[0]
+        except IndexError:
+            mode = "r"
+        args = list(args)
+        if mode == "rb":
+            args[0] = "r"
+        with self._open.call_capture(self._ext, self._archive, filename, tuple(args), kwargs) as plg:
             r = plg.first_or_default()
             if not hasattr(r, 'read') or not hasattr(r, 'write'):
                 raise exceptions.PluginHandlerError(plg.get_node(0), "Expected a file-like object from archive.open")

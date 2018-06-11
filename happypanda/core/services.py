@@ -453,6 +453,7 @@ class TaskService(Service):
 
     constants.task_command = clsutils.AttributeDict({
         "thumbnail_cleaner": None,
+        "temp_cleaner": None,
         })
 
     def __init__(self, name):

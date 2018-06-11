@@ -773,3 +773,11 @@ def language_to_code(language_name):
     except LookupError:
         pass
     return code
+
+def get_real_file(path):
+    """
+    """
+    if path.endswith(constants.link_ext):
+        with open(path, 'r', encoding='utf-8') as fp:
+            path = fp.read()
+    return path

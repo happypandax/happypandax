@@ -1,11 +1,14 @@
 import os
+import mimetypes
+import io
 
-from flask import (render_template, abort, request, send_from_directory)
+from flask import (render_template, abort, request, send_file)
 from werkzeug.utils import secure_filename
 from gevent.lock import BoundedSemaphore
 
 from happypanda.core.client import Client
 from happypanda.common import exceptions, hlogger, constants, utils
+from happypanda.core.commands import io_cmd
 
 happyweb = None
 socketio = None
@@ -256,16 +259,28 @@ def init_views(flask_app, socketio_app):
 
     @happyweb.route(constants.thumbs_view + '/<path:filename>')
     def thumbs_view(filename):
-        s_filename = secure_filename(filename)
-        d = os.path.abspath(constants.dir_thumbs)
-        f = s_filename
-        if s_filename.endswith(constants.link_ext):
-            p = os.path.join(constants.dir_thumbs, s_filename)
-            if os.path.exists(p):
-                with open(p, 'r', encoding='utf-8') as fp:
-                    img_p = fp.read()
-                d, f = os.path.split(img_p)
-        return send_from_directory(d, f)
+        try:
+            img_file = None
+            s_filename = secure_filename(filename)
+            img_file = os.path.join(os.path.abspath(constants.dir_thumbs), s_filename)
+            img_file = io_cmd.CoreFS(img_file)
+            if not img_file.exists:
+                img_file = None
+
+
+            if img_file.path.endswith(constants.link_ext):
+                img_file = io_cmd.CoreFS(utils.get_real_file(img_file.path))
+                if not img_file.exists:
+                    img_file = None
+
+            if img_file:
+                mimetype, _ = mimetypes.guess_type(img_file.path)
+                if mimetype:
+                    with img_file.open("rb") as fp:
+                        return send_file(io.BytesIO(fp.read()), conditional=True, mimetype=mimetype)
+        except Exception:
+            log.exception("Exception was raised during thumbnail retrieval")
+        abort(404)
 
     @happyweb.route('/server', methods=['POST'])
     def server_proxy():

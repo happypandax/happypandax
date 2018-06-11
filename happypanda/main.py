@@ -2,6 +2,7 @@ import os  # noqa: E402
 import sys  # noqa: E402
 import rollbar  # noqa: E402
 import getpass  # noqa: E402
+import pdb
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
@@ -105,6 +106,11 @@ def init_commands(args):
         thumb_id = services.TaskService.generic.add_command(io_cmd.CacheCleaner())
         constants.task_command.thumbnail_cleaner = services.TaskService.generic.start_command(thumb_id, constants.dir_thumbs, size=config.auto_thumb_clean_size.value, silent=True)
 
+        log.i("Initiating background temp", io_cmd.CacheCleaner.__name__)
+        temp_id = services.TaskService.generic.add_command(io_cmd.CacheCleaner())
+        constants.task_command.temp_cleaner = services.TaskService.generic.start_command(temp_id, constants.dir_temp, size=config.auto_temp_clean_size.value, silent=True)
+
+
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 6), "Python 3.6 and up is required"
     e_code = None
@@ -122,6 +128,8 @@ def start(argv=None, db_kwargs={}):
         db_inited = False
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
+        else:
+            pdb.set_trace = lambda: None # disable pdb
         if config.debug.value:
             log.i("DEBUG MODE ENABLED", stdout=True)
         log.i(utils.os_info())
@@ -184,7 +192,6 @@ def start(argv=None, db_kwargs={}):
                 meta_cmd.UpdateApplication.update.subscribe(hp_server.update)
                 e_code = hp_server.run(interactive=args.interact)
 
-            io_cmd.CoreFS(constants.dir_temp).delete(ignore_errors=True)
 
         else:
             if db_inited:
@@ -192,6 +199,7 @@ def start(argv=None, db_kwargs={}):
             else:
                 e_code = constants.ExitCode.Exit
 
+        io_cmd.CoreFS(constants.dir_temp).delete(ignore_errors=True)
         log.i("HPX END")
 
         if e_code == constants.ExitCode.Exit:

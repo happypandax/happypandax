@@ -455,6 +455,12 @@ with config.namespace(core_ns):
         400,
         "Maximum size in megabytes to which the thumbnail folder will automatically get emptied when exceeded")
 
+    auto_temp_clean_size = config.create(
+        core_ns,
+        "auto_temp_clean_size",
+        3000,
+        "Maximum size in megabytes to which the temp folder will automatically get emptied when exceeded")
+
 
 plugin_ns = 'plugin'
 

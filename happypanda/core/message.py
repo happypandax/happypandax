@@ -471,6 +471,7 @@ class Profile(DatabaseMessage):
                 d['data'] = ""
         else:
             im = ""
+            path = utils.get_real_file(path)
             if path.exists:
                 with path.open("rb") as f:
                     im = utils.imagetobase64(f.read())
