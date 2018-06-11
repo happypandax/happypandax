@@ -23,6 +23,7 @@ t-or: Or
 
 # Menu Item
 mi-dashboard: Dashboard
+mi-manage: Manage
 mi-favorites: Favorites
 mi-library: Library
 mi-directory: Directory

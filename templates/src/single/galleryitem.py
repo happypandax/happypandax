@@ -122,6 +122,12 @@ def gallery_render():
                  h("div",
                    thumb,
                    e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
+                   *([e(ui.Icon,
+                        js_name="inbox",
+                        title=tr(this, "ui.t-inboxed-gallery", "This gallery is in your inbox"),
+                        bordered=True,
+                        inverted=True,
+                        className="card-item top right above-dimmer")] if inbox else []),
                    e(ui.Popup,
                      e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, clearable=True, className=""),
                      trigger=e(

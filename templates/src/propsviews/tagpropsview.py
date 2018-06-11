@@ -53,8 +53,6 @@ def tagprops_render():
                        as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
                      e(ui.Button, icon="heart", title=tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"),
                        as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
-                     e(ui.Button, icon="inbox", title=tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"),
-                       as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
                      basic=True,
                      size="tiny",
                      ),

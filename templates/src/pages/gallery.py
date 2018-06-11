@@ -479,7 +479,7 @@ def page_render():
                                             secondary=True,
                                             sildesToShow=4),
                                           label=tr(this, "ui.h-more-same-artist", "More from same artist", count=len(this.state.data.artists)),
-                                          color="teal",
+                                          color="violet",
                                           cfg_suffix=this.cfg_suffix + 'same_artist',
                                           default_open=True
                                           )
@@ -508,7 +508,6 @@ def page_render():
                                      e(LabelAccordion,
                                        similar_progress_el if this.state.similar_gallery_loading else similar_slider_el,
                                        label=tr(this, "ui.h-more-like-this", "More like this"),
-                                       color="teal",
                                        cfg_suffix=this.cfg_suffix + 'similar',
                                        default_open=True
                                        )
@@ -589,8 +588,8 @@ def page_render():
                columns=3
                ),
              *series_accordion,
-             *same_artist_accordion,
              *collection_accordion,
+             *same_artist_accordion,
              *similar_galleries,
              e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
                                                 history=this.props.history,

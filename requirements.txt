@@ -28,3 +28,6 @@ psycopg2==2.7.4
 packaging==17.1
 Flask-SocketIO==3.0.1
 Flask==1.0.2
+langcodes==1.4.1
+natsort==5.3.2
+ordered-set==2.0.2

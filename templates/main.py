@@ -16,7 +16,7 @@ from src.i18n import tr
 from src.pages import (api, collection, gallery,
                        dashboard, favorites,library,
                        page, directory,
-                       activity, login)
+                       activity, login, manage)
 from src.client import pushclient, PushID
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -286,6 +286,7 @@ def app_render():
                        ),
                      e(Switch,
                        *api_route,
+                       e(Route, path="/manage", component=this.manage_page),
                        e(Route, path="/dashboard", component=this.dashboard_page),
                        e(Route, path="/library", component=this.library_page),
                        e(Route, path="/favorite", component=this.favorites_page),
@@ -383,6 +384,7 @@ App = createReactClass({
     'collection_page': lambda p: e(collection.Page, menu=this.set_menu_contents, **p),
     'directory_page': lambda p: e(directory.Page, menu=this.set_menu_contents, **p),
     'activity_page': lambda p: e(activity.Page, menu=this.set_menu_contents, **p),
+    'manage_page': lambda p: e(manage.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
 })
