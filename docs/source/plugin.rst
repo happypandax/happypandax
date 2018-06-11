@@ -3,7 +3,7 @@ Plugins
 
 HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease with plugins.
 
-Plug-ins can be written in ``Python 3`` up to``Python 3.6``.
+Plugins can be written in ``Python 3`` up to ``Python 3.6``.
 Note that you don't need to be running HPX from source to develop a plugin.
 
 Here you will learn how to create a HPX plugin and use it to extend HPX.
@@ -39,7 +39,7 @@ Now that we understand some basic concepts it's time to create a plugin.
 
 HPX makes it very easy to create and write a plugin.
 
-Plug-ins are contained in their own folder, so we start by creating one for our plugin::
+Plugins are contained in their own folder, so we start by creating one for our plugin::
 
     -/..
     -MyPlugin/
@@ -140,7 +140,7 @@ These are the different kind of states a plugin can be in: :class:`PluginState <
 Interfacing with HPX
 ****************************************
 
-HPX plugins in a special environment with a special module named ``__hpx__`` to interface with HPX.
+HPX plugins run in a special environment with a special module named ``__hpx__`` to interface with HPX.
 
 After a plugin has been registered, it can be installed. Installation has to be manually done by the user unless either of the two settings ``plugin.auto_install_plugin`` and ``plugin.auto_install_plugin_dependency``
 are true.
@@ -180,8 +180,8 @@ The contents of the ``__hpx__`` module can be found at :ref:`Plugin API`, howeve
 :meth:`attach <happypanda.core.plugin_interface.attach>` and :meth:`subscribe <happypanda.core.plugin_interface.subscribe>`.
 
 The main point of a HPX plugin is to use these methods to extend what HPX is capable of.
-
 Just like previously mentioned, HPX provides many **commands** that defines different entrypoints and events that we can use.
+
 The method :meth:`subscribe <happypanda.core.plugin_interface.subscribe>` subscribes a handler function that we define to a command event.
 HPX defines the plugin events ``init`` and ``disable`` that we can listen to.
 We can use these events to initialize/terminate our stuff::

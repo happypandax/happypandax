@@ -40,15 +40,17 @@ Running
 
 See available command arguments: ``python3 bootstrap.py run --help``
 
-Start the server and webclient in development mode: ``python3 bootstrap.py run -dx``
+Start the server and webclient in development and debug mode: ``python3 bootstrap.py run --dev --debug``
 
+.. tip::
+    When developing on HPX, it is recommended that you use a development database. To do that, supply the `--dev-db` flag.
 
 Code Style
 **************************************
 
 We should all *try* to follow the official style guide :pep:`8`.
 
-Run ``python3 bootstrap.py lint`` (supply the ``-f`` switch to autoformat) when you are ready to make a PR on Github. You're good to go as long as this script returns no errors.
+Run ``python3 bootstrap.py lint`` (supply the ``-f`` flag to fix most issues automatically) when you are ready to make a PR on Github. You're good to go as long as this script returns no errors.
 
 .. Note::
     Remember that code style fixes should always be in a separate commit!
@@ -64,15 +66,14 @@ Create two files named ``pre-push`` and ``pre-push.py`` at ``[HPX location]/.git
     # REMEMBER TO UNCOMMENT YOUR PLATFORM
 
     # POSIX
-    #"env/bin/python.exe" ".git/hooks/pre-push.py"
+    #"env/bin/python" ".git/hooks/pre-push.py"
 
     # WINDOWS
-    "env/scripts/python.exe" ".git/hooks/pre-push.py"
+    #"env/scripts/python.exe" ".git/hooks/pre-push.py"
 
 ``pre-push.py``::
 
     #!/usr/bin/python3
-    import os
     import sys
     from subprocess import run
 
