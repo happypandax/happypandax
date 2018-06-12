@@ -12,6 +12,28 @@ __pragma__('noskip')
 
 io = require('socket.io-client')
 
+class CommandState:
+
+    #: command has not been put in any service yet
+    out_of_service = 0
+
+    #: command has been put in a service (but not started or stopped yet)
+    in_service = 1
+
+    #: command has been scheduled to start
+    in_queue = 2
+
+    #: command has been started
+    started = 3
+
+    #: command has finished succesfully
+    finished = 4
+
+    #: command has been forcefully stopped without finishing
+    stopped = 5
+
+    #: command has finished with an error
+    failed = 6
 
 class ItemType:
     #: Gallery
@@ -509,7 +531,10 @@ class Command(Base):
                 str_i = str(i)
                 self._states[str_i] = data[str_i]
         elif error:
-            pass
+            if "does not exist" in error['msg']:
+                for i in self._command_ids:
+                    str_i = str(i)
+                    self._states[str_i] = CommandState.stopped
         else:
             self._stopped = True
             self.commandclient.call_func("stop_command", self.stop, command_ids=self._command_ids)

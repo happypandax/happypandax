@@ -3,6 +3,10 @@ import sys  # noqa: E402
 import rollbar  # noqa: E402
 import getpass  # noqa: E402
 import pdb
+import faulthandler
+#f = open("fault.log", "w")
+#faulthandler.enable(f)
+#faulthandler.dump_traceback_later(120, repeat=True, file=f)
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/

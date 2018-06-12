@@ -66,6 +66,7 @@ class Logger:
     has_setup = False
     report_online = False
     _queue = None
+    _manager = None
     _logs_queue = []
 
     def __init__(self, name, process=None):
@@ -256,7 +257,8 @@ class Logger:
     def init_listener(cls, args):
         assert isinstance(args, argparse.Namespace)
         "Start a listener in a child process, returns queue"
-        q = Queue()
+        cls._manager = mp.Manager()
+        q = cls._manager.Queue()
         Process(target=Logger._listener, args=(args, q,), daemon=True, name="HPX Logger").start()
         cls._queue = q
         return cls._queue
