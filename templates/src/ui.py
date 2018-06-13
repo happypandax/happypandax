@@ -199,10 +199,11 @@ def pagination_render():
                       size="mini",
                       js_type="number",
                       placeholder=current_page,
-                      action=e(ui.Button, compact=True, icon="share", onClick=this.go_to_page,
+                      action=e(ui.Button, js_type="submit", compact=True, icon="share", onClick=this.go_to_page,
                                **query_args),
                       min=0, max=pages),
                     ),
+                  onSubmit=this.go_to_page
                 ),
               on="click",
               hoverable=True,

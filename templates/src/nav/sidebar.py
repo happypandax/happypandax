@@ -39,7 +39,7 @@ def sidebar_nav_render():
     items.append(
         MenuItem(
             "Library",
-            "ui.mi-library",
+            "ui.mi-browse",
             icon="grid layout",
             url="/library",
             handler=this.props["toggler"]))

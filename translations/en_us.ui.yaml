@@ -25,6 +25,7 @@ t-or: Or
 mi-dashboard: Dashboard
 mi-manage: Manage
 mi-favorites: Favorites
+mi-browse: Browse
 mi-library: Library
 mi-directory: Directory
 mi-inbox: Inbox
@@ -33,6 +34,10 @@ mi-downloads: Downloads
 mi-preferences: Preferences
 mi-about: About
 mi-all: All
+
+# Manage Page
+mi-create: Create
+mi-scan: Scan
 
 # Login Page
 t-login: Login

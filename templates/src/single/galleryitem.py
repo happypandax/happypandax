@@ -67,6 +67,8 @@ def gallery_render():
         for u in data.urls:
             urls.append(u.js_name)
 
+    gallery_url = '/item/gallery/'+str(item_id)
+
     add_cls = this.props.className or ""
     link = True
     if not this.props.link == js_undefined:
@@ -77,7 +79,7 @@ def gallery_render():
         read_button_args['onClick'] = this.open_external
     else:
         read_button_args['as'] = Link
-        read_button_args['to'] = utils.build_url("/item/page", {'gid': item_id}, keep_query=False)
+        read_button_args['to'] = "/item/gallery/{}/page/1".format(item_id)
 
     thumb = e(thumbitem.Thumbnail,
               item_id=item_id,
@@ -90,7 +92,7 @@ def gallery_render():
                        active=this.state.dimmer,
                        content=e(ui.Responsive,
                                  e(ui.List,
-                                   e(ui.List.Item, e(ui.Button, tr(this, "ui.b-read", "Read"),
+                                   e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="envelope open outline"), tr(this, "ui.b-read", "Read"),
                                                      primary=True, size="tiny", **read_button_args)),
                                    e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="bookmark outline"), tr(this, "ui.b-save-later", "Save for later"), size="tiny") if not inbox else
                                      e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to library"), color="green", size="tiny")),
@@ -100,13 +102,12 @@ def gallery_render():
                        inverted=True),
               )
     if link:
-        thumb = e(Link, thumb, to={'pathname': '/item/gallery',
-                                   'search': utils.query_to_string({'id': item_id}),
+        thumb = e(Link, thumb, to={'pathname': gallery_url,
                                    'state': {'gallery': data},
                                    })
 
     menu_options = []
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"), **read_button_args))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"), icon="envelope open outline", **read_button_args))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline"))
     if inbox:
         menu_options.append(e(ui.List.Item, content=tr(

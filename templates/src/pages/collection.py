@@ -93,8 +93,9 @@ def get_item(data=None, error=None):
     else:
         if utils.defined(this.props.location):
             if this.props.location.state and this.props.location.state.collection:
-                this.get_item(this.props.location.state.collection)
-                return
+                if int(this.props.match.params.item_id) == this.props.location.state.collection.id:
+                    this.get_item(this.props.location.state.collection)
+                    return
         item = this.state.item_type
         item_id = this.state.id
         if item and item_id:
@@ -120,8 +121,8 @@ def get_category(data=None, error=None):
 
 
 def collection_on_update(p_props, p_state):
-    if p_props.location.search != this.props.location.search:
-        this.setState({'id': int(utils.get_query("id", 0))})
+    if p_props.location.pathname != this.props.location.pathname:
+        this.setState({'id': int(this.props.match.params.item_id)})
 
     if any((
         p_state.id != this.state.id,
@@ -302,7 +303,7 @@ Page = createReactClass({
 
     'cfg_suffix': "collectionpage",
 
-    'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
+    'getInitialState': lambda: {'id': int(this.props.match.params.item_id),
                                 'data': this.props.data,
                                 'rating': 0,
                                 'fav': 0,

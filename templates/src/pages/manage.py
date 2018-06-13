@@ -113,39 +113,77 @@ SimpleLayout = createReactClass({
 })
 
 def scanpage_render():
-    return e("div")
+    return e("div", e(TitleChange, title=tr(this, "ui.mi-scan", "Scan")),)
 
 
 ScanPage = createReactClass({
     'displayName': 'ScanPage',
 
     'getInitialState': lambda: {
-        'search_query': utils.get_query("search", "") or this.props.search_query,
         'data': {},
-        'limit': 50,
-        'page': utils.get_query("page", 1),
-        'count': 0,
-        'data_loading': False,
     },
 
     'render': scanpage_render
 })
 
+def creategallery_render():
+    return e("div",)
+
+
+CreateGallery = createReactClass({
+    'displayName': 'CreateGallery',
+
+    'getInitialState': lambda: {
+        'data': {},
+    },
+
+    'render': creategallery_render
+})
+
+def createcollection_render():
+    return e("div",)
+
+
+CreateCollection= createReactClass({
+    'displayName': 'CreateCollection',
+
+    'getInitialState': lambda: {
+        'data': {},
+    },
+
+    'render': createcollection_render
+})
+
 def createpage_render():
-    return e("div")
+    return e(ui.Container, 
+             e(TitleChange, title=tr(this, "ui.mi-create", "Create")),
+             e(ui.Button.Group,
+               e(ui.Button, tr(this, "general.db-item-gallery", "Gallery"),
+                 value=ItemType.Gallery,
+                 active=this.state.item_type==ItemType.Gallery,
+                 primary=this.state.item_type==ItemType.Gallery,
+                 onClick=this.set_item_type,
+                 ),
+               e(ui.Button.Or, text=tr(this, "ui.t-or", "Or")),
+               e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
+                 value=ItemType.Collection,
+                 active=this.state.item_type==ItemType.Collection,
+                 primary=this.state.item_type==ItemType.Collection,
+                 onClick=this.set_item_type,
+                 ),
+               toggle=True,
+               )
+             )
 
 
 CreatePage = createReactClass({
     'displayName': 'CreatePage',
 
     'getInitialState': lambda: {
-        'search_query': utils.get_query("search", "") or this.props.search_query,
         'data': {},
-        'limit': 50,
-        'page': utils.get_query("page", 1),
-        'count': 0,
-        'data_loading': False,
+        'item_type': this.props.item_type or ItemType.Gallery,
     },
+    'set_item_type': lambda e,d: this.setState({'item_type':d.value}),
 
     'render': createpage_render
 })
@@ -154,9 +192,9 @@ Page = createReactClass({
     'displayName': 'ManagePage',
 
     'componentWillMount': lambda: this.props.menu([
-        e(ui.Menu.Item, js_name=tr(this, "", "Create"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-create", "Create"), as_=NavLink,
           to="/manage/create", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Scan"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-scan", "Scan"), as_=NavLink,
           to="/manage/scan", activeClassName="active"),
     ], pointing=True),
 

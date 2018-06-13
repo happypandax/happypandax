@@ -73,7 +73,8 @@ def on_update(props):
             x.stop()
         # HACK: blocks scroll restoration
         # TODO: scroll restoration
-        window.scrollTo(0, 0)
+        if state.reset_scroll:
+            window.scrollTo(0, 0)
 
 
 def on_path_mount():
@@ -292,9 +293,9 @@ def app_render():
                        e(Route, path="/favorite", component=this.favorites_page),
                        e(Route, path="/directory", component=this.directory_page),
                        e(Route, path="/activity", component=this.activity_page),
-                       e(Route, path="/item/gallery", component=this.gallery_page),
-                       e(Route, path="/item/collection", component=this.collection_page),
-                       e(Route, path="/item/page", component=this.page_page),
+                       e(Route, path="/item/gallery/:gallery_id(\d+)/page/:page_number(\d+)", component=this.page_page),
+                       e(Route, path="/item/gallery/:item_id(\d+)", component=this.gallery_page),
+                       e(Route, path="/item/collection/:item_id(\d+)", component=this.collection_page),
                        e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
                        ),
                      # e(ui.Sticky,

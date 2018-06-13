@@ -156,6 +156,7 @@ class PushID():
 
 
 def log(msg):
+    print(msg)
     if state.debug:
         print(msg)
 

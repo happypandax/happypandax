@@ -458,7 +458,7 @@ with config.namespace(core_ns):
     auto_temp_clean_size = config.create(
         core_ns,
         "auto_temp_clean_size",
-        3000,
+        500,
         "Maximum size in megabytes to which the temp folder will automatically get emptied when exceeded")
 
 

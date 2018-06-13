@@ -39,6 +39,8 @@ def collection_render():
     if this.props.className:
         cls_name += ' ' + this.props.className
 
+    collection_url = '/item/collection/'+str(item_id)
+
     link = True
     if not this.props.link == js_undefined:
         link = this.props.link
@@ -52,8 +54,7 @@ def collection_render():
               )
 
     if link:
-        thumb = e(Link, thumb, to={'pathname': '/item/collection',
-                                   'search': utils.query_to_string({'id': item_id}),
+        thumb = e(Link, thumb, to={'pathname': collection_url,
                                    'state': {'collection': data},
                                    })
 

@@ -141,8 +141,9 @@ def get_item(data=None, error=None):
     else:
         if utils.defined(this.props.location):
             if this.props.location.state and this.props.location.state.gallery:
-                this.get_item(this.props.location.state.gallery)
-                return
+                if int(this.props.match.params.item_id) == this.props.location.state.gallery.id:
+                    this.get_item(this.props.location.state.gallery)
+                    return
         item = this.state.item_type
         item_id = this.state.id
         if item and item_id:
@@ -265,8 +266,8 @@ __pragma__("tconv")
 
 
 def gallery_on_update(p_props, p_state):
-    if p_props.location.search != this.props.location.search:
-        this.setState({'id': int(utils.get_query("id", 0))})
+    if p_props.location.pathname != this.props.location.pathname:
+        this.setState({'id': int(this.props.match.params.item_id)})
 
     if any((
         p_state.id != this.state.id,
@@ -329,8 +330,8 @@ def page_render():
     if this.state.external_viewer:
         read_btn = {'onClick': this.open_external}
     else:
-        read_btn = {'as': Link, 'to': utils.build_url(
-            "/item/page", {'gid': item_id}, keep_query=False)}
+        read_btn = {'as': Link, 'to': "/item/gallery/{}/page/1".format(item_id),
+                    }
 
     buttons.append(
         e(ui.Grid.Row,
@@ -338,7 +339,7 @@ def page_render():
             e(ui.Button.Group,
               e(ui.Button, e(ui.Icon, js_name="bookmark outline"), tr(this, "ui.b-save-later", "Save for later")),
               e(ui.Button.Or, text="or"),
-              e(ui.Button, "Read", primary=True, **read_btn),
+              e(ui.Button, tr(this, "ui.b-read", "Read"), primary=True, **read_btn),
               *external_view,
               ),
             textAlign="center",
@@ -402,7 +403,7 @@ def page_render():
             filter_items.append(e(ui.List.Item,
                                   e(ui.List.Icon, js_name="filter"),
                                   e(ui.List.Content, f['name'],),
-                                  as_=Link, to=utils.build_url("/inbox" if inbox else "/library",
+                                  as_=Link, to=utils.build_url("/library",
                                                                {'filter_id': f['id']},
                                                                keep_query=False),
                                   ))
@@ -616,7 +617,7 @@ Page = createReactClass({
 
     'cfg_suffix': "gallerypage",
 
-    'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
+    'getInitialState': lambda: {'id': int(this.props.match.params.item_id),
                                 'data': this.props.data,
                                 'rating': 0,
                                 'fav': 0,

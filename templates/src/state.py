@@ -1,6 +1,6 @@
 
 state = {
-    'title': 'HPX - Preview',
+    'title': 'HPX - Alpha',
     'app': None,
     'history': None,  # router history
     'container_ref': None,  # main conatiner
@@ -16,4 +16,5 @@ state = {
     'untranslated_text': False,
     'translation_id_error': False,
     'translations': None,
+    'reset_scroll': True,
 }
