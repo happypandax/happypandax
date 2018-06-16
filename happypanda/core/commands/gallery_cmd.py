@@ -17,6 +17,72 @@ from happypanda.core import db, async_utils
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
+def _get_scan_options():
+    return {
+    }
+
+
+class ScanGallery(AsyncCommand):
+    """
+    """
+
+    _discover: bool = CommandEntry("discover",
+                            CParam("path", str, "path to folder or archive"),
+                            CParam("options", dict, "a of options to be applied to the scan"),
+                            __doc="""
+                            Called to find any valid galleries in the given path
+                            """,
+                            __doc_return="""
+                            a tuple of absolute paths or tuples to valid galleries found in the given directory/archive,
+                            related galleries are put in their own tuple
+                            """)
+
+    @_discover.default()
+    def _find_galleries(path, options):
+        path = io_cmd.CoreFS(path)
+        found_galleries = []
+        if path.is_archive or path.inside_archive:
+            raise NotImplementedError
+        else:
+            contents = os.scandir(path)
+            for p in contents:
+                if p.is_file() and not p.path.endswith(io_cmd.CoreFS.archive_formats()):
+                    continue
+                found_galleries.append(os.path.abspath(p.path))
+
+        return found_galleries
+
+    def main(self, path: typing.Union[str, io_cmd.CoreFS], options: dict={}, auto_add=False) -> typing.List[io_cmd.GalleryFS]:
+        galleries = []
+        self.set_progress(text=fs.path)
+        self.set_max_progress(1)
+
+        fs = io_cmd.CoreFS(path)
+        if fs.is_dir or fs.is_archive:
+            scan_options = _get_scan_options()
+            scan_options.update(options)
+            found_paths = set()
+            if fs.exist:
+                with self._discover.call(fs.path, scan_options) as plg:
+                    for p in plg.all(default=True):
+                        found_paths.add(os.path.normpath(p))
+
+            paths_len = len(found_paths)
+            log.d("Found", paths_len, "gallery candidates")
+
+            self.set_max_progress(paths_len, add=True)
+        
+            for n, g in [io_cmd.GalleryFS(x) for x in found_paths]:
+                self.next_progress(text=g.path.path)
+                if g.evaluate():
+                    galleries.append(g)
+
+            if auto_add:
+                add_cmd = AddGallery()
+
+        self.next_progress(text="")
+
+        return galleries
 
 class AddGallery(UndoCommand):
     """
@@ -46,17 +112,17 @@ class SimilarGallery(AsyncCommand):
         all_gallery_tags = {}
         self.set_progress(type_=enums.ProgressType.Unknown)
         self.set_max_progress(1)
-        with utils.intertnal_db() as idb:
-            if not constants.invalidator.similar_gallery:
-                gl_data = idb.get(constants.internaldb.similar_gallery_calc.key, gl_data)
-            all_gallery_tags = idb.get(constants.internaldb.similar_gallery_tags.key, all_gallery_tags)
+        idb = constants.internaldb
+        if not constants.invalidator.similar_gallery:
+            gl_data = idb.get(constants.internaldb.similar_gallery_calc.key, gl_data)
+        all_gallery_tags = idb.get(constants.internaldb.similar_gallery_tags.key, all_gallery_tags)
         log.d("Cached gallery tags", len(all_gallery_tags))
         if gid not in gl_data:
             log.d("Similarity calculation not found in cache")
             gl_data.update(self._calculate(gallery_or_id, all_gallery_tags).get())
-            with utils.intertnal_db() as idb:
-                idb[constants.internaldb.similar_gallery_calc.key] = gl_data
-                idb[constants.internaldb.similar_gallery_tags.key] = all_gallery_tags
+            idb = constants.internaldb
+            idb[constants.internaldb.similar_gallery_calc.key] = gl_data
+            idb[constants.internaldb.similar_gallery_tags.key] = all_gallery_tags
         self.next_progress()
         v = []
         if gid in gl_data:
@@ -255,3 +321,4 @@ class OpenGallery(Command):
             raise NotImplementedError
 
         return parent, child
+

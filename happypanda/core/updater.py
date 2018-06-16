@@ -25,8 +25,8 @@ def verify_release(checksum, silent=True, cmd=None):
     repo_owner = config.checksum_provider_repo.value['owner']
     repo_file = config.checksum_provider_repo.value['file']
     checksum_rel_key = "release_checksums"
-    with utils.intertnal_db() as db:
-        rels_checks = db.get(checksum_rel_key, '')
+    db = constants.internaldb
+    rels_checks = db.get(checksum_rel_key, '')
     if checksum in rels_checks:
         return True
     try:
@@ -36,8 +36,7 @@ def verify_release(checksum, silent=True, cmd=None):
         if data:
             r = SimpleGETRequest(data['download_url']).merge(cmd).run()
             if r.text:
-                with utils.intertnal_db() as db:
-                    db[checksum_rel_key] = r.text
+                db[checksum_rel_key] = r.text
                 log.d("Matching checksum", checksum)
                 return checksum in r.text
     except exceptions.NetworkError:
@@ -79,7 +78,7 @@ def check_release(silent=True, cmd=None):
             log.d("Skipping release check, still within interval")
             log.d("Checking local")
             latest_rel = constants.internaldb.latest_release.get()
-            if latest_rel and latest_rel['version'] > constants.version:
+            if latest_rel and tuple(latest_rel['version']) > constants.version:
                 return latest_rel
             return None
         next_check = arrow.now().replace(minutes=+max(config.check_release_interval.value, 5))
@@ -161,17 +160,16 @@ def get_release(download_url=None, archive=True, silent=True, cmd=None):
         log.i("Getting release", download_url, stdout=True)
 
     down_rels_key = "downloaded_releases"
+    db = constants.internaldb
 
     if not download_url:
-        with utils.intertnal_db() as db:
-            l_rel = db.get(constants.internaldb.latest_release.key, {})
-            download_url = l_rel.get('url', False)
-            if not download_url or (l_rel.get('version', tuple()) < constants.version):
-                log.d("No new release found in internal db")
-                return None
+        l_rel = db.get(constants.internaldb.latest_release.key, {})
+        download_url = l_rel.get('url', False)
+        if not download_url or (tuple(l_rel.get('version', tuple())) < constants.version):
+            log.d("No new release found in internal db")
+            return None
 
-    with utils.intertnal_db() as db:
-        down_rels = db.get(down_rels_key, {})
+    down_rels = db.get(down_rels_key, {})
 
     d_file = None
     try:
@@ -196,8 +194,7 @@ def get_release(download_url=None, archive=True, silent=True, cmd=None):
             down_rels[download_url] = d_file
             if archive:
                 log.d("Archiving release file")
-                with utils.intertnal_db() as db:
-                    db[down_rels_key] = down_rels
+                db[down_rels_key] = down_rels
         else:
             d_file = down_rels[download_url]
             log.i("Release file found in archive", stdout=True)
@@ -224,6 +221,7 @@ def register_release(filepath, silent=True, restart=True):
     if not isinstance(filepath, CoreFS):
         filepath = CoreFS(filepath)
     log.d("Registering new release", filepath.path)
+    db = constants.internaldb
     try:
         up = CoreFS(constants.dir_update)
         if up.exists:
@@ -245,13 +243,12 @@ def register_release(filepath, silent=True, restart=True):
         if constants.dev and not constants.is_frozen:
             app_path = constants.dir_temp
 
-        with utils.intertnal_db() as db:
-            db[constants.updater_key] = {'from': extracted_content,
-                                         'to': app_path,
-                                         'restart': restart,
-                                         'app': sys.argv[0],
-                                         'args': sys.argv[1:],
-                                         'state': constants.UpdateState.Registered.value}
+        db[constants.updater_key] = {'from': extracted_content,
+                                        'to': app_path,
+                                        'restart': restart,
+                                        'app': sys.argv[0],
+                                        'args': sys.argv[1:],
+                                        'state': constants.UpdateState.Registered.value}
         up_name = constants.updater_name
         if constants.is_win:
             up_name += '.exe'

@@ -50,19 +50,16 @@ def create_user_interactive():
 
 
 def check_update():
-    with utils.intertnal_db() as db:
-        update_info = db.get(constants.updater_key, {})
+    update_info = constants.internaldb.get(constants.updater_key, {})
 
     state = None
     if update_info:
         if update_info['state'] == constants.UpdateState.Registered.value:
             update_info['state'] = constants.UpdateState.Installing.value
-            with utils.intertnal_db() as db:
-                db[constants.updater_key] = update_info
+            constants.internaldb[constants.updater_key] = update_info
             state = constants.UpdateState.Installing.value
         else:
-            with utils.intertnal_db() as db:
-                db[constants.updater_key] = {}
+            constants.internaldb[constants.updater_key] = {}
             if not update_info['state'] == constants.UpdateState.Installing.value:
                 state = update_info['state']
     return state

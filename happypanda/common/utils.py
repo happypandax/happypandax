@@ -401,23 +401,6 @@ def setup_online_reporter():
         hlogger.Logger.report_online = True
 
 
-@contextmanager
-def intertnal_db():
-    log.d("Opening internal db")
-    if not os.path.exists(constants.dir_data):
-        setup_dirs()
-
-    try:
-        db = shelve.Shelf(dumbdb.open(constants.internal_db_path))
-    except BaseException:
-        log.e("Failed to open internal db")
-        raise
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 def restart_process():
     """
     Restart process. This function will never return.
@@ -599,6 +582,21 @@ def indent_text(txt, num=4):
         txt = txt.split('\n')
     return "\n".join((num * " ") + i for i in txt)
 
+def remove_multiple_spaces(txt):
+    """
+    Also removes whitespace characters (tab, newline, etc.)
+    """
+    return " ".join(txt.split())
+
+def regex_first_group(rgx):
+    """
+    """
+    r = []
+    for x in rgx:
+        if isinstance(x, tuple):
+            x = x[0]
+        r.append(x)
+    return tuple(r)
 
 def get_language_code(lcode):
     assert isinstance(lcode, str)

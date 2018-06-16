@@ -1074,7 +1074,7 @@ def main(args=sys.argv[1:]):
                             artist = None
                             artist_name = dst_aliasnames.get(a_name)
                             if not artist_name:
-                                artist_name = db.AliasName()
+                                artist_name = db.ArtistName()
                                 artist_name.name = a_name
                                 artist_name.language = db_lang
                                 dst_aliasnames[a_name] = artist_name
@@ -1138,7 +1138,7 @@ def main(args=sys.argv[1:]):
                                     parody = db.Parody()
                                     parody_name = dst_aliasnames.get(pname)
                                     if not parody_name:
-                                        parody_name = db.AliasName()
+                                        parody_name = db.ParodyName()
                                         parody_name.name = pname
                                         parody_name.language = dst_languages['english']
                                         dst_aliasnames[pname] = parody_name

@@ -201,10 +201,15 @@ class CoreCommand:
         if type_ is not None:
             self._progress_type = type_
 
-    def set_max_progress(self, value):
+    def set_max_progress(self, value, add=False):
         assert isinstance(value, (int, float))
         self._add_progress()
-        self._progress_max = value
+        if add:
+            if self._progress_max is None:
+                self._progress_max = 0
+            self._progress_max += value
+        else:
+            self._progress_max = value
 
     def next_progress(self, add=1, text=None, _from=0):
         assert isinstance(add, (int, float))
@@ -247,8 +252,9 @@ class CoreCommand:
               )
 
     def __del__(self):
-        if self._progress_count and self._progress_count in self._progresses:
-            del self._progresses[self._progress_count]
+        if hasattr(self, '_progress_count') and hasattr(self, '_progresses'):
+            if self._progress_count and self._progress_count in self._progresses:
+                del self._progresses[self._progress_count]
 
     @classmethod
     def _get_commands(cls, self=None):

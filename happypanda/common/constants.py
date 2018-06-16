@@ -34,9 +34,9 @@ updater_key = "updater"
 
 ## VERSIONING ##
 build = 128
-version = (0, 0, 15)
-version_db = (0, 0, 5)
-version_web = (0, 0, 13)
+version = (0, 1, 0)
+version_db = (0, 1, 0)
+version_web = (0, 1, 0)
 version_str = ".".join(str(x) for x in version)
 version_db_str = ".".join(str(x) for x in version_db)
 version_web_str = ".".join(str(x) for x in version_web)
@@ -67,7 +67,7 @@ db_name = "happypanda"
 db_name_dev = "happypanda_dev"
 db_path = os.path.join(dir_root, dir_data, db_name + '.db')
 db_path_dev = os.path.join(dir_root, dir_data, db_name_dev + '.db')
-internal_db_path = os.path.join(dir_data, "internals")
+internal_db_path = os.path.join(dir_data, "internals.db")
 favicon_path = os.path.join(dir_static, "favicon", "favicon.ico")
 
 thumbs_view = "/thumb"

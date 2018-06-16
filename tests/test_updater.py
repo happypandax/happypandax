@@ -10,7 +10,7 @@ from unittest import mock
 pytestmark = pytest.mark.updatertest
 
 import updater as happyupd
-from happypanda.common import constants, utils
+from happypanda.common import constants, utils, clsutils
 from happypanda.core import updater
 
 def compare_json_dicts(a, b):
@@ -206,11 +206,12 @@ class TestUpdating:
     def test_get_release(self, mresponses, tmpdir):
         define_github_responses(mresponses)
         p = tmpdir.mkdir("updater_get")
-        db_p = p.join("internals")
+        db_p = p.join("internals.db")
         p = str(p)
         with mock.patch("happypanda.common.constants.version", (2, 0, 0)),\
             mock.patch("happypanda.common.constants.dir_cache", p),\
             mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
+            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
             mock.patch("happypanda.common.constants.dir_temp", p):
             r = updater.get_release("http://randomurl.abc", silent=False)
             assert r is not None
@@ -224,8 +225,9 @@ class TestUpdating:
 
     def test_register_release(self, tmp_update_folder, app_path):
         p = str(tmp_update_folder.mkdir("updater_register"))
-        db_p = tmp_update_folder.join("internals")
+        db_p = tmp_update_folder.join("internals.db")
         with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
+            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("happypanda.common.utils.create_temp_dir") as utils_temp,\
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
@@ -233,33 +235,35 @@ class TestUpdating:
             utils_temp.return_value = str(tmp_update_folder.mkdir("updater_release"))
             assert updater.register_release(asset_url_platform, silent=False, restart=False)
             assert constants.internal_db_path == str(db_p)
-            with utils.intertnal_db() as db:
-                d = db[constants.updater_key]
-                assert compare_json_dicts(d, {'from': utils_temp.return_value,
-                                                 'to': os.path.abspath(constants.app_path),
-                                                 'restart': False,
-                                                 'app': sys.argv[0],
-                                                 'args': sys.argv[1:],
-                                                 'state': constants.UpdateState.Registered.value})
+            db = constants.internaldb
+            d = db[constants.updater_key]
+            assert compare_json_dicts(d, {'from': utils_temp.return_value,
+                                                'to': os.path.abspath(constants.app_path),
+                                                'restart': False,
+                                                'app': sys.argv[0],
+                                                'args': sys.argv[1:],
+                                                'state': constants.UpdateState.Registered.value})
 
     def test_updater(self, tmp_update_folder, app_path):
-        db_p = tmp_update_folder.join("internals")
+        db_p = tmp_update_folder.join("internals.db")
         with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
+            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
             happyupd.main()
-            with utils.intertnal_db() as db:
-                d = db[constants.updater_key]
-                assert d['state'] == constants.UpdateState.Success.value
+            db = constants.internaldb
+            d = db[constants.updater_key]
+            assert d['state'] == constants.UpdateState.Success.value
             assert all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
 
     def test_updater_overwrite(self, tmp_update_folder, app_path):
 
         all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
-        db_p = tmp_update_folder.join("internals")
+        db_p = tmp_update_folder.join("internals.db")
         p = str(tmp_update_folder.mkdir("updater_register2"))
         with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
+            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("happypanda.common.utils.create_temp_dir") as utils_temp,\
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
@@ -269,12 +273,13 @@ class TestUpdating:
 
         with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder.join("internals"))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
+            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
             with mock.patch("updater.atexit.register") as aexit:
                 happyupd.main()
                 assert aexit.called
-            with utils.intertnal_db() as db:
-                d = db[constants.updater_key]
-                assert d['state'] == constants.UpdateState.Success.value
+            db = constants.internaldb
+            d = db[constants.updater_key]
+            assert d['state'] == constants.UpdateState.Success.value
             assert all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)

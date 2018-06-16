@@ -17,6 +17,9 @@ import imghdr
 import errno
 import typing
 import io
+import regex
+import langcodes
+import itertools
 
 from io import BytesIO
 from PIL import Image
@@ -894,6 +897,15 @@ class GalleryFS(CoreCommand):
         path_or_dbitem: path to a valid gallery archive/folder or a :class:`.db.Gallery` database item
     """
 
+    _evaluate: bool = CommandEntry("evaluate",
+                                CParam("path", str, "path to gallery"),
+                                __doc="""
+                                Called to evaluate if path is a valid gallery or not
+                                """,
+                                __doc_return="""
+                                a bool indicating whether path is pointing to a valid gallery or not
+                                """)
+
     _filter_pages: tuple = CommandEntry("filter_pages",
                                 CParam("pages", tuple, "a tuple of pages"),
                                 __doc="""
@@ -925,6 +937,7 @@ class GalleryFS(CoreCommand):
 
         self.pages = {} # number : db.Page
         self._sources = None
+        self._evaluated = None
 
     def load_metadata(self, update=True):
         """
@@ -937,12 +950,12 @@ class GalleryFS(CoreCommand):
                 from_file_data = any(plg.all(default=True)) # TODO: stop at first handler that returns true
 
             if not from_file_data: # TODO: only set missing data
-                n = NameParser(p, self.gallery)
+                sess = constants.db_session()
+                n = NameParser(p)
                 langs = []
                 for l in n.extract_language():
-                    dblang = db.Language()
-                    dblang.name = l
-                    langs.append(dblang.exists(True))
+                    langs.append(db.Language.as_unique(name=l, session=sess))
+
                 lang = None
                 if langs:
                     self.gallery.language = lang = langs[0]
@@ -954,41 +967,81 @@ class GalleryFS(CoreCommand):
                     if lang:
                         dbtitle.language = lang
                     self.gallery.titles.append(dbtitle)
+                circles = []
+                for t in n.extract_circle():
+                    circles.append(db.Circle.as_unique(name=t, session=sess))
 
                 for t in n.extract_artist():
                     dbartist = db.Artist()
-                    dbartistname = db.AliasName()
-                    dbartistname.name = t
-                    if lang:
+                    dbartistname = db.ArtistName.as_unique(name=t, session=sess)
+                    artists = sess.query(db.Artist).join(db.Artist.names).filter(db.ArtistName==dbartistname.name).all()
+                    [sess.expunge(x) for x in artists]
+                    if not artists:
+                        dbartist.names.append(dbartistname)
+                        artists = [dbartist]
+
+                    for a in artists:
+                        if a not in self.gallery.artists:
+                            self.gallery.artists.append(a)
+
+                    for a in artists:
+                        for c in circles:
+                            if c not in a.circles:
+                                a.circles.append(c)
+
+                    if lang and not dbartistname.language:
                         dbartistname.language = lang
-                    dbartist.names.append(dbartistname)
+
+                for col_name, cat_name in n.extract_collection():
+                    dbcollection = db.Collection.as_unique(name=col_name, session=sess)
+                    if cat_name:
+                        dbcat = db.Category.as_unique(name=cat_name, session=sess)
+                        dbcollection.category = dbcat
+                    self.gallery.collections.append(dbcollection)
 
     def load_pages(self, delete_existing=True):
         """
         """
-        if delete_existing:
-            self.pages.clear()
-            if self.gallery.id:
-                self.gallery = db.ensure_in_session(self.gallery)
-                self.gallery.pages.delete()
+        if self.evaluate(raise_error=True):
+            if delete_existing:
+                self.pages.clear()
+                if self.gallery.id:
+                    self.gallery = db.ensure_in_session(self.gallery)
+                    self.gallery.pages.delete()
 
-        n = 0
-        for s in sorted(self.get_sources()):
-            fs = CoreFS(s)
-            c = fs.contents(corefs=False)
-            real_pages = OrderedSet(c)
+            n = 0
+            for s in sorted(self.get_sources()):
+                fs = CoreFS(s)
+                c = tuple(x for x in fs.contents(corefs=False) if x.lower().endswith(CoreFS.image_formats()))
+                real_pages = OrderedSet(c)
 
-            with self._filter_pages.call(c) as plg:
-                for x in plg.all():
-                    real_pages.difference_update(x)
+                with self._filter_pages.call(c) as plg:
+                    for x in plg.all():
+                        real_pages.difference_update(x)
 
-            for p in natsorted(real_pages):
-                n += 1
-                dbpage = db.Page()
-                dbpage.path = p
-                dbpage.number = n
-                self.gallery.pages.append(dbpage)
-                self.pages[n] = p
+                for p in natsorted(real_pages):
+                    n += 1
+                    dbpage = db.Page()
+                    dbpage.path = p
+                    dbpage.number = n
+                    self.gallery.pages.append(dbpage)
+                    self.pages[n] = p
+
+    def evaluate(self, raise_error=False):
+        """
+        """
+        if self._evaluated is not None:
+            return self._evaluated
+
+        r = False
+
+        for s in self.get_sources():
+            sfs = CoreFS(s)
+            if sfs.is_dir or (sfs.is_file and sfs.is_archive):
+                r = True
+
+        self._evaluated = r
+        return self._evaluated
 
     def get_gallery(self, load=True, update=True):
         self.load_metadata(update=update)
@@ -1002,7 +1055,7 @@ class GalleryFS(CoreCommand):
                 raise NotImplementedError("Loading metadata for a gallery with multiple sources is not supported")
 
         if self.path:
-            return (self.path,)
+            return (self.path.path,)
         if self._sources is not None:
             return self._sources
 
@@ -1050,13 +1103,13 @@ class NameParser(CoreCommand):
                                 a tuple of strings of all the extracted artists
                                 """)
 
-    _extract_convention: tuple = CommandEntry("extract_convention",
+    _extract_collection: tuple = CommandEntry("extract_collection",
                                 CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
                                 __doc="""
-                                Called to extract the convention from ``name``
+                                Called to extract the convention/magazine from ``name``
                                 """,
                                 __doc_return="""
-                                a tuple of strings of all the extracted conventions
+                                a tuple of (collection_name, category_name) of all the extracted convention/magazines
                                 """)
 
     _extract_language: tuple = CommandEntry("extract_language",
@@ -1071,24 +1124,115 @@ class NameParser(CoreCommand):
     _extract_circle: tuple = CommandEntry("extract_circle",
                                 CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
                                 __doc="""
-                                Called to extract the language from ``name``
+                                Called to extract the circle from ``name``
                                 """,
                                 __doc_return="""
-                                a tuple of strings of all the extracted languages
+                                a tuple of strings of all the extracted circles
                                 """)
+
+    @_extract_title.default()
+    def _extract_gallery_title(name):
+        particles = list(regex.findall(r'((\[|{) *[^\]]+( +\S+)* *(\]|}))', name)) # everyting in brackets
+        particles.extend(list(regex.findall(r"(\(C\d+\))", name, regex.IGNORECASE | regex.UNICODE))) # Convention name
+
+        for p in utils.regex_first_group(particles):
+            name = name.replace(p, '')
+
+        return tuple([utils.remove_multiple_spaces(name)])
+
+    @_extract_language.default()
+    def _extract_gallery_language(name):
+        langs = []
+        particles = list(regex.findall(r'((?<=(\[|{|\()) *(\S+)* *(?=(\]|}|\))))', name)) # everyting in brackets and colons; only singlewords
+        for p in utils.regex_first_group(particles):
+            try:
+                l = langcodes.find(p)
+                langs.append(l.autonym())
+            except LookupError:
+                pass
+
+        return tuple(langs)
+
+    @_extract_artist.default()
+    def _extract_gallery_artist(name):
+        artists = []
+        for p in utils.regex_first_group(regex.findall(r"(\(C\d+\))", name, regex.IGNORECASE | regex.UNICODE)):
+            name = name.replace(p, '')
+        name = name.strip()
+        r = regex.compile(r'((?<=(\[|{|\()) *[^\]]+( +\S+)* *(?=(\]|}|\))))')
+        particles = utils.regex_first_group(r.findall(name)) # everyting in brackets and colons
+        if particles:
+            particles = particles[0]
+
+            m = utils.regex_first_group(r.findall(particles))
+            particles = m[0] if m else particles
+
+            artists = [utils.remove_multiple_spaces(x) for x in particles.split(',')]
+
+        return tuple(artists)
+
+    @_extract_circle.default()
+    def _extract_gallery_circle(name):
+        circles = []
+        for p in utils.regex_first_group(regex.findall(r"(\(C\d+\))", name, regex.IGNORECASE | regex.UNICODE)):
+            name = name.replace(p, '')
+        name = name.strip()
+        r = regex.compile(r'((?<=(\[|{|\()) *[^\]]+( +\S+)* *(?=(\]|}|\))))')
+        particles = utils.regex_first_group(r.findall(name)) # everyting in brackets and colons
+        if particles:
+            particles = particles[0]
+            m = utils.regex_first_group(r.findall(particles)) # circle (artist)
+            if m:
+                for x in m:
+                    particles = particles.replace(x, '')
+                particles = particles.replace('[]', '')
+                particles = particles.replace('()', '')
+                particles = particles.replace('{}', '')
+                particles = utils.remove_multiple_spaces(particles)
+                circles.append(particles)
+
+        return tuple(circles)
+
+    @_extract_collection.default()
+    def _extract_gallery_collection(name):
+        category = ""
+        col_name = ""
+
+        class CType:
+            comiket = 1
+            gfm = 2
+
+        for i, r in ((CType.comiket, r"(\(C\d+\))"),
+                     (CType.gfm, r"(\(\s*(from)?\s*girls form vol\.?\s*\d*\s*\))")):
+            m = regex.search(r, name, regex.IGNORECASE | regex.UNICODE)
+            if m:
+                if i == CType.comiket:
+                    col_name = "Comiket " + "".join(x for x in m[0] if x.isdigit())
+                    category = "Convention"
+                elif i == CType.gfm:
+                    d = "".join(x for x in m[0] if x.isdigit())
+                    if len(d) == 1:
+                        d = '0' + d
+                    col_name = "Girls forM Vol. " + d
+                    category = "Magazine"
+                break
+
+        return ((col_name, category),)
 
     def __init__(self, name: str):
         super().__init__()
         self.titles = tuple()
         self.artists = tuple()
-        self.conventions = tuple()
+        self.collections = tuple()
         self.languages = tuple()
+        self.circles = tuple()
 
         fs = CoreFS(name)
         if fs.ext:
             self.name = name[:-len(fs.ext)] # remove ext
         else:
             self.name = name
+        self.name =  utils.remove_multiple_spaces(self.name)
 
     def extract_title(self) -> typing.Tuple[str]:
         if self.titles:
@@ -1102,7 +1246,6 @@ class NameParser(CoreCommand):
             self.titles = tuple(x for x in ts if x)
         return self.titles
 
-
     def extract_artist(self) -> typing.Tuple[str]:
         if self.artists:
             return self.artists
@@ -1115,17 +1258,30 @@ class NameParser(CoreCommand):
             self.artists = tuple(x for x in ts if x)
         return self.artists
 
-    def extract_convention(self) -> typing.Tuple[str]:
-        if self.conventions:
-            return self.conventions
+    def extract_circle(self) -> typing.Tuple[str]:
+        if self.circles:
+            return self.circles
 
-        with self._extract_convention.call(self.name) as plg:
+        with self._extract_circle.call(self.name) as plg:
             ts = tuple()
             for t in plg.all(default=True):
                 if t:
                     ts += t
-            self.conventions = tuple(x for x in ts if x)
-        return self.conventions
+            self.circles = tuple(x for x in ts if x)
+        return self.circles
+
+    def extract_collection(self) -> typing.Tuple[str]:
+        if self.collections:
+            return self.collections
+
+        with self._extract_collection.call(self.name) as plg:
+            ts = list()
+            for t in plg.all(default=True):
+                for x in t:
+                    if isinstance(x, tuple) and len(x) == 2 and x[0]:
+                        ts.append(x)
+            self.collections = tuple(x for x in ts if x)
+        return self.collections
 
     def extract_language(self) -> typing.Tuple[str]:
         if self.languages:
