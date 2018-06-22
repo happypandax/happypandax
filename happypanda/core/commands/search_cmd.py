@@ -505,7 +505,7 @@ class PartialModelFilter(Command):
                 x[0] for x in q.join(
                     child_model.names).filter(
                     match_string(
-                        db.AliasName.name,
+                        db.ArtistName.name,
                         term.tag,
                         options)).all())
         return ids
@@ -532,7 +532,7 @@ class PartialModelFilter(Command):
                 x[0] for x in q.join(
                     child_model.names).filter(
                     match_string(
-                        db.AliasName.name,
+                        db.ParodyName.name,
                         term.tag,
                         options)).all())
         return ids

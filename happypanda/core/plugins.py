@@ -20,7 +20,7 @@ from logging.handlers import RotatingFileHandler
 from contextlib import contextmanager
 
 from happypanda.interface import enums
-from happypanda.common import exceptions, constants, hlogger, config
+from happypanda.common import exceptions, constants, hlogger, config, utils
 from happypanda.core import plugin_interface, async_utils
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
@@ -359,7 +359,8 @@ class HandlerValue:
         if not self.default_handler:
             return self._raise_default_error() if error else None
         log.d(f"Calling default handler for '{self.name}'")
-        return self.default_handler(*self.args, **self.kwargs)
+        r = self.default_handler(*self.args, **self.kwargs)
+        return self._ensure_type(r)
 
     def default_capture(self, token, idx, error=True):
         "Calls the default capture handler"
@@ -369,13 +370,22 @@ class HandlerValue:
         if token_handler_d:
             r = []
             if idx is not None:
-                return token_handler_d[0](*self.args, **self.kwargs)
+                return self._ensure_type(token_handler_d[0](*self.args, **self.kwargs))
             else:
                 for y in token_handler_d:
-                    r.append(y(*self.args, **self.kwargs))
+                    r.append(self._ensure_type(y(*self.args, **self.kwargs)))
             return tuple(r)
         else:
             return self._raise_default_error() if error else None
+
+    def _ensure_type(self, r):
+        if self.expected_type is not None:
+            if not isinstance(r, self.expected_type):
+                raise exceptions.CoreError(
+                    utils.this_function(),
+                    "Command handler '{}' expected type '{}', but got '{}' by default handler [token={}]".format(
+                        self.name, self.expected_type, str(type(r)), self.capture_token))
+        return r
 
     def all(self, default=False):
         "Calls all handlers, returns tuple"
@@ -599,7 +609,7 @@ class HandlerValue:
                 raise exceptions.PluginHandlerError(
                     node,
                     "Command handler '{}' expected type '{}', but got '{}' by plugin '{}'".format(
-                        self.name, str(type(self.expected_type)), str(type(r)), node.format()))
+                        self.name, self.expected_type, str(type(r)), node.format()))
         return r
 
 

@@ -77,7 +77,7 @@ def check_release(silent=True, cmd=None):
         if constants.dev or next_check and next_check > arrow.now():
             log.d("Skipping release check, still within interval")
             log.d("Checking local")
-            latest_rel = constants.internaldb.latest_release.get()
+            latest_rel = constants.internaldb.latest_release.get({})
             if latest_rel and tuple(latest_rel['version']) > constants.version:
                 return latest_rel
             return None

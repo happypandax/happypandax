@@ -246,3 +246,34 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
     opened = gallery_cmd.OpenGallery().run(**kwargs)
 
     return message.Identity("status", opened)
+
+def scan_galleries(path: str, scan_options: dict = {}):
+    """
+    Scan for galleries in the given directory/archive
+
+    Args:
+        path: path to directory/archive that exists on this system
+        scan_options: options to apply to the scanning process, see :ref:`Settings` for available scanning options
+
+    Returns:
+        .. code-block:: guess
+
+            [
+                'command_id': int,
+                'view_id': int
+            ]
+
+    |async command|
+
+    |temp view|
+    """
+    path = io_cmd.CoreFS(path)
+    if not path.exists:
+        raise exceptions.CoreError(utils.this_function(), f"Path does not exists on this system: '{path.path}'")
+
+    view_id = next(constants.general_counter)
+    cmd_id = gallery_cmd.ScanGallery(services.AsyncService.generic).run(path, scan_options, view_id=view_id)
+
+    return message.Identity('data', {'command_id': cmd_id,
+                                     'view_id': view_id})
+

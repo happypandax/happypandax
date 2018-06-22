@@ -70,7 +70,8 @@ I hope you'll like HPX.
 def on_update(props):
     if props.location.pathname != this.props.location.pathname:
         for x in state.commands:
-            x.stop()
+            if x.daemon:
+                x.stop()
         # HACK: blocks scroll restoration
         # TODO: scroll restoration
         if state.reset_scroll:

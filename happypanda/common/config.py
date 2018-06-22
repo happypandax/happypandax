@@ -511,6 +511,13 @@ with config.namespace(gallery_ns):
         False,
         "Send path to first file when opening a gallery in external viewer")
 
+    add_to_inbox = config.create(
+        gallery_ns,
+        "add_to_inbox",
+        True,
+        "Add new galleries to inbox")
+
+
 db_ns = 'db'
 
 with config.namespace(db_ns):

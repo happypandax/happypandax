@@ -5,13 +5,14 @@ UI
 """
 
 import i18n
+import itertools
 
 from collections import OrderedDict
 
-from happypanda.common import utils, exceptions, hlogger, config
-from happypanda.core import message, db
+from happypanda.common import utils, exceptions, hlogger, config, constants
+from happypanda.core import message, db, services
 from happypanda.interface import enums, helpers
-from happypanda.core.commands import database_cmd, search_cmd
+from happypanda.core.commands import database_cmd, search_cmd, gallery_cmd
 
 log = hlogger.Logger(__name__)
 
@@ -326,3 +327,74 @@ def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, local
                 'item_type': i.value
             })
     return sort_indexes
+
+def temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.GalleryAddition,
+                    view_id: int = None,
+                    limit: int = 100,
+                    offset: int = 0,
+                    #sort_by: enums.ItemSort = None,
+                    #sort_desc: bool=False,
+                  ):
+    """
+
+    Args:
+        view_type: type of temporary view
+        view_id: id of a specific view
+        limit: amount of items per page
+        offset: offset the results by n items
+
+    Returns:
+        .. code-block:: guess
+
+            {
+                'items': [
+                        ...
+                    ],
+                'count': int # count of all items in view
+            }
+    """
+    view_type = enums.TemporaryViewType.get(view_type)
+    d = {'items':[], 'count':0}
+    msg_obj = None
+
+    sess = constants.db_session()
+    sess.autoflush = False
+
+    if view_type == enums.TemporaryViewType.GalleryAddition:
+        msg_obj = message.GalleryFS
+        c = constants.store.galleryfs_addition.get({})
+        if view_id:
+            c = list(c.get(view_id, tuple()))
+        else:
+            c = list(itertools.chain(*c.values()))
+
+    d['count'] = len(c)
+    d['items'] = [msg_obj(x).json_friendly(False) if msg_obj else x for x in c[offset:offset+limit]]
+
+    return message.Identity('items', d)
+
+def submit_temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.GalleryAddition,
+                            view_id: int = None,):
+    """
+    Args:
+        view_type: type of temporary view
+        view_id: id of a specific view
+    Returns:
+        a command id
+
+    |async command|
+
+    """
+    view_type = enums.TemporaryViewType.get(view_type)
+
+    cmd_id = None
+
+    if view_type == enums.TemporaryViewType.GalleryAddition:
+        c = constants.store.galleryfs_addition.get({})
+        if view_id:
+            c = list(c.get(view_id, tuple()))
+        else:
+            c = list(itertools.chain(*c.values()))
+        cmd_id = gallery_cmd.AddGallery(services.AsyncService.generic).run(c)
+
+    return message.Identity('command_id', cmd_id)

@@ -80,6 +80,9 @@ rst_prolog = """
     See :ref:`Asynchronous Commands` for more information.
 
 .. |python version| replace:: Python 3.6
+
+.. |temp view| replace:: **Temporary View** -- This function puts objects in a temporary view.
+    Use the returned ``view id`` with :func:`.temporary_view` to retrieve the objects.
 """
 
 # The version info for the project you're documenting, acts as replacement for

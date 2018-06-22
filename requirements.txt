@@ -17,10 +17,10 @@ psutil==5.4.5
 rollbar==0.14.0
 CacheControl==0.12.4
 attrs==18.1.0
-requests==2.18.4
+requests==2.19.1
 certifi
 APScheduler==3.5.1
-cachetools==2.0.1
+cachetools==2.1.0
 treelib==1.5.1
 regex==2018.06.06
 pyOpenSSL==18.0.0
@@ -30,4 +30,5 @@ Flask-SocketIO==3.0.1
 Flask==1.0.2
 langcodes==1.4.1
 natsort==5.3.2
-ordered-set==2.0.2
+ordered-set==3.0.0
+tinydb==3.9.0.post1

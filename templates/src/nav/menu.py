@@ -70,7 +70,7 @@ def menu_nav_render():
            secondary=True,
            borderless=True,
            stackable=True,
-           size="small",
+           size="tiny",
            **menu_args
            )
 

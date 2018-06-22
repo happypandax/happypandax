@@ -87,7 +87,8 @@ def search_render():
                                  ),
                                trigger=e(ui.Button, icon=e(ui.Icon.Group,
                                                            e(ui.Icon, js_name="options"),
-                                                           e(ui.Icon, js_name="search", corner=True)), js_type="button", basic=True),
+                                                           e(ui.Icon, js_name="search", corner=True)),
+                                         js_type="button", basic=True, size=this.props.size),
                                hoverable=True,
                                on="click",
                                hideOnScroll=True,),
@@ -218,7 +219,8 @@ def itembuttons_render():
                basic=this.props.value == ItemType.Gallery,
                ),
              toggle=True,
-             basic=True
+             basic=True,
+             size=this.props.size if utils.defined(this.props.size) else "small"
              )
 
 

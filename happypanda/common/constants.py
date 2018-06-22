@@ -2,6 +2,7 @@
 import sys
 import rarfile
 import enum
+import itertools
 
 rarfile.PATH_SEP = '/'
 
@@ -74,10 +75,14 @@ thumbs_view = "/thumb"
 link_ext = '.link'
 
 # CORE
+store = None
 invalidator = None
 internaldb = None
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
+
+general_counter = itertools.count(50)
+default_temp_view_id = 1
 
 notif_normal_timeout = 45
 notif_small_timeout = 15

@@ -158,6 +158,7 @@ class CoreCommand:
                  'percent': .0,
                  'max': .0,
                  'type': self._progress_type,
+                 'state': self.state.value if hasattr(self, "state") else None,
                  'timestamp': self._progress_timestamp}
 
             t = self._progress_tree.subtree(self._progress_count)
@@ -218,6 +219,7 @@ class CoreCommand:
         if text is not None:
             self._progress_text = text
         self._progress_current += add
+        utils.switch(self._priority)
 
     @contextmanager
     def progress(self, max_progress=None, text=None):

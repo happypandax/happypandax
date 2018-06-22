@@ -30,6 +30,7 @@ from contextlib import contextmanager
 from gevent import fileobject
 from natsort import natsorted
 from ordered_set import OrderedSet
+from cachetools.func import ttl_cache
 
 from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand, Command, CParam
@@ -296,6 +297,7 @@ class CoreFS(CoreCommand):
         return (CoreFS.JPG, CoreFS.JPEG, CoreFS.BMP, CoreFS.PNG, CoreFS.GIF)
 
     @classmethod
+    @ttl_cache()
     def archive_formats(cls):
         "Get supported archive formats"
         cls._get_commands()
@@ -306,6 +308,7 @@ class CoreFS(CoreCommand):
             return tuple(formats)
 
     @classmethod
+    @ttl_cache()
     def image_formats(cls):
         "Get supported image formats"
         cls._get_commands()
@@ -576,7 +579,7 @@ class CoreFS(CoreCommand):
         return super().__lt__(other)
 
     def __str__(self):
-        return "CoreFS({})".format(self.path)
+        return self.path
 
     def __repr__(self):
         return "CoreFS({})".format(self.path)
@@ -938,94 +941,109 @@ class GalleryFS(CoreCommand):
         self.pages = {} # number : db.Page
         self._sources = None
         self._evaluated = None
+        self._loaded_metadata = False
+        self._loaded_pages = False
 
-    def load_metadata(self, update=True):
+    def load_all(self, update=True, delete_existing=False, force=False):
+        if self.evaluate(True):
+            self.load_metadata(update=update, force=force)
+            self.load_pages(delete_existing=delete_existing, force=force)
+
+    def load_metadata(self, update=True, force=False):
         """
         """
+        if self._loaded_metadata and not force:
+            return
         sources = self.get_sources(only_single=True)
-        if not update and self.gallery.id:
-            self.gallery = db.ensure_in_session(self.gallery)
-        for p in sources:
-            with self._parse_metadata_file.call(p, self.gallery) as plg:
-                from_file_data = any(plg.all(default=True)) # TODO: stop at first handler that returns true
+        sess = constants.db_session()
+        with sess.no_autoflush:
+            if not update and self.gallery.id:
+                self.gallery = db.ensure_in_session(self.gallery)
+            for p in sources:
+                with self._parse_metadata_file.call(p, self.gallery) as plg:
+                    from_file_data = any(plg.all(default=True)) # TODO: stop at first handler that returns true
 
-            if not from_file_data: # TODO: only set missing data
-                sess = constants.db_session()
-                n = NameParser(p)
-                langs = []
-                for l in n.extract_language():
-                    langs.append(db.Language.as_unique(name=l, session=sess))
+                if not from_file_data: # TODO: only set missing data
+                    n = NameParser(os.path.split(p)[1])
+                    langs = []
+                    for l in n.extract_language():
+                        langs.append(db.Language.as_unique(name=l, session=sess))
 
-                lang = None
-                if langs:
-                    self.gallery.language = lang = langs[0]
-                if not update:
-                    self.gallery.titles.clear()
-                for t in n.extract_title():
-                    dbtitle = db.Title()
-                    dbtitle.name = t
-                    if lang:
-                        dbtitle.language = lang
-                    self.gallery.titles.append(dbtitle)
-                circles = []
-                for t in n.extract_circle():
-                    circles.append(db.Circle.as_unique(name=t, session=sess))
+                    lang = None
+                    if langs:
+                        self.gallery.language = lang = langs[0]
+                    if not update:
+                        self.gallery.titles.clear()
+                    for t in n.extract_title():
+                        dbtitle = db.Title()
+                        dbtitle.name = t
+                        if lang:
+                            dbtitle.language = lang
+                        self.gallery.titles.append(dbtitle)
+                    circles = []
+                    for t in n.extract_circle():
+                        circles.append(db.Circle.as_unique(name=t, session=sess))
 
-                for t in n.extract_artist():
-                    dbartist = db.Artist()
-                    dbartistname = db.ArtistName.as_unique(name=t, session=sess)
-                    artists = sess.query(db.Artist).join(db.Artist.names).filter(db.ArtistName==dbartistname.name).all()
-                    [sess.expunge(x) for x in artists]
-                    if not artists:
-                        dbartist.names.append(dbartistname)
-                        artists = [dbartist]
+                    for t in n.extract_artist():
+                        dbartist = db.Artist.as_unique(name=t)
+                        for an in dbartist.names:
+                            if an.name == t:
+                                dbartistname = an
+                                break
+                        else:
+                            dbartistname = None
 
-                    for a in artists:
-                        if a not in self.gallery.artists:
-                            self.gallery.artists.append(a)
+                        if dbartist not in self.gallery.artists:
+                            self.gallery.artists.append(dbartist)
 
-                    for a in artists:
                         for c in circles:
-                            if c not in a.circles:
-                                a.circles.append(c)
+                            if c not in dbartist.circles:
+                                dbartist.circles.append(c)
 
-                    if lang and not dbartistname.language:
-                        dbartistname.language = lang
+                        if lang and dbartistname and not dbartistname.language:
+                            dbartistname.language = lang
 
-                for col_name, cat_name in n.extract_collection():
-                    dbcollection = db.Collection.as_unique(name=col_name, session=sess)
-                    if cat_name:
-                        dbcat = db.Category.as_unique(name=cat_name, session=sess)
-                        dbcollection.category = dbcat
-                    self.gallery.collections.append(dbcollection)
+                    for col_name, cat_name in n.extract_collection():
+                        dbcollection = db.Collection.as_unique(name=col_name, session=sess)
+                        if cat_name:
+                            dbcat = db.Category.as_unique(name=cat_name, session=sess)
+                            dbcollection.category = dbcat
+                        self.gallery.collections.append(dbcollection)
+        self._loaded_metadata = True
 
-    def load_pages(self, delete_existing=True):
+    def load_pages(self, delete_existing=False, force=False):
         """
         """
+        if self._loaded_pages and not force:
+            return
         if self.evaluate(raise_error=True):
-            if delete_existing:
-                self.pages.clear()
-                if self.gallery.id:
-                    self.gallery = db.ensure_in_session(self.gallery)
-                    self.gallery.pages.delete()
+            sess = constants.db_session()
+            with sess.no_autoflush:
+                if delete_existing:
+                    raise NotImplementedError
+                    self.pages.clear()
+                    if self.gallery.id:
+                        self.gallery = db.ensure_in_session(self.gallery)
+                        self.gallery.pages.delete() # Can't call delete() when order_by has been applied
 
-            n = 0
-            for s in sorted(self.get_sources()):
-                fs = CoreFS(s)
-                c = tuple(x for x in fs.contents(corefs=False) if x.lower().endswith(CoreFS.image_formats()))
-                real_pages = OrderedSet(c)
+                n = 0
+                for s in sorted(self.get_sources()):
+                    fs = CoreFS(s)
+                    c = tuple(x for x in fs.contents(corefs=False) if x.lower().endswith(CoreFS.image_formats()))
+                    real_pages = OrderedSet(c)
 
-                with self._filter_pages.call(c) as plg:
-                    for x in plg.all():
-                        real_pages.difference_update(x)
+                    with self._filter_pages.call(c) as plg:
+                        for x in plg.all():
+                            real_pages.difference_update(x)
 
-                for p in natsorted(real_pages):
-                    n += 1
-                    dbpage = db.Page()
-                    dbpage.path = p
-                    dbpage.number = n
-                    self.gallery.pages.append(dbpage)
-                    self.pages[n] = p
+                    for p in natsorted(real_pages):
+                        n += 1
+                        dbpage = db.Page()
+                        dbpage.path = p
+                        dbpage.number = n
+                        self.gallery.pages.append(dbpage, enable_count_cache=True)
+                        self.pages[n] = p
+            self._loaded_pages = True
 
     def evaluate(self, raise_error=False):
         """
@@ -1038,6 +1056,7 @@ class GalleryFS(CoreCommand):
         for s in self.get_sources():
             sfs = CoreFS(s)
             if sfs.is_dir or (sfs.is_file and sfs.is_archive):
+
                 r = True
 
         self._evaluated = r
@@ -1074,6 +1093,30 @@ class GalleryFS(CoreCommand):
                 paths = self.gallery.get_sources()
 
         return tuple(paths)
+
+    def _check_exists(self):
+        return False
+
+    def add(self, view_id=constants.default_temp_view_id):
+        """
+        """
+        assert isinstance(view_id, int)
+        if not self._check_exists():
+            self.detach()
+            constants.store.galleryfs_addition.get().setdefault(view_id, set()).add(self)
+
+    def send_to_db(self, session=None):
+        try:
+            constants.store.galleryfs_addition.get().remove()
+        except KeyError:
+            pass
+
+        session = session or constants.db_session()
+
+        return session
+
+    def detach(self):
+        self.gallery = db.freeze_object(self.gallery)
 
 
 class NameParser(CoreCommand):
@@ -1144,7 +1187,7 @@ class NameParser(CoreCommand):
     def _extract_gallery_language(name):
         langs = []
         particles = list(regex.findall(r'((?<=(\[|{|\()) *(\S+)* *(?=(\]|}|\))))', name)) # everyting in brackets and colons; only singlewords
-        for p in utils.regex_first_group(particles):
+        for p in reversed(utils.regex_first_group(particles)):
             try:
                 l = langcodes.find(p)
                 langs.append(l.autonym())
@@ -1184,7 +1227,12 @@ class NameParser(CoreCommand):
             m = utils.regex_first_group(r.findall(particles)) # circle (artist)
             if m:
                 for x in m:
-                    particles = particles.replace(x, '')
+                    ex = ('(' + x + ')') 
+                    if ex in particles:
+                        particles = particles.replace(ex, '')
+                    else:
+                        particles = particles.replace(x, '')
+
                 particles = particles.replace('[]', '')
                 particles = particles.replace('()', '')
                 particles = particles.replace('{}', '')

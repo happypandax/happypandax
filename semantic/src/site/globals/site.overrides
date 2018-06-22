@@ -182,10 +182,10 @@ i.medium-size {
     }
 }
 i.huge.icon {
-    font-size: 3em;
+    font-size: 3em !important;
 }
 i.huge.icons {
-    font-size: 3em;
+    font-size: 3em !important;
 }
 
 .card.small-size {
@@ -280,4 +280,32 @@ h6 {
 
 .blur:hover {
     filter: unset;
+}
+
+/*--------------
+     Minimum Height
+---------------*/
+
+.min-200-h {
+    min-height: 200pt;
+}
+
+.min-300-h {
+    min-height: 300pt;
+}
+
+.min-400-h {
+    min-height: 400pt;
+}
+
+.min-500-h {
+    min-height: 500pt;
+}
+
+.min-600-h {
+    min-height: 600pt;
+}
+
+.min-700-h {
+    min-height: 700pt;
 }

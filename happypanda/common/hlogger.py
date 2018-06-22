@@ -5,6 +5,7 @@ import argparse
 import traceback
 import os
 import multiprocessing as mp
+import sqlite3
 
 try:
     import rollbar  # updater doesn't need this
@@ -55,6 +56,12 @@ class QueueHandler(logging.Handler):
                 self.format(record)
                 record.exc_info = None
             self.queue.put_nowait(record)
+        except TypeError:
+            try:
+                record.args = tuple(str(x) for x in record.args)
+                self.queue.put_nowait(record)
+            except:
+                self.handleError(record)
         except (KeyboardInterrupt, SystemExit):
             raise
         except BaseException:

@@ -237,7 +237,7 @@ def pagination_render():
              *items,
              pagination=True,
              borderless=True,
-             size=this.props.size,
+             size=this.props.size if utils.defined(this.props.size) else "small",
              as_=ui.Transition.Group,
              duration=1000,
              )

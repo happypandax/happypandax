@@ -20,6 +20,7 @@ b-delete: Delete
 t-unknown: Unknown
 t-bracket-unknown: <Unknown>
 t-or: Or
+t-submit: Submit
 
 # Menu Item
 mi-dashboard: Dashboard
@@ -36,8 +37,9 @@ mi-about: About
 mi-all: All
 
 # Manage Page
-mi-create: Create
 mi-scan: Scan
+t-create-gallery: Create a gallery
+t-create-collection: Create a collection
 
 # Login Page
 t-login: Login
@@ -204,6 +206,14 @@ t-inboxed-collection: This collection is in your inbox
 t-trashed-collection: This collection is set to be deleted
 t-galleries: Galleries
 
+# Scan Page
+de-scan-info: |-
+    Scan for new galleries in the provided path
+
+    Supported URLs:
+    - A directory
+
+    **Note:** Path must exist on the server-located system.
 
 # Item
 b-read: Read

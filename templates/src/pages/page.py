@@ -74,7 +74,7 @@ def get_thumbs(data=None, error=None, other=None):
                              item_type=this.state.item_type)
 
 
-def get_pages(data=None, error=None, gid=None):
+def get_pages(data=None, error=None, gid=None, limit=50):
     if data is not None and not error:
         pages = this.state.pages
         for p in data:
@@ -87,7 +87,6 @@ def get_pages(data=None, error=None, gid=None):
             gid = this.state.data.gallery_id
         page = this.state.page_list_page
         this.setState({'page_list_loading': True, "page_list_page": page + 1})
-        limit = 50
         client.call_func("get_related_items",
                          this.get_pages, item_type=ItemType.Gallery,
                          item_id=gid, limit=limit, offset=page * limit)
@@ -455,7 +454,7 @@ Page = createReactClass({
                                          )),
 
     'componentWillMount': lambda: all((this.props.menu([
-        e(ui.Menu.Item, e(ui.Icon, js_name="list layout", size="large"),
+        e(ui.Menu.Item, e(ui.Icon, js_name="ellipsis vertical", size="large"),
           icon=True, onClick=this.toggle_pages, position="left"),
         e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, onClick=this.back_to_gallery)),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),

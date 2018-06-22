@@ -3,10 +3,13 @@ from src.react_utils import (e,
                              Route,
                              Redirect,
                              NavLink,
+                             Link,
                              Switch,
                              createReactClass)
 from src.ui import ui, Pagination, TitleChange, TR
-from src.client import client, ItemType, ItemSort
+from src.client import (client, ItemType, ItemSort, Command,
+                        TemporaryViewType, CommandState)
+from src.single import artistitem, circleitem
 from src.i18n import tr
 from src.state import state
 from src.propsviews import artistpropsview, tagpropsview, circlepropsview, parodypropsview
@@ -21,43 +24,101 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+def scan_galleries(data=None, error=None):
+    if data is not None and not error:
+        utils.session_storage.set("scan_view_id", data['view_id'])
+        this.setState({'view_id': data['view_id']})
+        this.scan_cmd = Command(data['command_id'], daemon=False)
+        this.scan_cmd.poll_progress(interval=200, callback=this.on_scan_progress)
+    elif error:
+        state.app.notif("Failed to scan for galleries", level="error")
+    else:
+        if this.state.path:
+            client.call_func("scan_galleries", this.scan_galleries, path=this.state.path)
+            this.setState({'submitted_path': this.state.path,
+                           'loading': True})
+
+def on_scan_submit():
+    this.scan_galleries()
+
+def on_view_submit():
+    this.submit_view()
+
+def on_scan_progress(cmd):
+    p = cmd.get_progress()
+    this.setState({'progress_data': p})
+    if p and p.state == CommandState.finished:
+        this.setState({'loading': False})
+        this.get_view()
+
+def on_view_progress(cmd):
+    p = cmd.get_progress()
+    this.setState({'view_progress_data': p})
+    if p and p.state == CommandState.finished:
+        this.setState({'view_loading': False})
+
+def get_view(data=None, error=None):
+    if data is not None and not error:
+        this.setState({'view_data': data,
+                       'view_loading':False})
+    elif error:
+        state.app.notif("Failed to fetch temporary view", level="error")
+    else:
+        if this.state.view_id:
+            this.setState({'view_loading': True})
+            client.call_func("temporary_view", this.get_view,
+                             view_type=TemporaryViewType.GalleryAddition,
+                             view_id=this.state.view_id,
+                             limit=this.state.limit,
+                             offset=this.state.limit * (this.state.page - 1))
+
+def submit_view(data=None, error=None):
+    if data is not None and not error:
+        this.view_cmd = Command(data, daemon=False)
+        this.view_cmd.poll_progress(interval=200, callback=this.on_view_progress)
+    elif error:
+        state.app.notif("Failed to submit temporary view", level="error")
+    else:
+        if this.state.view_id:
+            this.setState({'view_loading': True, 'view_data': {}})
+            client.call_func("submit_temporary_view", this.submit_view,
+                             view_type=TemporaryViewType.GalleryAddition,
+                             view_id=this.state.view_id,
+                             )
+
+def scanpage_update(p_p, p_s):
+    if any((
+        p_s.page != this.state.page,
+    )):
+        this.get_view()
 
 __pragma__("tconv")
+def scanpage_render():
 
+    els = []
 
-def simplelayout_render():
-    props = this.props
-    stats_el = []
-    if props.stats:
-        stats_el.append(
-            e(ui.Statistic.Group,
-              *props.stats,
-              size="mini",
-              )
-        )
-
-    search_el = []
-    if props.search:
-        search_el.append(e(ui.Divider, hidden=True, section=True))
-        search_el.append(
-            e(ui.Search, placeholder=props.search_placeholder, fluid=True,
-              js_input={'fluid': True},
-              showNoResults=False,
-              defaultValue=props.search_query,
-              onSearchChange=props.search_change)
-        )
+    view_data = this.state.view_data
+    progress_text = ""
+    title = ""
+    percent = 0
+    if this.state.progress_data:
+        p = this.state.progress_data
+        progress_text = p.text
+        title = p.title
+        percent = p.percent
 
     pages_el = []
-    if props.pages:
-        if props.item_count > props.limit:
+    count_el = []
+    if not this.state.loading and view_data:
+        if view_data['count'] > this.state.limit:
             pages_el.append(
                 e(ui.Grid.Row,
                     e(ui.Responsive,
                         e(Pagination,
                             limit=1,
-                            pages=props.item_count / props.limit,
-                            current_page=props.page,
-                            on_change=props.set_page,
+                            pages=view_data['count'] / this.state.limit,
+                            current_page=this.state.page,
+                            on_change=this.set_page,
                             query=True,
                             scroll_top=True,
                             size="tiny"),
@@ -65,9 +126,9 @@ def simplelayout_render():
                       ),
                     e(ui.Responsive,
                         e(Pagination,
-                            pages=props.item_count / props.limit,
-                            current_page=props.page,
-                            on_change=props.set_page,
+                            pages=view_data['count'] / this.state.limit,
+                            current_page=this.state.page,
+                            on_change=this.set_page,
                             query=True,
                             scroll_top=True),
                         minWidth=579,
@@ -75,59 +136,206 @@ def simplelayout_render():
                     centered=True
                   ),
             )
+            count_el.append(e(ui.Grid.Row,
+                    e(ui.Grid.Column,
+                        e(ui.Header,
+                        e(ui.Header.Subheader,
+                            tr(this,
+                                "ui.t-showing-count",
+                                "Showing {}".format(view_data['count']),
+                                placeholder={
+                                    'from': (
+                                        this.state.page -
+                                        1) *
+                                    this.state.limit +
+                                    1,
+                                    'to': (
+                                        this.state.page -
+                                        1) *
+                                    this.state.limit +
+                                    len(view_data['items']),
+                                    'all': view_data['count']}
+                                ),
+                            as_="h6"),
+                        ),
+                        textAlign="center", width=16)))
 
-    return e(ui.Container,
-             e(ui.Segment.Group,
-               e(ui.Segment,
-                 e(ui.Button, compact=True, basic=True,
-                   icon="options", floated="right",
-                   ),
-                 e(ui.Button, e(ui.Icon, js_name="plus"), tr(this, "ui.b-new", "New"), compact=True, disabled=True, basic=True, floated="right",
-                   ),
-                 *stats_el,
-                 *search_el,
-                 clearing=True
-                 ),
-               e(ui.Segment,
+    items = []
+    view_progress_data = this.state.view_progress_data
+
+    view_progress_el = []
+    submitted_view_data = this.state.view_loading and view_progress_data
+    if submitted_view_data:
+        p_kwargs = {}
+        p_kwargs['progress'] = 'value'
+        if view_progress_data['max']:
+            p_kwargs['value'] = view_progress_data['value']
+            p_kwargs['total'] = view_progress_data['max']
+            p_kwargs['autoSuccess'] = True
+        else:
+            p_kwargs['percent'] = 1
+            p_kwargs['autoSuccess'] = False
+        view_progress_el.append(e(ui.Segment,
+                                  e(ui.Progress,
+                                         precision=2,
+                                         indicating=True,
+                                         active=True,
+                                         **p_kwargs),
+                                  basic=True
+                                  ))
+
+    if not this.state.loading and view_data:
+        for t in this.state.view_data['items']:
+            all_circles = []
+            [all_circles.extend(a.circles) for a in t.artists]
+            circles = []
+            circle_names = []
+            for c in all_circles:
+                if c.js_name not in circle_names:
+                    circles.append(c)
+                    circle_names.append(c.js_name)
+
+            items.append(
+                e(ui.List.Item,
+                  e(ui.List.Content,
+                    *(h("p", x, className="sub-text") for x in t.sources),
+                    *[e(ui.List.Header, x.js_name) for x in t.titles],
+                    e(ui.Divider, hidden=True),
+                    e(ui.List.Description,
+                         h("span", h("span", tr(this, "ui.t-artist", "Artist") + ':', size="tiny", className="sub-text"),
+                              *(e(artistitem.ArtistLabel, data=x) for x in t.artists)),
+                        h("span", h("span", "   " + tr(this, "ui.t-circle", "Circle") + ':', size="tiny", className="sub-text"),
+                              *((e(circleitem.CircleLabel, data=x) for x in circles)) if circles else []),
+                        h("span", h("span", "   " + tr(this, "general.db-item-collection", "Collection") + ':', size="tiny", className="sub-text"),
+                              *(e(ui.Label, x.js_name) for x in t.collections)),
+                        h("span", h("span", "   " + tr(this, "ui.t-language", "Language") + ':', size="tiny", className="sub-text"),
+                              *([e(ui.Label, t.language.js_name)] if t.language else [])),
+                        h("br"),
+                        h("p", h("span", tr(this, "ui.t-pages", "Pages") + ': ', size="tiny", className="sub-text"),
+                              t.page_count),
+                       ),
+                    )
+                    )
+                  )
+
+    return e("div", e(TitleChange, title=tr(this, "ui.mi-scan", "Scan")),
+             e(ui.Container, e(ui.Message, e("div", dangerouslySetInnerHTML={'__html': utils.marked(tr(this, "ui.de-scan-info", ""))}))),
+             e(ui.Divider, hidden=True),
+             e(ui.Form,
+                 e(ui.Container,
+                        e(ui.Form.Input,
+                           width=16,
+                           #fluid=True,
+                           action=tr(this, "ui.mi-scan", "Scan"),
+                           placeholder=tr(this, "", "Directory"),
+                           onChange=this.set_path,
+                         ),
+                    textAlign="center"
+                    ),
+                 onSubmit=this.on_scan_submit,
+               ),
+             e(ui.Form,
+                 *([e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=submitted_view_data, primary=True, js_type="submit"), horizontal=True)] if view_data and view_data['items'] else []),
+                 *view_progress_el,
                  e(ui.Grid,
+                   *([e(ui.Label, title, attached="top")] if title else []),
+                   e(ui.Dimmer,
+                     e(ui.Loader, 
+                       e(ui.Statistic,
+                         e(ui.Statistic.Value, "{}%".format(int(percent))),
+                         e(ui.Statistic.Label, progress_text),
+                         inverted=True,
+                         size="mini"
+                         ),
+                       ),
+                     active=this.state.loading,
+                     ),
+                   e(ui.Divider, hidden=True),
+                   *count_el,
                    *pages_el,
                    e(ui.Grid.Row,
                      e(ui.Grid.Column,
-                       props.children,
-                       width=16,
-                       )
+                        e(ui.List, *items,
+                          relaxed=True,
+                          divided=True,
+                          animated=True),
+                       ),
                      ),
                    *pages_el,
-                   padded="horizontally",
+                   *count_el,
+                   container=True,
+                   as_=ui.Segment,
+                   loading=this.state.view_loading,
+                   secondary=True,
+                   className="min-300-h",
                    ),
-                 secondary=True, basic=True,
-                 loading=props.loading)
-               ))
-
-
+                 *([e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=submitted_view_data, primary=True, js_type="submit"), horizontal=True)] if view_data and view_data['items'] else []),
+                 onSubmit=this.on_view_submit,
+               )
+             )
 __pragma__("notconv")
-
-SimpleLayout = createReactClass({
-    'displayName': 'SimpleLayout',
-    'render': simplelayout_render
-})
-
-def scanpage_render():
-    return e("div", e(TitleChange, title=tr(this, "ui.mi-scan", "Scan")),)
 
 
 ScanPage = createReactClass({
     'displayName': 'ScanPage',
 
+    'scan_cmd': None,
+
+    'view_cmd': None,
+
     'getInitialState': lambda: {
-        'data': {},
+        'limit': 50,
+        'page': utils.get_query("page", 1),
+        'loading': False,
+        'view_loading': False,
+        'progress_data': None,
+        'view_progress_data': None,
+        'view_id': utils.session_storage.get("scan_view_id", None),
+        'view_data': {},
+        'path': "D:/Doujin",
+        'submitted_path': '',
     },
+
+    'set_path': lambda e, d: all((this.setState({'path': d.value}), )),
+
+    'get_view': get_view,
+
+    'submit_view': submit_view,
+
+    'set_page': lambda p: all((this.setState({'page': p}), )),
+
+    'scan_galleries': scan_galleries,
+
+    'on_scan_submit': on_scan_submit,
+    'on_view_submit': on_view_submit,
+
+    'on_scan_progress': on_scan_progress,
+    'on_view_progress': on_view_progress,
+
+    'componentDidUpdate': scanpage_update,
+
+    'componentDidMount': lambda: all((this.get_view(),)),
 
     'render': scanpage_render
 })
 
 def creategallery_render():
-    return e("div",)
+
+    return e("div",
+             e(TitleChange, title=tr(this, "ui.t-create-gallery", "Create a gallery")),
+             e(ui.Container,
+                 e(ui.Form,
+                   e(ui.Form.Group,
+                     e(ui.Form.Input,
+                       width=16,
+                       fluid=True,
+                       action={'color': 'teal', 'icon': 'sync alternate'}),
+                       placeholder=tr(this, "", "Directory"),
+                     ),
+                   ),
+                 textAlign="center",
+               ),
+             )
 
 
 CreateGallery = createReactClass({
@@ -141,7 +349,9 @@ CreateGallery = createReactClass({
 })
 
 def createcollection_render():
-    return e("div",)
+    return e("div",
+             e(TitleChange, title=tr(this, "ui.t-create-collection", "Create a collection")),
+             )
 
 
 CreateCollection= createReactClass({
@@ -155,24 +365,39 @@ CreateCollection= createReactClass({
 })
 
 def createpage_render():
+
+    item_type = {'gallery': ItemType.Gallery,
+                 'collection': ItemType.Collection}.get(this.props.match.params.item_type.lower(),
+                                                        ItemType.Gallery)
+
+    if item_type == ItemType.Gallery:
+        el = e(CreateGallery,)
+    elif item_type == ItemType.Collection:
+        el = e(CreateCollection,)
+
     return e(ui.Container, 
-             e(TitleChange, title=tr(this, "ui.mi-create", "Create")),
-             e(ui.Button.Group,
-               e(ui.Button, tr(this, "general.db-item-gallery", "Gallery"),
-                 value=ItemType.Gallery,
-                 active=this.state.item_type==ItemType.Gallery,
-                 primary=this.state.item_type==ItemType.Gallery,
-                 onClick=this.set_item_type,
-                 ),
-               e(ui.Button.Or, text=tr(this, "ui.t-or", "Or")),
-               e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
-                 value=ItemType.Collection,
-                 active=this.state.item_type==ItemType.Collection,
-                 primary=this.state.item_type==ItemType.Collection,
-                 onClick=this.set_item_type,
-                 ),
-               toggle=True,
-               )
+             e(ui.Container,
+                e(ui.Button.Group,
+                   e(ui.Button, tr(this, "general.db-item-gallery", "Gallery"),
+                     value=ItemType.Gallery,
+                     active=item_type==ItemType.Gallery,
+                     primary=item_type==ItemType.Gallery,
+                     as_=Link,
+                     to="/manage/new/gallery",
+                     ),
+                   e(ui.Button.Or, text=tr(this, "ui.t-or", "Or")),
+                   e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
+                     value=ItemType.Collection,
+                     active=item_type==ItemType.Collection,
+                     primary=item_type==ItemType.Collection,
+                     as_=Link,
+                     to="/manage/new/collection",
+                     ),
+                   toggle=True,
+                   ),
+               textAlign="center"),
+             e(ui.Divider, hidden=True),
+             el
              )
 
 
@@ -192,8 +417,8 @@ Page = createReactClass({
     'displayName': 'ManagePage',
 
     'componentWillMount': lambda: this.props.menu([
-        e(ui.Menu.Item, js_name=tr(this, "ui.mi-create", "Create"), as_=NavLink,
-          to="/manage/create", activeClassName="active"),
+        #e(ui.Menu.Item, js_name=tr(this, "ui.b-new", "New"), as_=NavLink,
+        #  to="/manage/new", activeClassName="active"),
         e(ui.Menu.Item, js_name=tr(this, "ui.mi-scan", "Scan"), as_=NavLink,
           to="/manage/scan", activeClassName="active"),
     ], pointing=True),
@@ -202,9 +427,10 @@ Page = createReactClass({
 
     'render': lambda: e(ui.Segment,
                         e(Switch,
-                            e(Route, path="/manage/create", component=CreatePage),
+                            e(Route, path="/manage/new/:item_type(\w+)", component=CreatePage),
                             e(Route, path="/manage/scan", component=ScanPage),
-                            e(Redirect, js_from="/manage", exact=True, to={'pathname': "/manage/create"}),
+                            e(Redirect, js_from="/manage/new", exact=True, to={'pathname': "/manage/new/gallery"}),
+                            e(Redirect, js_from="/manage", exact=True, to={'pathname': "/manage/scan"}),
                           ),
                         basic=True,
                         )

@@ -432,7 +432,7 @@ class GetDatabaseSort(Command):
         return {
             ItemSort.GalleryRandom.value: (func.random(),),
             ItemSort.GalleryTitle.value: (db.Title.name,),
-            ItemSort.GalleryArtist.value: (db.AliasName.name,),
+            ItemSort.GalleryArtist.value: (db.ArtistName.name,),
             ItemSort.GalleryDate.value: (db.Gallery.timestamp,),
             ItemSort.GalleryPublished.value: (db.Gallery.pub_date,),
             ItemSort.GalleryRead.value: (db.Gallery.last_read,),
@@ -504,8 +504,8 @@ class GetDatabaseSort(Command):
     @orderby.default(capture=True)
     def _aliasname_orderby(model_name, capture=tuple(db.model_name(x) for x in (db.Artist, db.Parody))):
         return {
-            ItemSort.ArtistName.value: (db.AliasName.name,),
-            ItemSort.ParodyName.value: (db.AliasName.name,),
+            ItemSort.ArtistName.value: (db.ArtistName.name,),
+            ItemSort.ParodyName.value: (db.ParodyName.name,),
         }
 
     @joins.default(capture=True)

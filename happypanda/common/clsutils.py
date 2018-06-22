@@ -4,6 +4,7 @@ import os
 import tinydb
 import __main__
 
+from tinydb.storages import MemoryStorage
 from collections import UserList
 from collections.abc import MutableMapping
 
@@ -89,16 +90,17 @@ constants.invalidator = CacheInvalidation()
 
 class _Nothing: pass
 
-class InternalDatabase():
-
+class InternalTinyDB:
 
     query = tinydb.Query()
 
     class GetSet:
 
-        def __init__(self, idb, key):
+        def __init__(self, idb, key, default=None):
             self._idb = idb
             self.key = key
+            if default is not None:
+                self.set(default)
 
         def get(self, default=_Nothing):
             return self._idb.get(self.key, default)
@@ -109,25 +111,14 @@ class InternalDatabase():
         def __call__(self, default=_Nothing):
             return self.get(default)
 
-
-    def __init__(self, db_path):
-        self._db = tinydb.TinyDB(db_path)
-
-        self.release_tags = self.GetSet(self, "release_tags")
-        self.latest_release = self.GetSet(self, "latest_release")
-        self.update_info = self.GetSet(self, constants.updater_key)
-        self.network_session = self.GetSet(self, "network_session")
-
-        self.similar_gallery_calc = self.GetSet(self, "similar_gallery_calc")
-        self.similar_gallery_tags = self.GetSet(self, "similar_gallery_tags")
-
-        self.plugins_state = self.GetSet(self, "plugins_state")
+    def __init__(self, db):
+        self._db = db
 
     def get(self, key, default=_Nothing):
         r = self._db.get(self.query.key==key)
         if r is None:
             if default == _Nothing:
-                raise KeyError(f"Key {'self.key'} does not exist")
+                raise KeyError(f"Key {key} does not exist")
             return default
         v = r['value']
         if r['type'] == str(type(tuple)):
@@ -155,8 +146,31 @@ class InternalDatabase():
     def __len__(self):
         return len(self._db)
 
-in_test = hasattr(sys, "_called_from_test")
+class InternalDatabase(InternalTinyDB):
 
+    def __init__(self, db_path):
+        super().__init__(tinydb.TinyDB(db_path))
+
+        self.release_tags = self.GetSet(self, "release_tags")
+        self.latest_release = self.GetSet(self, "latest_release")
+        self.update_info = self.GetSet(self, constants.updater_key)
+        self.network_session = self.GetSet(self, "network_session")
+
+        self.similar_gallery_calc = self.GetSet(self, "similar_gallery_calc")
+        self.similar_gallery_tags = self.GetSet(self, "similar_gallery_tags")
+
+        self.plugins_state = self.GetSet(self, "plugins_state")
+
+class InternalStore(InternalTinyDB):
+
+    def __init__(self):
+        super().__init__(tinydb.TinyDB(storage=MemoryStorage))
+        self.temp_view = InternalTinyDB(self._db.table("temp_view"))
+        self.galleryfs_addition = self.GetSet(self.temp_view, "galleryfs_addition", {})
+
+constants.store = store = InternalStore()
+
+in_test = hasattr(sys, "_called_from_test")
 if in_test:
     constants.internaldb = internaldb = None
 else:

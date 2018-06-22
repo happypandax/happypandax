@@ -9,8 +9,7 @@ import subprocess
 import math
 
 from happypanda.common import utils, hlogger, config, exceptions, constants
-from happypanda.core.command import (UndoCommand, CommandEvent,
-                                     CommandEntry, Command, AsyncCommand, CParam)
+from happypanda.core.command import (CommandEvent, CommandEntry, Command, AsyncCommand, CParam)
 from happypanda.core.commands import database_cmd, io_cmd
 from happypanda.interface import enums
 from happypanda.core import db, async_utils
@@ -21,12 +20,16 @@ def _get_scan_options():
     return {
     }
 
+def _get_gallery_options():
+    return {
+        config.add_to_inbox.name:config.add_to_inbox.value,
+        }
 
 class ScanGallery(AsyncCommand):
     """
     """
 
-    _discover: bool = CommandEntry("discover",
+    _discover: tuple = CommandEntry("discover",
                             CParam("path", str, "path to folder or archive"),
                             CParam("options", dict, "a of options to be applied to the scan"),
                             __doc="""
@@ -40,57 +43,96 @@ class ScanGallery(AsyncCommand):
     @_discover.default()
     def _find_galleries(path, options):
         path = io_cmd.CoreFS(path)
+        archive_formats = io_cmd.CoreFS.archive_formats()
         found_galleries = []
         if path.is_archive or path.inside_archive:
             raise NotImplementedError
         else:
-            contents = os.scandir(path)
+            contents = os.scandir(str(path))
             for p in contents:
-                if p.is_file() and not p.path.endswith(io_cmd.CoreFS.archive_formats()):
+                if p.is_file() and not p.path.endswith(archive_formats):
                     continue
                 found_galleries.append(os.path.abspath(p.path))
 
-        return found_galleries
+        return tuple(found_galleries[:250])
 
-    def main(self, path: typing.Union[str, io_cmd.CoreFS], options: dict={}, auto_add=False) -> typing.List[io_cmd.GalleryFS]:
+    @async_utils.defer
+    def _generate_gallery_fs(self, found_paths):
+        paths_len = len(found_paths)
         galleries = []
-        self.set_progress(text=fs.path)
-        self.set_max_progress(1)
+        sess = constants.db_session()
+        sess.autoflush = False
+        for n, g in enumerate([io_cmd.GalleryFS(x) for x in found_paths], 1):
+            self.next_progress(text=f"[{n}/{paths_len}] {g.path.path}")
+            if g.evaluate():
+                g.load_all()
+                self.set_progress(text=f"[{n}/{paths_len}] {g.path.path} .. OK")
+                galleries.append(g)
+        return galleries
 
+    def main(self, path: typing.Union[str, io_cmd.CoreFS], options: dict={}, view_id: int=None, auto_add: bool=False) -> typing.List[io_cmd.GalleryFS]:
         fs = io_cmd.CoreFS(path)
+        galleries = []
+        self.set_progress(title=fs.path, text=fs.path, type_=enums.ProgressType.GalleryScan)
+        self.set_max_progress(1)
         if fs.is_dir or fs.is_archive:
             scan_options = _get_scan_options()
             scan_options.update(options)
             found_paths = set()
-            if fs.exist:
+            if fs.exists:
                 with self._discover.call(fs.path, scan_options) as plg:
                     for p in plg.all(default=True):
-                        found_paths.add(os.path.normpath(p))
+                        [found_paths.add(os.path.normpath(x)) for x in p]
 
             paths_len = len(found_paths)
             log.d("Found", paths_len, "gallery candidates")
 
             self.set_max_progress(paths_len, add=True)
-        
-            for n, g in [io_cmd.GalleryFS(x) for x in found_paths]:
-                self.next_progress(text=g.path.path)
-                if g.evaluate():
-                    galleries.append(g)
-
+            view_id = view_id if view_id else constants.default_temp_view_id
+            galleries = self._generate_gallery_fs(found_paths).get()
+            [x.add(view_id=view_id) for x in galleries]
             if auto_add:
+                raise NotImplementedError
                 add_cmd = AddGallery()
 
         self.next_progress(text="")
 
         return galleries
 
-class AddGallery(UndoCommand):
+class AddGallery(AsyncCommand):
     """
     Add a gallery
     """
 
-    def __init__(self):
-        super().__init__()
+    @async_utils.defer
+    def _add_to_db(self, galleries, options):
+        with db.safe_session() as sess:
+            sess.autoflush = False
+            for g in galleries:
+                if isinstance(g, io_cmd.GalleryFS):
+                    g.load_all()
+                    g = g.gallery
+                if options.get(config.add_to_inbox.name):
+                    if not any(x.name == db.MetaTag.names.inbox for x in g.metatags):
+                        g.metatags.append(db.MetaTag.as_unique(name=db.MetaTag.names.inbox))
+                g_sess = db.object_session(g)
+                if g_sess and g_sess != sess:
+                    g_sess.expunge_all()
+                sess.add(g)
+                self.next_progress()
+            sess.commit()
+            sess.autoflush = True
+
+    def main(self, galleries: typing.List[typing.Union[db.Gallery, io_cmd.GalleryFS]], options: dict={}) -> bool:
+        assert isinstance(galleries, (list, tuple, db.Gallery, io_cmd.GalleryFS))
+        if not isinstance(galleries, (list, tuple)):
+            galleries = [galleries]
+        self.set_progress(type_=enums.ProgressType.GalleryAdd)
+        self.set_max_progress(len(galleries))
+        gallery_options = _get_gallery_options()
+        gallery_options.update(options)
+        self._add_to_db(galleries, gallery_options).get()
+        return True
 
 
 class SimilarGallery(AsyncCommand):

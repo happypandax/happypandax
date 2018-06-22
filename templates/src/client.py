@@ -12,6 +12,10 @@ __pragma__('noskip')
 
 io = require('socket.io-client')
 
+class TemporaryViewType:
+    #: Contains gallery items to be added
+    GalleryAddition = 1
+
 class CommandState:
 
     #: command has not been put in any service yet
@@ -483,10 +487,11 @@ commandclient = Client("command", namespace="/command")
 
 
 class Command(Base):
-
-    def __init__(self, command_ids, customclient=None):
+    __pragma__("kwargs")
+    def __init__(self, command_ids, customclient=None, daemon=True):
         super().__init__()
         assert command_ids is not None
+        self.daemon = daemon
         self._single_id = None
         if isinstance(command_ids, int):
             self._single_id = command_ids
@@ -502,6 +507,7 @@ class Command(Base):
         self._on_each = False
         self._complete_callback = None
         self._progress_callback = None
+        self._error = False
         self.commandclient = commandclient
 
         for i in self._command_ids:
@@ -509,6 +515,7 @@ class Command(Base):
 
         if customclient:
             self.commandclient = customclient
+    __pragma__("nokwargs")
 
     __pragma__('iconv')
 
@@ -518,7 +525,7 @@ class Command(Base):
                 str_i = str(i)
                 self._states[str_i] = data[str_i]
         elif error:
-            pass
+            self._error = True
         else:
             self.commandclient.call_func("get_command_state", self._check_status, command_ids=self._command_ids)
     __pragma__('noiconv')
@@ -567,7 +574,7 @@ class Command(Base):
         if not self.finished():
 
             def _poll():
-                if state.connected:
+                if state.connected and not self._error:
                     self._fetch_value()
                     if not self.finished():
                         self._check_status()
@@ -598,7 +605,7 @@ class Command(Base):
                 str_i = str(i)
                 self._progress[str_i] = data[str_i]
         elif error:
-            pass
+            self._error = True
         else:
             self.commandclient.call_func("get_command_progress", self._fetch_progress, command_ids=self._command_ids)
     __pragma__('noiconv')
@@ -611,7 +618,9 @@ class Command(Base):
         if not self.finished():
 
             def _poll():
-                if state.connected:
+                if state.connected and not self._error:
+                    if not self.finished():
+                        self._check_status()
                     self._fetch_progress()
                     if self._progress_callback:
                         self._progress_callback(self)
@@ -644,7 +653,7 @@ class Command(Base):
 
             self._getting_value = False
         elif error:
-            pass
+            self._error = True
         else:
             if self.finished(self._on_each) and not self._getting_value and not self._stopped:
                 if not cmd_ids:

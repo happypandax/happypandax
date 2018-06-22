@@ -78,6 +78,9 @@ or_op = or_
 sa_text = text
 desc_expr = desc
 
+expunge_cascade = "save-update, merge, refresh-expire, expunge"
+default_cascade = "save-update, merge, refresh-expire"
+
 
 class OrderingQuery(dynamic.AppenderQuery):
     """
@@ -446,6 +449,9 @@ class UniqueMixin:
 class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
 
+    def __init__(self, name=""):
+        self.name = name
+
     @classmethod
     def unique_hash(cls, name):
         return name
@@ -550,16 +556,24 @@ class UserMixin:
     def user(cls):
         return relationship(
             "User",
-            cascade="save-update, merge, refresh-expire")
+            cascade=expunge_cascade)
 
     @declared_attr
     def user_id(cls):
-        return Column(Integer, ForeignKey('user.id'))
+        return Column(Integer, ForeignKey('user.id'), default=cls.current_user)
 
-    def __init__(self, *args, **kwargs):
-        pass
-        # TODO: set current user here
+    def __init__(self, user=None):
+        self.user = user
 
+    @classmethod
+    def current_user(cls):
+        "Retrieve the current user"
+        ctx = utils.get_context()
+        if ctx:
+            u = ctx.get('user')
+            if u:
+                return u.id
+        return constants.default_user.id
 
 def validate_int(value):
     if isinstance(value, str):
@@ -828,7 +842,7 @@ class Event(Base):
     user = relationship(
         "User",
         back_populates="events",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
 
     def __init__(self, action, item, name=None, user_id=None, timestamp=None):
         assert isinstance(item, Base)
@@ -857,9 +871,9 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
     namespace_id = Column(Integer, ForeignKey('namespace.id'))
     __table_args__ = (UniqueConstraint('tag_id', 'namespace_id'),)
 
-    tag = relationship("Tag", cascade="save-update, merge, refresh-expire, expunge")
+    tag = relationship("Tag", cascade=expunge_cascade)
     namespace = relationship("Namespace",
-                             cascade="save-update, merge, refresh-expire, expunge")
+                             cascade=expunge_cascade)
 
     parent_id = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)
     parent = relationship("NamespaceTags",
@@ -1017,14 +1031,14 @@ class ArtistName(NameMixin, AliasMixin, Base):
     __tablename__ = 'artistname'
 
 @generic_repr
-class Artist(ProfileMixin, UserMixin, Base):
+class Artist(UniqueMixin, ProfileMixin, UserMixin, Base):
     __tablename__ = 'artist'
 
     names = relationship(
         "ArtistName",
         secondary=artist_names,
-        backref=backref("artists", lazy="joined"),
-        cascade="save-update, merge, refresh-expire, expunge",
+        backref=backref("artists", lazy="dynamic"),
+        cascade=expunge_cascade,
         lazy="joined")
 
     info = Column(Text, nullable=False, default='')
@@ -1034,14 +1048,44 @@ class Artist(ProfileMixin, UserMixin, Base):
         secondary=gallery_artists,
         back_populates='artists',
         lazy="dynamic",
-        cascade="save-update, merge, refresh-expire")
+        cascade=default_cascade)
 
     circles = relationship(
         "Circle",
         secondary=artist_circles,
         back_populates='artists',
         lazy="joined",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
+
+
+    def __init__(self, *args, **kwargs):
+        names = kwargs.pop("names", [])
+        name = kwargs.pop("name")
+        if name:
+            names.append(name)
+        super().__init__(*args, **kwargs)
+        for n in names:
+            n = ArtistName.as_unique(name=n)
+            if n not in self.names:
+                self.names.append(n)
+
+    @classmethod
+    def unique_hash(cls, name=None, names=None):
+        n = []
+        if name:
+            n.append(name)
+        if names:
+            n.extend(names)
+        return tuple(n)
+
+    @classmethod
+    def unique_filter(cls, query, name=None, names=None):
+        n = []
+        if name:
+            n.append(name)
+        if names:
+            n.extend(names)
+        return query.join(cls.names).filter(and_op(*(ArtistName.name==x for x in n)))
 
 
 setup_preffered_name(Artist)
@@ -1086,8 +1130,8 @@ class Parody(ProfileMixin, UserMixin, Base):
     names = relationship(
         "ParodyName",
         secondary=parody_names,
-        backref=backref("parodies", lazy="joined"),
-        cascade="save-update, merge, refresh-expire, expunge",
+        backref=backref("parodies", lazy="dynamic"),
+        cascade=expunge_cascade,
         lazy="joined")
 
     galleries = relationship(
@@ -1095,6 +1139,36 @@ class Parody(ProfileMixin, UserMixin, Base):
         secondary=gallery_parodies,
         back_populates='parodies',
         lazy="dynamic")
+
+    def __init__(self, *args, **kwargs):
+        names = kwargs.pop("names", [])
+        name = kwargs.pop("name")
+        if name:
+            names.append(name)
+        super().__init__(*args, **kwargs)
+        for n in names:
+            n = ParodyName.as_unique(name=n)
+            if n not in self.names:
+                self.names.append(n)
+
+    @classmethod
+    def unique_hash(cls, name=None, names=None):
+        n = []
+        if name:
+            n.append(name)
+        if names:
+            n.extend(names)
+        return tuple(n)
+
+    @classmethod
+    def unique_filter(cls, query, name=None, names=None):
+        n = []
+        if name:
+            n.append(name)
+        if names:
+            n.extend(names)
+        return query.join(cls.names).filter(and_op(*(ParodyName.name==x for x in n)))
+
 
 
 setup_preffered_name(Parody)
@@ -1156,7 +1230,7 @@ class Grouping(ProfileMixin, NameMixin, Base):
     status = relationship(
         "Status",
         back_populates="groupings",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
 
 
 profile_association(Grouping, "groupings")
@@ -1218,7 +1292,7 @@ class Collection(ProfileMixin, UpdatedMixin, NameMixin, UserMixin, Base):
 
     category = relationship(
         "Category",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
 
     galleries = relationship(
         "Gallery",
@@ -1226,7 +1300,7 @@ class Collection(ProfileMixin, UpdatedMixin, NameMixin, UserMixin, Base):
         order_by=desc_expr(gallery_collections.c.timestamp),
         back_populates="collections",
         lazy="dynamic",
-        cascade="save-update, merge, refresh-expire")
+        cascade=default_cascade)
 
 
 profile_association(Collection, "collections")
@@ -1253,27 +1327,27 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     grouping = relationship(
         "Grouping",
         back_populates="galleries",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
     collections = relationship(
         "Collection",
         secondary=gallery_collections,
         back_populates="galleries",
-        cascade="save-update, merge, refresh-expire",
+        cascade=expunge_cascade,
         lazy="dynamic")
     language = relationship(
         "Language",
         back_populates="galleries",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
     category = relationship(
         "Category",
         back_populates="galleries",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
     artists = relationship(
         "Artist",
         secondary=gallery_artists,
         back_populates='galleries',
         lazy="joined",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
     filters = relationship(
         "GalleryFilter",
         secondary=gallery_filters,
@@ -1296,7 +1370,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         secondary=gallery_parodies,
         back_populates='galleries',
         lazy="joined",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
 
     def read(self, user_id=None, datetime=None):
         "Creates a read event for user"
@@ -1408,7 +1482,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     in_archive = Column(Boolean, default=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
-    hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
+    hash = relationship("Hash", cascade=expunge_cascade)
     gallery = relationship("Gallery", back_populates="pages")
 
     @property
@@ -1457,7 +1531,7 @@ class Title(AliasMixin, UserMixin, Base):
 
     language = relationship(
         "Language",
-        cascade="save-update, merge, refresh-expire")
+        cascade=expunge_cascade)
     gallery = relationship("Gallery", back_populates="titles")
 
     def __init__(self, **kwargs):
@@ -1757,7 +1831,6 @@ def check_db_version(sess):
         sess.add(life)
         life.version = constants.version_db_str
         life.times_opened = 0
-        sess.commit()
 
     db_key = "db_usage"
 
@@ -1769,11 +1842,12 @@ def check_db_version(sess):
         constants.invalidator.similar_gallery = True
     idb[db_key] = life.times_opened
 
+    log.d("Using DB Version: {}".format(life.version))
+
     sess.add(Event(Event.Action.app_start, life))
     init_defaults(sess, life.times_opened==1)
-    sess.commit()
     log.d("Succesfully initiated database")
-    log.d("Using DB Version: {}".format(life.version))
+    sess.commit()
     return True
 
 
@@ -1784,9 +1858,10 @@ def _get_session(sess):
 
 def _get_current():
     if not utils.in_cpubound_thread() and constants.server_started:
-        return gevent.getcurrent()
+        l_obj = gevent.getcurrent()
     else:
-        return threading.local()
+        l_obj = threading.current_thread()
+    return l_obj
 
 
 def make_db_url(db_name=None):
@@ -1826,7 +1901,8 @@ def init(**kwargs):
         if not constants.db_engine:
             if config.dialect.value == constants.Dialect.SQLITE:
                 constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                                    connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
+                                                    connect_args={'timeout': config.sqlite_database_timeout.value,
+                                                                  'check_same_thread': False})
             else:
                 db_url = make_db_url()
                 if not database_exists(db_url):
@@ -1859,7 +1935,7 @@ def add_bulk(session, objects, amount=100, flush=False, bulk_save=False, return_
         left = objects[:amount]
 
 
-def table_attribs(model, id=False, descriptors=False):
+def table_attribs(model, id=False, descriptors=False, raise_err=True):
     """Returns a dict of table column names and their SQLAlchemy value objects
     Params:
         id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
@@ -1871,6 +1947,9 @@ def table_attribs(model, id=False, descriptors=False):
     obj = model
     in_obj = inspect(model)
     if isinstance(in_obj, state.InstanceState):
+        sess = object_session(model)
+        if sess:
+            sess.autoflush = False
         model = type(model)
         attr = list(in_obj.attrs)
 
@@ -1880,7 +1959,14 @@ def table_attribs(model, id=False, descriptors=False):
 
         for x in attr:
             if x.key not in exclude:
-                d[x.key] = x.value
+                try:
+                    d[x.key] = x.value
+                except exc.DetachedInstanceError:
+                    if raise_err:
+                        raise
+                    d[x.key] = None
+        if sess:
+            sess.autoflush = True
     else:
         for name in model.__dict__:
             value = model.__dict__[name]
@@ -1894,6 +1980,10 @@ def table_attribs(model, id=False, descriptors=False):
 
     return d
 
+def is_detached(obj):
+    "Check if obj was expunged from a session"
+    if is_instanced(obj):
+        return inspect(obj).detached
 
 def is_instanced(obj):
     "Check if db object is an instanced object"
@@ -1950,15 +2040,33 @@ def model_name(model):
     return model.__name__
 
 
-def ensure_in_session(item):
+def ensure_in_session(item, session=None):
     if not object_session(item):
         try:
-            constants.db_session().add(item)
+            session = session or constants.db_session()
+            session.add(item)
             return item
         except exc.InvalidRequestError:
             return constants.db_session().merge(item)
     return item
 
+def freeze_object(obj):
+    if is_instanced(obj):
+        sess = object_session(obj)
+        if sess:
+            with sess.no_autoflush:
+                for t, v in table_attribs(obj).items():
+                    if is_instanced(v):
+                        freeze_object(v)
+                    elif is_list(v):
+                        for x in v:
+                            freeze_object(v)
+                try:
+                    sess.refresh(obj)
+                except exc.InvalidRequestError:
+                    pass
+                sess.expunge(obj)
+    return obj
 
 @contextmanager
 def safe_session(sess=None):

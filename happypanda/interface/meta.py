@@ -37,7 +37,7 @@ def get_changelog():
     """
 
     ch = {'version': '', 'changes': ''}
-    lr = constants.internaldb.latest_release.get()
+    lr = constants.internaldb.latest_release.get(None)
     if lr:
         ch['changes'] = lr.get("changes", "")
         ch['version'] = lr.get("tag", "")
@@ -273,7 +273,7 @@ def get_command_state(command_ids: list):
         .. code-block:: guess
 
             {
-                command_id : state
+                command_id : :py:class:`.CommandState`
             }
     """
 
@@ -310,7 +310,8 @@ def get_command_progress(command_ids: list = None):
                                 'percent': float,
                                 'type': :py:class:`.ProgressType`,
                                 'text': str,
-                                'timestamp':int
+                                'timestamp':int,
+                                'state': :py:class:`.CommandState`
                                 }
             }
 

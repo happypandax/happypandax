@@ -123,6 +123,8 @@ def sidebar_nav_render():
                         closeIcon=True,
                         onClose=x.on_modal_close,
                         onOpen=x.on_modal_open,
+                        centered=False,
+                        className="min-400-h"
                         )
 
         container.append(menu_el)

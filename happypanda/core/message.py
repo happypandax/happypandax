@@ -202,13 +202,21 @@ class DatabaseMessage(CoreMessage):
         assert isinstance(db_item, db.Base)
         assert db.is_instanced(db_item), "must be instanced database object"
         self.item = db_item
+        self._recursive_depth = 2
+        self._indirect = False
+        self._msg_path = []
+        self._sess = None
+        self._detached = db.is_detached(db_item)
         DatabaseMessage._clsmembers = {
             x: globals()[x] for x in globals() if inspect.isclass(
                 globals()[x])}
 
     def _before_data(self):
         self._check_link()
-        db.ensure_in_session(self.item)
+        if not self._detached and self.item and self.item.id:
+            db.ensure_in_session(self.item)
+        self._sess = db.object_session(self.item)
+        self._msg_path.append(self.__class__.__name__)
 
     def data(self, load_values=False, load_collections=False):
         """
@@ -217,12 +225,17 @@ class DatabaseMessage(CoreMessage):
             load_collections -- Queries database to fetch all items in a collection
         """
         self._before_data()
-        gattribs = db.table_attribs(self.item, not load_values, descriptors=True)
-        return {
+        if self._sess:
+            self._sess.autoflush = False
+        gattribs = db.table_attribs(self.item, not load_values, descriptors=True, raise_err=not self._detached)
+        r = {
             x: self._unpack(
                 x,
                 gattribs[x],
                 load_collections) for x in gattribs}
+        if self._sess:
+            self._sess.autoflush = True
+        return r
 
     def json_friendly(
             self,
@@ -234,8 +247,6 @@ class DatabaseMessage(CoreMessage):
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
-        if self.item:
-            db.ensure_in_session(self.item)
         d = self.data(load_values, load_collections)
         assert isinstance(d, dict), "self.data() must return a dict!"
         if self._error:
@@ -287,6 +298,10 @@ class DatabaseMessage(CoreMessage):
         if db.is_instanced(attrib):
             msg_obj = None
 
+            if self.__class__.__name__ in self._msg_path:
+                if self._recursive_depth <= len([x for x in self._msg_path if x==self.__class__.__name__]):
+                    return msg_obj
+
             exclude = (db.NameMixin.__name__,)
 
             for cls_name, cls_obj in self._db_clsmembers:
@@ -304,13 +319,16 @@ class DatabaseMessage(CoreMessage):
                         "Message encapsulation for this database object does not exist ({})".format(
                             type(attrib)))
 
+            msg_obj._indirect = True
+            msg_obj._detached = self._detached
+            msg_obj._msg_path = self._msg_path.copy()
             return msg_obj.data() if msg_obj else None
 
         elif db.is_list(attrib) or isinstance(attrib, list):
             return [self._unpack(name, x, load_collections) for x in attrib]
 
         elif db.is_query(attrib):
-            if load_collections:
+            if load_collections and not self._detached:
                 return [self._unpack(name, x, load_collections)
                         for x in attrib.all()]
             else:
@@ -593,3 +611,24 @@ class Plugin(CoreMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+
+class GalleryFS(CoreMessage):
+    ""
+
+    def __init__(self, gfs):
+        super().__init__('galleryfs')
+        assert isinstance(gfs, io_cmd.GalleryFS)
+        self._gfs = gfs
+
+    def data(self):
+        g = Gallery(self._gfs.gallery).data(load_collections=True, load_values=True)
+        d = {'sources': self._gfs.get_sources(),
+             'page_count': len(self._gfs.pages),
+             'language': g['language'],
+             'titles': g['titles'],
+             'artists': g['artists'],
+             'collections': g['collections']}
+        return d
+
+
+

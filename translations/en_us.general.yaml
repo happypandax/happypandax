@@ -13,6 +13,8 @@ db-status-completed: Completed
 db_status-unknown: Unknown
 db_status-unreleased: Unreleased
 
+db-category-convention: Convention
+
 # Sort
 sort-idx-1: Random
 sort-idx-2: Title

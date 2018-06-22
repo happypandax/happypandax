@@ -898,7 +898,7 @@ def main(args=sys.argv[1:]):
         db.initEvents(sess)
         s = sess()
         db.init_defaults(s)
-
+        s.autoflush = False
         print("Converting to HappyPanda X Gallery.. ")
 
         gallery_mixmap = {}
