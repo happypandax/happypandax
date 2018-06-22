@@ -1654,11 +1654,11 @@ def initEvents(sess):
     many_to_many_deletion(ArtistName, custom_filter=lambda: and_op(
         not ArtistName.alias_for,
         ~ArtistName.artists.any(),
-        ), found_attrs=lambda: [ArtistName.artists])
+            ), found_attrs=lambda: [ArtistName.artists])
     many_to_many_deletion(ParodyName, custom_filter=lambda: and_op(
         not ParodyName.alias_for,
         ~ParodyName.parodies.any(),
-        ), found_attrs=lambda: [ParodyName.parodies])
+            ), found_attrs=lambda: [ParodyName.parodies])
     # TODO: clean up
     many_to_many_deletion(Profile, custom_filter=lambda: and_op(
         ~Profile.artists.any(),
