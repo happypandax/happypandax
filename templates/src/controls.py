@@ -1,4 +1,4 @@
-#from src.react_utils import (h,
+# from src.react_utils import (h,
 #                             e,
 #                             createReactClass)
 #from src.ui import ui
@@ -18,11 +18,11 @@
 #__pragma__('noskip')
 
 
-#def titlecontrol_render():
+# def titlecontrol_render():
 #    return e()
 
 
-#TitleControl = CreateGallery = createReactClass({
+# TitleControl = CreateGallery = createReactClass({
 #    'displayName': 'TitleControl',
 
 #    'getInitialState': lambda: {
