@@ -332,7 +332,7 @@ class ArtistNameRelationship(unittest.TestCase):
         self.gallery = Gallery()
         self.artist = Artist()
         self.gallery.artists.append(self.artist)
-        self.names = [AliasName(name='name'+str(x)) for x in range(10)]
+        self.names = [ArtistName(name='name'+str(x)) for x in range(10)]
         root = self.names[0]
         for n in self.names[1:]:
             n.alias_for = root
@@ -342,26 +342,26 @@ class ArtistNameRelationship(unittest.TestCase):
 
         self.assertEqual(len(self.artist.names), 1)
         self.assertEqual(len(root.aliases), 9)
-        self.assertEqual(self.session.query(AliasName).count(), 10)
+        self.assertEqual(self.session.query(ArtistName).count(), 10)
 
     def test_delete(self):
         self.session.delete(self.names[1])
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 1)
-        self.assertEqual(self.session.query(AliasName).count(), 9)
+        self.assertEqual(self.session.query(ArtistName).count(), 9)
         self.assertEqual(self.artist.names[0], self.names[0])
 
     def test_delete2(self):
         self.session.delete(self.names[0])
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 1)
-        self.assertEqual(self.session.query(AliasName).count(), 0)
+        self.assertEqual(self.session.query(ArtistName).count(), 0)
 
     def test_no_orphans(self):
         self.session.delete(self.artist)
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 0)
-        self.assertEqual(self.session.query(AliasName).count(), 0)
+        self.assertEqual(self.session.query(ArtistName).count(), 0)
 
     def tearDown(self):
         self.session.close()
@@ -407,7 +407,7 @@ class ParodyNameRelationship(unittest.TestCase):
         self.gallery = Gallery()
         self.parody = Parody()
         self.gallery.parodies.append(self.parody)
-        self.names = [AliasName(name='name'+str(x)) for x in range(10)]
+        self.names = [ParodyName(name='name'+str(x)) for x in range(10)]
         root = self.names[0]
         for n in self.names[1:]:
             n.alias_for = root
@@ -417,26 +417,26 @@ class ParodyNameRelationship(unittest.TestCase):
 
         self.assertEqual(len(self.parody.names), 1)
         self.assertEqual(len(root.aliases), 9)
-        self.assertEqual(self.session.query(AliasName).count(), 10)
+        self.assertEqual(self.session.query(ParodyName).count(), 10)
 
     def test_delete(self):
         self.session.delete(self.names[1])
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 1)
-        self.assertEqual(self.session.query(AliasName).count(), 9)
+        self.assertEqual(self.session.query(ParodyName).count(), 9)
         self.assertEqual(self.parody.names[0], self.names[0])
 
     def test_delete2(self):
         self.session.delete(self.names[0])
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 1)
-        self.assertEqual(self.session.query(AliasName).count(), 0)
+        self.assertEqual(self.session.query(ParodyName).count(), 0)
 
     def test_no_orphans(self):
         self.session.delete(self.parody)
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 0)
-        self.assertEqual(self.session.query(AliasName).count(), 0)
+        self.assertEqual(self.session.query(ParodyName).count(), 0)
 
     def tearDown(self):
         self.session.close()
@@ -667,7 +667,7 @@ class StatusRelationship(unittest.TestCase):
         self.session.add_all(self.galleryns)
         self.session.add(self.status)
         self.session.commit()
-        self.assertEqual(self.session.query(Status).count(), 1)
+        self.assertEqual(self.session.query(Status).count(), 1+len(Status.names))
         self.assertEqual(self.session.query(Grouping).count(), 2)
         self.assertEqual(self.session.query(Gallery).count(), 10)
         self.assertEqual(self.status, self.galleryns[0].status)
@@ -685,14 +685,14 @@ class StatusRelationship(unittest.TestCase):
         self.session.commit()
 
         self.assertEqual(self.session.query(Grouping).count(), 1)
-        self.assertEqual(self.session.query(Status).count(), 1)
+        self.assertEqual(self.session.query(Status).count(), 1+len(Status.names))
 
     def test_orphans(self):
         self.session.query(Grouping).delete()
         self.session.commit()
 
         self.assertEqual(self.session.query(Grouping).count(), 0)
-        self.assertEqual(self.session.query(Status).count(), 1)
+        self.assertEqual(self.session.query(Status).count(), 1+len(Status.names))
 
     def tearDown(self):
         self.session.close()

@@ -244,11 +244,11 @@ def register_release(filepath, silent=True, restart=True):
             app_path = constants.dir_temp
 
         db[constants.updater_key] = {'from': extracted_content,
-                                        'to': app_path,
-                                        'restart': restart,
-                                        'app': sys.argv[0],
-                                        'args': sys.argv[1:],
-                                        'state': constants.UpdateState.Registered.value}
+                                     'to': app_path,
+                                     'restart': restart,
+                                     'app': sys.argv[0],
+                                     'args': sys.argv[1:],
+                                     'state': constants.UpdateState.Registered.value}
         up_name = constants.updater_name
         if constants.is_win:
             up_name += '.exe'

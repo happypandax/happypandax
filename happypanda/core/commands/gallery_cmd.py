@@ -16,26 +16,29 @@ from happypanda.core import db, async_utils
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
+
 def _get_scan_options():
     return {
     }
 
+
 def _get_gallery_options():
     return {
-        config.add_to_inbox.name:config.add_to_inbox.value,
-        }
+        config.add_to_inbox.name: config.add_to_inbox.value,
+    }
+
 
 class ScanGallery(AsyncCommand):
     """
     """
 
     _discover: tuple = CommandEntry("discover",
-                            CParam("path", str, "path to folder or archive"),
-                            CParam("options", dict, "a of options to be applied to the scan"),
-                            __doc="""
+                                    CParam("path", str, "path to folder or archive"),
+                                    CParam("options", dict, "a of options to be applied to the scan"),
+                                    __doc="""
                             Called to find any valid galleries in the given path
                             """,
-                            __doc_return="""
+                                    __doc_return="""
                             a tuple of absolute paths or tuples to valid galleries found in the given directory/archive,
                             related galleries are put in their own tuple
                             """)
@@ -70,7 +73,8 @@ class ScanGallery(AsyncCommand):
                 galleries.append(g)
         return galleries
 
-    def main(self, path: typing.Union[str, io_cmd.CoreFS], options: dict={}, view_id: int=None, auto_add: bool=False) -> typing.List[io_cmd.GalleryFS]:
+    def main(self, path: typing.Union[str, io_cmd.CoreFS], options: dict={},
+             view_id: int=None, auto_add: bool=False) -> typing.List[io_cmd.GalleryFS]:
         fs = io_cmd.CoreFS(path)
         galleries = []
         self.set_progress(title=fs.path, text=fs.path, type_=enums.ProgressType.GalleryScan)
@@ -93,11 +97,12 @@ class ScanGallery(AsyncCommand):
             [x.add(view_id=view_id) for x in galleries]
             if auto_add:
                 raise NotImplementedError
-                add_cmd = AddGallery()
+                #add_cmd = AddGallery()
 
         self.next_progress(text="")
 
         return galleries
+
 
 class AddGallery(AsyncCommand):
     """
@@ -363,4 +368,3 @@ class OpenGallery(Command):
             raise NotImplementedError
 
         return parent, child
-

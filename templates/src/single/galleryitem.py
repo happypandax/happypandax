@@ -5,7 +5,6 @@ from src.react_utils import (h,
 from src.ui import ui
 from src.client import (ItemType, ImageSize, client)
 from src.single import thumbitem
-from src import utils
 from src.propsviews import gallerypropsview
 from src.i18n import tr
 from org.transcrypt.stubs.browser import __pragma__
@@ -67,7 +66,7 @@ def gallery_render():
         for u in data.urls:
             urls.append(u.js_name)
 
-    gallery_url = '/item/gallery/'+str(item_id)
+    gallery_url = '/item/gallery/' + str(item_id)
 
     add_cls = this.props.className or ""
     link = True
@@ -107,7 +106,8 @@ def gallery_render():
                                    })
 
     menu_options = []
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"), icon="envelope open outline", **read_button_args))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"),
+                          icon="envelope open outline", **read_button_args))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline"))
     if inbox:
         menu_options.append(e(ui.List.Item, content=tr(

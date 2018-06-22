@@ -3,9 +3,9 @@ import sys  # noqa: E402
 import rollbar  # noqa: E402
 import getpass  # noqa: E402
 import pdb
-import faulthandler
+#import faulthandler
 #f = open("fault.log", "w")
-#faulthandler.enable(f)
+# faulthandler.enable(f)
 #faulthandler.dump_traceback_later(120, repeat=True, file=f)
 
 # OS X: fix the working directory when running a mac app
@@ -95,6 +95,7 @@ def cmd_commands(args):
             print("{}\t{}".format(u.name, u.role.value))
         return True
 
+
 def init_commands(args):
     if not args.only_web:
         upd_int = config.check_release_interval.value or config.check_release_interval.default
@@ -105,11 +106,13 @@ def init_commands(args):
 
         log.i("Initiating background thumbnail", io_cmd.CacheCleaner.__name__)
         thumb_id = services.TaskService.generic.add_command(io_cmd.CacheCleaner())
-        constants.task_command.thumbnail_cleaner = services.TaskService.generic.start_command(thumb_id, constants.dir_thumbs, size=config.auto_thumb_clean_size.value, silent=True)
+        constants.task_command.thumbnail_cleaner = services.TaskService.generic.start_command(
+            thumb_id, constants.dir_thumbs, size=config.auto_thumb_clean_size.value, silent=True)
 
         log.i("Initiating background temp", io_cmd.CacheCleaner.__name__)
         temp_id = services.TaskService.generic.add_command(io_cmd.CacheCleaner())
-        constants.task_command.temp_cleaner = services.TaskService.generic.start_command(temp_id, constants.dir_temp, size=config.auto_temp_clean_size.value, silent=True)
+        constants.task_command.temp_cleaner = services.TaskService.generic.start_command(
+            temp_id, constants.dir_temp, size=config.auto_temp_clean_size.value, silent=True)
 
 
 def start(argv=None, db_kwargs={}):
@@ -130,7 +133,7 @@ def start(argv=None, db_kwargs={}):
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
         else:
-            pdb.set_trace = lambda: None # disable pdb
+            pdb.set_trace = lambda: None  # disable pdb
         if config.debug.value:
             log.i("DEBUG MODE ENABLED", stdout=True)
         log.i(utils.os_info())
@@ -192,7 +195,6 @@ def start(argv=None, db_kwargs={}):
                 meta_cmd.RestartApplication.restart.subscribe(hp_server.restart)
                 meta_cmd.UpdateApplication.update.subscribe(hp_server.update)
                 e_code = hp_server.run(interactive=args.interact)
-
 
         else:
             if db_inited:

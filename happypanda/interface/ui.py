@@ -250,6 +250,7 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
                 raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
     return message.Identity("translation", trs)
 
+
 def get_translations(locale: str = None):
     """
     Get all translations for given locale
@@ -328,13 +329,14 @@ def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, local
             })
     return sort_indexes
 
+
 def temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.GalleryAddition,
-                    view_id: int = None,
-                    limit: int = 100,
-                    offset: int = 0,
-                    #sort_by: enums.ItemSort = None,
-                    #sort_desc: bool=False,
-                  ):
+                   view_id: int = None,
+                   limit: int = 100,
+                   offset: int = 0,
+                   # sort_by: enums.ItemSort = None,
+                   # sort_desc: bool=False,
+                   ):
     """
 
     Args:
@@ -354,7 +356,7 @@ def temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.
             }
     """
     view_type = enums.TemporaryViewType.get(view_type)
-    d = {'items':[], 'count':0}
+    d = {'items': [], 'count': 0}
     msg_obj = None
 
     sess = constants.db_session()
@@ -369,12 +371,13 @@ def temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.
             c = list(itertools.chain(*c.values()))
 
     d['count'] = len(c)
-    d['items'] = [msg_obj(x).json_friendly(False) if msg_obj else x for x in c[offset:offset+limit]]
+    d['items'] = [msg_obj(x).json_friendly(False) if msg_obj else x for x in c[offset:offset + limit]]
 
     return message.Identity('items', d)
 
+
 def submit_temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.GalleryAddition,
-                            view_id: int = None,):
+                          view_id: int = None,):
     """
     Args:
         view_type: type of temporary view

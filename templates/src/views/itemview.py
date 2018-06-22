@@ -569,9 +569,10 @@ def item_view_render():
                                        )
 
     el_items = [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
-              for n, x in enumerate(items)]
+                for n, x in enumerate(items)]
     if len(el_items) == 0 and count != 0:
-        el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x) for x in range(min(limit, 30))]
+        el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x)
+                    for x in range(min(limit, 30))]
 
     return e(ItemViewBase,
              el_items,

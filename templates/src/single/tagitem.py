@@ -44,7 +44,7 @@ def taglbl_render():
                      size=this.props.size,
                      ),
            hoverable=True,
-            hideOnScroll=True,
+           hideOnScroll=True,
            on="click",
            position="top center",
            wide="very",

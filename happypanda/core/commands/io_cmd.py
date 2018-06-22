@@ -16,17 +16,14 @@ import subprocess
 import imghdr
 import errno
 import typing
-import io
 import regex
 import langcodes
-import itertools
 
 from io import BytesIO
 from PIL import Image
-from zipfile import ZipFile, ZipExtFile
+from zipfile import ZipFile
 from rarfile import RarFile
 from tarfile import TarFile
-from contextlib import contextmanager
 from gevent import fileobject
 from natsort import natsorted
 from ordered_set import OrderedSet
@@ -38,6 +35,7 @@ from happypanda.core.services import ImageService
 from happypanda.core import db
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
+
 
 @attr.s
 class ImageProperties:
@@ -273,7 +271,6 @@ class CoreFS(CoreCommand):
 
         def __getattr__(self, key):
             return getattr(self.fp, key)
-
 
     def __init__(self, path: str=pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
@@ -901,30 +898,31 @@ class GalleryFS(CoreCommand):
     """
 
     _evaluate: bool = CommandEntry("evaluate",
-                                CParam("path", str, "path to gallery"),
-                                __doc="""
+                                   CParam("path", str, "path to gallery"),
+                                   __doc="""
                                 Called to evaluate if path is a valid gallery or not
                                 """,
-                                __doc_return="""
+                                   __doc_return="""
                                 a bool indicating whether path is pointing to a valid gallery or not
                                 """)
 
     _filter_pages: tuple = CommandEntry("filter_pages",
-                                CParam("pages", tuple, "a tuple of pages"),
-                                __doc="""
+                                        CParam("pages", tuple, "a tuple of pages"),
+                                        __doc="""
                                 Called to filter out files not to be regarded as pages
                                 """,
-                                __doc_return="""
+                                        __doc_return="""
                                 a tuple of strings of all the pages that should NOT be included in the gallery
                                 """)
 
     _parse_metadata_file: bool = CommandEntry("parse_metadata_file",
-                                CParam("path", str, "path to the gallery source, note that this can also be inside of an archive"),
-                                CParam("gallery", db.Gallery, "gallery db item"),
-                                __doc="""
+                                              CParam(
+                                                  "path", str, "path to the gallery source, note that this can also be inside of an archive"),
+                                              CParam("gallery", db.Gallery, "gallery db item"),
+                                              __doc="""
                                 Called to read and apply metadata from an identified metadata file accompanying a gallery
                                 """,
-                                __doc_return="""
+                                              __doc_return="""
                                 a bool indicating whether a file was identified and data was applied
                                 """)
 
@@ -938,7 +936,7 @@ class GalleryFS(CoreCommand):
             self.gallery = db.Gallery()
             self.path = CoreFS(path_or_dbitem)
 
-        self.pages = {} # number : db.Page
+        self.pages = {}  # number : db.Page
         self._sources = None
         self._evaluated = None
         self._loaded_metadata = False
@@ -961,9 +959,9 @@ class GalleryFS(CoreCommand):
                 self.gallery = db.ensure_in_session(self.gallery)
             for p in sources:
                 with self._parse_metadata_file.call(p, self.gallery) as plg:
-                    from_file_data = any(plg.all(default=True)) # TODO: stop at first handler that returns true
+                    from_file_data = any(plg.all(default=True))  # TODO: stop at first handler that returns true
 
-                if not from_file_data: # TODO: only set missing data
+                if not from_file_data:  # TODO: only set missing data
                     n = NameParser(os.path.split(p)[1])
                     langs = []
                     for l in n.extract_language():
@@ -1024,7 +1022,7 @@ class GalleryFS(CoreCommand):
                     self.pages.clear()
                     if self.gallery.id:
                         self.gallery = db.ensure_in_session(self.gallery)
-                        self.gallery.pages.delete() # Can't call delete() when order_by has been applied
+                        self.gallery.pages.delete()  # Can't call delete() when order_by has been applied
 
                 n = 0
                 for s in sorted(self.get_sources()):
@@ -1129,54 +1127,59 @@ class NameParser(CoreCommand):
     """
 
     _extract_title: tuple = CommandEntry("extract_title",
-                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
-                                __doc="""
+                                         CParam(
+                                             "name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                         __doc="""
                                 Called to extract the title from ``name``
                                 """,
-                                __doc_return="""
+                                         __doc_return="""
                                 a tuple of strings of all the extracted titles
                                 """)
 
     _extract_artist: tuple = CommandEntry("extract_artist",
-                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
-                                __doc="""
+                                          CParam(
+                                              "name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                          __doc="""
                                 Called to extract the artist from ``name``
                                 """,
-                                __doc_return="""
+                                          __doc_return="""
                                 a tuple of strings of all the extracted artists
                                 """)
 
     _extract_collection: tuple = CommandEntry("extract_collection",
-                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
-                                __doc="""
+                                              CParam(
+                                                  "name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                              __doc="""
                                 Called to extract the convention/magazine from ``name``
                                 """,
-                                __doc_return="""
+                                              __doc_return="""
                                 a tuple of (collection_name, category_name) of all the extracted convention/magazines
                                 """)
 
     _extract_language: tuple = CommandEntry("extract_language",
-                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
-                                __doc="""
+                                            CParam(
+                                                "name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                            __doc="""
                                 Called to extract the language from ``name``
                                 """,
-                                __doc_return="""
+                                            __doc_return="""
                                 a tuple of strings of all the extracted languages
                                 """)
 
     _extract_circle: tuple = CommandEntry("extract_circle",
-                                CParam("name", str, "gallery name, usually a gallery's filename but with its extension removed"),
-                                __doc="""
+                                          CParam(
+                                              "name", str, "gallery name, usually a gallery's filename but with its extension removed"),
+                                          __doc="""
                                 Called to extract the circle from ``name``
                                 """,
-                                __doc_return="""
+                                          __doc_return="""
                                 a tuple of strings of all the extracted circles
                                 """)
 
     @_extract_title.default()
     def _extract_gallery_title(name):
-        particles = list(regex.findall(r'((\[|{) *[^\]]+( +\S+)* *(\]|}))', name)) # everyting in brackets
-        particles.extend(list(regex.findall(r"(\(C\d+\))", name, regex.IGNORECASE | regex.UNICODE))) # Convention name
+        particles = list(regex.findall(r'((\[|{) *[^\]]+( +\S+)* *(\]|}))', name))  # everyting in brackets
+        particles.extend(list(regex.findall(r"(\(C\d+\))", name, regex.IGNORECASE | regex.UNICODE)))  # Convention name
 
         for p in utils.regex_first_group(particles):
             name = name.replace(p, '')
@@ -1186,7 +1189,8 @@ class NameParser(CoreCommand):
     @_extract_language.default()
     def _extract_gallery_language(name):
         langs = []
-        particles = list(regex.findall(r'((?<=(\[|{|\()) *(\S+)* *(?=(\]|}|\))))', name)) # everyting in brackets and colons; only singlewords
+        # everyting in brackets and colons; only singlewords
+        particles = list(regex.findall(r'((?<=(\[|{|\()) *(\S+)* *(?=(\]|}|\))))', name))
         for p in reversed(utils.regex_first_group(particles)):
             try:
                 l = langcodes.find(p)
@@ -1203,7 +1207,7 @@ class NameParser(CoreCommand):
             name = name.replace(p, '')
         name = name.strip()
         r = regex.compile(r'((?<=(\[|{|\()) *[^\]]+( +\S+)* *(?=(\]|}|\))))')
-        particles = utils.regex_first_group(r.findall(name)) # everyting in brackets and colons
+        particles = utils.regex_first_group(r.findall(name))  # everyting in brackets and colons
         if particles:
             particles = particles[0]
 
@@ -1221,13 +1225,13 @@ class NameParser(CoreCommand):
             name = name.replace(p, '')
         name = name.strip()
         r = regex.compile(r'((?<=(\[|{|\()) *[^\]]+( +\S+)* *(?=(\]|}|\))))')
-        particles = utils.regex_first_group(r.findall(name)) # everyting in brackets and colons
+        particles = utils.regex_first_group(r.findall(name))  # everyting in brackets and colons
         if particles:
             particles = particles[0]
-            m = utils.regex_first_group(r.findall(particles)) # circle (artist)
+            m = utils.regex_first_group(r.findall(particles))  # circle (artist)
             if m:
                 for x in m:
-                    ex = ('(' + x + ')') 
+                    ex = ('(' + x + ')')
                     if ex in particles:
                         particles = particles.replace(ex, '')
                     else:
@@ -1277,10 +1281,10 @@ class NameParser(CoreCommand):
 
         fs = CoreFS(name)
         if fs.ext:
-            self.name = name[:-len(fs.ext)] # remove ext
+            self.name = name[:-len(fs.ext)]  # remove ext
         else:
             self.name = name
-        self.name =  utils.remove_multiple_spaces(self.name)
+        self.name = utils.remove_multiple_spaces(self.name)
 
     def extract_title(self) -> typing.Tuple[str]:
         if self.titles:
@@ -1343,6 +1347,7 @@ class NameParser(CoreCommand):
             self.languages = tuple(x for x in ts if x)
         return self.languages
 
+
 class CacheCleaner(Command):
     """
     Clean the provided folder
@@ -1369,8 +1374,8 @@ class CacheCleaner(Command):
     def _clean_contents(self, path, silent, size):
 
         # delete old files first
-        files =  list(sorted(os.scandir(path), key=lambda x: x.stat().st_ctime))
-        for f in files[:int(len(files)/2)]:
+        files = list(sorted(os.scandir(path), key=lambda x: x.stat().st_ctime))
+        for f in files[:int(len(files) / 2)]:
             try:
                 if f.is_file():
                     os.unlink(f.path)
@@ -1383,10 +1388,9 @@ class CacheCleaner(Command):
         while float(self._calculate_size(path)) > size:
             self._clean_contents(self, path, silent, size)
 
-
     def main(self, cache_path: typing.Union[CoreFS, str], size: float=0.0, silent: bool=False) -> bool:
         p = CoreFS(cache_path)
-        size = float(size)*1048576 # 1048576 bytes = 1 mb
+        size = float(size) * 1048576  # 1048576 bytes = 1 mb
         if p.exists and float(self._calculate_size(p.path)) > size:
             self._clean_contents(p.path, silent, size)
             return True

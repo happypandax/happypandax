@@ -110,7 +110,7 @@ def get_item(ctx=None, data=None, error=None):
     else:
         gid = int(this.props.match.params.gallery_id)
         number = int(this.props.match.params.page_number)
-        client.log("Fetching page: "+number)
+        client.log("Fetching page: " + number)
         if this.state.data and number == this.state.data.number:
             client.log("Current page data is the same")
             return
@@ -124,6 +124,7 @@ def get_item(ctx=None, data=None, error=None):
         if gid:
             client.call_func("get_page", this.get_item, gallery_id=gid, number=number, ctx=True)
             this.setState({'loading': True})
+
 
 __pragma__("noiconv")
 __pragma__("notconv")
@@ -143,26 +144,32 @@ def get_page_count(data=None, error=None, gid=None):
             client.call_func("get_related_count", this.get_page_count, item_type=item, item_id=item_id,
                              related_type=this.state.item_type)
 
+
 def get_page_url(number, gid=None):
     return "/item/gallery/{}/page/{}".format(
-        this.props.match.params.gallery_id if gid == None else gid,
+        this.props.match.params.gallery_id if gid is None else gid,
         number)
 
+
 __pragma__("nokwargs")
+
 
 def go_next():
     if int(this.state.data.number) < int(this.state.page_count):
         utils.go_to(this.props.history, this.get_page_url(this.state.data.number + 1))
 
+
 def go_prev():
     if int(this.state.data.number) > 1:
         utils.go_to(this.props.history, this.get_page_url(this.state.data.number - 1))
+
 
 def go_left():
     if this.state.cfg_direction == ReaderDirection.left_to_right:
         this.go_prev()
     elif this.state.cfg_direction == ReaderDirection.right_to_left:
         this.go_next()
+
 
 def go_right():
     if this.state.cfg_direction == ReaderDirection.left_to_right:
@@ -181,6 +188,7 @@ def on_key(ev):
     elif ev.key in ("ArrowLeft", "a"):
         ev.preventDefault()
         this.go_left()
+
 
 def on_canvas_click(ev):
     if this.state.context:
@@ -231,10 +239,8 @@ def page_render():
     hash_id = ""
     path = ""
     fav = 0
-    gid = this.state.gid
     all_pages = this.state.pages
     if this.state.data:
-        gid = this.state.data.gallery_id
         p_id = this.state.data.id
         number = this.state.data.number
         hash_id = this.state.data.hash
@@ -250,8 +256,8 @@ def page_render():
 
     n_url = ""
     if int(number) < int(this.state.page_count):
-        n_url = this.get_page_url(int(number)+1)
-    p_url = this.get_page_url(int(number)-1)
+        n_url = this.get_page_url(int(number) + 1)
+    p_url = this.get_page_url(int(number) - 1)
 
     thumb_style = {}
     thumb_class = ''
@@ -308,7 +314,6 @@ def page_render():
         {'key': 3, 'text': tr(this, "", 'Fit Height'), 'value': ReaderScaling.fit_height},
     ]
 
-    set_page = this.set_page
     return e(ui.Sidebar.Pushable,
              e(ui.Ref,
                e(ui.Sidebar,
@@ -393,6 +398,7 @@ def page_render():
                  as_=ui.Grid,
                )
              )
+
 
 Page = createReactClass({
     'displayName': 'Page',

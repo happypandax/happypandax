@@ -361,27 +361,27 @@ def viewdropdown_change(e, d):
     if this.props.on_change:
         this.props.on_change(e, d)
 
+
 def viewdropdown_render():
     item_options = [
         {'text': tr(this, "ui.mi-all", "All"),
          'value': 0,
-        },
+         },
         {'text': tr(this, "ui.mi-library", "Library"),
          'value': ViewType.Library,
-        },
+         },
         {'text': tr(this, "ui.mi-inbox", "Inbox"),
          'value': ViewType.Inbox,
-        },
-        ]
-
+         },
+    ]
 
     if this.props.view_type == ViewType.Favorite:
         item_options = [
             {'text': tr(this, "ui.mi-favorites", "Favorites"),
                 'value': this.props.view_type,
-            },
-            ]
-    elif this.props.view_type != None:
+             },
+        ]
+    elif this.props.view_type is not None:
         for x in item_options:
             if x['value'] == this.props.view_type:
                 item_options = [x]
@@ -402,7 +402,7 @@ def viewdropdown_render():
              selection=this.props.selection,
              basic=this.props.basic,
              className=this.props.className,
-             disabled=True if this.props.view_type != None else js_undefined,
+             disabled=True if this.props.view_type is not None else js_undefined,
              icon=None if this.props.view_type else js_undefined
              )
 

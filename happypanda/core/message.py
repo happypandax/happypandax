@@ -299,7 +299,7 @@ class DatabaseMessage(CoreMessage):
             msg_obj = None
 
             if self.__class__.__name__ in self._msg_path:
-                if self._recursive_depth <= len([x for x in self._msg_path if x==self.__class__.__name__]):
+                if self._recursive_depth <= len([x for x in self._msg_path if x == self.__class__.__name__]):
                     return msg_obj
 
             exclude = (db.NameMixin.__name__,)
@@ -612,6 +612,7 @@ class Plugin(CoreMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class GalleryFS(CoreMessage):
     ""
 
@@ -629,6 +630,3 @@ class GalleryFS(CoreMessage):
              'artists': g['artists'],
              'collections': g['collections']}
         return d
-
-
-

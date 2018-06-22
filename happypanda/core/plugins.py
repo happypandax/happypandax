@@ -525,7 +525,7 @@ class HandlerValue:
                 return self._call_handler(*token_handler[idx])
             else:
                 for y in token_handler:
-                    with self._unhandled_exception(y[0]) as err: # noqa: F841
+                    with self._unhandled_exception(y[0]) as err:  # noqa: F841
                         r.append(self._call_handler(*y))
 
         if token_handler_d and default:

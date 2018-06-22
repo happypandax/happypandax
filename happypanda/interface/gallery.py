@@ -247,6 +247,7 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
 
     return message.Identity("status", opened)
 
+
 def scan_galleries(path: str, scan_options: dict = {}):
     """
     Scan for galleries in the given directory/archive
@@ -276,4 +277,3 @@ def scan_galleries(path: str, scan_options: dict = {}):
 
     return message.Identity('data', {'command_id': cmd_id,
                                      'view_id': view_id})
-

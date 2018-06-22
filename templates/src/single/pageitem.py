@@ -5,7 +5,6 @@ from src.react_utils import (h,
 from src.ui import ui
 from src.client import (ItemType, ImageSize, client)
 from src.single import thumbitem
-from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 

@@ -13,7 +13,6 @@ import gevent
 import platform
 import threading
 import i18n
-import shelve
 import rollbar
 import importlib
 import atexit
@@ -25,7 +24,6 @@ import OpenSSL
 import errno
 import langcodes
 
-from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
 from collections import namedtuple
@@ -582,11 +580,13 @@ def indent_text(txt, num=4):
         txt = txt.split('\n')
     return "\n".join((num * " ") + i for i in txt)
 
+
 def remove_multiple_spaces(txt):
     """
     Also removes whitespace characters (tab, newline, etc.)
     """
     return " ".join(txt.split())
+
 
 def regex_first_group(rgx):
     """
@@ -597,6 +597,7 @@ def regex_first_group(rgx):
             x = x[0]
         r.append(x)
     return tuple(r)
+
 
 def get_language_code(lcode):
     assert isinstance(lcode, str)
@@ -682,7 +683,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
                 "DNS:happypanda.local",
                 "DNS:happypandax.local",
                 "IP:127.0.0.1",
-                "IP:::1", # IPv6
+                "IP:::1",  # IPv6
                 ]
     l_ip = get_local_ip()
     if l_ip != "127.0.0.1":
@@ -709,6 +710,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
     if pfx_file:
         export_cert_to_pfx(pfx_file, cert_file, key_file)
 
+
 def export_cert_to_pfx(pfx_file, cert_file, key_file):
     with open(cert_file, "rb") as f:
         c = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, f.read())
@@ -718,7 +720,7 @@ def export_cert_to_pfx(pfx_file, cert_file, key_file):
     pfx.set_certificate(c)
     pfx.set_privatekey(k)
     with open(pfx_file, "wb") as f:
-        f.write(pfx.export()) # pfx.export("password")
+        f.write(pfx.export())  # pfx.export("password")
 
 
 def log_exception(f=None, log=log):
@@ -771,6 +773,7 @@ def language_to_code(language_name):
     except LookupError:
         pass
     return code
+
 
 def get_real_file(path):
     """

@@ -34,7 +34,7 @@ updater_name = "happyupd"  # windows will make it require escalted priv. if name
 updater_key = "updater"
 
 ## VERSIONING ##
-build = 128
+build = 129
 version = (0, 1, 0)
 version_db = (0, 1, 0)
 version_web = (0, 1, 0)
@@ -105,7 +105,8 @@ log_ns_network = '[network].'
 log_ns_search = '[search].'
 log_ns_misc = '[misc].'
 
-task_command = None # TaskService.TaskList of TaskService commands
+task_command = None  # TaskService.TaskList of TaskService commands
+
 
 class Dialect:
     SQLITE = "sqlite"

@@ -435,14 +435,14 @@ def page_render():
     series_accordion = []
     if len(series_data) > 1:
         series_accordion.append(e(ui.Grid.Row, e(ui.Grid.Column,
-                                  e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
-                                    loading=this.state.loading_group,
-                                    basic=False,
-                                    secondary=True,
-                                    sildesToShow=4,
-                                    color="blue",
-                                    label=tr(this, "ui.t-series", "Series")),
-                                  )))
+                                                 e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
+                                                   loading=this.state.loading_group,
+                                                   basic=False,
+                                                   secondary=True,
+                                                   sildesToShow=4,
+                                                   color="blue",
+                                                   label=tr(this, "ui.t-series", "Series")),
+                                                 )))
 
     collection_accordion = []
 
@@ -472,21 +472,26 @@ def page_render():
     same_artist_data = this.state.same_artist_data
     if len(same_artist_data) > 1:
         same_artist_accordion.append(e(ui.Grid.Row,
-                                      e(ui.Grid.Column,
-                                        e(LabelAccordion,
-                                          e(Slider,
-                                            *[e(galleryitem.Gallery, data=x, className="small-size")
-                                                for x in same_artist_data],
-                                            secondary=True,
-                                            sildesToShow=4),
-                                          label=tr(this, "ui.h-more-same-artist", "More from same artist", count=len(this.state.data.artists)),
-                                          color="violet",
-                                          cfg_suffix=this.cfg_suffix + 'same_artist',
-                                          default_open=True
-                                          )
-                                        )
-                                      )
-                                    )
+                                       e(ui.Grid.Column,
+                                         e(LabelAccordion,
+                                           e(Slider,
+                                             *[e(galleryitem.Gallery, data=x, className="small-size")
+                                               for x in same_artist_data],
+                                             secondary=True,
+                                             sildesToShow=4),
+                                           label=tr(
+                                               this,
+                                               "ui.h-more-same-artist",
+                                               "More from same artist",
+                                               count=len(
+                                                   this.state.data.artists)),
+                                             color="violet",
+                                             cfg_suffix=this.cfg_suffix + 'same_artist',
+                                             default_open=True
+                                           )
+                                         )
+                                       )
+                                     )
 
     similar_galleries = []
 
@@ -546,7 +551,7 @@ def page_render():
                  e(ui.Grid,
                    e(ui.Grid.Row,
                      e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav),
-                      floated="right", className="no-margins"),
+                       floated="right", className="no-margins"),
                      e(ui.Grid.Column, *indicators, floated="right", textAlign="right", className="no-margins"),
                      columns=2,
                      verticalAlign="middle",

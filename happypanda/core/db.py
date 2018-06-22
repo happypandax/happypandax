@@ -449,8 +449,10 @@ class UniqueMixin:
 class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
 
-    def __init__(self, name=""):
+    def __init__(self, *args, name="", **kwargs):
+        super().__init__(*args, **kwargs)
         self.name = name
+
 
     @classmethod
     def unique_hash(cls, name):
@@ -562,7 +564,8 @@ class UserMixin:
     def user_id(cls):
         return Column(Integer, ForeignKey('user.id'), default=cls.current_user)
 
-    def __init__(self, user=None):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
         self.user = user
 
     @classmethod
@@ -574,6 +577,7 @@ class UserMixin:
             if u:
                 return u.id
         return constants.default_user.id
+
 
 def validate_int(value):
     if isinstance(value, str):
@@ -723,6 +727,7 @@ def setup_preffered_name(cls):
 
     cls.name_by_language = hybrid_method(name_by_language)
     cls.preferred_name = hybrid_property(preferred_name)
+
 
 def url_association(cls, bref="items"):
     if not issubclass(cls, Base):
@@ -1004,6 +1009,7 @@ class TaggableMixin(UpdatedMixin):
 
     compact_tags = Taggable.compact_tags
 
+
 gallery_artists = Table(
     'gallery_artists', Base.metadata, Column(
         'artist_id', Integer, ForeignKey('artist.id')), Column(
@@ -1026,9 +1032,11 @@ artist_names = Table(
                     'artist.id',)), UniqueConstraint(
                         'artistname_id', 'artist_id'))
 
+
 @generic_repr
 class ArtistName(NameMixin, AliasMixin, Base):
     __tablename__ = 'artistname'
+
 
 @generic_repr
 class Artist(UniqueMixin, ProfileMixin, UserMixin, Base):
@@ -1057,7 +1065,6 @@ class Artist(UniqueMixin, ProfileMixin, UserMixin, Base):
         lazy="joined",
         cascade=expunge_cascade)
 
-
     def __init__(self, *args, **kwargs):
         names = kwargs.pop("names", [])
         name = kwargs.pop("name", None)
@@ -1085,7 +1092,7 @@ class Artist(UniqueMixin, ProfileMixin, UserMixin, Base):
             n.append(name)
         if names:
             n.extend(names)
-        return query.join(cls.names).filter(and_op(*(ArtistName.name==x for x in n)))
+        return query.join(cls.names).filter(and_op(*(ArtistName.name == x for x in n)))
 
 
 setup_preffered_name(Artist)
@@ -1119,9 +1126,11 @@ parody_names = Table(
                     'parody.id',)), UniqueConstraint(
                         'parodyname_id', 'parody_id'))
 
+
 @generic_repr
 class ParodyName(NameMixin, AliasMixin, Base):
     __tablename__ = 'parodyname'
+
 
 @generic_repr
 class Parody(UniqueMixin, ProfileMixin, UserMixin, Base):
@@ -1167,8 +1176,7 @@ class Parody(UniqueMixin, ProfileMixin, UserMixin, Base):
             n.append(name)
         if names:
             n.extend(names)
-        return query.join(cls.names).filter(and_op(*(ParodyName.name==x for x in n)))
-
+        return query.join(cls.names).filter(and_op(*(ParodyName.name == x for x in n)))
 
 
 setup_preffered_name(Parody)
@@ -1204,11 +1212,11 @@ class Status(NameMixin, UserMixin, Base):
     __tablename__ = 'status'
 
     names = clsutils.AttributeDict({
-        'completed':'Completed',
-        'ongoing':'Ongoing',
-        'unreleased':'Unreleased',
-        'unknown':'Unknown',
-        })
+        'completed': 'Completed',
+        'ongoing': 'Ongoing',
+        'unreleased': 'Unreleased',
+        'unknown': 'Unknown',
+    })
 
     groupings = relationship(
         "Grouping",
@@ -1260,7 +1268,6 @@ class Language(NameMixin, UserMixin, Base):
     @validates("code")
     def validate_code(self, key, code):
         return utils.get_language_code(code)
-
 
 
 @generic_repr
@@ -1420,12 +1427,12 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         ""
         p_paths = []
         if self.id:
-            db = ensure_in_session(self)
+            ensure_in_session(self)
             if self.gallery.single_source:
-                        p_path = constants.db_session().query(Page.path).filter(Page.gallery_id==self.id,
-                                                                               Page.number==1)
-                        if p_path:
-                            p_paths.append(str(pathlib.Path(p_path).parent))
+                p_path = constants.db_session().query(Page.path).filter(Page.gallery_id == self.id,
+                                                                        Page.number == 1)
+                if p_path:
+                    p_paths.append(str(pathlib.Path(p_path).parent))
             else:
                 raise NotImplementedError
         return tuple(p_paths)
@@ -1644,8 +1651,14 @@ def initEvents(sess):
     many_to_many_deletion(Tag, lambda: Tag.namespaces)
     many_to_many_deletion(Namespace, lambda: Namespace.tags)
     many_to_many_deletion(Circle, lambda: Circle.artists)
-    many_to_many_deletion(ArtistName, lambda: ArtistName.artists)
-    many_to_many_deletion(ParodyName, lambda: ParodyName.parodies)
+    many_to_many_deletion(ArtistName, custom_filter=lambda: and_op(
+        not ArtistName.alias_for,
+        ~ArtistName.artists.any(),
+        ), found_attrs=lambda: [ArtistName.artists])
+    many_to_many_deletion(ParodyName, custom_filter=lambda: and_op(
+        not ParodyName.alias_for,
+        ~ParodyName.parodies.any(),
+        ), found_attrs=lambda: [ParodyName.parodies])
     # TODO: clean up
     many_to_many_deletion(Profile, custom_filter=lambda: and_op(
         ~Profile.artists.any(),
@@ -1738,6 +1751,7 @@ def init_defaults(sess, first_time=True):
             if not db_st.exists(session=sess):
                 sess.add(db_st)
                 sess.commit()
+
 
 def create_user(role, name=None, password=None):
     """
@@ -1845,7 +1859,7 @@ def check_db_version(sess):
     log.d("Using DB Version: {}".format(life.version))
 
     sess.add(Event(Event.Action.app_start, life))
-    init_defaults(sess, life.times_opened==1)
+    init_defaults(sess, life.times_opened == 1)
     log.d("Succesfully initiated database")
     sess.commit()
     return True
@@ -1980,10 +1994,12 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True):
 
     return d
 
+
 def is_detached(obj):
     "Check if obj was expunged from a session"
     if is_instanced(obj):
         return inspect(obj).detached
+
 
 def is_instanced(obj):
     "Check if db object is an instanced object"
@@ -2050,6 +2066,7 @@ def ensure_in_session(item, session=None):
             return constants.db_session().merge(item)
     return item
 
+
 def freeze_object(obj):
     if is_instanced(obj):
         sess = object_session(obj)
@@ -2067,6 +2084,7 @@ def freeze_object(obj):
                     pass
                 sess.expunge(obj)
     return obj
+
 
 @contextmanager
 def safe_session(sess=None):

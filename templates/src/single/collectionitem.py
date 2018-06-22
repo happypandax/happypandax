@@ -3,7 +3,6 @@ from src.react_utils import (h,
                              createReactClass,
                              Link)
 from src.ui import ui
-from src import utils
 from src.client import (ItemType, ImageSize)
 from src.single import thumbitem
 from org.transcrypt.stubs.browser import __pragma__
@@ -39,7 +38,7 @@ def collection_render():
     if this.props.className:
         cls_name += ' ' + this.props.className
 
-    collection_url = '/item/collection/'+str(item_id)
+    collection_url = '/item/collection/' + str(item_id)
 
     link = True
     if not this.props.link == js_undefined:

@@ -24,10 +24,12 @@ Redirect = require("react-router-dom").Redirect
 
 __pragma__("kwargs")
 
+
 def createReactClass(obj, pure=True):
     if pure and not obj.shouldComponentUpdate:
         obj['shouldComponentUpdate'] = lambda np, ns: shallowCompare(this, np, ns)
     return createReactClass_(obj)
+
 
 def e(elm_type, *args, **props):
     props.pop("constructor")
@@ -95,4 +97,3 @@ ScrollToTop = withRouter(createReactClass({
 
     'render': lambda: this.props.children
 }))
-

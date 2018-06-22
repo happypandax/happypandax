@@ -72,9 +72,11 @@ class ViewType(_APIEnum):
     #: Contains only items in ReadLater
     ReadLater = 5
 
+
 class TemporaryViewType(_APIEnum):
     #: Contains gallery items to be added
     GalleryAddition = 1
+
 
 class ItemType(_APIEnum):
     #: Gallery

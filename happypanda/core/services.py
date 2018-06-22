@@ -2,7 +2,6 @@ import gevent
 import weakref
 import functools
 import itertools
-import arrow
 
 from gevent import pool, queue, event
 from apscheduler.schedulers.gevent import GeventScheduler
@@ -46,7 +45,7 @@ class Service:
             return cls._all_commands[cmd_id]
         return None
 
-#class Trigger:
+# class Trigger:
 #    """
 #    [start.[every/at].[time/day/month...].[at]]
 #    """
@@ -432,6 +431,7 @@ class ImageService(AsyncService):
     def __init__(self, name):
         super().__init__(name, pool.Pool(config.concurrent_image_tasks.value))
 
+
 class TaskService(Service):
     """
     A task service where tasks only run when woken up
@@ -449,12 +449,11 @@ class TaskService(Service):
 
         def get(self, block=True, timeout=None):
             self.service.get_command_value(block=block, timeout=timeout)
-    
 
     constants.task_command = clsutils.AttributeDict({
         "thumbnail_cleaner": None,
         "temp_cleaner": None,
-        })
+    })
 
     def __init__(self, name):
         super().__init__(name)
@@ -508,7 +507,7 @@ class TaskService(Service):
                     db.cleanup_session_wrap(self._commands[cmd_id].main),
                     self._wake_objects[cmd_id],
                     self._result_queue,
-                    ),args, kwargs)
+                ), args, kwargs)
 
         self._group.start(self._greenlets[cmd_id])
         return TaskService.TaskCommand(cmd_id, self)
@@ -528,7 +527,6 @@ class TaskService(Service):
             except Exception as e:
                 result_queue.put((cmd_id, e))
             wake_obj.clear()
-
 
     def stop_command(self, cmd_id):
         """
@@ -570,6 +568,7 @@ class TaskService(Service):
         if isinstance(r, gevent.Timeout):
             raise exceptions.TimeoutError(utils.this_function(), "Command value retrieval timed out")
         return r
+
 
 def setup_generic_services():
     Scheduler.generic = Scheduler("scheduler")

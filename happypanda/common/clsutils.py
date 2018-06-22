@@ -6,7 +6,6 @@ import __main__
 
 from tinydb.storages import MemoryStorage
 from collections import UserList
-from collections.abc import MutableMapping
 
 from happypanda.common import constants, hlogger
 
@@ -29,6 +28,7 @@ class AttributeList(UserList):
         if key in self._names:
             return self._names[key]
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
+
 
 class AttributeDict(dict):
     """
@@ -88,7 +88,9 @@ class CacheInvalidation:
 constants.invalidator = CacheInvalidation()
 
 
-class _Nothing: pass
+class _Nothing:
+    pass
+
 
 class InternalTinyDB:
 
@@ -115,7 +117,7 @@ class InternalTinyDB:
         self._db = db
 
     def get(self, key, default=_Nothing):
-        r = self._db.get(self.query.key==key)
+        r = self._db.get(self.query.key == key)
         if r is None:
             if default == _Nothing:
                 raise KeyError(f"Key {key} does not exist")
@@ -126,10 +128,10 @@ class InternalTinyDB:
         return v
 
     def set(self, key, value):
-        self._db.upsert({'key': key, 'value': value, 'type':str(type(value))}, self.query.key == key)
+        self._db.upsert({'key': key, 'value': value, 'type': str(type(value))}, self.query.key == key)
 
     def __contains__(self, k):
-        return self._db.contains(self.query.key==k)
+        return self._db.contains(self.query.key == k)
 
     def __getitem__(self, key):
         return self.get(key)
@@ -139,12 +141,13 @@ class InternalTinyDB:
 
     def __delitem__(self, key):
         raise NotImplementedError
-    
+
     def __iter__(self):
         raise NotImplementedError
 
     def __len__(self):
         return len(self._db)
+
 
 class InternalDatabase(InternalTinyDB):
 
@@ -161,12 +164,14 @@ class InternalDatabase(InternalTinyDB):
 
         self.plugins_state = self.GetSet(self, "plugins_state")
 
+
 class InternalStore(InternalTinyDB):
 
     def __init__(self):
         super().__init__(tinydb.TinyDB(storage=MemoryStorage))
         self.temp_view = InternalTinyDB(self._db.table("temp_view"))
         self.galleryfs_addition = self.GetSet(self.temp_view, "galleryfs_addition", {})
+
 
 constants.store = store = InternalStore()
 
@@ -177,6 +182,7 @@ else:
     constants.internaldb = internaldb = InternalDatabase(constants.internal_db_path)
 
 in_repl = not hasattr(__main__, '__file__') or in_test
+
 
 class ForkablePdb(pdb.Pdb):
 
@@ -196,6 +202,7 @@ class ForkablePdb(pdb.Pdb):
             self.cmdloop()
         finally:
             sys.stdin = current_stdin
+
 
 if not in_repl and __name__ == '__mp_main__' or (__name__ == '__main__' and len(
         sys.argv) >= 2 and sys.argv[1] == '--multiprocessing-fork'):

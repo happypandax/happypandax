@@ -1,6 +1,5 @@
 from src.react_utils import (e,
                              createReactClass)
-from src.client import ViewType
 from src import pages
 from src.i18n import tr
 from src.ui import TitleChange

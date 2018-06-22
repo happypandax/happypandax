@@ -32,7 +32,14 @@ def sidebar_nav_render():
     items.append(MenuItem("", position="left", handler=this.props["toggler"],
                           content=e(ui.Icon, className="hpx-alternative huge left")))
 
-    items.append(MenuItem("Manage", "ui.mi-manage", icon="plus square outline", url="/manage", position="left", handler=this.props["toggler"]))
+    items.append(
+        MenuItem(
+            "Manage",
+            "ui.mi-manage",
+            icon="plus square outline",
+            url="/manage",
+            position="left",
+            handler=this.props["toggler"]))
 
     #items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite", handler=this.props["toggler"]))

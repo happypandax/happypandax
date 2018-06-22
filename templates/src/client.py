@@ -12,9 +12,11 @@ __pragma__('noskip')
 
 io = require('socket.io-client')
 
+
 class TemporaryViewType:
     #: Contains gallery items to be added
     GalleryAddition = 1
+
 
 class CommandState:
 
@@ -38,6 +40,7 @@ class CommandState:
 
     #: command has finished with an error
     failed = 6
+
 
 class ItemType:
     #: Gallery
@@ -392,7 +395,7 @@ class Client(Base):
                 self.socket.emit("server_call", serv_msg._msg)
                 return
             if serv_msg.func_name and serv_data:
-                if serv_data.data != None: # noqa: E711
+                if serv_data.data != None:  # noqa: E711
                     for func in serv_data.data:
                         err = None
                         if 'error' in func:
@@ -458,6 +461,7 @@ class Client(Base):
         utils.moment.locale(l)
 
     __pragma__("kwargs")
+
     def get_translations(self, data=None, error=None, locale=None):
         if data is not None and not error:
             state['translations'] = data
@@ -488,6 +492,7 @@ commandclient = Client("command", namespace="/command")
 
 class Command(Base):
     __pragma__("kwargs")
+
     def __init__(self, command_ids, customclient=None, daemon=True):
         super().__init__()
         assert command_ids is not None

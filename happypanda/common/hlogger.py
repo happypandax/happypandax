@@ -5,14 +5,13 @@ import argparse
 import traceback
 import os
 import multiprocessing as mp
-import sqlite3
 
 try:
     import rollbar  # updater doesn't need this
 except ImportError:
     pass
 
-from multiprocessing import Process, Queue, TimeoutError, queues
+from multiprocessing import Process, TimeoutError, queues
 from logging.handlers import RotatingFileHandler
 
 
@@ -60,7 +59,7 @@ class QueueHandler(logging.Handler):
             try:
                 record.args = tuple(str(x) for x in record.args)
                 self.queue.put_nowait(record)
-            except:
+            except BaseException:
                 self.handleError(record)
         except (KeyboardInterrupt, SystemExit):
             raise

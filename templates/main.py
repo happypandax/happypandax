@@ -14,7 +14,7 @@ from src.ui import ui, Alert, Notif, TitleChange
 from src.nav import (sidebar, menu)
 from src.i18n import tr
 from src.pages import (api, collection, gallery,
-                       dashboard, favorites,library,
+                       dashboard, favorites, library,
                        page, directory,
                        activity, login, manage)
 from src.client import pushclient, PushID
@@ -270,13 +270,13 @@ def app_render():
             api_route.append(e(Route, path="/api", component=this.api_page))
 
         el = h("div",
-                 e(ui.Responsive,
+               e(ui.Responsive,
                    #e(ConnectStatus, context=this.state.root_ref),
                    e(sidebar.SideBar, **sidebar_args), minWidth=767),
-                 e(ui.Responsive,
+               e(ui.Responsive,
                    e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
-                 e(Route, component=PathChange),
-                 e(ui.Ref,
+               e(Route, component=PathChange),
+               e(ui.Ref,
                    e(ui.Sidebar.Pusher,
                      e(ui.Visibility,
                        e(ui.Responsive,
@@ -312,9 +312,9 @@ def app_render():
                      className="min-fullheight",
                      ),
                    innerRef=this.get_context_ref,
-                   ),
-                    key="1",
                  ),
+               key="1",
+               ),
     elif not utils.defined(this.state.logged_in):
         el = e(ui.Segment,
                e(ui.Dimmer,
