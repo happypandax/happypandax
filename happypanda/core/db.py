@@ -1060,7 +1060,7 @@ class Artist(UniqueMixin, ProfileMixin, UserMixin, Base):
 
     def __init__(self, *args, **kwargs):
         names = kwargs.pop("names", [])
-        name = kwargs.pop("name")
+        name = kwargs.pop("name", None)
         if name:
             names.append(name)
         super().__init__(*args, **kwargs)
@@ -1124,7 +1124,7 @@ class ParodyName(NameMixin, AliasMixin, Base):
     __tablename__ = 'parodyname'
 
 @generic_repr
-class Parody(ProfileMixin, UserMixin, Base):
+class Parody(UniqueMixin, ProfileMixin, UserMixin, Base):
     __tablename__ = 'parody'
 
     names = relationship(
@@ -1142,7 +1142,7 @@ class Parody(ProfileMixin, UserMixin, Base):
 
     def __init__(self, *args, **kwargs):
         names = kwargs.pop("names", [])
-        name = kwargs.pop("name")
+        name = kwargs.pop("name", None)
         if name:
             names.append(name)
         super().__init__(*args, **kwargs)

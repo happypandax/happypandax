@@ -1071,19 +1071,23 @@ def main(args=sys.argv[1:]):
                             artist_names.append(g.artist.strip())
 
                         for a_name in artist_names:
-                            artist = None
-                            artist_name = dst_aliasnames.get(a_name)
-                            if not artist_name:
-                                artist_name = db.ArtistName()
-                                artist_name.name = a_name
-                                artist_name.language = db_lang
-                                dst_aliasnames[a_name] = artist_name
-                            artist = dst_artists.get(artist_name.name.lower())
+                            artist = dst_artists.get(a_name.lower())
                             if not artist:
-                                artist = db.Artist()
+                                artist = db.Artist.as_unique(name=a_name)
+                            for a in artist.names:
+                                if a.name.lower() == a_name.lower():
+                                    artist_name = a
+                                    break
+                            else:
+                                artist_name = db.ArtistName.as_unique(name=a_name)
                                 artist.names.append(artist_name)
+
+                            if not artist_name.language:
+                                artist_name.language = db_lang
+
                             gallery.artists.append(artist)
-                            dst_artists[artist_name.name.lower()] = artist
+                            dst_artists[a_name.lower()] = artist
+
                             if 'Group' in g.tags:
                                 circle_tags = g.tags['Group']
                                 for ctag in circle_tags:
@@ -1135,14 +1139,17 @@ def main(args=sys.argv[1:]):
                                 if not parody:
                                     if args.debug:
                                         print("Adding new parody:", pname)
-                                    parody = db.Parody()
-                                    parody_name = dst_aliasnames.get(pname)
-                                    if not parody_name:
-                                        parody_name = db.ParodyName()
-                                        parody_name.name = pname
+                                    parody = db.Parody.as_unique(name=pname)
+                                    for a in parody.names:
+                                        if a.name.lower() == pname.lower():
+                                            parody_name = a
+                                            break
+                                    else:
+                                        parody_name = db.ParodyName.as_unique(name=pname)
+                                        parody.names.append(parody_name)
+                                    if not parody_name.language:
                                         parody_name.language = dst_languages['english']
-                                        dst_aliasnames[pname] = parody_name
-                                    parody.names.append(parody_name)
+
                                     dst_parodies[pname.lower()] = parody
                                 else:
                                     if args.debug:

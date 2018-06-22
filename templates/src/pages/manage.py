@@ -292,7 +292,7 @@ ScanPage = createReactClass({
         'view_progress_data': None,
         'view_id': utils.session_storage.get("scan_view_id", None),
         'view_data': {},
-        'path': "D:/Doujin",
+        'path': "",
         'submitted_path': '',
     },
 
