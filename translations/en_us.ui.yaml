@@ -208,7 +208,7 @@ t-galleries: Galleries
 
 # Scan Page
 de-scan-info: |-
-    Scan for new galleries in the provided path
+    Scan for new galleries in a given path
 
     Supported URLs:
     - A directory

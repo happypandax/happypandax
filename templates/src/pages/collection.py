@@ -281,7 +281,7 @@ def page_render():
                                                 item_id=item_id,
                                                 item_type=this.state.item_type,
                                                 related_type=ItemType.Gallery,
-                                                view_filter=ViewType.Library,
+                                                view_filter=None,
                                                 label=tr(this, "ui.t-galleries", "Galleries"),
                                                 config_suffix=this.cfg_suffix,
                                                 toggle_config=this.toggle_galleries_config,

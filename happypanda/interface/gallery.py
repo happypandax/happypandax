@@ -51,7 +51,7 @@ def _get_similar(kwargs, similar_items):
         db_items = {}  # needed to sort them the way they came in
         for g in database_cmd.GetModelItems().run(kwargs['db_model'], set(similar_items)):
             db_items[g.id] = g
-        [items.append(db_items[x]) for x in similar_items]
+        [items.append(db_items[x]) for x in similar_items if x in db_items]
 
     [item_list.append(kwargs['db_msg'](x)) for x in items]
     return item_list

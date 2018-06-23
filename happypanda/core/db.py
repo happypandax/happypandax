@@ -490,7 +490,6 @@ class NameMixin(UniqueMixin):
                     self.__class__.name.ilike(
                         "%{}%".format(
                             self.name))).scalar() is not None
-        sess.close()
         return e
 
     def __repr__(self):
@@ -565,7 +564,8 @@ class UserMixin:
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.user = user
+        if user is not None:
+            self.user = user
 
     @classmethod
     def current_user(cls):
@@ -777,8 +777,7 @@ class MetaTag(NameMixin, Base):
         sess = constants.db_session()
         return tuple(x[0] for x in sess.query(cls.name).all())
 
-
-class User(Base):
+class User(NameMixin, Base):
     __tablename__ = 'user'
 
     class Role(enum.Enum):
@@ -794,9 +793,9 @@ class User(Base):
     password = Column(Password)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     rights = Column(JSONType, nullable=False, default={})
-    right_add_gallery = index_property("rights", "add_gallery", default=True)
-    right_remove_gallery = index_property("rights", "remove_gallery", default=True)
-    right_update_gallery = index_property("rights", "update_gallery", default=True)
+    right_add_gallery = index_property("rights", "add_gallery", default=False)
+    right_remove_gallery = index_property("rights", "remove_gallery", default=False)
+    right_update_gallery = index_property("rights", "update_gallery", default=False)
 
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
@@ -811,7 +810,6 @@ class User(Base):
     @property
     def is_admin(self):
         return self.role == self.Role.admin
-
 
 metatag_association(User, "users")
 
@@ -831,18 +829,17 @@ class Event(Base):
     __tablename__ = 'event'
 
     class Action(enum.Enum):
-        gallery_update = 'gallery_update'
-        gallery_delete = 'gallery_delete'
+        object_update = 'object_update'
+        object_delete = 'object_delete'
         gallery_read = 'gallery_read'
-        app_start = 'app_start'
-        app_shutdown = 'app_shutdown'
 
     item_id = Column(Integer)
     name = Column(String, nullable=False, default="")
     by_table = Column(String, nullable=False, default="")
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     action = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey('user.id'))
+    extra = Column(JSONType, nullable=False, default={})
+    user_id = Column(Integer, ForeignKey('user.id'), default=UserMixin.current_user)
     user = relationship(
         "User",
         back_populates="events",
@@ -966,7 +963,9 @@ taggable_tags = Table(
     Column(
         'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
     Column(
-        'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
+        'taggable_id', Integer, ForeignKey('taggable.id')),
+    Column('timestamp', ArrowType, nullable=False, default=arrow.now),
+    UniqueConstraint(
         'namespace_tag_id', 'taggable_id'))
 
 
@@ -1187,6 +1186,7 @@ gallery_filters = Table('gallery_filters', Base.metadata,
                             'gallery_id',
                             Integer,
                             ForeignKey('gallery.id')),
+                        Column('timestamp', ArrowType, nullable=False, default=arrow.now),
                         UniqueConstraint('filter_id', 'gallery_id'))
 
 
@@ -1382,6 +1382,8 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         "Creates a read event for user"
         if not datetime:
             datetime = arrow.now()
+        if user_id is None:
+            user_id = UserMixin.current_user()
         self.last_read = datetime
         sess = object_session(self)
         if sess:
@@ -1391,6 +1393,12 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                 "Cannot add gallery read event because no session exists for this object")
         self.times_read += 1
         self.last_read = datetime
+        for m in self.metatags:
+            if m.name == MetaTag.names.read:
+                break
+        else:
+            m = MetaTag.as_unique(name=MetaTag.names.read)
+            self.metatags.append(m)
 
     @hybrid_property
     def preferred_title(self):
@@ -1731,7 +1739,6 @@ def init_defaults(sess, first_time=True):
     if not duser:
         duser = User(name=constants.super_user_name, role=User.Role.default)
         sess.add(duser)
-        sess.commit()
     constants.default_user = duser
     # init default metatags
     for t in MetaTag.names:
@@ -1739,7 +1746,6 @@ def init_defaults(sess, first_time=True):
         if not t_d:
             t_d = MetaTag(name=t)
             sess.add(t_d)
-            sess.commit()
         MetaTag.tags[t] = t_d
 
     # init status
@@ -1749,7 +1755,7 @@ def init_defaults(sess, first_time=True):
             db_st.name = s
             if not db_st.exists(session=sess):
                 sess.add(db_st)
-                sess.commit()
+    sess.commit()
 
 
 def create_user(role, name=None, password=None):
@@ -1857,7 +1863,6 @@ def check_db_version(sess):
 
     log.d("Using DB Version: {}".format(life.version))
 
-    sess.add(Event(Event.Action.app_start, life))
     init_defaults(sess, life.times_opened == 1)
     log.d("Succesfully initiated database")
     sess.commit()

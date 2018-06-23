@@ -573,7 +573,7 @@ class Command(Base):
 
     __pragma__('kwargs')
 
-    def poll_until_complete(self, interval=1000 * 5, timeout=1000 * 60 * 10, callback=None):
+    def poll_until_complete(self, interval=1000 * 5, timeout=1000 * 60 * 120, callback=None):
         "Keep polling for command state until it has finished running"
         self._complete_callback = callback
         if not self.finished():
@@ -617,7 +617,7 @@ class Command(Base):
 
     __pragma__('kwargs')
 
-    def poll_progress(self, interval=1000 * 3, timeout=1000 * 60 * 10, callback=None):
+    def poll_progress(self, interval=1000 * 3, timeout=1000 * 60 * 120, callback=None):
         "Keep polling for command progress until it has finished running"
         self._progress_callback = callback
         if not self.finished():

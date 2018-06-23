@@ -33,7 +33,7 @@ def get_config(data=None, error=None):
 __pragma__('kwargs')
 
 
-def get_item(data=None, error=None):
+def get_item(data=None, error=None, force=False):
     if data is not None and not error:
         this.setState({"data": data,
                        "loading": False,
@@ -139,13 +139,17 @@ def get_item(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
+        item_id = this.state.id
         if utils.defined(this.props.location):
             if this.props.location.state and this.props.location.state.gallery:
                 if int(this.props.match.params.item_id) == this.props.location.state.gallery.id:
-                    this.get_item(this.props.location.state.gallery)
-                    return
+                    if not force:
+                        this.get_item(this.props.location.state.gallery)
+                        return
+                    else:
+                        item_id = this.props.match.params.item_id
+
         item = this.state.item_type
-        item_id = this.state.id
         if item and item_id:
             client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
             this.setState({'loading': True})
@@ -228,7 +232,7 @@ __pragma__("notconv")
 
 def get_similar_value(cmd):
     v = cmd.get_value()
-    this.setState({"similar_gallery_data": v, 'similar_gallery_loading': False})
+    this.setState({"similar_gallery_data": v or [], 'similar_gallery_loading': False})
 
 
 def get_similar(data=None, error=None):
@@ -327,11 +331,11 @@ def page_render():
         external_view.append(e(ui.Button, icon="external", toggle=True, active=this.state.external_viewer,
                                title=tr(this, "ui.t-open-external-viewer", "Open in external viewer"), onClick=this.toggle_external_viewer))
 
-    if this.state.external_viewer:
-        read_btn = {'onClick': this.open_external}
-    else:
-        read_btn = {'as': Link, 'to': "/item/gallery/{}/page/1".format(item_id),
-                    }
+    read_btn = {}
+    read_btn['onClick'] = this.on_read
+    if not this.state.external_viewer:
+        read_btn['as'] = Link
+        read_btn['to'] = "/item/gallery/{}/page/1".format(item_id)
 
     buttons.append(
         e(ui.Grid.Row,
@@ -647,7 +651,6 @@ Page = createReactClass({
                                 'same_artist_data': [],
                                 },
 
-    'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
     'get_item': get_item,
     'get_grouping': get_grouping,
     'get_lang': get_lang,
@@ -662,6 +665,10 @@ Page = createReactClass({
     'get_same_artist_data': get_same_artist_data,
     'get_config': get_config,
     'open_external': galleryitem.open_external,
+    'read_event': galleryitem.read_event,
+    'on_read': lambda e, d: all((this.read_event(e, d),
+                                 this.open_external(e, d) if this.state.external_viewer else None,
+                                 this.get_item(force=True))),
 
     'toggle_pages_config': lambda a: this.setState({'visible_page_cfg': not this.state.visible_page_cfg}),
     'toggle_external_viewer': toggle_external_viewer,

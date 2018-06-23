@@ -36,8 +36,13 @@ def open_external(e, d):
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
 
 
-__pragma__("notconv")
 
+def read_event(e, d):
+    print("read event")
+    if this.state.data:
+        client.call_func("gallery_read_event", None, item_id=this.state.data.id)
+
+__pragma__("notconv")
 
 def gallery_render():
     fav = 0
@@ -74,9 +79,8 @@ def gallery_render():
         link = this.props.link
 
     read_button_args = {}
-    if this.props.external_viewer:
-        read_button_args['onClick'] = this.open_external
-    else:
+    read_button_args['onClick'] = this.on_read
+    if not this.props.external_viewer:
         read_button_args['as'] = Link
         read_button_args['to'] = "/item/gallery/{}/page/1".format(item_id)
 
@@ -196,6 +200,10 @@ Gallery = createReactClass({
                                 'dimmer': False,
                                 },
     'open_external': open_external,
+
+    'read_event': read_event,
+
+    'on_read': lambda e, d: all((this.read_event(e, d), this.open_external(e, d) if this.props.external_viewer else None)),
 
     'on_tags': on_tags,
 

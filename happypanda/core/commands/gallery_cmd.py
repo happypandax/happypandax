@@ -126,6 +126,7 @@ class AddGallery(AsyncCommand):
                 sess.add(g)
                 self.next_progress()
             sess.commit()
+            constants.invalidator.similar_gallery = True
             sess.autoflush = True
 
     def main(self, galleries: typing.List[typing.Union[db.Gallery, io_cmd.GalleryFS]], options: dict={}) -> bool:
@@ -155,6 +156,7 @@ class SimilarGallery(AsyncCommand):
 
     def main(self, gallery_or_id: db.Gallery) -> typing.List[db.Gallery]:
         gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
+        gid = str(gid) # because JSON keys are str
         gl_data = {}
         all_gallery_tags = {}
         self.set_progress(type_=enums.ProgressType.Unknown)
@@ -162,7 +164,7 @@ class SimilarGallery(AsyncCommand):
         idb = constants.internaldb
         if not constants.invalidator.similar_gallery:
             gl_data = idb.get(constants.internaldb.similar_gallery_calc.key, gl_data)
-        all_gallery_tags = idb.get(constants.internaldb.similar_gallery_tags.key, all_gallery_tags)
+            all_gallery_tags = idb.get(constants.internaldb.similar_gallery_tags.key, all_gallery_tags)
         log.d("Cached gallery tags", len(all_gallery_tags))
         if gid not in gl_data:
             log.d("Similarity calculation not found in cache")
@@ -173,7 +175,7 @@ class SimilarGallery(AsyncCommand):
         self.next_progress()
         v = []
         if gid in gl_data:
-            v = [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
+            v = [int(x) for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
         return v
 
     def __init__(self):
@@ -192,9 +194,12 @@ class SimilarGallery(AsyncCommand):
 
     @async_utils.defer
     def _calculate(self, gallery_or_id, all_gallery_tags={}):
-        assert isinstance(gallery_or_id, (int, db.Gallery))
+        assert isinstance(gallery_or_id, (str, int, db.Gallery))
+        sess = constants.db_session()
+        sess.autoflush = False
         data = {}
         g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
+        g_id = str(g_id) # because JSON keys are str
         tag_count = 0
         tag_count_minimum = 5
         if g_id in all_gallery_tags:
@@ -207,7 +212,7 @@ class SimilarGallery(AsyncCommand):
                 g_tags = gallery_or_id
             else:
                 g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
-                                                          filter=db.Gallery.id == g_id)
+                                                          filter=db.Gallery.id == int(g_id))
                 if g_tags:
                     g_tags = g_tags[0]
                 tag_count = g_tags.tags.count()
@@ -223,6 +228,7 @@ class SimilarGallery(AsyncCommand):
             max_prog = 3
             for t_id, t in all_gallery_tags.items() or constants.db_session().query(
                     db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
+                t_id = str(t_id)
                 self.next_progress()
                 if update_dict:
                     all_gallery_tags[t_id] = t.compact_tags(t.tags.all())
@@ -238,6 +244,7 @@ class SimilarGallery(AsyncCommand):
                 if cos:
                     gl_data[t_id] = cos
             log.d("Finished calculating similarity")
+        sess.autoflush = True
         self.next_progress()
 
         return data
