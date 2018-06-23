@@ -4,7 +4,7 @@ from src.ui import ui, TitleChange, DateLabel
 from src.i18n import tr
 from src.state import state
 from src.single import thumbitem
-from src.client import ItemType, ViewType, ImageSize, client
+from src.client import ItemType, ImageSize, client
 from src.propsviews import collectionpropsview
 from src.views import itemview
 from src import utils
