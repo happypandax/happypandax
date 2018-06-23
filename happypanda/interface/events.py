@@ -20,7 +20,7 @@ def gallery_read_event(item_id: int=0):
     s = False
     if item_id:
         sess = database_cmd.GetSession().run()
-        g = sess.query(db.Gallery).filter(db.Gallery.id==item_id).one_or_none()
+        g = sess.query(db.Gallery).filter(db.Gallery.id == item_id).one_or_none()
         if g:
             g.read()
             sess.commit()

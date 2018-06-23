@@ -381,7 +381,7 @@ def viewdropdown_render():
                 'value': this.props.view_type,
              },
         ]
-    elif this.props.view_type != None: # noqa: E711
+    elif this.props.view_type != None:  # noqa: E711
         for x in item_options:
             if x['value'] == this.props.view_type:
                 item_options = [x]
@@ -402,7 +402,7 @@ def viewdropdown_render():
              selection=this.props.selection,
              basic=this.props.basic,
              className=this.props.className,
-             disabled=True if this.props.view_type != None else js_undefined, # noqa: E711
+             disabled=True if this.props.view_type != None else js_undefined,  # noqa: E711
              icon=None if this.props.view_type else js_undefined
              )
 

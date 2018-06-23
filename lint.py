@@ -6,7 +6,8 @@ from subprocess import run
 
 def aformat(f_path):
     print("Auto formatting", f_path)
-    run(["autopep8", "--in-place", "-a", "--max-line-length=120", f_path])
+    run(["autopep8", "--in-place", "-a", "--max-line-length=120",
+         "--ignore", "E24,W503,E711", f_path])
 
 
 def main():

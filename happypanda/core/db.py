@@ -780,6 +780,7 @@ class MetaTag(NameMixin, Base):
         sess = constants.db_session()
         return tuple(x[0] for x in sess.query(cls.name).all())
 
+
 class User(NameMixin, Base):
     __tablename__ = 'user'
 
@@ -813,6 +814,7 @@ class User(NameMixin, Base):
     @property
     def is_admin(self):
         return self.role == self.Role.admin
+
 
 metatag_association(User, "users")
 
@@ -1662,11 +1664,11 @@ def initEvents(sess):
     many_to_many_deletion(Namespace, lambda: Namespace.tags)
     many_to_many_deletion(Circle, lambda: Circle.artists)
     many_to_many_deletion(ArtistName, custom_filter=lambda: and_op(
-        ArtistName.alias_for == None, # noqa: E711
+        ArtistName.alias_for == None,  # noqa: E711
         ~ArtistName.artists.any(),
     ), found_attrs=lambda: [ArtistName.artists])
     many_to_many_deletion(ParodyName, custom_filter=lambda: and_op(
-        ParodyName.alias_for == None, # noqa: E711
+        ParodyName.alias_for == None,  # noqa: E711
         ~ParodyName.parodies.any(),
     ), found_attrs=lambda: [ParodyName.parodies])
     # TODO: clean up
@@ -1686,8 +1688,8 @@ def initEvents(sess):
         ~Url.galleries.any()),
         found_attrs=lambda: [Url.artists, Url.galleries])
     many_to_many_deletion(NamespaceTags, custom_filter=lambda: or_op(
-        NamespaceTags.tag == None, # noqa: E711
-        NamespaceTags.namespace == None), # noqa: E711
+        NamespaceTags.tag == None,  # noqa: E711
+        NamespaceTags.namespace == None),  # noqa: E711
         found_attrs=lambda: [NamespaceTags.tag, NamespaceTags.namespace])
 
 

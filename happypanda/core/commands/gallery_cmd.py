@@ -156,7 +156,7 @@ class SimilarGallery(AsyncCommand):
 
     def main(self, gallery_or_id: db.Gallery) -> typing.List[db.Gallery]:
         gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
-        gid = str(gid) # because JSON keys are str
+        gid = str(gid)  # because JSON keys are str
         gl_data = {}
         all_gallery_tags = {}
         self.set_progress(type_=enums.ProgressType.Unknown)
@@ -199,7 +199,7 @@ class SimilarGallery(AsyncCommand):
         sess.autoflush = False
         data = {}
         g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
-        g_id = str(g_id) # because JSON keys are str
+        g_id = str(g_id)  # because JSON keys are str
         tag_count = 0
         tag_count_minimum = 5
         if g_id in all_gallery_tags:

@@ -9,13 +9,13 @@
 #from org.transcrypt.stubs.browser import __pragma__
 #__pragma__('alias', 'as_', 'as')
 
-#__pragma__('skip')
+# __pragma__('skip')
 #require = window = require = setInterval = setTimeout = setImmediate = None
 #clearImmediate = clearInterval = clearTimeout = this = document = None
 #JSON = Math = console = alert = requestAnimationFrame = None
 #js_undefined = location = locationStorage = sessionStorage = None
 #Date = None
-#__pragma__('noskip')
+# __pragma__('noskip')
 
 
 # def titlecontrol_render():
@@ -30,4 +30,4 @@
 #    },
 
 #    'render': creategallery_render
-#})
+# })

@@ -36,13 +36,14 @@ def open_external(e, d):
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
 
 
-
 def read_event(e, d):
     print("read event")
     if this.state.data:
         client.call_func("gallery_read_event", None, item_id=this.state.data.id)
 
+
 __pragma__("notconv")
+
 
 def gallery_render():
     fav = 0
