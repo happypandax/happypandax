@@ -408,8 +408,7 @@ def deploy(args, unknown=None):
                                                                    '--name',
                                                                    constants.updater_name,
                                                                    '--icon',
-                                                                   os.path.join(constants.dir_static,
-                                                                                'favicon.ico'),
+                                                                   constants.favicon_path,
                                                                    '--specpath',
                                                                    'build'
                                                                    ]):
