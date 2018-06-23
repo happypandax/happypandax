@@ -92,7 +92,7 @@ def cmd_commands(args):
 
     if args.list_users:
         for u in db.list_users(limit=20, offset=args.list_users - 1):
-            print("{}\t{}".format(u.name, u.role.value))
+            print("{}\t[{}]".format(u.name, u.role.value))
         return True
 
 
