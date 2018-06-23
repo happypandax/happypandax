@@ -62,19 +62,18 @@ class GeneralTest(unittest.TestCase):
         self.session.commit()
 
     def test_history(self):
-        self.assertEqual(self.session.query(Event).count(), 1) # life
+        self.assertEqual(self.session.query(Event).count(), 0) #
 
         self.gallery.read(constants.default_user.id)
-        self.assertEqual(self.session.query(Event).count(), 2)
+        self.assertEqual(self.session.query(Event).count(), 1)
         self.gallery.read(constants.default_user.id)
         self.session.commit()
-        self.assertEqual(self.session.query(Event).count(), 3)
+        self.assertEqual(self.session.query(Event).count(), 2)
 
         self.gallery.delete()
 
-        self.assertEqual(self.session.query(Event).count(), 3)
+        self.assertEqual(self.session.query(Event).count(), 2)
 
-    #@unittest.expectedFailure
     def test_typesfail(self):
         with self.assertRaises(AssertionError):
             self.gallery.last_read = datetime.date.today()
@@ -339,6 +338,7 @@ class ArtistNameRelationship(unittest.TestCase):
         self.session.add(self.gallery)
         self.artist.names.append(root)
         self.session.commit()
+        assert not self.names[0].alias_for
 
         self.assertEqual(len(self.artist.names), 1)
         self.assertEqual(len(root.aliases), 9)

@@ -226,8 +226,10 @@ class TestUpdating:
     def test_register_release(self, tmp_update_folder, app_path):
         p = str(tmp_update_folder.mkdir("updater_register"))
         db_p = tmp_update_folder.join("internals.db")
+        idb = clsutils.InternalDatabase(str(db_p))
         with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
-            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
+            mock.patch("happypanda.common.constants.internaldb", idb),\
+            mock.patch("happypanda.common.clsutils.internaldb", idb),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("happypanda.common.utils.create_temp_dir") as utils_temp,\
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
@@ -246,8 +248,10 @@ class TestUpdating:
 
     def test_updater(self, tmp_update_folder, app_path):
         db_p = tmp_update_folder.join("internals.db")
+        idb = clsutils.InternalDatabase(str(db_p))
         with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
-            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
+            mock.patch("happypanda.common.constants.internaldb", idb),\
+            mock.patch("happypanda.common.clsutils.internaldb", idb),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
@@ -262,8 +266,10 @@ class TestUpdating:
         all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
         db_p = tmp_update_folder.join("internals.db")
         p = str(tmp_update_folder.mkdir("updater_register2"))
+        idb = clsutils.InternalDatabase(str(db_p))
         with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
-            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
+            mock.patch("happypanda.common.constants.internaldb", idb),\
+            mock.patch("happypanda.common.clsutils.internaldb", idb),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("happypanda.common.utils.create_temp_dir") as utils_temp,\
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
@@ -271,9 +277,11 @@ class TestUpdating:
             utils_temp.return_value = str(tmp_update_folder.mkdir("updater_release2"))
             assert updater.register_release(asset_url_platform, silent=False, restart=True)
 
+        idb = clsutils.InternalDatabase(str(db_p))
         with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder.join("internals"))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
-            mock.patch("happypanda.common.constants.internaldb", clsutils.InternalDatabase(str(db_p))),\
+            mock.patch("happypanda.common.constants.internaldb", idb),\
+            mock.patch("happypanda.common.clsutils.internaldb", idb),\
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
             with mock.patch("updater.atexit.register") as aexit:

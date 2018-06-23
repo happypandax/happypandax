@@ -505,7 +505,7 @@ class AliasMixin:
 
     @declared_attr
     def language(cls):
-        return relationship("Language", cascade="all")
+        return relationship("Language", cascade=expunge_cascade)
 
     @declared_attr
     def alias_for_id(cls):
@@ -537,6 +537,9 @@ class AliasMixin:
         if alias and alias.alias_for:
             return alias.alias_for
         return alias
+
+    def __init__(self, *args, **kwargs):
+        return super().__init__(*args, **kwargs)
 
 
 class ProfileMixin:
@@ -1044,7 +1047,7 @@ class Artist(UniqueMixin, ProfileMixin, UserMixin, Base):
         "ArtistName",
         secondary=artist_names,
         backref=backref("artists", lazy="dynamic"),
-        cascade=expunge_cascade,
+        cascade="all",
         lazy="joined")
 
     info = Column(Text, nullable=False, default='')
@@ -1138,7 +1141,7 @@ class Parody(UniqueMixin, ProfileMixin, UserMixin, Base):
         "ParodyName",
         secondary=parody_names,
         backref=backref("parodies", lazy="dynamic"),
-        cascade=expunge_cascade,
+        cascade="all",
         lazy="joined")
 
     galleries = relationship(
@@ -1397,7 +1400,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             if m.name == MetaTag.names.read:
                 break
         else:
-            m = MetaTag.as_unique(name=MetaTag.names.read)
+            m = MetaTag.as_unique(name=MetaTag.names.read, session=sess)
             self.metatags.append(m)
 
     @hybrid_property
@@ -1659,11 +1662,11 @@ def initEvents(sess):
     many_to_many_deletion(Namespace, lambda: Namespace.tags)
     many_to_many_deletion(Circle, lambda: Circle.artists)
     many_to_many_deletion(ArtistName, custom_filter=lambda: and_op(
-        not ArtistName.alias_for,
+        ArtistName.alias_for == None, # noqa: E711
         ~ArtistName.artists.any(),
     ), found_attrs=lambda: [ArtistName.artists])
     many_to_many_deletion(ParodyName, custom_filter=lambda: and_op(
-        not ParodyName.alias_for,
+        ParodyName.alias_for == None, # noqa: E711
         ~ParodyName.parodies.any(),
     ), found_attrs=lambda: [ParodyName.parodies])
     # TODO: clean up
@@ -1683,8 +1686,8 @@ def initEvents(sess):
         ~Url.galleries.any()),
         found_attrs=lambda: [Url.artists, Url.galleries])
     many_to_many_deletion(NamespaceTags, custom_filter=lambda: or_op(
-        NamespaceTags.tag is None,
-        NamespaceTags.namespace is None),
+        NamespaceTags.tag == None, # noqa: E711
+        NamespaceTags.namespace == None), # noqa: E711
         found_attrs=lambda: [NamespaceTags.tag, NamespaceTags.namespace])
 
 
