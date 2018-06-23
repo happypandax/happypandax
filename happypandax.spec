@@ -7,7 +7,7 @@ from PyInstaller.utils.hooks import exec_statement
 sys.modules['FixTk'] = None
 
 working_dir = os.getcwd()
-icon_path = "deploy/osx/app.icns" if sys.platform.startswith('darwin') else "static/favicon.ico"
+icon_path = "deploy/osx/app.icns" if sys.platform.startswith('darwin') else "static/favicon/favicon.ico"
 version_path = "deploy/win/version.txt"
 
 block_cipher = None
