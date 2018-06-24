@@ -338,6 +338,7 @@ def temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.
                    # sort_desc: bool=False,
                    ):
     """
+    not ready yet...
 
     Args:
         view_type: type of temporary view
@@ -379,6 +380,8 @@ def temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.
 def submit_temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryViewType.GalleryAddition,
                           view_id: int = None,):
     """
+    not ready yet...
+
     Args:
         view_type: type of temporary view
         view_id: id of a specific view

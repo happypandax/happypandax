@@ -201,7 +201,7 @@ class SimilarGallery(AsyncCommand):
         g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
         g_id = str(g_id)  # because JSON keys are str
         tag_count = 0
-        tag_count_minimum = 5
+        tag_count_minimum = 3
         if g_id in all_gallery_tags:
             g_tags = all_gallery_tags[g_id]
             for a, b in g_tags.items():

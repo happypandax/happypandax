@@ -35,6 +35,8 @@ __pragma__('kwargs')
 
 def get_item(data=None, error=None, force=False):
     if data is not None and not error:
+        if not this._mounted:
+            return
         this.setState({"data": data,
                        "loading": False,
                        "rating": data.rating,
@@ -280,6 +282,14 @@ def gallery_on_update(p_props, p_state):
 
 
 __pragma__("tconv")
+
+def page_willmount():
+    this._mounted = True
+    this.get_item() if not this.state.data else None
+    this.get_config()
+
+def page_willunmount():
+    this._mounted = False
 
 
 def page_render():
@@ -673,9 +683,8 @@ Page = createReactClass({
     'toggle_pages_config': lambda a: this.setState({'visible_page_cfg': not this.state.visible_page_cfg}),
     'toggle_external_viewer': toggle_external_viewer,
 
-    'componentWillMount': lambda: all(((this.get_item() if not this.state.data else None),
-                                       this.get_config(),
-                                       )),
+    'componentWillMount': page_willmount,
+    'componentWillUnmount': page_willunmount,
     'componentDidUpdate': gallery_on_update,
 
     'render': page_render

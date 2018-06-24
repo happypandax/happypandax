@@ -33,40 +33,6 @@ __pragma__('noskip')
 __pragma__('alias', 'as_', 'as')
 require('smoothscroll-polyfill').polyfill()
 
-preview_txt = """Hi there!
-
-This is a [preview] of what HPX is capable of.
-Though, it is not a complete preview because I plan to keep adding more features over time.
-This [preview] is intended for users migrating from good old Happypanda.
-Why is that?
-Well, because you won't be able to use HPX without a database from Happypanda.
-HPX [preview] also means that it's not possible to write anything to the HPX database yet.
-There is no "Add gallery..." function yet. I have not implemented it.
-To use HPX you need to convert your database from Happypanda to a HPX database.
-You can do that with the GUI (named 'happypandax_gui'), click the button named "HP to HPX".
-
-I'd advise against deleting your Happypanda database. You will likely need to convert again in the future.
-So, if you wish to add new galleries, a proposed way is:
-Add galleries in Happypanda -> Convert database -> New galleries are in HPX
-
-HPX has an auto update feature. When a new release comes out just click [Update] on the pop-up notification and it'll update and restart for you automatically!
-(Provided you're not running from source).
-HPX should gradually become much better than Happypanda. Now you can fa- I mean indulge your stuff from anywhere once you have it set up!
-
-I have poured many hours into HPX and will likely continue to do so in the forseeable future!
-I want to thank everyone who have contributed to HPX and HP in some way or another.
-I want to especially thank you guys who went ahead and donated to me.
-I did not actually expect anyone to do that so I am very happy, and most importantly, it motivated me a ton!
-And so... because of that, I went ahead and made a Patreon. The Patreon will be for HPX and my art.
-If you think that Happypanda has served you well and want to see HPX become better faster, please consider supporting me on there.
-It'll motivate me a ton! :)
-
-Once again, thank you guys who donated to me through Ko-Fi.
-
-I hope you'll like HPX.
-"""
-
-
 def on_update(props):
     if props.location.pathname != this.props.location.pathname:
         for x in state.commands:
@@ -253,16 +219,6 @@ def app_render():
                            *server_push_actions_el,
                            onClose=this.server_push_close,
                            open=this.state.server_push, dimmer="inverted", closeIcon=True)
-                         )
-
-        modal_els.append(e(ui.Modal,
-                           e(ui.Modal.Header, "Welcome to HappyPanda X Preview!"),
-                           e(ui.Modal.Content, preview_txt, style={"white-space": "pre-wrap"}),
-                           e(ui.Modal.Actions, e(ui.Button, e(ui.Icon, js_name="heart"), "Show your support on patreon!",
-                                                 href="https://www.patreon.com/twiddly", target="_blank", color="orange")),
-                           closeIcon=True,
-                           open=utils.storage.get("preview_msg", this.state.preview_msg),
-                           onClose=this.close_preview_msg)
                          )
 
         api_route = []

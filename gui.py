@@ -545,7 +545,7 @@ class Window(QMainWindow):
             self.server_process = self.start_server()
             self.activate_output.emit()
             if config.gui_open_webclient_on_server_start.value:
-                Timer(3, self.open_client).start()
+                Timer(4, self.open_client).start()
         else:
             self.force_kill = True
             self.server_btn.setText(t("gui.b-start-server", default="Start server"))

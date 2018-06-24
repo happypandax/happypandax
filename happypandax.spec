@@ -39,7 +39,7 @@ interface_files = exec_statement("""
     from happypanda.common import utils
     from happypanda import interface
     print(" ".join(utils.get_package_modules(interface, False)))""").split()
-
+print(interface_files)
 if os.name == 'nt':
   added_files += [('deploy/win/vc_redist.x86.exe', '.')]
   interface_files.append("winreg")

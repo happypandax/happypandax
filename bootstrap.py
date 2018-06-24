@@ -470,7 +470,10 @@ def deploy(args, unknown=None):
 
             if os.environ.get('CI'):
                 deploy_file_o = os.path.join(deploy_dir, pathlib.Path(output_path_a).name)
-                os.replace(output_path_a, deploy_file_o)
+                try:
+                    os.replace(output_path_a, deploy_file_o)
+                except FileNotFoundError as e:
+                    print(e)
 
     print("Done")
 

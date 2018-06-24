@@ -152,6 +152,7 @@ class InternalTinyDB:
 class InternalDatabase(InternalTinyDB):
 
     def __init__(self, db_path):
+        os.makedirs(os.path.split(db_path)[0], exist_ok=True)
         super().__init__(tinydb.TinyDB(db_path))
 
         self.release_tags = self.GetSet(self, "release_tags")
@@ -182,7 +183,8 @@ else:
     constants.internaldb = internaldb = InternalDatabase(constants.internal_db_path)
 
 in_repl = not hasattr(__main__, '__file__') or in_test
-
+if getattr(sys, 'frozen', False):
+    in_repl = True
 
 class ForkablePdb(pdb.Pdb):
 

@@ -221,16 +221,8 @@ def get_package_modules(pkg, load=True):
     mods = [m[1] for m in pkgutil.iter_modules(pkg.__path__, prefix)]
 
     # special handling for PyInstaller
-    importers = map(pkgutil.get_importer, pkg.__path__)
-    toc = set()
-    for i in importers:
-        #log.d("importer:", i)
-        if hasattr(i, 'toc'):
-            #log.d("toc:", i.toc)
-            toc |= i.toc
-    for elm in toc:
-        if elm.startswith(prefix):
-            mods.append(elm)
+    if hasattr(pkg, '__loader__') and hasattr(pkg.__loader__, 'toc'):
+        [mods.append(x) for x in pkg.__loader__.toc if x.startswith(prefix)]
 
     return [importlib.import_module(x) for x in mods] if load else mods
 

@@ -200,6 +200,7 @@ class Scheduler(Service):
 
     def __init__(self, name):
         super().__init__(name)
+        self._commands = {}  # cmd_id : command
         self._scheduler = GeventScheduler({
             'apscheduler.timezone': 'UTC',  # TODO: locatime or user configurable
         })
@@ -219,6 +220,7 @@ class Scheduler(Service):
         "Add a command to this scheduler and return a command id"
         assert isinstance(cmd, command.CoreCommand)
         command_id = super().add_command(cmd)
+        self._commands[command_id] = cmd
         if trigger:
             self.set_trigger(command_id, trigger)
         else:
