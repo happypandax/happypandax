@@ -934,11 +934,22 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
         e = None
         if self.tag_id and self.namespace_id:
             sess = session or constants.db_session()
+
+            if self.tag and self.tag.id:
+                tag_id = self.tag.id
+            else:
+                tag_id = self.tag_id
+
+            if self.namespace and self.namespace.id:
+                namespace_id = self.namespace.id
+            else:
+                namespace_id = self.namespace_id
+
             e = sess.query(
                 self.__class__).filter_by(
                 and_(
-                    NamespaceTags.tag_id == self.tag_id,
-                    NamespaceTags.namespace_id == self.namespace_id)).scalar()
+                    self.__class__.tag_id == tag_id,
+                    self.__class__.namespace_id == namespace_id)).scalar()
         if not e:
             e = self
         return e
