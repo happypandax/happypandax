@@ -55,6 +55,7 @@ The object ``constants`` is available on the module-level and provides various u
 import typing
 import functools
 
+database = None
 command = None
 constants = None
 

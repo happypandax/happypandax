@@ -450,7 +450,7 @@ class CoreFS(CoreCommand):
             else:
                 l = tuple(str(x) for x in self._path.iterdir())
         if corefs:
-            l = tuple(CoreFS(x) for x in l)
+            l = tuple(CoreFS(x, archive=self._archive) for x in l)
         return l
 
     def get(self, target=None):
@@ -957,31 +957,35 @@ class GalleryFS(CoreCommand):
         with sess.no_autoflush:
             if not update and self.gallery.id:
                 self.gallery = db.ensure_in_session(self.gallery)
+            if not update:
+                self.gallery.titles.clear()
             for p in sources:
                 with self._parse_metadata_file.call(p, self.gallery) as plg:
                     from_file_data = any(plg.all(default=True))  # TODO: stop at first handler that returns true
 
-                if not from_file_data:  # TODO: only set missing data
-                    n = NameParser(os.path.split(p)[1])
-                    langs = []
-                    for l in n.extract_language():
-                        langs.append(db.Language.as_unique(name=l, session=sess))
 
-                    lang = None
-                    if langs:
-                        self.gallery.language = lang = langs[0]
-                    if not update:
-                        self.gallery.titles.clear()
+                n = NameParser(os.path.split(p)[1])
+                langs = []
+                for l in n.extract_language():
+                    langs.append(db.Language.as_unique(name=l, session=sess))
+
+                lang = None
+                if langs:
+                    lang = langs[0]
+                if lang and not self.gallery.language:
+                    self.gallery.language = lang
+                if not self.gallery.titles or not from_file_data:
                     for t in n.extract_title():
                         dbtitle = db.Title()
                         dbtitle.name = t
                         if lang:
                             dbtitle.language = lang
                         self.gallery.titles.append(dbtitle)
-                    circles = []
-                    for t in n.extract_circle():
-                        circles.append(db.Circle.as_unique(name=t, session=sess))
+                circles = []
+                for t in n.extract_circle():
+                    circles.append(db.Circle.as_unique(name=t, session=sess))
 
+                if not self.gallery.artists or not from_file_data:
                     for t in n.extract_artist():
                         dbartist = db.Artist.as_unique(name=t)
                         for an in dbartist.names:
@@ -994,19 +998,24 @@ class GalleryFS(CoreCommand):
                         if dbartist not in self.gallery.artists:
                             self.gallery.artists.append(dbartist)
 
-                        for c in circles:
-                            if c not in dbartist.circles:
-                                dbartist.circles.append(c)
-
                         if lang and dbartistname and not dbartistname.language:
                             dbartistname.language = lang
 
+                for a in self.gallery.artists:
+                    if not a.circles or not from_file_data:
+                        for c in circles:
+                            if c not in a.circles:
+                                a.circles.append(c)
+
+                if not self.gallery.collections.count() or not from_file_data:
                     for col_name, cat_name in n.extract_collection():
                         dbcollection = db.Collection.as_unique(name=col_name, session=sess)
                         if cat_name:
                             dbcat = db.Category.as_unique(name=cat_name, session=sess)
                             dbcollection.category = dbcat
-                        self.gallery.collections.append(dbcollection)
+                        if dbcollection not in self.gallery.collections:
+                            self.gallery.collections.append(dbcollection)
+
         self._loaded_metadata = True
 
     def load_pages(self, delete_existing=False, force=False):
@@ -1054,8 +1063,9 @@ class GalleryFS(CoreCommand):
         for s in self.get_sources():
             sfs = CoreFS(s)
             if sfs.is_dir or (sfs.is_file and sfs.is_archive):
-
                 r = True
+                if sfs.is_dir and not [x for x in sfs.contents(corefs=False) if x.endswith(CoreFS.image_formats())]:
+                    r = False
 
         self._evaluated = r
         return self._evaluated

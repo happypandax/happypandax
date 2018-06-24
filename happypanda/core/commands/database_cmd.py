@@ -284,8 +284,14 @@ class GetModelClass(Command):
         super().__init__()
 
     def main(self, model_name: str) -> db.Base:
+        e = False
+        try:
+            if not hasattr(db, model_name) or not issubclass(getattr(db, model_name), db.Base):
+                e = True
+        except TypeError:
+            e = True
 
-        if not hasattr(db, model_name):
+        if e:
             raise exceptions.CoreError(
                 utils.this_command(self),
                 "No database model named '{}'".format(model_name))

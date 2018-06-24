@@ -57,7 +57,7 @@ class ScanGallery(AsyncCommand):
                     continue
                 found_galleries.append(os.path.abspath(p.path))
 
-        return tuple(found_galleries)
+        return tuple(found_galleries[:100])
 
     @async_utils.defer
     def _generate_gallery_fs(self, found_paths):

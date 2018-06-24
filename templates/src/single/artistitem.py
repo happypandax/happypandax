@@ -21,8 +21,9 @@ def artistlbl_render():
     if data:
         if data.preferred_name:
             name = data.preferred_name.js_name
-        if data.metatags.favorite:
-            fav = 1
+        if data.metatags:
+            if data.metatags.favorite:
+                fav = 1
 
     lbl_args = {'content': name}
     if fav:

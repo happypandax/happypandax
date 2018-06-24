@@ -38,7 +38,8 @@ from sqlalchemy.orm import (
     state,
     collections,
     dynamic,
-    backref)
+    backref,
+    exc as exc_orm)
 from sqlalchemy import (
     create_engine,
     event,
@@ -573,12 +574,11 @@ class UserMixin:
     @classmethod
     def current_user(cls):
         "Retrieve the current user"
+        u = constants.default_user
         ctx = utils.get_context()
         if ctx:
             u = ctx.get('user')
-            if u:
-                return u.id
-        return constants.default_user.id
+        return u.id if u else None
 
 
 def validate_int(value):
@@ -889,6 +889,10 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
 
     def __init__(self, ns=None, tag=None, **kwargs):
         super().__init__(**kwargs)
+        if isinstance(ns, str):
+            ns = Namespace.as_unique(name=ns)
+        if isinstance(tag, str):
+            tag = Tag.as_unique(name=tag)
         self.namespace = ns
         self.tag = tag
 
@@ -926,17 +930,21 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
             alias = alias.alias_for
         return alias
 
-    def mapping_exists(self):
-        sess = constants.db_session()
-        e = sess.query(
-            self.__class__).filter_by(
-            and_(
-                tag_id=self.tag_id,
-                namespace_id=self.namespace_id)).scalar()
+    def mapping_exists(self, session=None):
+        e = None
+        if self.tag_id and self.namespace_id:
+            sess = session or constants.db_session()
+            e = sess.query(
+                self.__class__).filter_by(
+                and_(
+                    tag_id==self.tag_id,
+                    namespace_id==self.namespace_id)).scalar()
         if not e:
             e = self
-        sess.close()
         return e
+
+    def exists(self, *args, **kwargs):
+        return self.mapping_exists(*args, **kwargs)
 
 
 metatag_association(NamespaceTags, "namespacetags")
@@ -1261,17 +1269,32 @@ class Language(NameMixin, UserMixin, Base):
 
     @validates("name")
     def validate_name(self, key, name):
+        name, code = self._real_name(name)
+        if code:
+            self.code = code
+        return name
+
+    @classmethod
+    def _real_name(cls, name):
+        code = ''
         try:
             l = langcodes.find(name)
             name = utils.capitalize_text(l.autonym())
-            self.code = l.language
+            code = l.language
         except LookupError:
             pass
-        return name
+        return name, code
 
     @validates("code")
     def validate_code(self, key, code):
         return utils.get_language_code(code)
+    
+    @classmethod
+    def as_unique(cls, *arg, session = None, **kw):
+        if 'name' in kw:
+            name, _ = cls._real_name(kw['name'])
+            kw['name'] = name
+        return super().as_unique(*arg, session=session, **kw)
 
 
 @generic_repr
@@ -1984,7 +2007,7 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True):
             if x.key not in exclude:
                 try:
                     d[x.key] = x.value
-                except exc.DetachedInstanceError:
+                except exc_orm.DetachedInstanceError:
                     if raise_err:
                         raise
                     d[x.key] = None
@@ -1999,8 +2022,12 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True):
     if descriptors:
         for name, value in model.__dict__.items():
             if isinstance(value, (hybrid_property, AssociationProxy, index_property)):
-                d[name] = getattr(obj, name)
-
+                try:
+                    d[name] = getattr(obj, name)
+                except exc_orm.DetachedInstanceError:
+                    if raise_err:
+                        raise
+                    d[name] = None
     return d
 
 
@@ -2081,7 +2108,7 @@ def freeze_object(obj):
         sess = object_session(obj)
         if sess:
             with sess.no_autoflush:
-                for t, v in table_attribs(obj).items():
+                for t, v in table_attribs(obj, descriptors=True, raise_err=False).items():
                     if is_instanced(v):
                         freeze_object(v)
                     elif is_list(v):
