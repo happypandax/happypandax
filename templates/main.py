@@ -33,6 +33,7 @@ __pragma__('noskip')
 __pragma__('alias', 'as_', 'as')
 require('smoothscroll-polyfill').polyfill()
 
+
 def on_update(props):
     if props.location.pathname != this.props.location.pathname:
         for x in state.commands:

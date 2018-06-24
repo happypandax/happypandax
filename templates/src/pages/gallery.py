@@ -283,10 +283,12 @@ def gallery_on_update(p_props, p_state):
 
 __pragma__("tconv")
 
+
 def page_willmount():
     this._mounted = True
     this.get_item() if not this.state.data else None
     this.get_config()
+
 
 def page_willunmount():
     this._mounted = False
