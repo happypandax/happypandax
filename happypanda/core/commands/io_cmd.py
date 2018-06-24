@@ -963,7 +963,6 @@ class GalleryFS(CoreCommand):
                 with self._parse_metadata_file.call(p, self.gallery) as plg:
                     from_file_data = any(plg.all(default=True))  # TODO: stop at first handler that returns true
 
-
                 n = NameParser(os.path.split(p)[1])
                 langs = []
                 for l in n.extract_language():

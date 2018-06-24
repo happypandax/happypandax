@@ -937,8 +937,8 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
             e = sess.query(
                 self.__class__).filter_by(
                 and_(
-                    tag_id==self.tag_id,
-                    namespace_id==self.namespace_id)).scalar()
+                    NamespaceTags.tag_id == self.tag_id,
+                    NamespaceTags.namespace_id == self.namespace_id)).scalar()
         if not e:
             e = self
         return e
@@ -1288,9 +1288,9 @@ class Language(NameMixin, UserMixin, Base):
     @validates("code")
     def validate_code(self, key, code):
         return utils.get_language_code(code)
-    
+
     @classmethod
-    def as_unique(cls, *arg, session = None, **kw):
+    def as_unique(cls, *arg, session=None, **kw):
         if 'name' in kw:
             name, _ = cls._real_name(kw['name'])
             kw['name'] = name
