@@ -16,6 +16,9 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
+**Logs**
+If applicable, include your ``error.log`` or ``debug.log`` found in ``[HPX]\logs\`` to help identifying your problem.
+
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 

@@ -14,7 +14,7 @@ import pdb
 if hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
 
-from multiprocessing import Process  # noqa: E402
+from multiprocessing import Process, connection  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
 
 from happypanda.common import utils, constants, hlogger, config, exceptions  # noqa: E402
@@ -114,12 +114,12 @@ def init_commands(args):
         constants.task_command.temp_cleaner = services.TaskService.generic.start_command(
             temp_id, constants.dir_temp, size=config.auto_temp_clean_size.value, silent=True)
 
-
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 6), "Python 3.6 and up is required"
     e_code = None
     e_num = 0
     try:
+        utils.setup_online_reporter()
         log.i("HPX START")
         log.i("Version:", constants.version_str)
         log.i("DB Version:", constants.version_db_str)
@@ -148,9 +148,8 @@ def start(argv=None, db_kwargs={}):
             return
 
         if not args.only_web:
-            hlogger.Logger.init_listener(args)
+            hlogger.Logger.init_listener(args, timeout=config.logger_manager_timeout.value)
 
-        utils.setup_online_reporter()
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
         utils.disable_loggers(config.disabled_loggers.value)
 

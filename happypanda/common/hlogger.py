@@ -5,6 +5,7 @@ import argparse
 import traceback
 import os
 import multiprocessing as mp
+import gevent
 
 try:
     import rollbar  # updater doesn't need this
@@ -15,7 +16,7 @@ from multiprocessing import Process, TimeoutError, queues
 from logging.handlers import RotatingFileHandler
 
 
-from happypanda.common import constants
+from happypanda.common import constants, patch
 
 
 def shutdown(*args):
@@ -63,6 +64,8 @@ class QueueHandler(logging.Handler):
                 self.handleError(record)
         except (KeyboardInterrupt, SystemExit):
             raise
+        except (BrokenPipeError, EOFError):
+            pass
         except BaseException:
             self.handleError(record)
 
@@ -252,15 +255,19 @@ class Logger:
                 if record is None:
                     break
                 Logger(record.name).handle(record)
-            except (KeyboardInterrupt, SystemExit):
-                pass
+            except (BrokenPipeError, KeyboardInterrupt, SystemExit):
+                break
             except BaseException:
                 traceback.print_exc(file=sys.stderr)
         shutdown()
-        queue.put(None)
+        try:
+            queue.put(None)
+        except (BrokenPipeError,):
+            pass
 
+        
     @classmethod
-    def init_listener(cls, args):
+    def init_listener(cls, args, timeout=5):
         assert isinstance(args, argparse.Namespace)
         "Start a listener in a child process, returns queue"
         cls._manager = mp.Manager()
@@ -272,8 +279,8 @@ class Logger:
     @classmethod
     def shutdown_listener(cls):
         if cls._queue:
-            cls._queue.put(None)
             try:
+                cls._queue.put(None)
                 cls._queue.get(timeout=3)
-            except (TimeoutError, queues.Empty):
+            except (EOFError, BrokenPipeError, TimeoutError, queues.Empty):
                 pass

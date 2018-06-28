@@ -372,7 +372,6 @@ def os_info():
 
 def setup_online_reporter():
     """
-
     WARNING:
         execute AFTER setting up a logger!
         the rollbar lib somehow messes it up!

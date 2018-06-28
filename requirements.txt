@@ -24,7 +24,7 @@ cachetools==2.1.0
 treelib==1.5.1
 regex==2018.06.06
 pyOpenSSL==18.0.0
-psycopg2==2.7.4
+psycopg2==2.7.5
 packaging==17.1
 Flask-SocketIO==3.0.1
 Flask==1.0.2

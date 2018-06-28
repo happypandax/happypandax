@@ -796,6 +796,12 @@ advanced_ns = "advanced"
 
 with config.namespace(advanced_ns):
 
+    logger_manager_timeout = config.create(
+        advanced_ns,
+        "logger_manager_timeout",
+        30,
+        "Timeout in seconds for logger manager queue creation", hidden=True)
+
     rollbar_access_token = config.create(
         advanced_ns,
         "rollbar_access_token",
