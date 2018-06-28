@@ -1,14 +1,16 @@
 import sys
-import gevent.monkey 
+import gevent.monkey
 
 patched = False
 
+
 def _patched_os_read(f, timeout=5):
     def wrapper(*args, **kwargs):
-        class A:pass
+        class A:
+            pass
         r = A
         err = None
-        import gevent # noqa: E402
+        import gevent  # noqa: E402
         with gevent.Timeout(timeout, False):
             while True:
                 try:
@@ -25,17 +27,18 @@ def _patched_os_read(f, timeout=5):
         return r
     return wrapper
 
+
 def patch():
     global patched
     if not patched:
         gevent.monkey.patch_all(thread=False, socket=False)
-        import os # noqa: E402
-        from multiprocessing import managers, connection # noqa: E402
+        import os  # noqa: E402
+        from multiprocessing import managers, connection  # noqa: E402
         if os.name == "posix":
             # multiprocessing.Manager spawns socketlisteners in a nativethread which causes
             # "cannot switch to a different thread" errors when using a monkeypatched socket
             # so we just let it use the native socket instead
-            import socket # noqa: E402
+            import socket  # noqa: E402
             connection.socket = socket
             del sys.modules[socket.__name__]
         gevent.monkey.patch_socket()
@@ -43,6 +46,7 @@ def patch():
         managers.Server.accepter = make_gevent_compatible_in_native_thread(managers.Server.accepter)
         managers.Server.handle_request = make_gevent_compatible_in_native_thread(managers.Server.handle_request)
         patched = True
+
 
 def unpatch():
     import importlib  # noqa: E402
@@ -64,19 +68,20 @@ def with_unpatch(f):
 
     return wrapper
 
+
 def make_gevent_compatible_in_native_thread(f):
-    import gevent # noqa: E402
-    import threading # noqa: E402
+    import gevent  # noqa: E402
+    import threading  # noqa: E402
 
     def _daemon():
         while True:
             gevent.sleep(0.1)
 
     def wrapper(*args, **kwargs):
-        h = gevent.get_hub()
         l = threading.local()
         g = None
         if not getattr(l, "_daemon", False):
+            gevent.get_hub()
             g = l._daemon = gevent.spawn(_daemon)
         r = None
         try:
@@ -88,13 +93,15 @@ def make_gevent_compatible_in_native_thread(f):
 
     return wrapper
 
+
 original_thread_cls = None
+
 
 def patch_native_thread():
     global original_thread_cls
 
-    import threading # noqa: E402
-    
+    import threading  # noqa: E402
+
     if not original_thread_cls:
         original_thread_cls = threading.Thread
 
@@ -108,9 +115,10 @@ def patch_native_thread():
 
     threading.Thread = GeventNativeThread
 
+
 def unpatch_native_thread():
     global original_thread_cls
-    import threading # noqa: E402
-    
+    import threading  # noqa: E402
+
     if original_thread_cls:
         threading.Thread = original_thread_cls

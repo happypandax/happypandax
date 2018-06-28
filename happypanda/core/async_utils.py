@@ -17,6 +17,7 @@ log = hlogger.Logger(constants.log_ns_core + __name__)
 Thread = monkey.get_original("threading", "Thread")
 local = monkey.get_original("threading", "local")
 
+
 class Greenlet(gevent.Greenlet):
     '''
     A subclass of gevent.Greenlet which adds additional members:

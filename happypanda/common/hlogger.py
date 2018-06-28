@@ -5,7 +5,6 @@ import argparse
 import traceback
 import os
 import multiprocessing as mp
-import gevent
 
 try:
     import rollbar  # updater doesn't need this
@@ -16,7 +15,7 @@ from multiprocessing import Process, TimeoutError, queues
 from logging.handlers import RotatingFileHandler
 
 
-from happypanda.common import constants, patch
+from happypanda.common import constants
 
 
 def shutdown(*args):
@@ -265,7 +264,6 @@ class Logger:
         except (BrokenPipeError,):
             pass
 
-        
     @classmethod
     def init_listener(cls, args, timeout=5):
         assert isinstance(args, argparse.Namespace)

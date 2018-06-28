@@ -14,7 +14,7 @@ import pdb
 if hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
 
-from multiprocessing import Process, connection  # noqa: E402
+from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
 
 from happypanda.common import utils, constants, hlogger, config, exceptions  # noqa: E402
@@ -113,6 +113,7 @@ def init_commands(args):
         temp_id = services.TaskService.generic.add_command(io_cmd.CacheCleaner())
         constants.task_command.temp_cleaner = services.TaskService.generic.start_command(
             temp_id, constants.dir_temp, size=config.auto_temp_clean_size.value, silent=True)
+
 
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 6), "Python 3.6 and up is required"
