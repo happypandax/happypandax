@@ -930,28 +930,27 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
             alias = alias.alias_for
         return alias
 
-    def mapping_exists(self, session=None):
+    def mapping_exists(self, obj=False, session=None):
         e = None
-        if self.tag_id and self.namespace_id:
-            sess = session or constants.db_session()
+        sess = session or constants.db_session()
 
-            if self.tag and self.tag.id:
-                tag_id = self.tag.id
-            else:
-                tag_id = self.tag_id
+        if self.tag and self.tag.id:
+            tag_id = self.tag.id
+        else:
+            tag_id = self.tag_id
 
-            if self.namespace and self.namespace.id:
-                namespace_id = self.namespace.id
-            else:
-                namespace_id = self.namespace_id
+        if self.namespace and self.namespace.id:
+            namespace_id = self.namespace.id
+        else:
+            namespace_id = self.namespace_id
 
-            e = sess.query(
-                self.__class__).filter_by(
-                and_(
-                    self.__class__.tag_id == tag_id,
-                    self.__class__.namespace_id == namespace_id)).scalar()
-        if not e:
-            e = self
+        if tag_id and namespace_id:
+            e = sess.query(self.__class__).filter(and_op(self.__class__.tag_id == tag_id, self.__class__.namespace_id == namespace_id)).scalar()
+        if not obj:
+            e = True if e else False
+        else:
+            if not e:
+                e = self
         return e
 
     def exists(self, *args, **kwargs):
