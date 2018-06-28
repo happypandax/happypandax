@@ -149,7 +149,7 @@ def start(argv=None, db_kwargs={}):
             return
 
         if not args.only_web:
-            hlogger.Logger.init_listener(args, timeout=config.logger_manager_timeout.value)
+            hlogger.Logger.init_listener(args)
 
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
         utils.disable_loggers(config.disabled_loggers.value)

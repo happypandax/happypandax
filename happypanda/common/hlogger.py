@@ -265,7 +265,7 @@ class Logger:
             pass
 
     @classmethod
-    def init_listener(cls, args, timeout=5):
+    def init_listener(cls, args):
         assert isinstance(args, argparse.Namespace)
         "Start a listener in a child process, returns queue"
         cls._manager = mp.Manager()
