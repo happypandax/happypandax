@@ -1,6 +1,12 @@
 Plugin API
 ========================================
 
+.. warning::
+
+    Please know that the API is not stable at this time. API changes, additions and removals are
+    only documented in the release changelogs, so make sure to read them. Things should stabilize once
+    HPX enters beta status.
+
 .. automodule:: happypanda.core.plugin_interface
    :members:
    :member-order: groupwise

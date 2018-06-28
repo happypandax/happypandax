@@ -69,6 +69,49 @@ If you're interested in building a client to work with HPX, head over to :ref:`C
 
 Since a HPX client cannot function without the server running, it is a good idea to always leave the HPX server running in the background.
 
+Installing plugins
+========================================
+
+Your HPX installation can be extended with plugins. If you wish to create a plugin for HPX then head over to :ref:`Plugins`.
+
+HPX looks for plugins in the following folders:
+
+- ``[HPX]/plugins`` which exists in your HPX root folder
+- a folder defined by the ``plugin.plugin_dir`` setting
+
+If you're on OS X, your root HPX folder is at ``HappyPanda X.app/Contents/MacOS/`` which might be a bit bothersome, so I recommend that you
+define a new folder of your choosing HPX can look for plugins in with the `plugin.plugin_dir` setting.
+
+Plugins a contained in their own folder. To register a plugin with HPX, just move the plugin's folder into one of the locations above.
+HPX will then discover and register it, **but not install it**.
+
+To install a plugin after it has been registered, open up a HPX client that supports showing registered plugins (``About -> Plugins`` in the default client).
+Here you can install a registered plugin manually. Once a plugin has been installed, it will also be automatically installed on the next HPX run unless disabled or removed.
+
+To automatically install plugins once discovered and registered, set the setting ``plugin.auto_install_plugin`` to ``true``, but **this is not recommended** for the reasons explained below.
+
+Some plugins may depend on other plugins which needs to be installed first before they can be installed. There's the setting ``plugin.auto_install_plugin_dependency`` which is set to ``true`` by default
+that controls if these plugin dependencies should be installed automatically when the plugin in question is being installed.
+
+Be careful about plugins
+-------------------------------------
+
+**A plugin can not do anything before it has been installed.**
+
+Plugins have as much power as HPX once installed.
+
+If you give HPX elevated privileges when running, plugins will also have this privilege **but not before they have been installed**.
+Know that, inherently, **HappyPanda X does not need elevated privileges**.
+
+Some plugins may also cause unwanted effects towards your system or database.
+That is why care should be taken when wanting to use a plugin. Only use those you trust, and also don't just blindly trust a plugin.
+Backing up your HPX database before installing a plugin is recommended.
+
+With all that being said, HPX tries its best to minimize some of these issues. As long as plugin developers follow the guidelines and write safe code
+then everything should be okay.
+
+The `HappyPanda X Plugin Repo <https://github.com/happypandax/plugins>`_ houses plugins that have been checked and are relatively safe to use.
+If you're a plugin developer and want your plugin in there, just submit a PR.
 
 Securing HappyPanda X
 ========================================

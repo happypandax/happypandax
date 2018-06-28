@@ -1,7 +1,7 @@
 Plugins
 ========================================
 
-HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease with plugins.
+HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease through plugins.
 
 Plugins can be written in ``Python 3`` up to ``Python 3.6``.
 Note that you don't need to be running HPX from source to develop a plugin.
@@ -265,6 +265,28 @@ Here are some **DO**'s and **DON'T**'s that should ensure that everything plays 
 * **DO** always prefer the :ref:`Plugin API` instead of rolling your own thing. If you think the API is limited and doesn't allow doing what you want to, consider opening a PR on Github instead.
 * **DO** always prefer using the **commands** that HPX provides, especially because it allows other things that are beyond your control a chance to run.
 * **DO** keep everything you produce in the plugin's own folder when possible. Use ``__hpx__.constants.current_dir`` to retrieve the path to the plugin's folder.
+
+Importing modules and packages
+****************************************
+
+Importing modules works as expected and, other than ``happypanda``, all available modules can be imported normally::
+
+    import modulename
+    # .. code
+
+It is also possible to import modules that you create yourself. Just put the file/folder in your plugin directory alongside your entry file and import it normally.
+
+See :ref:`Available packages` for a list of all available modules in an HPX installation.
+
+Importing external packages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you need an external package that is not listed in :ref:`Available packages` then here's what you can do.
+
+.. todo::
+
+    external packages
+
 
 Available packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
