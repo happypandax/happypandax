@@ -34,8 +34,8 @@ updater_name = "happyupd"  # windows will make it require escalted priv. if name
 updater_key = "updater"
 
 ## VERSIONING ##
-build = 131
-version = (0, 1, 0)
+build = 132
+version = (0, 1, 1)
 version_db = (0, 1, 0)
 version_web = (0, 1, 0)
 version_str = ".".join(str(x) for x in version)
