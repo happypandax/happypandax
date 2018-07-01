@@ -276,6 +276,7 @@ class LowerCaseString(TypeDecorator):
     def process_bind_param(self, value, dialect):
         return value.lower()
 
+
 class CapitalizedString(TypeDecorator):
     """
     Ensures strings capitalized
@@ -549,6 +550,7 @@ class CapitalizedNameMixin(NameMixin):
         if 'name' in kwargs:
             kwargs['name'] = kwargs['name'].capitalize()
         return super().unique_filter(*args, **kwargs)
+
 
 class AliasMixin:
 
@@ -999,7 +1001,11 @@ class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
             namespace_id = self.namespace_id
 
         if tag_id and namespace_id:
-            e = sess.query(self.__class__).filter(and_op(self.__class__.tag_id == tag_id, self.__class__.namespace_id == namespace_id)).scalar()
+            e = sess.query(
+                self.__class__).filter(
+                and_op(
+                    self.__class__.tag_id == tag_id,
+                    self.__class__.namespace_id == namespace_id)).scalar()
         if not obj:
             e = True if e else False
         else:
@@ -1024,9 +1030,8 @@ class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
         assert not isinstance(tag, Tag)
         if ns is None:
             ns = constants.special_namespace
-        return query.join(cls.namespace).join(cls.tag).filter(and_op(Namespace.name==Namespace.format(ns),
-                                                                     Tag.name==Tag.format(tag)))
-
+        return query.join(cls.namespace).join(cls.tag).filter(and_op(Namespace.name == Namespace.format(ns),
+                                                                     Tag.name == Tag.format(tag)))
 
 
 metatag_association(NamespaceTags, "namespacetags")
