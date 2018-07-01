@@ -35,8 +35,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade pyenv; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade node; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv install 3.6.5; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv global 3.6.5; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo python-build 3.6.5 /usr/local/; fi
     - python3 -V
     - node --version
     - npm update -g npm
