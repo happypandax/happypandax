@@ -276,6 +276,15 @@ class LowerCaseString(TypeDecorator):
     def process_bind_param(self, value, dialect):
         return value.lower()
 
+class CapitalizedString(TypeDecorator):
+    """
+    Ensures strings capitalized
+    """
+    impl = String
+
+    def process_bind_param(self, value, dialect):
+        return value.capitalize()
+
 
 class RegexMatchExpression(BinaryExpression):
     """Represents matching of a column againsts a regular expression."""
@@ -497,6 +506,49 @@ class NameMixin(UniqueMixin):
         return "<{}(ID: {}, Name: {})>".format(
             self.__class__.__name__, self.id, self.name)
 
+
+class LowerNameMixin(NameMixin):
+    name = Column(LowerCaseString, nullable=False, default='', unique=True)
+
+    @classmethod
+    def as_unique(cls, *args, **kwargs):
+        if 'name' in kwargs:
+            kwargs['name'] = kwargs['name'].lower()
+        return super().as_unique(*args, **kwargs)
+
+    @classmethod
+    def unique_hash(cls, *args, **kwargs):
+        if 'name' in kwargs:
+            kwargs['name'] = kwargs['name'].lower()
+        return super().unique_hash(*args, **kwargs)
+
+    @classmethod
+    def unique_filter(cls, *args, **kwargs):
+        if 'name' in kwargs:
+            kwargs['name'] = kwargs['name'].lower()
+        return super().unique_filter(*args, **kwargs)
+
+
+class CapitalizedNameMixin(NameMixin):
+    name = Column(CapitalizedString, nullable=False, default='', unique=True)
+
+    @classmethod
+    def as_unique(cls, *args, **kwargs):
+        if 'name' in kwargs:
+            kwargs['name'] = kwargs['name'].capitalize()
+        return super().as_unique(*args, **kwargs)
+
+    @classmethod
+    def unique_hash(cls, *args, **kwargs):
+        if 'name' in kwargs:
+            kwargs['name'] = kwargs['name'].capitalize()
+        return super().unique_hash(*args, **kwargs)
+
+    @classmethod
+    def unique_filter(cls, *args, **kwargs):
+        if 'name' in kwargs:
+            kwargs['name'] = kwargs['name'].capitalize()
+        return super().unique_filter(*args, **kwargs)
 
 class AliasMixin:
 
@@ -870,7 +922,7 @@ class Hash(NameMixin, Base):
 
 
 @generic_repr
-class NamespaceTags(AliasMixin, UserMixin, Base):
+class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
     __tablename__ = 'namespace_tags'
 
     tag_id = Column(Integer, ForeignKey('tag.id'))
@@ -895,6 +947,8 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
             tag = Tag.as_unique(name=tag)
         self.namespace = ns
         self.tag = tag
+        if tag and not ns:
+            self.namespace = Namespace.default()
 
     @validates('children')
     def validate_child(self, key, child):
@@ -956,12 +1010,30 @@ class NamespaceTags(AliasMixin, UserMixin, Base):
     def exists(self, *args, **kwargs):
         return self.mapping_exists(*args, **kwargs)
 
+    @classmethod
+    def unique_hash(cls, ns=None, tag=None):
+        assert not isinstance(ns, Namespace)
+        assert not isinstance(tag, Tag)
+        if ns is None:
+            ns = constants.special_namespace
+        return (Namespace.format(ns), Tag.format(tag))
+
+    @classmethod
+    def unique_filter(cls, query, ns=None, tag=None):
+        assert not isinstance(ns, Namespace)
+        assert not isinstance(tag, Tag)
+        if ns is None:
+            ns = constants.special_namespace
+        return query.join(cls.namespace).join(cls.tag).filter(and_op(Namespace.name==Namespace.format(ns),
+                                                                     Tag.name==Tag.format(tag)))
+
+
 
 metatag_association(NamespaceTags, "namespacetags")
 
 
 @generic_repr
-class Tag(NameMixin, AliasMixin, Base):
+class Tag(LowerNameMixin, AliasMixin, Base):
     __tablename__ = 'tag'
 
     namespaces = relationship(
@@ -970,8 +1042,14 @@ class Tag(NameMixin, AliasMixin, Base):
         back_populates='tags',
         lazy="dynamic")
 
+    @classmethod
+    def format(cls, tag):
+        if tag:
+            return tag.lower()
+        return tag
 
-class Namespace(NameMixin, AliasMixin, Base):
+
+class Namespace(CapitalizedNameMixin, AliasMixin, Base):
     __tablename__ = 'namespace'
 
     tags = relationship(
@@ -979,6 +1057,16 @@ class Namespace(NameMixin, AliasMixin, Base):
         secondary="namespace_tags",
         back_populates='namespaces',
         lazy="dynamic")
+
+    @classmethod
+    def default(cls):
+        return Namespace.as_unique(name=constants.special_namespace)
+
+    @classmethod
+    def format(cls, ns):
+        if ns:
+            return ns.capitalize()
+        return ns
 
 
 taggable_tags = Table(
@@ -1999,7 +2087,6 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True):
     """
     assert isinstance(model, Base) or issubclass(model, Base)
     d = {}
-
     obj = model
     in_obj = inspect(model)
     if isinstance(in_obj, state.InstanceState):

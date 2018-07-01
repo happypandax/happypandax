@@ -635,17 +635,16 @@ class PluginNode:
         self.logger.info("Initiating plugin")
         self._isolate = PluginIsolate(self)
         err = None
-        entry_file = os.path.join(self.info.path, self.info.entry)
-        with open(entry_file) as f:
-            try:
-                with self._isolate as i:
-                    exec(f.read(), i.plugin_globals)
-            except Exception as e:
-                err = e
-                self.logger.exception(
-                    f"An unhandled exception '{e.__class__.__name__}' was raised during plugin initialization")
-                get_plugin_context_logger(self.logger.name).w(
-                    "An unhandled exception was raised during plugin initialization by {}: {}: {}".format(self.format(), e.__class__.__name__, str(e)))
+        entry_file = os.path.splitext(self.info.entry)[0]
+        try:
+            with self._isolate as i:
+                exec(f"import {entry_file}", i.plugin_globals)
+        except Exception as e:
+            err = e
+            self.logger.exception(
+                f"An unhandled exception '{e.__class__.__name__}' was raised during plugin initialization")
+            get_plugin_context_logger(self.logger.name).w(
+                "An unhandled exception was raised during plugin initialization by {}: {}: {}".format(self.format(), e.__class__.__name__, str(e)))
 
         return False if err else True
 

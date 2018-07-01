@@ -8,7 +8,7 @@ const config = {
     },
     resolve: {
         extensions: ['.js', '.jsx', '.css'],
-    },
+    }
 };
 
 module: {

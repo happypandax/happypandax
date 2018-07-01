@@ -39,8 +39,8 @@ def page_render():
                     ProgressType.UpdateApplication)
 
     for p in this.state.data:
-        # if p['type'] == ProgressType.Unknown:
-        #    continue
+        if p['type'] == ProgressType.Unknown:
+            continue
         p_title = p.title
         kwargs = {}
         kwargs['progress'] = 'percent'

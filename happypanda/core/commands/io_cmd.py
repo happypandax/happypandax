@@ -260,7 +260,7 @@ class CoreFS(CoreCommand):
             self.corefs = corefs
             self.args = (mode, *args)
             self.kwargs = kwargs
-            self.fp = self.corefs._open(*self.args, *self.kwargs)
+            self.fp = self.corefs._open(*self.args, **self.kwargs)
 
         def __enter__(self):
             return self
@@ -483,7 +483,6 @@ class CoreFS(CoreCommand):
 
     def _open(self, mode="r", *args, **kwargs):
         ""
-        #import pdb; pdb.set_trace()
         try:
             if self.inside_archive:
                 self._init_archive()
@@ -498,7 +497,7 @@ class CoreFS(CoreCommand):
         return f
 
     def open(self, mode="r", *args, **kwargs):
-        return self._File(self, mode, *args, *kwargs)
+        return self._File(self, mode, *args, **kwargs)
 
     @staticmethod
     def open_with_default(path):
