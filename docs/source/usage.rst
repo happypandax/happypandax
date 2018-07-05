@@ -80,9 +80,9 @@ HPX looks for plugins in the following folders:
 - a folder defined by the ``plugin.plugin_dir`` setting
 
 If you're on OS X, your root HPX folder is at ``HappyPanda X.app/Contents/MacOS/`` which might be a bit bothersome, so I recommend that you
-define a new folder of your choosing HPX can look for plugins in with the `plugin.plugin_dir` setting.
+define a new folder of your choosing where HPX can look for plugins in with the `plugin.plugin_dir` setting.
 
-Plugins a contained in their own folder. To register a plugin with HPX, just move the plugin's folder into one of the locations above.
+Plugins are contained in their own folder. To register a plugin with HPX, just move the plugin's folder into one of the locations above.
 HPX will then discover and register it, **but not install it**.
 
 To install a plugin after it has been registered, open up a HPX client that supports showing registered plugins (``About -> Plugins`` in the default client).

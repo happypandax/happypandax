@@ -68,6 +68,7 @@ class QueueHandler(logging.Handler):
         except BaseException:
             self.handleError(record)
 
+getNativeLogger = logging.getLogger
 
 class Logger:
 
@@ -83,7 +84,7 @@ class Logger:
         self.category = ""
         if '.' in name:
             self.category = name.split('.')[0]
-        self._logger = logging.getLogger(name)
+        self._logger = getNativeLogger(name)
 
     def exception(self, *args):
         ""
@@ -282,3 +283,6 @@ class Logger:
                 cls._queue.get(timeout=3)
             except (EOFError, BrokenPipeError, TimeoutError, queues.Empty):
                 pass
+
+def getLogger(name, *args, **kwargs):
+    return Logger(name, *args, **kwargs)

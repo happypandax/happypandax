@@ -10,10 +10,14 @@ import threading
 import pathlib
 import langcodes
 import inspect as pyinspect
+import alembic.config
+import alembic.command
+import alembic.script
+import alembic.migration
 
 from contextlib import contextmanager
 from sqlalchemy.engine import Engine
-from sqlalchemy.engine.url import URL
+from sqlalchemy.engine.url import URL, make_url as sa_make_url
 from sqlalchemy import String as _String
 from sqlalchemy import Text as _Text
 from sqlalchemy import exc as sa_exc
@@ -1311,7 +1315,7 @@ class GalleryFilter(UserMixin, NameMixin, Base):
     __tablename__ = 'filter'
     filter = Column(Text, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
-    regex = Column(Boolean, nullable=False, default=False)
+    #regex = Column(Boolean, nullable=False, default=False)
     l_case = Column(Boolean, nullable=False, default=False)
     strict = Column(Boolean, nullable=False, default=False)
 
@@ -2023,16 +2027,31 @@ def make_db_url(db_name=None):
     drivername = config.dialect.value
     if drivername == constants.Dialect.MYSQL:
         drivername += '+pymysql'
-    db_url = URL(
-        drivername,
-        username=config.db_username.value,
-        password=config.db_password.value,
-        host=config.db_host.value,
-        port=config.db_port.value,
-        database=db_name,
-        query=db_query,
-    )
+
+    if drivername == constants.Dialect.SQLITE:
+        db_url = sa_make_url(os.path.join("sqlite:///", constants.db_path_dev if constants.dev else constants.db_path))
+    else:
+        db_url = URL(
+            drivername,
+            username=config.db_username.value,
+            password=config.db_password.value,
+            host=config.db_host.value,
+            port=config.db_port.value,
+            database=db_name,
+            query=db_query,
+        )
     return db_url
+
+def migrate():
+    log.d("Initiating db migration")
+    a_cfg = alembic.config.Config(constants.migration_config_path)
+    a_cfg.attributes['configure_logger'] = False
+    script = alembic.script.ScriptDirectory.from_config(a_cfg)
+    ctx = alembic.migration.MigrationContext.configure(constants.db_engine.connect())
+    log.d("Current db migration BASE:", tuple(script.get_bases()))
+    log.d("Current db migration rev:", tuple(ctx.get_current_heads()))
+    log.d("Current db migration HEAD:", tuple(script.get_heads()))
+    alembic.command.stamp(a_cfg, "head")
 
 
 def init(**kwargs):
@@ -2061,6 +2080,8 @@ def init(**kwargs):
                                                     pool_timeout=config.pool_timeout.value)
 
         Base.metadata.create_all(constants.db_engine)
+
+        migrate()
 
         Session.configure(bind=constants.db_engine)
     except exc.OperationalError as e:

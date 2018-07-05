@@ -71,6 +71,8 @@ db_path_dev = os.path.join(dir_root, dir_data, db_name_dev + '.db')
 internal_db_path = os.path.join(dir_data, "internals.db")
 favicon_path = os.path.join(dir_static, "favicon", "favicon.ico")
 
+migration_config_path = os.path.join(dir_root, "alembic.ini")
+
 thumbs_view = "/thumb"
 link_ext = '.link'
 

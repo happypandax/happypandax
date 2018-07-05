@@ -31,15 +31,15 @@ cache:
         - node_modules
 
 before_install:
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then "alias python='python3'" >> ~/.bash_profile; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then nvm install 8; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade pyenv; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade node; fi
-    - env PYTHON_CONFIGURE_OPTS="--enable-shared"
-    - pyenv install 3.6.5
-    - pyenv global 3.6.5
-    - python -V
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then env PYTHON_CONFIGURE_OPTS="--enable-shared"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv install 3.6.5; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv global 3.6.5; fi
+    - python3 -V
     - node --version
     - npm update -g npm
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then npm install -g gulp; fi
@@ -48,14 +48,14 @@ install:
     - pip3 install --user -r requirements-dev.txt
 
 script:
-    - python lint.py
-    - python ./run_tests.py
+    - python3 lint.py
+    - "python3 ./run_tests.py"
 
 before_deploy:
     - npm install
-    - "python ./bootstrap.py deploy"
-    - export APP_VERSION=$(python ./bootstrap.py version --app-version)
-    - export APP_RELEASE_NAME=$(python ./bootstrap.py version --app-release)
+    - "python3 ./bootstrap.py deploy"
+    - export APP_VERSION=$(python3 ./bootstrap.py version --app-version)
+    - export APP_RELEASE_NAME=$(python3 ./bootstrap.py version --app-release)
     - export VERSION_TAG=v$APP_VERSION
     - git config --local user.name "$GH_USER"
     - git config --local user.email "$GH_MAIL"
@@ -95,7 +95,7 @@ after_deploy:
     - cd $CWD
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$DOCS_REPO.git ../_docs_repo; fi
     - pwd
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then "python ./bootstrap.py build --docs"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then "python3 ./bootstrap.py build --docs"; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then rsync -a $DOCS_DIR ../_docs_repo/; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd ../_docs_repo; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git config --local user.name "$GH_USER"; fi

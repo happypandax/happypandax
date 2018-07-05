@@ -3,7 +3,7 @@ gevent==1.2.2
 SQLAlchemy==1.2.8
 SQLAlchemy-Utils==0.33.3
 rarfile==3.0
-alembic==0.9.6
+alembic==0.9.10
 arrow==0.12.1
 https://github.com/Pewpews/happy-bittorrent/archive/master/1.0.0.zip
 karellen-geventws==1.0.2
