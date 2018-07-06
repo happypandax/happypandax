@@ -202,7 +202,7 @@ class ConvertHP(QDialog):
         self._rar = ""
         self._process = 0
         self._archive = False
-        self._delete = True
+        self._delete = False
         self._dev = False
         self._args_edit = QLineEdit(self)
         self.args = []

@@ -19,6 +19,7 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 def _get_scan_options():
     return {
+        config.skip_existing_galleries.name:config.skip_existing_galleries.value,
     }
 
 
@@ -60,13 +61,17 @@ class ScanGallery(AsyncCommand):
         return tuple(found_galleries)
 
     @async_utils.defer
-    def _generate_gallery_fs(self, found_paths):
+    def _generate_gallery_fs(self, found_paths, options):
         paths_len = len(found_paths)
         galleries = []
         sess = constants.db_session()
         sess.autoflush = False
-        for n, g in enumerate([io_cmd.GalleryFS(x) for x in found_paths], 1):
-            self.next_progress(text=f"[{n}/{paths_len}] {g.path.path}")
+        for n, p in enumerate(found_paths, 1):
+            self.next_progress(text=f"[{n}/{paths_len}] {p}")
+            if options.get(config.skip_existing_galleries.name):
+                if db.Gallery.exists_by_path(p):
+                    continue
+            g = io_cmd.GalleryFS(p)
             if g.evaluate():
                 g.load_all()
                 self.set_progress(text=f"[{n}/{paths_len}] {g.path.path} .. OK")
@@ -93,7 +98,7 @@ class ScanGallery(AsyncCommand):
 
             self.set_max_progress(paths_len, add=True)
             view_id = view_id if view_id else constants.default_temp_view_id
-            galleries = self._generate_gallery_fs(found_paths).get()
+            galleries = self._generate_gallery_fs(found_paths, scan_options).get()
             [x.add(view_id=view_id) for x in galleries]
             if auto_add:
                 raise NotImplementedError

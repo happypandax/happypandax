@@ -130,6 +130,8 @@ def start(argv=None, db_kwargs={}):
         utils.setup_dirs()
         args = parser.parse_args(argv)
         utils.parse_options(args)
+        # setup logger without multiprocessing
+        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         db_inited = False
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
@@ -148,9 +150,10 @@ def start(argv=None, db_kwargs={}):
         if cmd_commands(args):
             return
 
-        if not args.only_web:
+        if not args.only_web: # can't init earlier because of cmd_commands 
             hlogger.Logger.init_listener(args)
-
+        
+        # setup logger with multiprocessing
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
         utils.disable_loggers(config.disabled_loggers.value)
 

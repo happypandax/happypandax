@@ -164,6 +164,12 @@ class Logger:
         argsdebug = getattr(args, 'debug', False)
         if logging_queue:
             cls._queue = logging_queue
+
+        # remove all previously set handlers
+        first_time = not bool(logging.root.handlers)
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+
         log_level = logging.DEBUG if argsdebug else logging.INFO
         log_handlers = []
         if not argsdev:
@@ -234,7 +240,7 @@ class Logger:
                 Logger("sqlalchemy.engine").setLevel(logging.INFO)
                 Logger("sqlalchemy.orm").setLevel(logging.INFO)
 
-            if debug:
+            if debug and first_time:
                 Logger(__name__).i(
                     os.path.split(
                         constants.log_debug)[1], "created at", os.path.abspath(

@@ -1315,7 +1315,7 @@ class GalleryFilter(UserMixin, NameMixin, Base):
     __tablename__ = 'filter'
     filter = Column(Text, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
-    #regex = Column(Boolean, nullable=False, default=False)
+    regex = Column(Boolean, nullable=False, default=False)
     l_case = Column(Boolean, nullable=False, default=False)
     strict = Column(Boolean, nullable=False, default=False)
 
@@ -1513,6 +1513,16 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         lazy="joined",
         cascade=expunge_cascade)
 
+    first_page = relationship(lambda: Page,
+                              primaryjoin=lambda: and_op(
+                                  Gallery.id==Page.gallery_id,
+                                  Page.number==select([func.min(Page.number)]).
+                                                where(Page.gallery_id==Gallery.id).
+                                                correlate(Gallery.__table__)
+                                                ),
+                              uselist=False
+                              )
+
     def read(self, user_id=None, datetime=None):
         "Creates a read event for user"
         if not datetime:
@@ -1579,40 +1589,22 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                 raise NotImplementedError
         return tuple(p_paths)
 
-    # def exists(self, obj=False, strict=False):
-    #    """Checks if gallery exists by path
-    #    Params:
-    #        obj -- queries for the full object and returns it
-    #    """
-    #    e = self
-    #    if not constants.db_session:
-    #        return e
-    #    g = self.__class__
-    #    if self.path:
-    #        head, tail = os.path.split(self.path)
-    #        p, ext = os.path.splitext(tail if tail else head)
-    #        sess = constants.db_session()
-    #        if self.in_archive:
-    #            head, tail = os.path.split(self.path_in_archive)
-    #            p_a = tail if tail else head
-    #            e = sess.query(
-    #                self.__class__.id).filter(
-    #                and_(
-    #                    g.path.ilike(
-    #                        "%{}%".format(p)), g.path_in_archive.ilike(
-    #                        "%{}%".format(p_a)))).scalar()
-    #        else:
-    #            e = sess.query(
-    #                self.__class__.id).filter(
-    #                and_(
-    #                    g.path.ilike(
-    #                        "%{}%".format(p)))).scalar()
-    #        sess.close()
-    #        if not obj:
-    #            e = e is not None
-    #    else:
-    #        log.w("Could not query for gallery existence because no path was set.")
-    #    return e
+    @classmethod
+    def exists_by_path(cls, path="", obj=False, case=True):
+        """Checks if gallery exists by path
+        """
+        assert path
+        path = Page.format_path(path)
+        e = False
+        s = constants.db_session()
+        with s.no_autoflush:
+            page_expr = Page.path.like if case else Page.path.ilike
+            page_expr = page_expr(path+'%')
+            if obj:
+                e = s.query(Gallery).join(Gallery.pages).filter(page_expr).first()
+            else:
+                e = bool(s.query(Page.id).filter(page_expr).count())
+            return e
 
 
 metatag_association(Gallery, "galleries")
@@ -1623,7 +1615,7 @@ url_association(Gallery, "galleries")
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
-    number = Column(Integer, nullable=False, default=-1)
+    number = Column(Integer, nullable=False, index=True, default=-1)
     name = Column(String, nullable=False, default='')
     path = Column(Text, nullable=False, default='')
     hash_id = Column(Integer, ForeignKey('hash.id'))
@@ -1633,6 +1625,14 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
     hash = relationship("Hash", cascade=expunge_cascade)
     gallery = relationship("Gallery", back_populates="pages")
+
+    @validates('path')
+    def _validate_password(self, key, p):
+        return self.format_path(p)
+
+    @classmethod
+    def format_path(cls, path):
+        return str(pathlib.Path(path))
 
     @property
     def file_type(self):
@@ -1650,21 +1650,20 @@ class Page(TaggableMixin, ProfileMixin, Base):
         if not constants.db_session:
             return e
         sess = constants.db_session()
-        p = self.__class__
-        if self.path:
-            sess = constants.db_session()
-            e = sess.query(
-                p.id).filter(
-                and_(
-                    p.path.ilike(
-                        "%{}%".format(
-                            self.path)))).scalar()
-            sess.close()
-            if not obj:
-                e = e is not None
-        else:
-            log.w("Could not query for page existence because no path was set.")
-        return e
+        with sess.no_autoflush:
+            p = self.__class__
+            if self.path:
+                e = sess.query(
+                    p.id).filter(
+                    and_(
+                        p.path.like(
+                            "{}".format(
+                                self.path)))).scalar()
+                if not obj:
+                    e = e is not None
+            else:
+                log.w("Could not query for page existence because no path was set.")
+            return e
 
 
 metatag_association(Page, "pages")
@@ -2216,6 +2215,9 @@ def model_name(model):
 
 
 def ensure_in_session(item, session=None):
+    """
+    Ensures item is in a session, returns item
+    """
     if not object_session(item):
         try:
             session = session or constants.db_session()

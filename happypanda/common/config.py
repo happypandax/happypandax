@@ -724,6 +724,17 @@ with config.namespace(search_ns):
         True,
         "Also match on descandants")
 
+scan_ns = "scan"
+
+with config.namespace(scan_ns):
+
+    skip_existing_galleries = config.create(
+        None,
+        "skip_existing_galleries",
+        True,
+        "Skip galleries that have already been added to HPX",
+        isolation=ConfigIsolation.client)
+
 client_ns = "client"
 
 with config.namespace(client_ns):
