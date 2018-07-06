@@ -61,6 +61,8 @@ class _APIEnum(enum.Enum):
 
 
 class ViewType(_APIEnum):
+    #: Contains all items except items in Trash
+    All = 6
     #: Contains all items except items in Inbox and Trash
     Library = 1
     #: Contains all favourite items (mutually exclusive with items in Inbox)

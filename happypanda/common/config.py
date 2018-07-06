@@ -831,11 +831,11 @@ with config.namespace(advanced_ns):
         "",
         "Path to the 7z executable", hidden=True)
 
-    disabled_loggers = config.create(
+    enabled_loggers = config.create(
         advanced_ns,
-        "disabled_loggers",
+        "enabled_loggers",
         [],
-        "Loggers to disable. Available loggers: {}".format(",".join((
+        "Loggers to enable. Available loggers: {}".format(",".join((
             x[:-1] for x in (
                 constants.log_ns_client,
                 constants.log_ns_command,

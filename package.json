@@ -29,7 +29,7 @@
     "react-s-alert": "^1.4.1",
     "react-slick": "0.21.x",
     "semantic-ui": "^2.3.1",
-    "semantic-ui-react": "^0.81.1",
+    "semantic-ui-react": "^0.82.0",
     "smoothscroll-polyfill": "^0.4.3",
     "socket.io": "^2.1.1",
     "webpack": "3.x"
@@ -58,7 +58,15 @@
       "react"
     ],
     "plugins": [
-      ["lodash", {"id": ["lodash", "semantic-ui-react"]}]
+      [
+        "lodash",
+        {
+          "id": [
+            "lodash",
+            "semantic-ui-react"
+          ]
+        }
+      ]
     ],
     "env": {
       "production": {

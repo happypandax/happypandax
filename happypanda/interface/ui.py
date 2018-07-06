@@ -94,6 +94,10 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         if hasattr(db_model, "metatags"):
             filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox))
             filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.trash))
+    elif view_filter == enums.ViewType.All:
+        if hasattr(db_model, "metatags"):
+            filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.trash))
+
 
     if related_type:
         filter_op.append(parent_model.id == item_id)

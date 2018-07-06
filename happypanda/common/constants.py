@@ -106,6 +106,19 @@ log_ns_gui = '[gui].'
 log_ns_network = '[network].'
 log_ns_search = '[search].'
 log_ns_misc = '[misc].'
+log_namespaces = (x[:-1] for x in (
+    log_ns_core,
+    log_ns_command,
+    log_ns_plugin,
+    log_ns_database,
+    log_ns_server,
+    log_ns_client,
+    log_ns_gui,
+    log_ns_network,
+    log_ns_search,
+    log_ns_misc,
+    log_ns_plugincontext
+    ))
 
 task_command = None  # TaskService.TaskList of TaskService commands
 

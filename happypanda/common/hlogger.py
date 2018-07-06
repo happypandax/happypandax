@@ -235,6 +235,8 @@ class Logger:
 
         cls.has_setup = True
         if main:
+            Logger("sqlalchemy.orm.relationships").setLevel(logging.ERROR)
+            Logger("sqlalchemy.orm.mapper").setLevel(logging.ERROR)
             if argsdev:
                 Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
                 Logger("sqlalchemy.engine").setLevel(logging.INFO)
@@ -248,7 +250,8 @@ class Logger:
             else:
                 Logger("apscheduler").setLevel(logging.ERROR)
 
-            for log in cls._logs_queue:
+            while cls._logs_queue:
+                log = cls._logs_queue.pop(0)
                 l = Logger(log[0])
                 l._log(log[1], *log[2], stdout=log[3], stderr=log[4])
 

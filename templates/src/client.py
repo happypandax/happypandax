@@ -83,12 +83,18 @@ class ImageSize:
 
 
 class ViewType:
-    #: Library
+    #: Contains all items except items in Trash
+    All = 6
+    #: Contains all items except items in Inbox and Trash
     Library = 1
-    #: Favourite
+    #: Contains all favourite items (mutually exclusive with items in Inbox)
     Favorite = 2
-    #: Inbox
+    #: Contains only items in Inbox
     Inbox = 3
+    #: Contains only items in Trash
+    Trash = 4
+    #: Contains only items in ReadLater
+    ReadLater = 5
 
 
 class ItemSort:

@@ -365,7 +365,7 @@ def viewdropdown_change(e, d):
 def viewdropdown_render():
     item_options = [
         {'text': tr(this, "ui.mi-all", "All"),
-         'value': 0,
+         'value': ViewType.All,
          },
         {'text': tr(this, "ui.mi-library", "Library"),
          'value': ViewType.Library,

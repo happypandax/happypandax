@@ -71,25 +71,26 @@ def setup_dirs():
                 os.makedirs(dir_x)
 
 
-def disable_loggers(logs):
+def enable_loggers(logs):
     assert isinstance(logs, list)
     log_level = logging.WARNING
-    for l in logs:
-        if isinstance(l, str):
-            hlogger.Logger(l).setLevel(log_level)
-            lx = l + '.'
-            if lx == constants.log_ns_core:
-                hlogger.Logger("apscheduler").setLevel(log_level)
-                hlogger.Logger("PIL").setLevel(log_level)
-            elif lx == constants.log_ns_database:
-                hlogger.Logger("sqlalchemy").setLevel(log_level)
-                hlogger.Logger("sqlalchemy.pool").setLevel(log_level)
-                hlogger.Logger("sqlalchemy.engine").setLevel(log_level)
-                hlogger.Logger("sqlalchemy.orm").setLevel(log_level)
-            elif lx == constants.log_ns_client:
-                hlogger.Logger("geventwebsocket").setLevel(log_level)
-            elif lx == constants.log_ns_network:
-                hlogger.Logger("cachecontrol").setLevel(log_level)
+    if logs:
+        for l in constants.log_namespaces:
+            if not l in logs:
+                hlogger.Logger(l).setLevel(log_level)
+                if l in constants.log_ns_core:
+                    hlogger.Logger("apscheduler").setLevel(log_level)
+                    hlogger.Logger("PIL").setLevel(log_level)
+                elif l in constants.log_ns_database:
+                    hlogger.Logger("sqlalchemy").setLevel(log_level)
+                    hlogger.Logger("sqlalchemy.pool").setLevel(log_level)
+                    hlogger.Logger("sqlalchemy.engine").setLevel(log_level)
+                    hlogger.Logger("sqlalchemy.orm").setLevel(log_level)
+                    hlogger.Logger("alembic").setLevel(log_level)
+                elif l in constants.log_ns_client:
+                    hlogger.Logger("geventwebsocket").setLevel(log_level)
+                elif l in constants.log_ns_network:
+                    hlogger.Logger("cachecontrol").setLevel(log_level)
 
 
 def get_argparser():

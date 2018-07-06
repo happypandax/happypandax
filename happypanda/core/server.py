@@ -662,7 +662,7 @@ class WebServer:
         if logging_queue:
             hlogger.Logger.setup_logger(cmd_args, logging_queue, debug=debug)
             utils.setup_online_reporter()
-            utils.disable_loggers(config.disabled_loggers.value)
+            utils.enable_loggers(config.enabled_loggers.value)
 
         if cmd_args is not None:
             utils.parse_options(cmd_args)

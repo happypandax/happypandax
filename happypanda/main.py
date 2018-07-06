@@ -132,6 +132,7 @@ def start(argv=None, db_kwargs={}):
         utils.parse_options(args)
         # setup logger without multiprocessing
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
+        utils.enable_loggers(config.enabled_loggers.value)
         db_inited = False
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
@@ -155,7 +156,6 @@ def start(argv=None, db_kwargs={}):
         
         # setup logger with multiprocessing
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
-        utils.disable_loggers(config.disabled_loggers.value)
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 
