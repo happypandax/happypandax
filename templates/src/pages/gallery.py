@@ -347,7 +347,7 @@ def page_render():
     read_btn['onClick'] = this.on_read
     if not this.state.external_viewer:
         read_btn['as'] = Link
-        read_btn['to'] = "/item/gallery/{}/page/1".format(item_id)
+        read_btn['to'] = { 'pathname': "/item/gallery/{}/page/1".format(item_id), 'state': {'gallery': this.state.data} }
 
     buttons.append(
         e(ui.Grid.Row,

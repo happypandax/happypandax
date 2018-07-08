@@ -2,11 +2,12 @@
 locale: English (United States)
 
 # very useful for updating
-_version_: 3
+_version_: 4
 
 # Database
 db-item-gallery: Gallery
 db-item-collection: Collection
+db-item-page: Page
 
 db-status-ongoing: Ongoing
 db-status-completed: Completed

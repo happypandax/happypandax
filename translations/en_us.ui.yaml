@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 8
+_version_: 9
 
 # Common
 t-loading: Loading
@@ -214,6 +214,9 @@ de-scan-info: |-
     - A directory
 
     **Note:** Path must exist on the server-located system.
+
+# Page Reader Page
+t-page: Page
 
 # Item
 b-read: Read

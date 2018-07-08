@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui
+from src.ui import ui, TitleChange, TR
 from src.i18n import tr
 from src.state import state
 from src.client import (ItemType, ImageSize, client, Command)
@@ -144,6 +144,18 @@ def get_page_count(data=None, error=None, gid=None):
             client.call_func("get_related_count", this.get_page_count, item_type=item, item_id=item_id,
                              related_type=this.state.item_type)
 
+def get_gallery(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"gallery": data})
+    elif error:
+        state.app.notif("Failed to fetch gallery item ({})".format(this.state.id), level="error")
+    else:
+        if this.props.location.state and this.props.location.state.gallery:
+            this.get_gallery(this.props.location.state.gallery)
+            return
+        gid = int(this.props.match.params.gallery_id)
+        if gid:
+            client.call_func("get_item", this.get_gallery, item_type=ItemType.Gallery, item_id=gid)
 
 def get_page_url(number, gid=None):
     return "/item/gallery/{}/page/{}".format(
@@ -248,6 +260,12 @@ def page_render():
         if this.state.data.metatags.favorite:
             fav = 1
 
+    page_title = "",
+    if this.state.gallery:
+        if this.state.gallery.preferred_title:
+            t = this.state.gallery.preferred_title.js_name
+            page_title = "{} {} | {}".format(tr(this, "ui.t-page", "Page"), number, t)
+
     img = None
     __pragma__("iconv")
     if number in this.state.pages:
@@ -315,6 +333,7 @@ def page_render():
     ]
 
     return e(ui.Sidebar.Pushable,
+             e(TitleChange, title=page_title),
              e(ui.Ref,
                e(ui.Sidebar,
                  e(itemview.SimpleView,
@@ -407,6 +426,7 @@ Page = createReactClass({
 
     'getInitialState': lambda: {'gid': int(this.props.match.params.gallery_id),
                                 'number': int(this.props.match.params.page_number),
+                                'gallery': None,
                                 'pages': {},
                                 'page_list_ref': None,
                                 'page_list_page': 0,
@@ -436,6 +456,7 @@ Page = createReactClass({
     'set_thumbs': set_thumbs,
     'get_thumbs': get_thumbs,
     'get_item': get_item,
+    'get_gallery': get_gallery,
     'get_pages': get_pages,
     'get_page_count': get_page_count,
     'on_key': on_key,
@@ -454,7 +475,7 @@ Page = createReactClass({
     'on_canvas_click': on_canvas_click,
 
     'componentDidUpdate': on_update,
-    'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
+    'componentDidMount': lambda: all((window.addEventListener("keydown", this.on_key, False), this.get_gallery())),
     'componentWillUnmount': lambda: all((window.removeEventListener("keydown", this.on_key, False),
                                          state.update({'reset_scroll': True})
                                          )),
@@ -462,7 +483,8 @@ Page = createReactClass({
     'componentWillMount': lambda: all((this.props.menu([
         e(ui.Menu.Item, e(ui.Icon, js_name="ellipsis vertical", size="large"),
           icon=True, onClick=this.toggle_pages, position="left"),
-        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, onClick=this.back_to_gallery)),
+        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, as_=Link, to={'pathname':"/item/gallery/{}".format(this.props.match.params.gallery_id),
+                                                                                                               'state':{'gallery':this.state.gallery}})),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
           icon=True, onClick=this.toggle_config, position="right"),
     ]),
