@@ -86,7 +86,8 @@ from PyQt5.QtWidgets import (QApplication,
                              QMenu,
                              QFileDialog,
                              QPlainTextEdit,
-                             QCheckBox)  # noqa: E402
+                             QCheckBox,
+                             QSpinBox)  # noqa: E402
 from PyQt5.QtGui import QIcon, QPalette, QMouseEvent  # noqa: E402
 from PyQt5.QtCore import Qt, QDir, pyqtSignal, QEvent  # noqa: E402
 from i18n import t  # noqa: E402
@@ -204,6 +205,8 @@ class ConvertHP(QDialog):
         self._archive = False
         self._delete = False
         self._dev = False
+        self._limit = -1
+        self._offset = 0
         self._args_edit = QLineEdit(self)
         self.args = []
         self.create_ui()
@@ -221,6 +224,16 @@ class ConvertHP(QDialog):
         rar_edit.textChanged.connect(self.on_rar)
         lf.addRow(t("gui.t-rar-path", default="RAR tool path") + ':', rar_edit)
         rar_edit.setText(config.unrar_tool_path.value)
+
+        limit_box = QSpinBox(self)
+        limit_box.valueChanged.connect(self.on_limit)
+        lf.addRow(t("gui.t-limit", default="Limit") + ':', limit_box)
+        limit_box.setRange(-1, 2147483647)
+
+        offset_box = QSpinBox(self)
+        offset_box.valueChanged.connect(self.on_offset)
+        lf.addRow(t("gui.t-offset", default="Offset") + ':', offset_box)
+        offset_box.setRange(0, 2147483647)
 
         archive_box = QCheckBox(self)
         archive_box.stateChanged.connect(self.on_archive)
@@ -257,6 +270,14 @@ class ConvertHP(QDialog):
         self._archive = v
         self.update_label()
 
+    def on_limit(self, v):
+        self._limit = v
+        self.update_label()
+
+    def on_offset(self, v):
+        self._offset = v
+        self.update_label()
+
     def on_delete(self, v):
         self._delete = v
         self.update_label()
@@ -279,6 +300,10 @@ class ConvertHP(QDialog):
             self.args .append("--skip-archive")
         if self._delete:
             self.args .append("--delete-target")
+        self.args .append("--limit")
+        self.args .append(str(self._limit))
+        self.args .append("--offset")
+        self.args .append(str(self._offset))
 
         self._args_edit.setText(" ".join(self.args))
         self.adjustSize()

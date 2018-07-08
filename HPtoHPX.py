@@ -719,6 +719,8 @@ def parse_args(args=sys.argv[1:]):
     parser.add_argument('source', help="Path to old HP database")
     parser.add_argument('destination', help="Desired path to new HPX database")
     parser.add_argument('-r', '--rar', help="Path to unrar tool", default=config.unrar_tool_path.value)
+    parser.add_argument('-l', '--limit', type=int, default=-1, help="Limit the amount of galleries being added (inclusive)")
+    parser.add_argument('-o', '--offset', type=int, default=0, help="Offset the amount of galleries being added (exclusive)")
     parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
     parser.add_argument(
         '-a',
@@ -888,9 +890,16 @@ def main(args=sys.argv[1:]):
         DBBase._DB_CONN = conn_src
         ListDB.init_lists()
         print("Fetching gallery lists..")
-        src_galleries = GalleryDB.get_all_gallery()
+        src_galleries = list(GalleryDB.get_all_gallery())
         print("Fetching all galleries, chapters, tags and hashes..")
         print("Fetched galleries count:", len(src_galleries))
+        if args.offset > 0:
+            src_galleries = src_galleries[args.offset:]
+            print(f"Offsetting the amount of galleries to add by {args.offset}")
+        if args.limit > 0:
+            src_galleries = src_galleries[:args.limit]
+            print(f"Limiting the amount of galleries to add by {args.limit}")
+        print(f"Total gallery count to add {len(src_galleries)}")
         print("Creating new HappyPanda X database")
         if not is_rfc:
             engine = db.create_engine(os.path.join("sqlite:///", dst))
@@ -1330,28 +1339,26 @@ def main(args=sys.argv[1:]):
         #s.bulk_save_objects(items, return_defaults=True)
 
         if args.debug:
-            print("Created parodies:")
+            print(f"Created parodies:")
             for p in dst_parodies.values():
                 print(p.names)
 
-        print("Adding languages...")
+        print(f"Adding {len(dst_languages)} languages...")
         s.add_all(dst_languages.values())
-        print("Adding artists...")
+        print(f"Adding {len(dst_artists)} artists...")
         s.add_all(dst_artists.values())
-        print("Adding gallery types...")
+        print(f"Adding {len(dst_categories)} gallery types...")
         s.add_all(dst_categories.values())
-        print("Adding gallery namespaces...")
+        print(f"Adding {len(dst_nstagmapping)} gallery tags...")
         s.add_all(dst_namespace.values())
-        print("Adding gallery tags...")
         s.add_all(dst_tag.values())
         s.add_all(dst_nstagmapping.values())
-        print("Adding galleries...")
+        print(f"Adding {len(dst_galleries)} galleries...")
         s.add_all(dst_galleries)
-        print("Adding gallery lists...")
+        print(f"Adding {len(dst_lists)} gallery lists...")
         s.add_all(dst_lists)
         print("Flushing... (this might take a few minutes)")
         s.flush()
-        print("Adding gallery pages... (this might take a while too)")
         taggable_items = []
         page_items = []
         for g, g_pages in dst_pagelist.items():
@@ -1359,6 +1366,7 @@ def main(args=sys.argv[1:]):
                 p.gallery_id = g.id
                 page_items.append(p)
                 taggable_items.append(db.Taggable())
+        print(f"Adding {len(page_items)} gallery pages... (this might take a while too)")
         if taggable_items:
             one_taggable = taggable_items[0]
             s.add(one_taggable)
