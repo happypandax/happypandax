@@ -28,6 +28,7 @@ __pragma__("kwargs")
 def createReactClass(obj, pure=True):
     if pure and not obj.shouldComponentUpdate:
         obj['shouldComponentUpdate'] = lambda np, ns: shallowCompare(this, np, ns)
+
     return createReactClass_(obj)
 
 

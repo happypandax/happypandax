@@ -28,6 +28,7 @@ def Itemviewvonfig_render():
     group_gallery_cfg = "group_gallery"
     blur_cfg = "blur"
     default_sort_cfg = "def_sort_idx"
+    default_sort_order_cfg = "def_sort_order"
     default_view_cfg = "def_view_type"
 
     item_count_options = [
@@ -69,32 +70,45 @@ def Itemviewvonfig_render():
               ))
 
     sort_el = []
-    sort_el.append(
-        e(ui.Form.Field,
-            h("label", tr(this, "ui.t-default-sort", "Default sorting")),
-            e(item.SortDropdown,
-              query=False,
-              item_type=props.item_type,
-              defaultValue=utils.storage.get(default_sort_cfg + props.item_type + cfg_suffix),
-              on_change=lambda e, d: utils.storage.set(default_sort_cfg + props.item_type + cfg_suffix, d.value)
-              )
+    if props.item_type != ItemType.Page:
+        sort_el.append(
+            e(ui.Form.Field,
+                h("label", tr(this, "ui.t-default-sort", "Default sorting")),
+                e(item.SortDropdown,
+                  query=False,
+                  item_type=props.item_type,
+                  defaultValue=utils.storage.get(default_sort_cfg + props.item_type + cfg_suffix),
+                  on_change=lambda e, d: utils.storage.set(default_sort_cfg + props.item_type + cfg_suffix, d.value)
+                  )
+              ),
+        )
+
+    sort_order_el = []
+    sort_order_el.append(
+        e(ui.Form.Select,
+            label=h("label", tr(this, "ui.t-default-sort-order", "Default sort order")),
+            options=[{'key':0, 'text':tr(this, "ui.t-ascending", "Ascending"), 'value':0},
+                     {'key':1, 'text':tr(this, "ui.t-descending", "Descending"), 'value':1}],
+            defaultValue=utils.storage.get(default_sort_order_cfg + cfg_suffix, 0),
+            onChange=lambda e, d: utils.storage.set(default_sort_order_cfg + cfg_suffix, d.value)
           ),
     )
 
     view_el = []
-    view_el.append(
-        e(ui.Form.Field,
-            h("label", tr(this, "ui.t-default-view", "Default view")),
-            e(item.ViewDropdown,
-              query=False,
-              view_type=props.view_type if props.view_type == ViewType.Favorite else js_undefined,
-              defaultValue=utils.storage.get(default_view_cfg + cfg_suffix),
-              item=True,
-              selection=True,
-              on_change=lambda e, d: utils.storage.set(default_view_cfg + cfg_suffix, d.value)
-              )
-          ),
-    )
+    if props.item_type != ItemType.Page:
+        view_el.append(
+            e(ui.Form.Field,
+                h("label", tr(this, "ui.t-default-view", "Default view")),
+                e(item.ViewDropdown,
+                  query=False,
+                  view_type=props.view_type if props.view_type == ViewType.Favorite else js_undefined,
+                  defaultValue=utils.storage.get(default_view_cfg + cfg_suffix),
+                  item=True,
+                  selection=True,
+                  on_change=lambda e, d: utils.storage.set(default_view_cfg + cfg_suffix, d.value)
+                  )
+              ),
+        )
 
     return e(ui.Sidebar,
              e(ui.Form,
@@ -122,6 +136,7 @@ def Itemviewvonfig_render():
                            item_count_cfg + cfg_suffix, d.value))),
                    ),
                  *sort_el,
+                 *sort_order_el,
                  *view_el,
                  e(ui.Form.Field, tr(this, "ui.b-close", "Close"), control=ui.Button),
                  onSubmit=props.on_close,
@@ -144,7 +159,6 @@ ItemViewConfig = createReactClass({
 def itemviewbase_render():
     props = this.props
     pagination = []
-
     if props.show_pagination or not utils.defined(props.show_pagination):
         pagination.append(e(ui.Grid.Row,
                             e(ui.Responsive,
@@ -644,7 +658,7 @@ ItemView = createReactClass({
                                 'item_type': utils.session_storage.get("item_type" + this.config_suffix(), int(utils.get_query("item_type", ItemType.Gallery))),
                                 'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id" + this.config_suffix(), 0))),
                                 'sort_by': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery)) + this.config_suffix(), int(utils.get_query("sort_idx", 0))),
-                                'sort_desc': utils.session_storage.get("sort_desc" + this.config_suffix(), bool(utils.get_query("sort_desc", 0))),
+                                'sort_desc': utils.session_storage.get("sort_desc" + this.config_suffix(), bool(utils.get_query("sort_desc",  utils.storage.get("def_sort_order" + this.config_suffix(), 0)))),
                                 'search_query': this.props.search_query if utils.defined(this.props.search_query) else utils.session_storage.get("search_query" + this.config_suffix(), utils.get_query("search", "") if this.query() else "", True),
                                 'search_options': utils.storage.get("search_options", {}),
                                 },

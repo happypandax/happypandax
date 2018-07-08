@@ -136,7 +136,7 @@ ItemViewPage = createReactClass({
 
     'config_suffix': "main",
 
-    'default_view': lambda: this.props.view_type or utils.session_storage.get("view_type", int(utils.get_query("view_type", utils.storage.get("def_view_type" + this.config_suffix, ViewType.Library)))),
+    'default_view': lambda: this.props.view_type or int(utils.get_query("view_type", utils.storage.get("def_view_type" + this.config_suffix, ViewType.Library))),
     'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
     'on_item_change': lambda e, d: all((this.setState({'item_type': d.value,
@@ -189,7 +189,7 @@ ItemViewPage = createReactClass({
                                 'view_type': this.default_view(),
                                 'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id", 0))),
                                 'sort_idx': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery)), int(utils.get_query("sort_idx", 0))),
-                                'sort_desc': utils.session_storage.get("sort_desc", bool(utils.get_query("sort_desc", 0))),
+                                'sort_desc': utils.session_storage.get("sort_desc", bool(utils.get_query("sort_desc", utils.storage.get("def_sort_order" + this.config_suffix, 0)))),
                                 'search_query': utils.session_storage.get("search_query", utils.get_query("search", ""), True),
                                 'search_options': utils.storage.get("search_options", {}),
                                 'visible_config': False,
