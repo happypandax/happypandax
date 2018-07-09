@@ -59,6 +59,8 @@ class GeneralTest(unittest.TestCase):
         self.gallery.pub_date = arrow.now()
         self.gallery.timestamp = arrow.now()
         self.gallery.last_read = arrow.now()
+        self.gallery.last_read = datetime.datetime.utcnow()
+        self.assertTrue(isinstance(self.gallery.last_read, arrow.Arrow))
         self.session.commit()
 
     def test_history(self):
@@ -185,6 +187,105 @@ class GeneralTest(unittest.TestCase):
         for n, i in enumerate(self.gallery.pages.all(), 1):
             self.assertEqual(i.number, n)
 
+
+    def tearDown(self):
+        self.session.close()
+
+class ItemUpdateTest(unittest.TestCase):
+    def setUp(self):
+        self.session = create_db()
+
+    def test_general(self):
+        self.gallery = Gallery()
+        with self.assertRaises(AssertionError) as e:
+            self.gallery.update("artists", "a1", op="test")
+
+
+    def test_gallery(self):
+        self.gallery = Gallery()
+        d = arrow.now()
+        self.gallery.update("last_read", d)
+        self.assertEqual(self.gallery.last_read, d)
+        self.gallery.update("single_source", False)
+        self.assertEqual(self.gallery.single_source, False)
+        self.gallery.update("number", 1)
+        self.assertEqual(self.gallery.number, 1)
+        
+        self.gallery.update("grouping", name="test")
+        self.assertIsNotNone(self.gallery.grouping)
+        self.assertEqual(self.gallery.grouping.name, "test")
+
+        self.gallery.update("language", Language(name="test2"))
+        self.assertIsNotNone(self.gallery.language)
+        self.assertEqual(self.gallery.language.name, "test2")
+
+        self.gallery.update("category", "test3")
+        self.assertIsNotNone(self.gallery.category)
+        self.assertEqual(self.gallery.category.name, "test3")
+
+        with self.assertRaises(AttributeError) as e:
+            self.gallery.update("artists", "a1")
+
+        anames = ["a1", "a2", "a3"]
+        self.gallery.update("artists", names=anames)
+        self.assertIsNotNone(self.gallery.artists)
+        self.assertEqual(len(self.gallery.artists), 1)
+        self.assertEqual(len(self.gallery.artists[0].names), 3)
+        for a in self.gallery.artists[0].names:
+            self.assertTrue(a.name in anames)
+            anames.remove(a.name)
+
+        self.gallery.update("pages", Page())
+        self.assertEqual(self.gallery.pages.count(), 1)
+        self.gallery.update("pages", [Page() for x in range(9)])
+        self.assertEqual(self.gallery.pages.count(), 10)
+
+    def test_metatags(self):
+        self.gallery = Gallery()
+        mtags = {x: True for x in MetaTag.names}
+        l = len(mtags)
+        self.assertGreater(l, 3)
+        self.assertEqual(len(self.gallery.metatags), 0)
+        self.gallery.update("metatags", mtags)
+        self.assertEqual(len(self.gallery.metatags), l)
+        mtags[MetaTag.names.inbox] = False
+        self.gallery.update("metatags", mtags)
+        self.assertEqual(len(self.gallery.metatags), l-1)
+        mtags[MetaTag.names.favorite] = False
+        self.gallery.update("metatags", mtags)
+        self.assertEqual(len(self.gallery.metatags), l-2)
+        mtags[MetaTag.names.inbox] = True
+        self.gallery.update("metatags", mtags)
+        self.assertEqual(len(self.gallery.metatags), l-1)
+        for x in mtags:
+            mtags[x] = False
+        self.gallery.update("metatags", mtags)
+        self.assertEqual(len(self.gallery.metatags), 0)
+
+        self.gallery.update("metatags", MetaTag(name="test"))
+        self.assertEqual(len(self.gallery.metatags), 1)
+        self.assertEqual(self.gallery.metatags[0].name, "test")
+        for x in mtags:
+            mtags[x] = True
+        self.gallery.update("metatags", mtags)
+        self.assertEqual(len(self.gallery.metatags), l+1)
+        self.gallery.metatags.clear()
+        self.assertEqual(len(self.gallery.metatags), 0)
+
+        m = MetaTag(name="test")
+        self.gallery.update("metatags", [MetaTag(name="test"+str(x)) for x in range(5)])
+        self.assertEqual(len(self.gallery.metatags), 5)
+        self.gallery.update("metatags", m)
+        self.assertEqual(len(self.gallery.metatags), 6)
+        self.gallery.update("metatags", m, op="remove")
+        self.assertEqual(len(self.gallery.metatags), 5)
+
+        self.gallery.update("metatags", "test", op="remove")
+        self.assertEqual(len(self.gallery.metatags), 5)
+        self.gallery.update("metatags", "test", op="add")
+        self.assertEqual(len(self.gallery.metatags), 6)
+        self.gallery.update("metatags", "test", op="remove")
+        self.assertEqual(len(self.gallery.metatags), 5)
 
     def tearDown(self):
         self.session.close()

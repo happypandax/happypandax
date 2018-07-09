@@ -37,10 +37,17 @@ def open_external(e, d):
 
 
 def read_event(e, d):
-    print("read event")
     if this.state.data:
         client.call_func("gallery_read_event", None, item_id=this.state.data.id)
 
+def update_metatags(mtags):
+    if this.state.data:
+        client.call_func("update_metatags", None, item_type=ItemType.Gallery,
+                         item_id=this.state.data.id, metatags=mtags)
+        d = dict(this.state.data)
+        d.metatags = dict(d.metatags)
+        d.metatags.update(mtags)
+        this.setState({'data': d})
 
 __pragma__("notconv")
 
@@ -113,7 +120,7 @@ def gallery_render():
     menu_options = []
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"),
                           icon="envelope open outline", **read_button_args))
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline", onClick=this.read_later))
     if inbox:
         menu_options.append(e(ui.List.Item, content=tr(
             this, "ui.b-send-library", "Send to library"), icon="grid layout"))
@@ -121,13 +128,13 @@ def gallery_render():
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-collection",
                                                    "Add to collection"), icon="plus square outline"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-series", "Add to series"), icon="add square"))
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-trash", "Send to Trash"), icon="trash"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-trash", "Send to Trash"), icon="trash", onClick=this.send_to_trash))
 
     return e(ui.Card,
              e(ui.Dimmer.Dimmable,
                  h("div",
                    thumb,
-                   e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
+                   e(ui.Rating, icon="heart", onRate=this.favorite, size="massive", className="card-item top left above-dimmer", rating=fav),
                    *([e(ui.Icon,
                         js_name="inbox",
                         title=tr(this, "ui.t-inboxed-gallery", "This gallery is in your inbox"),
@@ -207,6 +214,12 @@ Gallery = createReactClass({
     'on_read': lambda e, d: all((this.read_event(e, d), this.open_external(e, d) if this.props.external_viewer else None)),
 
     'on_tags': on_tags,
+    'update_metatags': update_metatags,
+
+    'favorite': lambda e, d: this.update_metatags({'favorite': bool(d.rating)}),
+    'send_to_trash': lambda e, d: this.update_metatags({'trash': True}),
+    'restore_from_trash': lambda e, d: this.update_metatags({'trash': False}),
+    'read_later': lambda e, d: this.update_metatags({'readlater': True}),
 
     'dimmer_show': lambda: this.setState({'dimmer': True}),
     'dimmer_hide': lambda: this.setState({'dimmer': False}),

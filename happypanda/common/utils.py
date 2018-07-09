@@ -774,3 +774,8 @@ def get_real_file(path):
         with open(path, 'r', encoding='utf-8') as fp:
             path = fp.read()
     return path
+
+def is_collection(obj):
+    if isinstance(obj, str):
+        return False
+    return hasattr(type(obj), '__iter__')

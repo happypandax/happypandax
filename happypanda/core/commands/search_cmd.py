@@ -393,11 +393,11 @@ class PartialModelFilter(Command):
         return expr(value)
 
     @staticmethod
-    def _match_integer_column(session, parent_model, column, term, options, **kwargs):
+    def _match_integer_column(column, value, options, **kwargs):
 
         options.update(kwargs)
 
-        return []
+        return None
 
     @match_model.default(capture=True)
     def _match_gallery(parent_model, child_model, term,

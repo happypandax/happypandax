@@ -1,3 +1,4 @@
+import sys
 import arrow
 import os
 import enum
@@ -14,6 +15,7 @@ import alembic.config
 import alembic.command
 import alembic.script
 import alembic.migration
+import datetime
 
 from contextlib import contextmanager
 from sqlalchemy.engine import Engine
@@ -415,8 +417,101 @@ class Base:
         sess = object_session(self)
         if not sess:
             sess = constants.db_session()
-        sess.delete(self)
+        with no_autoflush(sess):
+            sess.delete(self)
         return sess
+
+    def update(self, attr_name, value=None, op="add", **kw):
+        """
+        """
+        ops = ("add", "remove")
+        assert op in ops, f"op must be one of {ops}"
+
+        if not isinstance(attr_name, str):
+            attr_name = column_name(attr_name)
+
+        if value is None and kw:
+            value = kw
+
+        col_model = column_model(getattr(self.__class__, attr_name))
+
+        def do_op(x, v, o, check=True):
+            if is_list(x) or is_query(x):
+                if o == "add":
+                    if check and v not in x:
+                        x.append(v)
+                    elif not check:
+                        x.append(v)
+                elif o == "remove":
+                    if check and v in x:
+                        x.remove(v)
+                    elif not check:
+                        x.remove(v)
+                else:
+                    raise NotImplementedError
+            elif issubclass(col_model, Base):
+                if o == "add":
+                    setattr(self, attr_name, v)
+                elif o == "remove":
+                    setattr(self, attr_name, None)
+            else:
+                raise NotImplementedError
+
+        with no_autoflush(object_session(self)):
+            attr_value = getattr(self, attr_name)
+            models = (NameMixin, )
+            try:
+                rel_col = issubclass(col_model, Base)
+            except TypeError:
+                rel_col = False
+
+            if rel_col or is_list(attr_value) or is_query(attr_value):
+                if not utils.is_collection(value) or isinstance(value, dict):
+                    value = [value]
+
+                for x in value:
+                    if issubclass(col_model, MetaTag):
+                        if isinstance(x, dict):
+                            for m_name, m_value in x.items():
+                                mtag = col_model.as_unique(name=m_name)
+                                if m_value:
+                                    if not mtag in attr_value:
+                                        attr_value.append(mtag)
+                                else:
+                                    if mtag in attr_value:
+                                        attr_value.remove(mtag)
+                        elif isinstance(x, list):
+                            for m in x:
+                                if isinstance(m, str):
+                                    m = col_model.as_unique(name=m)
+                                do_op(attr_value, m, op)
+                        elif isinstance(x, str):
+                            x = col_model.as_unique(name=x)
+                            do_op(attr_value, x, op)
+                        else:
+                            do_op(attr_value, x, op)
+
+                    elif isinstance(x, Base):
+                        do_op(attr_value, x, op)
+                    elif isinstance(x, str) and issubclass(col_model, models):
+                        if issubclass(col_model, NameMixin):
+                            v = col_model.as_unique(name=x)
+                            do_op(attr_value, v, op)
+                        else:
+                            raise NotImplementedError
+                    elif isinstance(x, dict) and rel_col:
+                        if issubclass(col_model, UniqueMixin):
+                            v = col_model.as_unique(**x)
+                            do_op(attr_value, v, op)
+                        else:
+                            v = col_model(**x)
+                            do_op(attr_value, v, op)
+                    elif rel_col:
+                        do_op(attr_value, x, op)
+                    else:
+                        do_op(attr_value, x, op)
+            else:
+                setattr(self, attr_name, value)
 
 
 def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
@@ -663,7 +758,7 @@ def validate_string(value):
 
 def validate_arrow(value):
     assert isinstance(
-        value, arrow.Arrow) or value is None, "Column only accepts arrow types, not {}".format(
+        value, (arrow.Arrow, datetime.datetime)) or value is None, "Column only accepts arrow or datetime types, not {}".format(
         type(value))
     return value
 
@@ -2042,6 +2137,9 @@ def make_db_url(db_name=None):
     return db_url
 
 def migrate():
+    if hasattr(sys, "_called_from_test"):
+        return
+    log.i("Checking for database update", stdout=True)
     log.d("Initiating db migration")
     a_cfg = alembic.config.Config(constants.migration_config_path)
     a_cfg.attributes['configure_logger'] = False
@@ -2116,25 +2214,22 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True):
     in_obj = inspect(model)
     if isinstance(in_obj, state.InstanceState):
         sess = object_session(model)
-        if sess:
-            sess.autoflush = False
-        model = type(model)
-        attr = list(in_obj.attrs)
+        with no_autoflush(sess):
+            model = type(model)
+            attr = list(in_obj.attrs)
 
-        exclude = [y.key for y in attr if y.key.endswith('_id')]
-        if id:
-            exclude = [x[:-3] for x in exclude]  # -3 for '_id'
+            exclude = [y.key for y in attr if y.key.endswith('_id')]
+            if id:
+                exclude = [x[:-3] for x in exclude]  # -3 for '_id'
 
-        for x in attr:
-            if x.key not in exclude:
-                try:
-                    d[x.key] = x.value
-                except exc_orm.DetachedInstanceError:
-                    if raise_err:
-                        raise
-                    d[x.key] = None
-        if sess:
-            sess.autoflush = True
+            for x in attr:
+                if x.key not in exclude:
+                    try:
+                        d[x.key] = x.value
+                    except exc_orm.DetachedInstanceError:
+                        if raise_err:
+                            raise
+                        d[x.key] = None
     else:
         for name in model.__dict__:
             value = model.__dict__[name]
@@ -2279,3 +2374,14 @@ def cleanup_session_wrap(f=None):
             with cleanup_session():
                 return f(*args, **kwargs)
         return wrapper
+
+@contextmanager
+def no_autoflush(sess=None):
+    if sess:
+        o = sess.autoflush
+        sess.autoflush = False
+    try:
+        yield sess
+    finally:
+        if sess:
+            sess.autoflush = o

@@ -65,17 +65,17 @@ class ScanGallery(AsyncCommand):
         paths_len = len(found_paths)
         galleries = []
         sess = constants.db_session()
-        sess.autoflush = False
-        for n, p in enumerate(found_paths, 1):
-            self.next_progress(text=f"[{n}/{paths_len}] {p}")
-            if options.get(config.skip_existing_galleries.name):
-                if db.Gallery.exists_by_path(p):
-                    continue
-            g = io_cmd.GalleryFS(p)
-            if g.evaluate():
-                g.load_all()
-                self.set_progress(text=f"[{n}/{paths_len}] {g.path.path} .. OK")
-                galleries.append(g)
+        with db.no_autoflush(sess):
+            for n, p in enumerate(found_paths, 1):
+                self.next_progress(text=f"[{n}/{paths_len}] {p}")
+                if options.get(config.skip_existing_galleries.name):
+                    if db.Gallery.exists_by_path(p):
+                        continue
+                g = io_cmd.GalleryFS(p)
+                if g.evaluate():
+                    g.load_all()
+                    self.set_progress(text=f"[{n}/{paths_len}] {g.path.path} .. OK")
+                    galleries.append(g)
         return galleries
 
     def main(self, path: typing.Union[str, io_cmd.CoreFS], options: dict={},
@@ -117,22 +117,21 @@ class AddGallery(AsyncCommand):
     @async_utils.defer
     def _add_to_db(self, galleries, options):
         with db.safe_session() as sess:
-            sess.autoflush = False
-            for g in galleries:
-                if isinstance(g, io_cmd.GalleryFS):
-                    g.load_all()
-                    g = g.gallery
-                if options.get(config.add_to_inbox.name):
-                    if not any(x.name == db.MetaTag.names.inbox for x in g.metatags):
-                        g.metatags.append(db.MetaTag.as_unique(name=db.MetaTag.names.inbox))
-                g_sess = db.object_session(g)
-                if g_sess and g_sess != sess:
-                    g_sess.expunge_all()
-                sess.add(g)
-                self.next_progress()
-            sess.commit()
-            constants.invalidator.similar_gallery = True
-            sess.autoflush = True
+            with db.no_autoflush(sess):
+                for g in galleries:
+                    if isinstance(g, io_cmd.GalleryFS):
+                        g.load_all()
+                        g = g.gallery
+                    if options.get(config.add_to_inbox.name):
+                        if not any(x.name == db.MetaTag.names.inbox for x in g.metatags):
+                            g.metatags.append(db.MetaTag.as_unique(name=db.MetaTag.names.inbox))
+                    g_sess = db.object_session(g)
+                    if g_sess and g_sess != sess:
+                        g_sess.expunge_all()
+                    sess.add(g)
+                    self.next_progress()
+                sess.commit()
+                constants.invalidator.similar_gallery = True
 
     def main(self, galleries: typing.List[typing.Union[db.Gallery, io_cmd.GalleryFS]], options: dict={}) -> bool:
         assert isinstance(galleries, (list, tuple, db.Gallery, io_cmd.GalleryFS))
@@ -145,6 +144,20 @@ class AddGallery(AsyncCommand):
         self._add_to_db(galleries, gallery_options).get()
         return True
 
+class UpdateGallery(Command):
+    """
+    Update a gallery
+    """
+
+    def main(self, gallery: db.Gallery,
+             metatags: typing.Union[dict, db.MetaTag]={}) -> db.Gallery:
+        assert isinstance(gallery, db.Gallery)
+        sess = db.object_session(gallery)
+        with db.no_autoflush(sess):
+            if isinstance(metatags, db.MetaTag):
+                if metatags not in gallery.metatags:
+                    gallery.metatags.append(metatags)
+        return gallery
 
 class SimilarGallery(AsyncCommand):
     """
@@ -201,56 +214,55 @@ class SimilarGallery(AsyncCommand):
     def _calculate(self, gallery_or_id, all_gallery_tags={}):
         assert isinstance(gallery_or_id, (str, int, db.Gallery))
         sess = constants.db_session()
-        sess.autoflush = False
-        data = {}
-        g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
-        g_id = str(g_id)  # because JSON keys are str
-        tag_count = 0
-        tag_count_minimum = 3
-        if g_id in all_gallery_tags:
-            g_tags = all_gallery_tags[g_id]
-            for a, b in g_tags.items():
-                tag_count += len(b)
-            self.set_max_progress(len(g_tags) + 3)
-        else:
-            if isinstance(gallery_or_id, db.Gallery):
-                g_tags = gallery_or_id
+        with db.no_autoflush(sess):
+            data = {}
+            g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
+            g_id = str(g_id)  # because JSON keys are str
+            tag_count = 0
+            tag_count_minimum = 3
+            if g_id in all_gallery_tags:
+                g_tags = all_gallery_tags[g_id]
+                for a, b in g_tags.items():
+                    tag_count += len(b)
+                self.set_max_progress(len(g_tags) + 3)
             else:
-                g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
-                                                          filter=db.Gallery.id == int(g_id))
-                if g_tags:
-                    g_tags = g_tags[0]
-                tag_count = g_tags.tags.count()
-                if tag_count > tag_count_minimum:
-                    g_tags = g_tags.compact_tags(g_tags.tags.all())
-
-        self.next_progress()
-        if g_tags and tag_count > tag_count_minimum:
-            log.d("Calculating similarity")
-            g_tags = self._get_set(g_tags)
-            data[g_id] = gl_data = {}
-            update_dict = not all_gallery_tags
-            max_prog = 3
-            for t_id, t in all_gallery_tags.items() or constants.db_session().query(
-                    db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
-                t_id = str(t_id)
-                self.next_progress()
-                if update_dict:
-                    all_gallery_tags[t_id] = t.compact_tags(t.tags.all())
-                    max_prog += 1
-                    self.set_max_progress(max_prog)
-                if t_id == g_id:
-                    continue
-                t_tags = self._get_set(all_gallery_tags[t_id])
-                if (math.sqrt(len(g_tags)) * math.sqrt(len(t_tags))) != 0:
-                    cos = len(g_tags & t_tags) / (math.sqrt(len(g_tags))) * math.sqrt(len(t_tags))
+                if isinstance(gallery_or_id, db.Gallery):
+                    g_tags = gallery_or_id
                 else:
-                    cos = 0
-                if cos:
-                    gl_data[t_id] = cos
-            log.d("Finished calculating similarity")
-        sess.autoflush = True
-        self.next_progress()
+                    g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
+                                                              filter=db.Gallery.id == int(g_id))
+                    if g_tags:
+                        g_tags = g_tags[0]
+                    tag_count = g_tags.tags.count()
+                    if tag_count > tag_count_minimum:
+                        g_tags = g_tags.compact_tags(g_tags.tags.all())
+
+            self.next_progress()
+            if g_tags and tag_count > tag_count_minimum:
+                log.d("Calculating similarity")
+                g_tags = self._get_set(g_tags)
+                data[g_id] = gl_data = {}
+                update_dict = not all_gallery_tags
+                max_prog = 3
+                for t_id, t in all_gallery_tags.items() or constants.db_session().query(
+                        db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
+                    t_id = str(t_id)
+                    self.next_progress()
+                    if update_dict:
+                        all_gallery_tags[t_id] = t.compact_tags(t.tags.all())
+                        max_prog += 1
+                        self.set_max_progress(max_prog)
+                    if t_id == g_id:
+                        continue
+                    t_tags = self._get_set(all_gallery_tags[t_id])
+                    if (math.sqrt(len(g_tags)) * math.sqrt(len(t_tags))) != 0:
+                        cos = len(g_tags & t_tags) / (math.sqrt(len(g_tags))) * math.sqrt(len(t_tags))
+                    else:
+                        cos = 0
+                    if cos:
+                        gl_data[t_id] = cos
+                log.d("Finished calculating similarity")
+            self.next_progress()
 
         return data
 
