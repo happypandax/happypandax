@@ -1,10 +1,10 @@
 import logging
-import pprint
 import sys
 import argparse
 import traceback
 import os
 import multiprocessing as mp
+import pprintpp
 
 try:
     import rollbar  # updater doesn't need this
@@ -24,7 +24,7 @@ def shutdown(*args):
 
 def eprint(*args, **kwargs):
     "Prints to stderr"
-    print(*args, file=sys.stderr, **kwargs)
+    pprintpp.pprint(*args, stream=sys.stderr, **kwargs)
 
 
 class QueueHandler(logging.Handler):
@@ -119,7 +119,7 @@ class Logger:
         s = ""
         for a in args:
             if not isinstance(a, str):
-                a = pprint.pformat(a)
+                a = pprintpp.pformat(a)
             s += a
             s += " "
         return s

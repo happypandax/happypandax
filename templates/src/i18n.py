@@ -28,7 +28,7 @@ def add_translation(ctx, data, err):
 
 def add_translation_component(ctx, data, err):
     add_translation(ctx, data, err)
-    if not err and ctx['cmp']:
+    if not err and ctx['cmp'] and ctx['cmp'].mounted:
         ctx['cmp'].forceUpdate()
 
 

@@ -308,3 +308,6 @@ def either(a, b=None):
 
 
 __pragma__("nokwargs")
+
+def JSONCopy(obj):
+    return JSON.parse(JSON.stringify(obj))

@@ -2,6 +2,7 @@ from src.react_utils import (h,
                              e,
                              createReactClass,
                              Link)
+from src import utils
 from src.ui import ui
 from src.client import (ItemType, ImageSize, client)
 from src.single import thumbitem
@@ -44,7 +45,7 @@ def update_metatags(mtags):
     if this.state.data:
         client.call_func("update_metatags", None, item_type=ItemType.Gallery,
                          item_id=this.state.data.id, metatags=mtags)
-        d = dict(this.state.data)
+        d = utils.JSONCopy(this.state.data)
         d.metatags = dict(d.metatags)
         d.metatags.update(mtags)
         this.setState({'data': d})
@@ -60,7 +61,7 @@ def gallery_render():
     artist_names = []
     item_id = this.state.id
     inbox = False
-    data = this.props.data or this.state.data
+    data = this.state.data
 
     if data:
         rating = data.rating
@@ -174,24 +175,26 @@ def gallery_render():
                  onMouseEnter=this.dimmer_show,
                  onMouseLeave=this.dimmer_hide,
                ),
-             e(ui.Popup,
-               trigger=e(ui.Card.Content,
-                         e(ui.Card.Header, title, className="text-ellipsis card-header"),
-                         e(ui.Card.Meta, *[h("span", x) for x in artist_names], className="text-ellipsis"),
-                         ),
-               content=e(gallerypropsview.GalleryProps,
+             e(ui.Modal,
+                  e(ui.Modal.Content,
+                    e(gallerypropsview.GalleryProps,
                          compact=True,
                          data=data,
                          rating=rating,
                          tags=this.state.tags,
                          on_tags=this.on_tags,
                          size="small"),
-               hoverable=True,
-               hideOnScroll=True,
-               position="bottom center",
-               wide="very",
-               on="click",
-               ),
+                    ),
+                    trigger=e(ui.Card.Content,
+                         e(ui.Card.Header, title, className="text-ellipsis card-header"),
+                         e(ui.Card.Meta, *[h("span", x) for x in artist_names], className="text-ellipsis"),
+                         ),
+                    #dimmer="inverted",
+                    size="small",
+                    closeOnDocumentClick=True,
+                    closeIcon=True,
+                    centered=False,
+                  ),
              centered=this.props.centered,
              className=add_cls,
              # color="pink",
@@ -217,7 +220,7 @@ Gallery = createReactClass({
     'update_metatags': update_metatags,
 
     'favorite': lambda e, d: this.update_metatags({'favorite': bool(d.rating)}),
-    'send_to_trash': lambda e, d: this.update_metatags({'trash': True}),
+    'send_to_trash': lambda e, d: all(( this.update_metatags({'trash': True}), this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None)),
     'restore_from_trash': lambda e, d: this.update_metatags({'trash': False}),
     'read_later': lambda e, d: this.update_metatags({'readlater': True}),
 

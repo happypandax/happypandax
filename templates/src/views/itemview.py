@@ -378,6 +378,8 @@ ItemViewBase = createReactClass({
 
 
 def get_items(data=None, error=None):
+    if not this.mounted:
+        return
     if data is not None and not error:
         new_data = []
         if this.state.infinite_scroll and \
@@ -492,6 +494,9 @@ def get_more():
         if this.props.history:
             utils.go_to(this.props.history, query={'page': next_page}, push=False)
 
+def remove_item(d):
+    items = this.state['items']
+    this.setState({'items': [x for x in items if x.id != d.id]})
 
 def item_view_on_update(p_props, p_state):
     if p_props.item_type != this.props.item_type:
@@ -559,6 +564,7 @@ def item_view_will_mount():
 
 def item_view_render():
     items = this.state['items']
+    remove_item = this.remove_item
     el = this.state.element
     limit = this.props.limit or this.state.limit
     size_type = this.props.size_type
@@ -582,7 +588,7 @@ def item_view_render():
                                        on_blur=this.on_blur,
                                        )
 
-    el_items = [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
+    el_items = [e(el, data=x, size_type=size_type, remove_item=remove_item, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
                 for n, x in enumerate(items)]
     if len(el_items) == 0 and count != 0:
         el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x)
@@ -682,6 +688,8 @@ ItemView = createReactClass({
 
     'reset_page': lambda p: all((utils.go_to(this.props.history, query={'page': 1}, push=False), this.setState({'page': 1}), )),
     'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),
+
+    'remove_item': remove_item,
 
     'on_blur': lambda e, d: this.setState({'blur': d.checked}),
     'on_infinite_scroll': lambda e, d: this.setState({'infinite_scroll': d.checked}),

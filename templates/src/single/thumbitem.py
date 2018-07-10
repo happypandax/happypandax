@@ -32,6 +32,8 @@ __pragma__('tconv')
 
 
 def thumbnail_get_thumb(data=None, error=None):
+    if not this.mounted:
+        return
     if data is not None and not error:
         cmd_id = data[str(this.props.item_id)]
         if cmd_id:

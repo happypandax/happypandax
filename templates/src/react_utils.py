@@ -29,6 +29,22 @@ def createReactClass(obj, pure=True):
     if pure and not obj.shouldComponentUpdate:
         obj['shouldComponentUpdate'] = lambda np, ns: shallowCompare(this, np, ns)
 
+    obj['real_cmpmount'] = obj['componentWillMount']
+    obj['real_cmpunmount'] = obj['componentWillUnmount']
+
+    def cmp_mount():
+        this.mounted = True
+        if this.real_cmpmount:
+            this.real_cmpmount()
+
+    def cmp_unmount():
+        this.mounted = False
+        if this.real_cmpunmount:
+            this.real_cmpunmount()
+
+    obj['componentWillMount'] = cmp_mount
+    obj['componentWillUnmount'] = cmp_unmount
+
     return createReactClass_(obj)
 
 

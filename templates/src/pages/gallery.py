@@ -30,9 +30,10 @@ def get_config(data=None, error=None):
         pass
 
 __pragma__('kwargs')
+__pragma__("tconv")
 
 def update_menu(data={}):
-    if this.state.data:
+    if not data and this.state.data:
         data = this.state.data
     if data.id:
         inbox = data.metatags.inbox
@@ -62,7 +63,7 @@ def update_menu(data={}):
                     e(ui.Button.Group,
                         e(ui.Button,
                         e(ui.Icon, js_name="close"), tr(this, "ui.b-delete", "Delete"), color="red"),
-                        e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
+                        e(ui.Button, icon="remove circle", toggle=True, active=this.state.delete_files,
                         title=tr(this, "ui.t-delete-files", "Delete files")),
                         e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
                         title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"),
@@ -84,16 +85,23 @@ def update_menu(data={}):
         if len(menu_items):
             this.props.menu(menu_items)
 
+    else:
+        this.props.menu(e(ui.Menu.Menu))
+
+__pragma__("notconv")
 
 def get_item(data=None, error=None, force=False):
+    if not this.mounted:
+        return
     if data is not None and not error:
-        if not this._mounted:
-            return
         this.setState({"data": data,
                        "loading": False,
                        "rating": data.rating,
                        'loading_group': True,
                        })
+
+        trash = data.metatags.trash
+
         if data.metatags.favorite:
             this.setState({"fav": 1})
         if data.grouping_id:
@@ -115,7 +123,7 @@ def get_item(data=None, error=None, force=False):
                              item_type=ItemType.Category,
                              item_id=data.category_id)
 
-        if data.id:
+        if not trash and data.id:
             client.call_func("get_related_count", this.get_filter_count,
                              related_type=ItemType.GalleryFilter,
                              item_type=this.state.item_type,
@@ -135,7 +143,7 @@ def get_item(data=None, error=None, force=False):
             this.setState({"similar_gallery_loading": True})
 
         this.setState({'same_artist_data': []})
-        if len(data.artists):
+        if not trash and len(data.artists):
             for a in list(data.artists)[:5]:
                 client.call_func("get_related_items", this.get_same_artist_data,
                                  related_type=ItemType.Gallery, item_id=a.id, item_type=ItemType.Artist,
@@ -208,6 +216,8 @@ def get_collection_data(data=None, error=None):
 
 
 def get_same_artist_data(data=None, error=None):
+    if not this.mounted:
+        return
     if data is not None and not error:
         g_id = this.state.data.id or 0
         items = [x for x in data if x.id != g_id]
@@ -238,6 +248,8 @@ __pragma__("notconv")
 
 
 def get_similar_value(cmd):
+    if not this.mounted:
+        return
     v = cmd.get_value()
     this.setState({"similar_gallery_data": v or [], 'similar_gallery_loading': False})
 
@@ -289,19 +301,21 @@ def gallery_on_update(p_props, p_state):
         p_state.data != this.state.data,
     )):
         this.update_menu()
+        if this.props.location.state:
+            this.props.location.state.gallery = this.state.data
+            this.props.history.js_replace(this.props.location)
 
 __pragma__("tconv")
 
 
 def page_willmount():
-    this._mounted = True
+    this.update_menu()
     this.get_item() if not this.state.data else None
     this.get_config()
-    this.update_menu()
 
 
 def page_willunmount():
-    this._mounted = False
+    pass
 
 
 def page_render():
@@ -521,7 +535,7 @@ def page_render():
 
     similar_galleries = []
 
-    if len(this.state.similar_gallery_data) or this.state.similar_gallery_loading:
+    if not trash and (len(this.state.similar_gallery_data) or this.state.similar_gallery_loading):
         similar_gallery_data = this.state.similar_gallery_data
         similar_slider_el = e(Slider,
                               *[e(galleryitem.Gallery, data=x, className="small-size") for x in similar_gallery_data],
