@@ -22,6 +22,7 @@ import logging
 import regex
 import OpenSSL
 import errno
+import collections
 import langcodes
 
 from inspect import ismodule, currentframe, getframeinfo
@@ -779,3 +780,25 @@ def is_collection(obj):
     if isinstance(obj, str):
         return False
     return hasattr(type(obj), '__iter__')
+
+def is_url(url, strict=False):
+    t = ("https://", "http://")
+    if not strict:
+        t += ("www.",)
+    return url.lower().startswith(t)
+
+def dict_merge(dct, merge_dct):
+    """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
+    updating only top-level keys, dict_merge recurses down into dicts nested
+    to an arbitrary depth, updating keys. The ``merge_dct`` is merged into
+    ``dct``.
+    :param dct: dict onto which the merge is executed
+    :param merge_dct: dct merged into dct
+    """
+    for k in merge_dct:
+        if (k in dct and isinstance(dct[k], dict)
+                and isinstance(merge_dct[k], collections.Mapping)):
+            dict_merge(dct[k], merge_dct[k])
+        else:
+            dct[k] = merge_dct[k]
+    return dct

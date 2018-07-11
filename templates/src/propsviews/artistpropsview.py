@@ -28,9 +28,10 @@ def get_tags(data=None, error=None):
         data = this.props.data or this.state.data
         if data:
             id = data.id
-        client.call_func("get_common_tags", this.get_tags,
-                         item_type=this.state.item_type,
-                         item_id=id, limit=10)
+        if id:
+            client.call_func("get_common_tags", this.get_tags,
+                             item_type=this.state.item_type,
+                             item_id=id, limit=10)
 
 
 def get_gallery_count(data=None, error=None):

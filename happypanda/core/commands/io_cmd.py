@@ -137,7 +137,7 @@ class ImageItem(AsyncCommand):
             if isinstance(self._image, (str, CoreFS)):
                 fs_bytes = fs.open("rb")
                 _, ext = os.path.splitext(fs.path)
-                if self._retrying:
+                if self._retrying and not fs.archive_type:
                     ext = '.' + imghdr.what(None, h=fs_bytes)
             else:
                 fs_bytes = self._image
@@ -274,10 +274,10 @@ class CoreFS(CoreCommand):
             return getattr(self.fp, key)
 
         def __getitem__(self, item):
-            return super().__getitem__(item)
+            return self.fp.__getitem__(item)
 
         def __setitem__(self, key, value):
-            return super().__setitem__(key, value)
+            return self.fp.__setitem__(key, value)
 
     def __init__(self, path: str=pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
@@ -289,6 +289,8 @@ class CoreFS(CoreCommand):
         self._archive = archive
         self._extacted_file = None
         self._ext = None
+        if isinstance(path, str) and utils.is_url(path, strict=True):
+            raise NotImplementedError("URLs are not supported yet")
         self._resolve_path(path)
 
     @_archive_formats.default()
@@ -385,6 +387,16 @@ class CoreFS(CoreCommand):
         if self.ext in self.archive_formats():
             return True
         return False
+
+    @property
+    def archive_type(self):
+        "Return the archive ext if this file is an archive or is inside one"
+        suffixes = self._path.suffixes
+        while suffixes:
+            s = "".join(suffixes)
+            if s.lower() in self.archive_formats():
+                return s.lower()
+        return None
 
     @property
     def inside_archive(self):
@@ -1073,6 +1085,7 @@ class GalleryFS(CoreCommand):
                     for p in natsorted(real_pages):
                         n += 1
                         dbpage = db.Page()
+                        dbpage.name = os.path.split(p)[1]
                         dbpage.path = p
                         dbpage.number = n
                         self.gallery.pages.append(dbpage, enable_count_cache=True)

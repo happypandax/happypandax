@@ -16,6 +16,7 @@ import alembic.command
 import alembic.script
 import alembic.migration
 import datetime
+import types
 
 from contextlib import contextmanager
 from sqlalchemy.engine import Engine
@@ -35,6 +36,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.ext import orderinglist
 from sqlalchemy.orm import (
+    configure_mappers,
+    clear_mappers,
     sessionmaker,
     relationship,
     validates,
@@ -45,7 +48,8 @@ from sqlalchemy.orm import (
     collections,
     dynamic,
     backref,
-    exc as exc_orm)
+    exc as exc_orm,
+    deferred)
 from sqlalchemy import (
     create_engine,
     event,
@@ -821,7 +825,6 @@ def profile_association(cls, bref="items"):
         cascade="all")
     return assoc
 
-
 def metatag_association(cls, bref="items"):
     if not issubclass(cls, Base):
         raise ValueError("Must be subbclass of Base")
@@ -840,6 +843,30 @@ def metatag_association(cls, bref="items"):
         lazy='joined',
         backref=backref(bref, lazy="dynamic"),
         cascade="all")
+
+    def on_metatag_event(self, metatag, is_remove):
+        """
+        """
+        if is_remove:
+            pass
+        else:
+            if isinstance(self, Gallery) and metatag.name == MetaTag.names.favorite:
+                if not self.rating and config.auto_rate_gallery_on_favorite.value:
+                    self.rating = 10
+        return metatag
+
+    cls.on_metatag_event = on_metatag_event
+
+    @event.listens_for(cls.metatags, 'remove', retval=True, propagate=True)
+    def rec_remove(target, value, initator):
+        return target.on_metatag_event(value, True)
+
+    @event.listens_for(cls.metatags, 'append', retval=True, propagate=True)
+    def rec_append(target, value, initator):
+        return target.on_metatag_event(value, False)
+
+
+
     return assoc
 
 
@@ -1216,7 +1243,7 @@ class TaggableMixin(UpdatedMixin):
         super().__init__(**kwargs)
         self.taggable = Taggable()
 
-    @property
+    @hybrid_property
     def tags(self):
         return self.taggable.tags
 
@@ -1615,8 +1642,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                                                 where(Page.gallery_id==Gallery.id).
                                                 correlate(Gallery.__table__)
                                                 ),
-                              uselist=False
+                              uselist=False,
                               )
+
 
     def read(self, user_id=None, datetime=None):
         "Creates a read event for user"
@@ -1701,7 +1729,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                 e = bool(s.query(Page.id).filter(page_expr).count())
             return e
 
-
 metatag_association(Gallery, "galleries")
 profile_association(Gallery, "galleries")
 url_association(Gallery, "galleries")
@@ -1722,7 +1749,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     gallery = relationship("Gallery", back_populates="pages")
 
     @validates('path')
-    def _validate_password(self, key, p):
+    def _validate_path(self, key, p):
         return self.format_path(p)
 
     @classmethod
@@ -2199,25 +2226,28 @@ def add_bulk(session, objects, amount=100, flush=False, bulk_save=False, return_
         left = objects[:amount]
 
 
-def table_attribs(model, id=False, descriptors=False, raise_err=True):
+def table_attribs(model, id=False, descriptors=False, raise_err=True, exclude=tuple(), allow=tuple()):
     """Returns a dict of table column names and their SQLAlchemy value objects
     Params:
         id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
         descriptors -- include hybrid attributes and association proxies
     """
     assert isinstance(model, Base) or issubclass(model, Base)
+    exclude = tuple(exclude)
     d = {}
     obj = model
     in_obj = inspect(model)
     if isinstance(in_obj, state.InstanceState):
         sess = object_session(model)
+        model = type(obj)
         with no_autoflush(sess):
-            model = type(model)
             attr = list(in_obj.attrs)
 
-            exclude = [y.key for y in attr if y.key.endswith('_id')]
+            ex = tuple(y.key for y in attr if y.key.endswith('_id') and y.key[:-3] not in allow)
             if id:
-                exclude = [x[:-3] for x in exclude]  # -3 for '_id'
+                ex = tuple(x[:-3] for x in ex)  # -3 for '_id'
+
+            exclude += ex
 
             for x in attr:
                 if x.key not in exclude:
@@ -2229,13 +2259,15 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True):
                         d[x.key] = None
     else:
         for name in model.__dict__:
+            if name in exclude:
+                continue
             value = model.__dict__[name]
             if isinstance(value, attributes.InstrumentedAttribute):
                 d[name] = value
 
     if descriptors:
         for name, value in model.__dict__.items():
-            if isinstance(value, (hybrid_property, AssociationProxy, index_property)):
+            if name not in exclude and isinstance(value, (hybrid_property, AssociationProxy, index_property)):
                 try:
                     d[name] = getattr(obj, name)
                 except exc_orm.DetachedInstanceError:

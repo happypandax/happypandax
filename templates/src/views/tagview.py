@@ -43,12 +43,22 @@ def tag_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data})
 
-
 def tag_render():
 
     tag_rows = []
-    if this.state.data.__namespace__:  # somehow transcrypt ignores this in the loop below
-        ns_tags = this.state.data.__namespace__
+    data = this.state.data
+
+    if isinstance(data, list):
+        d = {}
+        for nstag in data:
+            if not d[nstag.namespace.js_name]:
+                d[nstag.namespace.js_name] = []
+            d[nstag.namespace.js_name].append(nstag.tag)
+        data = d
+
+
+    if data.__namespace__:  # somehow transcrypt ignores this in the loop below
+        ns_tags = data.__namespace__
         ns_tags = sorted([x.js_name for x in ns_tags])
         tag_rows.append(
             e(ui.Table.Row,
@@ -58,7 +68,7 @@ def tag_render():
                     ),
                   colSpan="2",
                   )))
-    for ns in sorted(dict(this.state.data).keys()):
+    for ns in sorted(dict(data).keys()):
         ns_tags = this.state.data[ns]
         ns_tags = sorted([x.js_name for x in ns_tags])
         tag_rows.append(

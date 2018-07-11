@@ -137,6 +137,19 @@ def pref_general(props):
                              ))
                          )
 
+    if defined(cfg.gallery):
+        items.append(e(ui.Header, tr(props.tab, "general.db-item-gallery", "Gallery"), size="small", dividing=True))
+
+        if defined(cfg.gallery.auto_rate_on_favorite):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "ui.t-auto-rate-on-favorite", "Auto rate gallery on favorite"),
+                             defaultChecked=cfg.gallery.auto_rate_on_favorite,
+                             onChange=lambda e, d: props.upd("gallery.auto_rate_on_favorite", d.checked),
+                             ))
+                         )
+
     if defined(cfg.search):
         items.append(e(ui.Header, tr(props.tab, "ui.h-search", "Search"), size="small", dividing=True))
 

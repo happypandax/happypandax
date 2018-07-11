@@ -90,7 +90,7 @@ def update_menu(data={}):
 
 __pragma__("notconv")
 
-def get_item(data=None, error=None, force=False):
+def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
     if not this.mounted:
         return
     if data is not None and not error:
@@ -100,73 +100,78 @@ def get_item(data=None, error=None, force=False):
                        'loading_group': True,
                        })
 
-        trash = data.metatags.trash
+        if not ctx.only_gallery:
+            trash = data.metatags.trash
 
-        if data.metatags.favorite:
-            this.setState({"fav": 1})
-        if data.grouping_id:
-            client.call_func("get_related_items", this.get_grouping,
-                             item_type=ItemType.Grouping,
-                             related_type=this.state.item_type,
-                             item_id=data.grouping_id)
-            client.call_func("get_related_items", this.get_status,
-                             item_type=ItemType.Grouping,
-                             related_type=ItemType.Status,
-                             item_id=data.grouping_id)
-        if data.language_id:
-            client.call_func("get_item", this.get_lang,
-                             item_type=ItemType.Language,
-                             item_id=data.language_id)
+            if data.metatags.favorite:
+                this.setState({"fav": 1})
+            else:
+                this.setState({"fav": 0})
 
-        if data.category_id:
-            client.call_func("get_item", this.get_category,
-                             item_type=ItemType.Category,
-                             item_id=data.category_id)
+            if data.grouping_id:
+                client.call_func("get_related_items", this.get_grouping,
+                                 item_type=ItemType.Grouping,
+                                 related_type=this.state.item_type,
+                                 item_id=data.grouping_id)
+                client.call_func("get_related_items", this.get_status,
+                                 item_type=ItemType.Grouping,
+                                 related_type=ItemType.Status,
+                                 item_id=data.grouping_id)
+            if data.language_id:
+                client.call_func("get_item", this.get_lang,
+                                 item_type=ItemType.Language,
+                                 item_id=data.language_id)
 
-        if not trash and data.id:
-            client.call_func("get_related_count", this.get_filter_count,
-                             related_type=ItemType.GalleryFilter,
-                             item_type=this.state.item_type,
-                             item_id=data.id)
-            client.call_func("get_related_items", this.get_collection_data,
-                             related_type=ItemType.Collection,
-                             item_type=this.state.item_type,
-                             item_id=data.id)
-            client.call_func("get_related_items", this.get_filters,
-                             item_type=ItemType.Gallery,
-                             related_type=ItemType.GalleryFilter,
-                             item_id=data.id)
+            if data.category_id:
+                client.call_func("get_item", this.get_category,
+                                 item_type=ItemType.Category,
+                                 item_id=data.category_id)
 
-            client.call_func("get_similar", this.get_similar,
-                             item_type=ItemType.Gallery,
-                             item_id=data.id, limit=30)
-            this.setState({"similar_gallery_loading": True})
+            if not trash and data.id:
+                client.call_func("get_related_count", this.get_filter_count,
+                                 related_type=ItemType.GalleryFilter,
+                                 item_type=this.state.item_type,
+                                 item_id=data.id)
+                client.call_func("get_related_items", this.get_collection_data,
+                                 related_type=ItemType.Collection,
+                                 item_type=this.state.item_type,
+                                 item_id=data.id)
+                client.call_func("get_related_items", this.get_filters,
+                                 item_type=ItemType.Gallery,
+                                 related_type=ItemType.GalleryFilter,
+                                 item_id=data.id)
 
-        this.setState({'same_artist_data': []})
-        if not trash and len(data.artists):
-            for a in list(data.artists)[:5]:
-                client.call_func("get_related_items", this.get_same_artist_data,
-                                 related_type=ItemType.Gallery, item_id=a.id, item_type=ItemType.Artist,
-                                 limit=10 if len(data.artists) > 1 else 30)
+                client.call_func("get_similar", this.get_similar,
+                                 item_type=ItemType.Gallery,
+                                 item_id=data.id, limit=30)
+                this.setState({"similar_gallery_loading": True})
 
-        this.update_menu(data)
+            this.setState({'same_artist_data': []})
+            if not trash and len(data.artists):
+                for a in list(data.artists)[:5]:
+                    client.call_func("get_related_items", this.get_same_artist_data,
+                                     related_type=ItemType.Gallery, item_id=a.id, item_type=ItemType.Artist,
+                                     limit=10 if len(data.artists) > 1 else 30)
+
+            this.update_menu(data)
 
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
+        ctx = {'only_gallery': only_gallery,}
         item_id = this.state.id
         if utils.defined(this.props.location):
             if this.props.location.state and this.props.location.state.gallery:
                 if int(this.props.match.params.item_id) == this.props.location.state.gallery.id:
                     if not force:
-                        this.get_item(this.props.location.state.gallery)
+                        this.get_item(ctx, this.props.location.state.gallery)
                         return
                     else:
                         item_id = this.props.match.params.item_id
 
         item = this.state.item_type
         if item and item_id:
-            client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
+            client.call_func("get_item", this.get_item, ctx=ctx, item_type=item, item_id=item_id)
             this.setState({'loading': True})
 
 
@@ -705,7 +710,8 @@ Page = createReactClass({
     'open_external': galleryitem.open_external,
     'read_event': galleryitem.read_event,
 
-    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}), this.setState({'fav':d.rating}))),
+    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
+                                  this.setState({'fav':d.rating}), this.get_item(only_gallery=True, force=True))),
     'send_to_trash': lambda e, d: this.update_metatags({'trash': True}),
     'restore_from_trash': lambda e, d: this.update_metatags({'trash': False}),
     'read_later': lambda e, d: this.update_metatags({'readlater': True}),

@@ -52,6 +52,22 @@ def update_metatags(mtags):
 
 __pragma__("notconv")
 
+def get_item(data=None, error=None):
+    if not this.mounted:
+        return
+    if data is not None and not error:
+        this.setState({"data": data,
+                       "id": data.id,
+                       })
+
+    elif error:
+        state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
+    else:
+        item_id = this.state.id
+        item = this.state.item_type
+        if item and item_id:
+            client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
+
 
 def gallery_render():
     fav = 0
@@ -204,7 +220,7 @@ def gallery_render():
 Gallery = createReactClass({
     'displayName': 'Gallery',
 
-    'getInitialState': lambda: {'id': None,
+    'getInitialState': lambda: {'id': this.props.data.id if this.props.data else None,
                                 'data': this.props.data,
                                 'item_type': ItemType.Gallery,
                                 'tags': this.props.tags,
@@ -218,8 +234,9 @@ Gallery = createReactClass({
 
     'on_tags': on_tags,
     'update_metatags': update_metatags,
+    'get_item': get_item,
 
-    'favorite': lambda e, d: this.update_metatags({'favorite': bool(d.rating)}),
+    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}), this.get_item())),
     'send_to_trash': lambda e, d: all(( this.update_metatags({'trash': True}), this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None)),
     'restore_from_trash': lambda e, d: this.update_metatags({'trash': False}),
     'read_later': lambda e, d: this.update_metatags({'readlater': True}),

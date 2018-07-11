@@ -7,6 +7,7 @@ import os
 import itertools
 
 from datetime import datetime
+from sqlalchemy import inspect as sa_inspect
 
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import db, plugins
@@ -46,7 +47,7 @@ class CoreMessage:
         if not isinstance(x, (dict, str, int, float, list)):
             raise ValueError("Incompatible type: {}".format(type(x)))
 
-    def data(self):
+    def data(self, **kwargs):
         "Implement in subclass. Must return a dict or list if intended to be serializable."
         raise NotImplementedError()
 
@@ -89,7 +90,7 @@ class Notification(CoreMessage):
             'text': text,
             'type': actiontype})
 
-    def data(self):
+    def data(self, **kwargs):
         d = {
             'id': self.id,
             'title': self.title,
@@ -112,7 +113,7 @@ class Identity(CoreMessage):
         super().__init__(key)
         self._obj = obj
 
-    def data(self):
+    def data(self, **kwargs):
         return self._obj
 
     def json_friendly(self, include_key=True):
@@ -144,7 +145,7 @@ class List(CoreMessage):
         self._incompatible_type(d)
         self.items.append(d)
 
-    def data(self):
+    def data(self, **kwargs):
         return self.items
 
     def from_json(self, j):
@@ -163,7 +164,7 @@ class Message(CoreMessage):
         super().__init__('msg')
         self.msg = msg
 
-    def data(self):
+    def data(self, **kwargs):
         return self.msg
 
     def from_json(self, j):
@@ -181,7 +182,7 @@ class Error(CoreMessage):
         self.error = error
         self.msg = msg
 
-    def data(self):
+    def data(self, **kwargs):
         return {'code': self.error, self.msg.key: self.msg.data()}
 
     def from_json(self, j):
@@ -207,9 +208,28 @@ class DatabaseMessage(CoreMessage):
         self._msg_path = []
         self._sess = None
         self._detached = db.is_detached(db_item)
+        self._properties = self.properties()
         DatabaseMessage._clsmembers = {
             x: globals()[x] for x in globals() if inspect.isclass(
                 globals()[x])}
+
+    def properties(self):
+        return {'exclusions': {},
+                'force_value_load': {}}
+
+    def exclude_attributes(self, exclusions=tuple()):
+        self.exclusions = exclusions
+        self._properties['exclusions'] = self._dict_tree_unpack(exclusions, {})
+
+    def _dict_tree_unpack(self, t, d={}):
+        """
+        a.b.c -> {'a': {'b': {'c': {}}}}
+        """
+        for x in t:
+            v = d
+            for k in x.split('.'):
+                v = v.setdefault(k, {})
+        return d
 
     def _before_data(self):
         self._check_link()
@@ -218,36 +238,47 @@ class DatabaseMessage(CoreMessage):
         self._sess = db.object_session(self.item)
         self._msg_path.append(self.__class__.__name__)
 
-    def data(self, load_values=False, load_collections=False):
+    def data(self, load_values=False, load_collections=False,
+             bypass_exclusions=False, propagate_bypass=False,
+             force_value_load=None):
         """
         Params:
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
         self._before_data()
-        if self._sess:
-            self._sess.autoflush = False
-        gattribs = db.table_attribs(self.item, not load_values, descriptors=True, raise_err=not self._detached)
-        r = {
-            x: self._unpack(
-                x,
-                gattribs[x],
-                load_collections) for x in gattribs}
-        if self._sess:
-            self._sess.autoflush = True
+        if force_value_load is not None:
+            self._properties['force_value_load'] = self._dict_tree_unpack(force_value_load)
+
+        with db.no_autoflush(self._sess):
+            ex = tuple(self._properties['exclusions'].keys())
+            gattribs = db.table_attribs(self.item, not load_values, descriptors=True, raise_err=not self._detached,
+                                        exclude=ex if not bypass_exclusions else tuple(),
+                                        allow=tuple(self._properties['force_value_load'].keys()))
+            r = {
+                x: self._unpack(
+                    x,
+                    gattribs[x],
+                    load_values, load_collections, propagate_bypass) for x in gattribs}
         return r
 
     def json_friendly(
             self,
             load_values=False,
             load_collections=False,
-            include_key=True):
+            include_key=True,
+            bypass_exclusions=False,
+            propagate_bypass=False,
+            force_value_load=None):
         """Serialize to JSON structure
         Params:
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
-        d = self.data(load_values, load_collections)
+        d = self.data(load_values, load_collections,
+                      bypass_exclusions=bypass_exclusions,
+                      propagate_bypass=propagate_bypass,
+                      force_value_load=force_value_load)
         assert isinstance(d, dict), "self.data() must return a dict!"
         if self._error:
             d[self._error.key] = self._error.data()
@@ -285,7 +316,7 @@ class DatabaseMessage(CoreMessage):
             m_tags[n] = True
         return m_tags
 
-    def _unpack(self, name, attrib, load_collections):
+    def _unpack(self, name, attrib, load_values, load_collections, propagate_bypass):
         "Helper method to unpack SQLalchemy objects"
         if attrib is None:
             return
@@ -320,16 +351,23 @@ class DatabaseMessage(CoreMessage):
                             type(attrib)))
 
             msg_obj._indirect = True
+            msg_obj._properties['force_value_load'] = utils.dict_merge(msg_obj._properties['force_value_load'], self._properties['force_value_load'].get(name, {}))
+            msg_obj._properties['exclusions'] = self._properties['exclusions'].get(name, {})
             msg_obj._detached = self._detached
             msg_obj._msg_path = self._msg_path.copy()
-            return msg_obj.data() if msg_obj else None
+            # note: don't pass load_values and load_collections here. use the force_value_load param
+            return msg_obj.data(bypass_exclusions=propagate_bypass, propagate_bypass=propagate_bypass) if msg_obj else None
+            
 
         elif db.is_list(attrib) or isinstance(attrib, list):
-            return [self._unpack(name, x, load_collections) for x in attrib]
+            return [self._unpack(name, x, load_values, load_collections, propagate_bypass) for x in attrib]
 
         elif db.is_query(attrib):
-            if load_collections and not self._detached:
-                return [self._unpack(name, x, load_collections)
+            can_load = False
+            if name in self._properties['force_value_load']:
+                can_load = True
+            if can_load or (load_collections and not self._detached and not self._prevent_unpacking(name)):
+                return [self._unpack(name, x, load_values, load_collections, propagate_bypass)
                         for x in attrib.all()]
             else:
                 return []
@@ -362,6 +400,7 @@ class Gallery(DatabaseMessage):
     def __init__(self, db_gallery):
         assert isinstance(db_gallery, db.Gallery)
         super().__init__('gallery', db_gallery)
+        self.exclude_attributes(("first_page",))
 
     def from_json(self, j):
         return super().from_json(j)
@@ -411,6 +450,7 @@ class Taggable(DatabaseMessage):
     def __init__(self, db_item):
         assert isinstance(db_item, db.Taggable)
         super().__init__('taggable', db_item)
+        self.exclude_attributes(("tags",))
 
 
 class NameMixin(DatabaseMessage):
@@ -433,33 +473,29 @@ class NamespaceTags(DatabaseMessage):
         assert isinstance(db_item, db.NamespaceTags)
         super().__init__('nstag', db_item)
 
-    def data(self, load_values=False, load_collections=False):
-        self._before_data()
-        d = {}
-        d[self.item.namespace.name] = Tag(self.item.tag, self).json_friendly(include_key=False)
-        d[db.MetaTag.__tablename__] = self._unpack_metatags(self.item.metatags)
+    def properties(self):
+        d = super().properties()
+        d['force_value_load'] = self._dict_tree_unpack(('tag', "namespace"))
         return d
-
 
 class Tag(DatabaseMessage):
     "Encapsulates database tag object"
 
     def __init__(self, db_item, nstag=None):
         assert isinstance(db_item, db.Tag)
+        assert isinstance(nstag, db.NamespaceTags) or nstag is None
         super().__init__('tag', db_item)
         self.nstag = nstag
 
-    def data(self, load_values=False, load_collections=False):
-        self._before_data()
-        d = {}
-        aliases = []
-        d['name'] = self.item.name
-        if self.nstag:
-            for a in self.nstag.aliases:
-                aliases.appned(a.tag.name)
-        d['aliases'] = aliases
-        return d
 
+class Namespace(DatabaseMessage):
+    "Encapsulates database tag object"
+
+    def __init__(self, db_item, nstag=None):
+        assert isinstance(db_item, db.Namespace)
+        assert isinstance(nstag, db.NamespaceTags) or nstag is None
+        super().__init__('namespace', db_item)
+        self.nstag = nstag
 
 class Profile(DatabaseMessage):
     "Encapsulates database profile object"
@@ -470,7 +506,7 @@ class Profile(DatabaseMessage):
         self._local_url = url
         self._uri = uri
 
-    def data(self, load_values=False, load_collections=False):
+    def data(self, load_values=False, load_collections=False, **kwargs):
         self._before_data()
         d = {}
         path = io_cmd.CoreFS(self.item.path)
@@ -576,8 +612,8 @@ class Function(CoreMessage):
         assert isinstance(d, CoreMessage) or d is None
         self._data = d
 
-    def data(self):
-        d = self._data.json_friendly(include_key=False) if self._data else None
+    def data(self, **kwargs):
+        d = self._data.json_friendly(include_key=False, **kwargs) if self._data else None
         return {'fname': self.name, 'data': d}
 
     def from_json(self, j):
@@ -604,7 +640,7 @@ class Plugin(CoreMessage):
                 'status': node.status
                 }
 
-    def data(self):
+    def data(self, **kwargs):
         d = self._node_data(self.node)
         d['require'] = [self._node_data(x) for x in self.node.dependencies]
         return d
@@ -621,12 +657,12 @@ class GalleryFS(CoreMessage):
         assert isinstance(gfs, io_cmd.GalleryFS)
         self._gfs = gfs
 
-    def data(self):
-        g = Gallery(self._gfs.gallery).data(load_collections=True, load_values=True)
+    def data(self, **kwargs):
+        g = Gallery(self._gfs.gallery).data(load_values=True,
+                                            propagate_bypass=True,
+                                            force_value_load=("taggable.tags",
+                                                              "pages",))
         d = {'sources': self._gfs.get_sources(),
              'page_count': len(self._gfs.pages),
-             'language': g['language'],
-             'titles': g['titles'],
-             'artists': g['artists'],
-             'collections': g['collections']}
+             'gallery': g}
         return d

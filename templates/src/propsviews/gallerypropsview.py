@@ -179,7 +179,7 @@ def galleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
+                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls], size="small", relaxed=True))))
 
     return e(ui.Table,
              e(ui.Table.Body,
@@ -210,4 +210,173 @@ GalleryProps = createReactClass({
     'componentDidUpdate': gallery_on_update,
 
     'render': galleryprops_render
+})
+
+
+def newgalleryprops_render():
+
+    title = ""
+    rating = this.props.rating
+    artists = []
+    item_id = this.props.id
+    info = ""
+    read_count = 0
+    date_pub = None
+    date_upd = None
+    date_read = None
+    date_added = None
+    urls = []
+    parodies = []
+    circles = []
+    titles = []
+    status = this.props.status or this.state.status_data
+    language = this.props.language or this.state.lang_data
+    tags = this.props.tags
+    if this.props.data:
+        item_id = this.props.data.id
+        parodies = this.props.data.parodies
+        titles = this.props.data.titles
+
+        if this.props.data.pub_date:
+            date_pub = this.props.data.pub_date
+        if this.props.data.last_updated:
+            date_upd = this.props.data.last_updated
+        if this.props.data.last_read:
+            date_read = this.props.data.last_read
+        if this.props.data.timestamp:
+            date_added = this.props.data.timestamp
+        read_count = this.props.data.times_read
+        info = this.props.data.info
+        if this.props.data.preferred_title:
+            title = this.props.data.preferred_title.js_name
+        if not item_id:
+            item_id = this.props.data.id
+
+        artists = this.props.data.artists
+        circle_ids = []
+        for a in artists:
+            if a.circles:
+                for c in a.circles:
+                    if c.id in circle_ids:
+                        continue
+                    circles.append(c)
+                    circle_ids.append(c.id)
+
+        for u in this.props.data.urls:
+            urls.append(u.js_name)
+
+        if not utils.defined(rating):
+            rating = this.props.data.rating
+
+        if not language and this.props.data.language:
+            language = this.props.data.language
+
+        if not status and this.props.data.status:
+            status = this.props.data.status
+
+        if not tags and this.props.data.taggable.tags:
+            tags = this.props.data.taggable.tags
+
+    paths = []
+    if this.props.sources:
+        paths = this.props.sources
+
+    status = status.js_name if status else tr(this, "ui.t-unknown", "Unknown")
+    language = language.js_name if language else tr(this, "ui.t-unknown", "Unknown")
+
+    rows = []
+
+    rows.append(e(ui.Table.Row,
+                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-title", "Title") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                    e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, e(ui.Header, x.js_name, size="tiny"),) for x in titles], size="small", relaxed=True, divided=True))))
+
+    rows.append(e(ui.Table.Row,
+                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-description", "Description") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                    e(ui.Table.Cell, e(ui.Header, info, size="tiny", className="sub-text"))))
+
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-artist", "Artist") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
+
+    rows.append(e(ui.Table.Row,
+                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
+                                        ':', size="tiny", className="sub-text"), collapsing=True),
+                    e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
+
+    rows.append(e(ui.Table.Row,
+                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") +
+                                        ':', size="tiny", className="sub-text"), collapsing=True),
+                    e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, language)))
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green",
+                                                                                                                       "ongoing": "orange",
+                                                                                                                       "unreleased": "red",
+                                                                                                                       "unknown": "grey"}.get(status.lower(), "blue")))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls], size="small", relaxed=True))))
+
+    if paths:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-path", "Path") +
+                                         ':', size="tiny", className="sub-text"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, e(ui.Header, x, size="tiny", className="sub-text"),) for x in paths], size="tiny", relaxed=True, divided=True))))
+
+
+    return e(ui.Table,
+             e(ui.Table.Body,
+               *rows
+               ),
+             basic="very",
+             size=this.props.size,
+             compact="very" if utils.defined(this.props.compact) else False,
+             )
+
+
+__pragma__('notconv')
+
+
+NewGalleryProps = createReactClass({
+    'displayName': 'NewGalleryProps',
+
+    'getInitialState': lambda: {'id': None,
+                                'data': this.props.data,
+                                'item_type': ItemType.Gallery,
+                                'lang_data': this.props.language,
+                                'status_data': this.props.status,
+                                'sources': this.props.sources,
+                                },
+    'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
+    #'componentDidMount': lambda: all((this.get_lang(), this.get_status())),
+    'get_lang': get_lang,
+    'get_status': get_status,
+
+    'render': newgalleryprops_render
 })

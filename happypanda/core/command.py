@@ -117,7 +117,9 @@ class CoreCommand:
         self._progress_time = arrow.now()
 
     def merge(self, cmd):
-        ""
+        """
+        Merge this command into given command
+        """
         assert cmd is None or isinstance(cmd, CoreCommand)
         if cmd:
             self.merge_progress_into(cmd)

@@ -278,12 +278,12 @@ def scan_galleries(path: str, scan_options: dict = {}):
     return message.Identity('data', {'command_id': cmd_id,
                                      'view_id': view_id})
 
-def load_gallery_from_url(url: str):
+def load_gallery_from_path(path: str = ""):
     """
-    Load gallery data from a URL
+    Load gallery data from a path
 
     Args:
-        url: a supported url (note that the url must exist on this system if url points to a file)
+        path: a supported path (note that the path must exist on this system if path points to a file/directory)
 
     Returns:
         .. code-block:: guess
@@ -291,5 +291,7 @@ def load_gallery_from_url(url: str):
             a GalleryFS message object
 
     """
-    gfs = io_cmd.GalleryFS(url)
+    gfs = io_cmd.GalleryFS(path)
     gfs.load_metadata()
+    gfs.load_pages()
+    return message.GalleryFS(gfs)

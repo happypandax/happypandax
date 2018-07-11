@@ -10,10 +10,12 @@ from src.ui import ui, Pagination, TitleChange
 from src.client import (client, ItemType, Command,
                         TemporaryViewType, CommandState)
 from src.single import artistitem, circleitem
+from src.propsviews import gallerypropsview
 from src.i18n import tr
 from src.state import state
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
+
 __pragma__('alias', 'as_', 'as')
 __pragma__('alias', 'js_input', 'input')
 
@@ -195,7 +197,7 @@ def scanpage_render():
     if not this.state.loading and view_data:
         for t in this.state.view_data['items']:
             all_circles = []
-            [all_circles.extend(a.circles) for a in t.artists]
+            [all_circles.extend(a.circles) for a in t.gallery.artists]
             circles = []
             circle_names = []
             for c in all_circles:
@@ -207,17 +209,17 @@ def scanpage_render():
                 e(ui.List.Item,
                   e(ui.List.Content,
                     *(h("p", x, className="sub-text") for x in t.sources),
-                    *[e(ui.List.Header, x.js_name) for x in t.titles],
+                    *[e(ui.List.Header, x.js_name) for x in t.gallery.titles],
                     e(ui.Divider, hidden=True),
                     e(ui.List.Description,
                       h("span", h("span", tr(this, "ui.t-artist", "Artist") + ':', size="tiny", className="sub-text"),
-                        *(e(artistitem.ArtistLabel, data=x) for x in t.artists)),
+                        *(e(artistitem.ArtistLabel, data=x) for x in t.gallery.artists)),
                         h("span", h("span", "   " + tr(this, "ui.t-circle", "Circle") + ':', size="tiny", className="sub-text"),
                           *((e(circleitem.CircleLabel, data=x) for x in circles)) if circles else []),
                         h("span", h("span", "   " + tr(this, "general.db-item-collection", "Collection") + ':', size="tiny", className="sub-text"),
-                          *(e(ui.Label, x.js_name) for x in t.collections)),
+                          *(e(ui.Label, x.js_name) for x in t.gallery.collections)),
                         h("span", h("span", "   " + tr(this, "ui.t-language", "Language") + ':', size="tiny", className="sub-text"),
-                          *([e(ui.Label, t.language.js_name)] if t.language else [])),
+                          *([e(ui.Label, t.gallery.language.js_name)] if t.gallery.language else [])),
                         h("br"),
                         h("p", h("span", tr(this, "ui.t-pages", "Pages") + ': ', size="tiny", className="sub-text"),
                           t.page_count),
@@ -332,8 +334,37 @@ ScanPage = createReactClass({
     'render': scanpage_render
 })
 
+def load_gallery(data=None, error=None):
+    if data is not None and not error:
+        this.setState({'data': data, 'load_gallery_loading': False})
+    elif error:
+        state.app.notif("Failed to load gallery", level="error")
+    else:
+        this.setState({'load_gallery_loading': True})
+        if this.state.load_gallery_path:
+            client.call_func("load_gallery_from_path", this.load_gallery,
+                                path=this.state.load_gallery_path)
 
 def creategallery_render():
+    ginfo_el = e(ui.Segment, e(gallerypropsview.NewGalleryProps,
+                               data=this.state.data.gallery,
+                               sources=this.state.data.sources))
+    pages_el = []
+    if this.state.data.gallery and this.state.data.gallery.pages:
+        for p in this.state.data.gallery.pages:
+            pages_el.append(e(ui.Item,
+                              e(ui.Item.Content,
+                                e(ui.Item.Meta, e(ui.Label, p.number, color="blue"), e(ui.Label, p.js_name)),
+                                e(ui.Item.Extra, p.path),
+                                onDismiss=lambda: None,
+                                as_=ui.Message,
+                                color="red",
+                                ),
+                              ),
+                            )
+
+    gpages_el = e(ui.Segment, e(ui.Label, tr(this, "ui.t-pages", "Pages"), e(ui.Label.Detail, this.state.data.page_count), attached="top"),
+                  e(ui.Item.Group, *pages_el, divided=True, relaxed=True))
 
     return e("div",
              e(TitleChange, title=tr(this, "ui.t-create-gallery", "Create a gallery")),
@@ -343,11 +374,16 @@ def creategallery_render():
                      e(ui.Form.Input,
                        width=16,
                        fluid=True,
-                       action={'color': 'teal', 'icon': 'sync alternate'}),
+                       action={'color': 'yellow' if this.state.load_gallery_loading else 'teal',
+                               'icon': e(ui.Icon, js_name='sync alternate',
+                                         loading=this.state.load_gallery_loading)},
+                       onChange=this.set_path),
                        placeholder=tr(this, "", "Directory"),
                      ),
+                   onSubmit=this.on_load_gallery_submit,
                    ),
-                 textAlign="center",
+                 ginfo_el,
+                 gpages_el,
                ),
              )
 
@@ -357,8 +393,13 @@ CreateGallery = createReactClass({
 
     'getInitialState': lambda: {
         'data': {},
+        'load_gallery_path': '',
+        'load_gallery_loading': False,
     },
 
+    'load_gallery': load_gallery,
+    'on_load_gallery_submit': lambda e,d: this.load_gallery(),
+    'set_path': lambda e, d: this.setState({'load_gallery_path': d.value}),
     'render': creategallery_render
 })
 
@@ -403,6 +444,7 @@ def createpage_render():
                    ),
                  e(ui.Button.Or, text=tr(this, "ui.t-or", "Or")),
                  e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
+                   disabled=True,
                    value=ItemType.Collection,
                    active=item_type == ItemType.Collection,
                    primary=item_type == ItemType.Collection,
@@ -446,7 +488,7 @@ Page = createReactClass({
                             e(Route, path="/manage/new/:item_type(\w+)", component=CreatePage),
                             e(Route, path="/manage/scan", component=ScanPage),
                             e(Redirect, js_from="/manage/new", exact=True, to={'pathname': "/manage/new/gallery"}),
-                            e(Redirect, js_from="/manage", exact=True, to={'pathname': "/manage/scan"}),
+                            e(Redirect, js_from="/manage", exact=True, to={'pathname': "/manage/new"}),
                           ),
                         basic=True,
                         )

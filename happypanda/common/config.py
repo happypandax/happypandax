@@ -509,13 +509,20 @@ with config.namespace(gallery_ns):
         gallery_ns,
         "send_path_to_first_file",
         False,
-        "Send path to first file when opening a gallery in external viewer")
+        "Send path to first file when opening a gallery in external viewer",
+        )
 
     add_to_inbox = config.create(
         gallery_ns,
         "add_to_inbox",
         True,
         "Add new galleries to inbox")
+
+    auto_rate_gallery_on_favorite = config.create(
+        gallery_ns,
+        "auto_rate_on_favorite",
+        True,
+        "Automatically set unrated galley rating to highest on favorite")
 
 
 db_ns = 'db'

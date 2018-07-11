@@ -41,6 +41,9 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
                 item_id : command_id
             }
 
+    .. seealso::
+
+        :func:`.get_image_from_path`
     """
 
     item_type = enums.ItemType.get(item_type)

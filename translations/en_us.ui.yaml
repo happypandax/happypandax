@@ -107,6 +107,7 @@ t-external-image-viewer: External Image Viewer
 t-external-image-viewer-args: External Image Viewer Arguments
 t-external-send-first-file: Send path to first file in folder/archive
 t-args-ex: "Example: -a -X --force"
+t-auto-rate-on-favorite: Automatically rate unrated gallery when favorited
 h-search: Search
 t-search-regex: Allow regex in search filters
 t-search-case-sensitive: Search filter is case sensitive
@@ -171,6 +172,8 @@ t-total-circles: Total Circles
 mi-batch-urls: Batch URs
 
 # Gallery Page
+t-title: Title
+t-description: Description
 t-artist: Artist
 t-circle: Circle
 t-parody: Parody
@@ -180,6 +183,7 @@ t-times-read: Times read
 t-rating: Rating
 t-tags: Tags
 t-url: URL
+t-path: Path
 t-inboxed-gallery: This gallery is in your inbox
 t-trashed-gallery: This gallery is set to be deleted
 b-restore: Restore
@@ -210,10 +214,10 @@ t-galleries: Galleries
 de-scan-info: |-
     Scan for new galleries in a given path
 
-    Supported URLs:
+    Supported paths:
     - A directory
 
-    **Note:** Path must exist on the server-located system.
+    **Note:** Path must exist on the server-located system if a directory or file.
 
 # Page Reader Page
 t-page: Page
