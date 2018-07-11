@@ -433,8 +433,8 @@ Page = createReactClass({
     'displayName': 'ManagePage',
 
     'componentWillMount': lambda: this.props.menu([
-        # e(ui.Menu.Item, js_name=tr(this, "ui.b-new", "New"), as_=NavLink,
-        #  to="/manage/new", activeClassName="active"),
+         e(ui.Menu.Item, js_name=tr(this, "ui.b-new", "New"), as_=NavLink,
+          to="/manage/new", activeClassName="active"),
         e(ui.Menu.Item, js_name=tr(this, "ui.mi-scan", "Scan"), as_=NavLink,
           to="/manage/scan", activeClassName="active"),
     ], pointing=True),

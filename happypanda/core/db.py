@@ -2051,8 +2051,7 @@ def list_users(role=None, limit=100, offset=0):
 
 
 def check_db_version(sess):
-    """Checks if DB version is allowed.
-    Raises db exception if not"""
+    """Checks if DB version"""
     try:
         life = sess.query(Life).one_or_none()
     except (exc.NoSuchTableError, exc.OperationalError):
@@ -2061,7 +2060,7 @@ def check_db_version(sess):
             log.w(msg, stdout=True)
             return False
         else:
-            raise exceptions.DatabaseInitError("Invalid database. Death DB.")
+            raise exceptions.DatabaseInitError("Invalid database. Momo says she thinks this database is not HPX-compatible.")
     if life:
         if life.version != constants.version_db_str:
             if constants.preview:
@@ -2069,11 +2068,9 @@ def check_db_version(sess):
                 log.w(msg, stdout=True)
                 return False
             else:
-                msg = 'Found database version: {}\nSupported database versions:{}'.format(
+                msg = 'Found database version {}. Your database has been upgraded/downgraded to version {}.'.format(
                     life.version, constants.version_db_str)
-                log.c("Incompatible database version")
-                log.d(msg)
-            raise exceptions.DatabaseVersionError(msg)
+                log.i(msg, stdout=True)
     else:
         life = Life()
         sess.add(life)

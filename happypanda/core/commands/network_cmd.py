@@ -88,7 +88,10 @@ class Response(CoreCommand):
         self._url = _url
 
     def _call(self):
-        self._rsp = self._method(self._url, **self._kwargs)
+        try:
+            self._rsp = self._method(self._url, **self._kwargs)
+        except (ConnectionError,) as e:
+            raise exceptions.NetworkError(str(e))
 
     @property
     def response(self):

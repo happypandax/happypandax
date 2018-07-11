@@ -10,7 +10,7 @@ from psycopg2 import extensions
 from gevent.socket import wait_read, wait_write
 from gevent import monkey
 
-from happypanda.common import hlogger, utils, constants
+from happypanda.common import hlogger, utils, constants, patch
 from happypanda.core import db
 
 log = hlogger.Logger(constants.log_ns_core + __name__)
@@ -81,8 +81,13 @@ class CPUThread():
         # in_cpubound_thread is sentinel to prevent double thread dispatch
         thread_ctx = local()
         thread_ctx.in_cpubound_thread = True
+        daemon_gevent = None
         try:
             self.in_async = gevent.get_hub().loop.async()
+            def _daemon():
+                while True:
+                    gevent.sleep(0.1)
+            daemon_gevent = gevent.spawn(_daemon)
             self.in_q_has_data = gevent.event.Event()
             self.in_async.start(self.in_q_has_data.set)
             while not self.stopping:
@@ -113,6 +118,8 @@ class CPUThread():
         except BaseException:
             self._error()
             # this may always halt the server process
+        if daemon_gevent:
+            daemon_gevent.kill()
 
     def apply(self, func, args, kwargs):
         done = gevent.event.Event()

@@ -259,10 +259,10 @@ def scan_galleries(path: str, scan_options: dict = {}):
     Returns:
         .. code-block:: guess
 
-            [
+            {
                 'command_id': int,
                 'view_id': int
-            ]
+            }
 
     |async command|
 
@@ -277,3 +277,19 @@ def scan_galleries(path: str, scan_options: dict = {}):
 
     return message.Identity('data', {'command_id': cmd_id,
                                      'view_id': view_id})
+
+def load_gallery_from_url(url: str):
+    """
+    Load gallery data from a URL
+
+    Args:
+        url: a supported url (note that the url must exist on this system if url points to a file)
+
+    Returns:
+        .. code-block:: guess
+
+            a GalleryFS message object
+
+    """
+    gfs = io_cmd.GalleryFS(url)
+    gfs.load_metadata()

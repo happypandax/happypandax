@@ -324,7 +324,7 @@ class ServerDisconnectError(ConnectionError):
 
 
 @_error_code(600)
-class ArchiveError(HappypandaError):
+class ArchiveError(CoreError):
     """Base archive exception, all archive exceptions will derive from this
     """
     pass

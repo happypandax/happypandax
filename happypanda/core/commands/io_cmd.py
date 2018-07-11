@@ -18,6 +18,7 @@ import errno
 import typing
 import regex
 import langcodes
+import weakref
 
 from io import BytesIO
 from PIL import Image
@@ -271,6 +272,12 @@ class CoreFS(CoreCommand):
 
         def __getattr__(self, key):
             return getattr(self.fp, key)
+
+        def __getitem__(self, item):
+            return super().__getitem__(item)
+
+        def __setitem__(self, key, value):
+            return super().__setitem__(key, value)
 
     def __init__(self, path: str=pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
@@ -685,6 +692,9 @@ class Archive(CoreCommand):
                                 Called to close the underlying archive object
                                 """)
 
+    _archive_cache = weakref.WeakValueDictionary()
+    _archive_obj_ref_count = {}
+
     def _def_formats():
         return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR, CoreFS.TARBZ2,
                 CoreFS.TARGZ, CoreFS.TARXZ)
@@ -695,28 +705,40 @@ class Archive(CoreCommand):
         self._path = pathlib.Path(fpath)
         self._pathfs = CoreFS(fpath)
         self._ext = self._pathfs.ext
-        if not self._path.exists():
-            raise exceptions.ArchiveExistError(str(self._path))
-        if self._pathfs.ext not in CoreFS.archive_formats():
-            raise exceptions.ArchiveUnsupportedError(str(self._path))
+        self.path_separator = '/'
 
-        try:
-            with self._init.call_capture(self._ext, self._path) as plg:
-                self._archive = plg.first_or_none(True)
+        a = self._archive_cache.get(self._pathfs.path, False)
+        if a:
+            self._archive = a._archive
+            self._opened = a._opened
+            self.path_separator = self.path_separator
+            self._archive_obj_ref_count.setdefault(self._archive, 0)
+            self._archive_obj_ref_count[self._archive] += 1
+        else:
+            if not self._path.exists():
+                raise exceptions.ArchiveExistError(str(self._path))
+            if self._pathfs.ext not in CoreFS.archive_formats():
+                raise exceptions.ArchiveUnsupportedError(str(self._path))
 
-            if not self._archive:
-                raise exceptions.CoreError(
-                    utils.this_function(),
-                    "No valid archive handler found for this archive type: '{}'".format(
-                        self._ext))
+            try:
+                with self._init.call_capture(self._ext, self._path) as plg:
+                    self._archive = plg.first_or_none(True)
 
-            with self._path_sep.call_capture(self._ext, self._archive) as plg:
-                p = plg.first_or_none(True)
-                self.path_separator = p if p else '/'
-        except BaseException:
-            if self._archive:
-                self.close()
-            raise
+                if not self._archive:
+                    raise exceptions.CoreError(
+                        utils.this_function(),
+                        "No valid archive handler found for this archive type: '{}'".format(
+                            self._ext))
+
+                with self._path_sep.call_capture(self._ext, self._archive) as plg:
+                    p = plg.first_or_none(True)
+                    self.path_separator = p if p else self.path_separator
+            except BaseException:
+                if self._archive:
+                    self.close()
+                raise
+
+            self._archive_cache[self._pathfs.path] = self
 
     def __del__(self):
         if hasattr(self, '_archive') and self._archive:
@@ -879,14 +901,21 @@ class Archive(CoreCommand):
             r = plg.first_or_default()
             if not hasattr(r, 'read') or not hasattr(r, 'write'):
                 raise exceptions.PluginHandlerError(plg.get_node(0), "Expected a file-like object from archive.open")
+            self._opened = True
             return r
 
-    def close(self):
+    def close(self, force=False):
         """
         Close archive, releases all open resources
         """
-        with self._close.call_capture(self._ext, self._archive) as plg:
-            plg.first_or_default()
+        refs = self._archive_obj_ref_count.get(self._archive, False)
+        if not refs or force:
+            with self._close.call_capture(self._ext, self._archive) as plg:
+                plg.first_or_default()
+            self._opened = False
+            self._archive_obj_ref_count.pop(self._archive, False)
+        else:
+            self._archive_obj_ref_count[self._archive] += 1
 
 
 class GalleryFS(CoreCommand):
