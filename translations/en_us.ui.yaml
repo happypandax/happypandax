@@ -219,6 +219,9 @@ de-scan-info: |-
 
     **Note:** Path must exist on the server-located system if a directory or file.
 
+# New Item Page
+t-load-gallery: Load a gallery from path (Path must exist on the server system)
+
 # Page Reader Page
 t-page: Page
 

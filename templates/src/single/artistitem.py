@@ -18,7 +18,6 @@ def artistlbl_render():
     name = ""
     fav = 0
     data = this.props.data or this.state.data
-    print(data)
     if data:
         if data.preferred_name:
             name = data.preferred_name.js_name

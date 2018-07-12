@@ -364,7 +364,7 @@ def creategallery_render():
                             )
 
     gpages_el = e(ui.Segment, e(ui.Label, tr(this, "ui.t-pages", "Pages"), e(ui.Label.Detail, this.state.data.page_count), attached="top"),
-                  e(ui.Item.Group, *pages_el, divided=True, relaxed=True))
+                  e(ui.Item.Group, *pages_el, divided=True, relaxed=True, className="max-800-h"))
 
     return e("div",
              e(TitleChange, title=tr(this, "ui.t-create-gallery", "Create a gallery")),
@@ -377,8 +377,9 @@ def creategallery_render():
                        action={'color': 'yellow' if this.state.load_gallery_loading else 'teal',
                                'icon': e(ui.Icon, js_name='sync alternate',
                                          loading=this.state.load_gallery_loading)},
-                       onChange=this.set_path),
-                       placeholder=tr(this, "", "Directory"),
+                       onChange=this.set_path,
+                       placeholder=tr(this, "ui.t-load-gallery", "Load gallery"),
+                       ),
                      ),
                    onSubmit=this.on_load_gallery_submit,
                    ),

@@ -732,3 +732,46 @@ class MostCommonTags(Command):
         ).group_by(db.NamespaceTags).order_by(
             db.desc_expr(db.func.count(db.NamespaceTags.id))).limit(limit).all()
         return tuple(r)
+
+def _get_item_options():
+    return {
+        config.add_to_inbox.name: config.add_to_inbox.value,
+    }
+
+class AddItem(AsyncCommand):
+    """
+    Add a database item
+    """
+
+    @async_utils.defer
+    def _add_to_db(self, items, options):
+        with db.safe_session() as sess:
+            with db.no_autoflush(sess):
+                obj_types = set()
+                for i in items:
+                    if isinstance(i, io_cmd.GalleryFS):
+                        i.load_all()
+                        i = i.gallery
+                    if isinstance(i, db.Gallery):
+                        if options.get(config.add_to_inbox.name):
+                            i.update('metatags', name=db.MetaTag.names.inbox)
+                    obj_types.add(type(i))
+                    i_sess = db.object_session(i)
+                    if i_sess and i_sess != sess:
+                        i_sess.expunge_all() # HACK: what if other sess was in use?
+                    sess.add(i)
+                    self.next_progress()
+                sess.commit()
+                if db.Gallery in obj_types:
+                    constants.invalidator.similar_gallery = True
+
+    def main(self, items: typing.List[typing.Union[db.Base, io_cmd.GalleryFS]], options: dict={}) -> bool:
+        assert isinstance(items, (list, tuple, db.Base, io_cmd.GalleryFS)), f"not {items}"
+        if not isinstance(items, (list, tuple)):
+            items = [items]
+        self.set_progress(type_=enums.ProgressType.ItemAdd)
+        self.set_max_progress(len(items))
+        item_options = _get_item_options()
+        item_options.update(options)
+        self._add_to_db(items, item_options).get()
+        return True

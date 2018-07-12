@@ -64,6 +64,35 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     return message.Identity('image', content)
 
+def new_item(item_type: enums.ItemType=enums.ItemType.Gallery,
+             item: dict={},
+             options: dict={}):
+    """
+    Create a new item and add it to the database
+
+    Args:
+        item_type: type of item to create
+        item: item messeage object
+
+    Returns:
+        []
+
+    |async command|
+
+    """
+
+    if not item:
+        raise exceptions.APIError(utils.this_function(), "item must be a message object")
+    if item.get('id', False) and not constants.dev:
+        raise exceptions.APIError(utils.this_function(), "cannot create item with an id")
+        
+    item_type = enums.ItemType.get(item_type)
+    db_msg, db_model = item_type._msg_and_model()
+
+    db_obj = db_msg.from_json(item)
+
+    cmd_id = database_cmd.AddItem(services.AsyncService.generic).run(db_obj, options=options)
+    return message.Identity('command_id', cmd_id)
 
 def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
              item_id: int=0):
@@ -89,6 +118,27 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
                                                                                             item_id))
 
     return db_msg(item)
+
+#def new_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+#             items: list={}):
+#    """
+#    Create new items and add them to the database
+
+#    Args:
+#        item_type: type of item to create
+#        item: item messeage object
+
+#    Returns:
+#        [
+#            {
+#                item_id : 0, # id of created item, will be 0 if item was not created
+#            },
+#            ...
+#        ]
+#    """
+
+#    item_type = enums.ItemType.get(item_type)
+#    raise NotImplementedError
 
 
 def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
@@ -360,3 +410,4 @@ def update_metatags(item_type: enums.ItemType=enums.ItemType.Gallery,
     db.object_session(t).commit()
 
     return message.Identity('status', True)
+

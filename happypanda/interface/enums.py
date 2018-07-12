@@ -232,8 +232,8 @@ class ProgressType(_APIEnum):
     UpdateApplication = 4
     #: Scanning for galleries
     GalleryScan = 5
-    #: Adding galleries
-    GalleryAdd = 6
+    #: Adding items to the database
+    ItemAdd = 6
 
 
 class PluginState(_APIEnum):

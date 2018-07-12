@@ -390,7 +390,7 @@ def submit_temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryVi
         view_type: type of temporary view
         view_id: id of a specific view
     Returns:
-        a command id
+        []
 
     |async command|
 
@@ -405,6 +405,6 @@ def submit_temporary_view(view_type: enums.TemporaryViewType = enums.TemporaryVi
             c = list(c.get(view_id, tuple()))
         else:
             c = list(itertools.chain(*c.values()))
-        cmd_id = gallery_cmd.AddGallery(services.AsyncService.generic).run(c)
+        cmd_id = database_cmd.AddItem(services.AsyncService.generic).run(c)
 
     return message.Identity('command_id', cmd_id)

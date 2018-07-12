@@ -23,12 +23,6 @@ def _get_scan_options():
     }
 
 
-def _get_gallery_options():
-    return {
-        config.add_to_inbox.name: config.add_to_inbox.value,
-    }
-
-
 class ScanGallery(AsyncCommand):
     """
     """
@@ -108,56 +102,6 @@ class ScanGallery(AsyncCommand):
 
         return galleries
 
-
-class AddGallery(AsyncCommand):
-    """
-    Add a gallery
-    """
-
-    @async_utils.defer
-    def _add_to_db(self, galleries, options):
-        with db.safe_session() as sess:
-            with db.no_autoflush(sess):
-                for g in galleries:
-                    if isinstance(g, io_cmd.GalleryFS):
-                        g.load_all()
-                        g = g.gallery
-                    if options.get(config.add_to_inbox.name):
-                        if not any(x.name == db.MetaTag.names.inbox for x in g.metatags):
-                            g.metatags.append(db.MetaTag.as_unique(name=db.MetaTag.names.inbox))
-                    g_sess = db.object_session(g)
-                    if g_sess and g_sess != sess:
-                        g_sess.expunge_all()
-                    sess.add(g)
-                    self.next_progress()
-                sess.commit()
-                constants.invalidator.similar_gallery = True
-
-    def main(self, galleries: typing.List[typing.Union[db.Gallery, io_cmd.GalleryFS]], options: dict={}) -> bool:
-        assert isinstance(galleries, (list, tuple, db.Gallery, io_cmd.GalleryFS))
-        if not isinstance(galleries, (list, tuple)):
-            galleries = [galleries]
-        self.set_progress(type_=enums.ProgressType.GalleryAdd)
-        self.set_max_progress(len(galleries))
-        gallery_options = _get_gallery_options()
-        gallery_options.update(options)
-        self._add_to_db(galleries, gallery_options).get()
-        return True
-
-class UpdateGallery(Command):
-    """
-    Update a gallery
-    """
-
-    def main(self, gallery: db.Gallery,
-             metatags: typing.Union[dict, db.MetaTag]={}) -> db.Gallery:
-        assert isinstance(gallery, db.Gallery)
-        sess = db.object_session(gallery)
-        with db.no_autoflush(sess):
-            if isinstance(metatags, db.MetaTag):
-                if metatags not in gallery.metatags:
-                    gallery.metatags.append(metatags)
-        return gallery
 
 class SimilarGallery(AsyncCommand):
     """

@@ -2567,6 +2567,55 @@ h6 {
 .min-700-h {
   min-height: 700pt;
 }
+
+/*--------------
+     Maximum Height
+---------------*/
+
+.max-200-h {
+  max-height: 200pt;
+  overflow-y: auto;
+}
+
+.max-300-h {
+  max-height: 300pt;
+  overflow-y: auto;
+}
+
+.max-400-h {
+  max-height: 400pt;
+  overflow-y: auto;
+}
+
+.max-500-h {
+  max-height: 500pt;
+  overflow-y: auto;
+}
+
+.max-600-h {
+  max-height: 600pt;
+  overflow-y: auto;
+}
+
+.max-700-h {
+  max-height: 700pt;
+  overflow-y: auto;
+}
+
+.max-800-h {
+  max-height: 800pt;
+  overflow-y: auto;
+}
+
+.max-900-h {
+  max-height: 900pt;
+  overflow-y: auto;
+}
+
+.max-1000-h {
+  max-height: 1000pt;
+  overflow-y: auto;
+}
 /*!
  * # Semantic UI 2.3.1 - Button
  * http://github.com/semantic-org/semantic-ui/

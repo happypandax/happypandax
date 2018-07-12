@@ -31,7 +31,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.indexable import index_property
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.ext.associationproxy import AssociationProxy
-from sqlalchemy.sql.expression import BinaryExpression, func, literal
+from sqlalchemy.sql.expression import BinaryExpression, func, literal, join
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.ext import orderinglist
@@ -417,6 +417,14 @@ class Base:
     _properties = Column(JSONType, nullable=False, default={})
     plugin = index_property('_properties', 'plugin', default={})
 
+    def replace_with(self, obj):
+        """
+        """
+        assert isinstance(obj, type(self))
+        with no_autoflush(object_session(obj)):
+            for k, v in obj.__dict__.items():
+                setattr(self, k, v)
+
     def delete(self):
         sess = object_session(self)
         if not sess:
@@ -477,7 +485,7 @@ class Base:
                     if issubclass(col_model, MetaTag):
                         if isinstance(x, dict):
                             for m_name, m_value in x.items():
-                                mtag = col_model.as_unique(name=m_name)
+                                mtag = col_model.as_unique(name=m_value)
                                 if m_value:
                                     if not mtag in attr_value:
                                         attr_value.append(mtag)
@@ -1677,19 +1685,21 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
     @preferred_title.setter
     def preferred_title(self, title):
-        raise NotImplementedError
+        pref_title = self.preferred_title
+        assert pref_title, "This gallery has no titles"
         if not isinstance(title, Title):
             title = Title()
             title.gallery = self
             title.name = title
-        lcode = config.translation_locale.value
-        title.language = Language(lcode)
+            lcode = config.translation_locale.value
+            title.language = Language(lcode)
+        pref_title.replace_with(title)
 
     @preferred_title.expression
     def preferred_title(cls):
-        raise NotImplementedError
         lcode = utils.get_language_code(config.translation_locale.value)
-        return select([Title]).where(Title.gallery_id == cls.id).where(Language.code == lcode).label("preffered_title")
+        j = Title.__table__.join(Language.__table__, Title.__table__.c.language_id==Language.__table__.c.id)
+        return select([Title]).select_from(j).where(Title.gallery_id == cls.id).where(Language.code == lcode).label("preffered_title")
 
     @hybrid_method
     def title_by_language(self, language_code):
