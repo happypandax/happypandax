@@ -42,7 +42,11 @@ def update_menu(data={}):
         menu_left = []
         min_width = 768
         if inbox:
-            menu_left.append(e(ui.Responsive, e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to Library"), color="green", basic=True),
+            menu_left.append(e(ui.Responsive, e(ui.Button,
+                                                e(ui.Icon, js_name="grid layout"),
+                                                tr(this, "ui.b-send-library", "Send to Library"),
+                                                onClick=this.send_to_library,
+                                                color="green", basic=True),
                                 as_=ui.Menu.Item,
                                 minWidth=min_width,
                                 ))
@@ -711,10 +715,17 @@ Page = createReactClass({
     'read_event': galleryitem.read_event,
 
     'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
-                                  this.setState({'fav':d.rating}), this.get_item(only_gallery=True, force=True))),
-    'send_to_trash': lambda e, d: this.update_metatags({'trash': True}),
-    'restore_from_trash': lambda e, d: this.update_metatags({'trash': False}),
-    'read_later': lambda e, d: this.update_metatags({'readlater': True}),
+                                  this.setState({'fav':d.rating}),
+                                  this.get_item(only_gallery=True, force=True),
+                                  e.preventDefault())),
+    'send_to_library': lambda e, d: all((this.update_metatags({'inbox': False}),
+                                         e.preventDefault())),
+    'send_to_trash': lambda e, d: all((this.update_metatags({'trash': True}),
+                                       e.preventDefault())),
+    'restore_from_trash': lambda e, d: all((this.update_metatags({'trash': False}),
+                                            e.preventDefault())),
+    'read_later': lambda e, d: all((this.update_metatags({'readlater': True}),
+                                    e.preventDefault())),
 
     'on_read': lambda e, d: all((this.read_event(e, d),
                                  this.open_external(e, d) if this.state.external_viewer else None,

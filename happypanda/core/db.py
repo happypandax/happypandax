@@ -483,9 +483,12 @@ class Base:
 
                 for x in value:
                     if issubclass(col_model, MetaTag):
-                        if isinstance(x, dict):
+                        if isinstance(x, dict) and len(x.keys()) == 1 and 'name' in x:
+                            x = x['name']
+
+                        if isinstance(x, dict): # {tag_name: True, tag_name:False, etc.} 
                             for m_name, m_value in x.items():
-                                mtag = col_model.as_unique(name=m_value)
+                                mtag = col_model.as_unique(name=m_name)
                                 if m_value:
                                     if not mtag in attr_value:
                                         attr_value.append(mtag)

@@ -123,7 +123,7 @@ def gallery_render():
                                    e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="envelope open outline"), tr(this, "ui.b-read", "Read"),
                                                      primary=True, size="tiny", **read_button_args)),
                                    e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="bookmark outline"), tr(this, "ui.b-save-later", "Save for later"), size="tiny") if not inbox else
-                                     e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to library"), color="green", size="tiny")),
+                                     e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to library"), onClick=this.send_to_library, color="green", size="tiny")),
                                    ),
                                  minWidth=900,
                                  ),
@@ -140,7 +140,7 @@ def gallery_render():
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline", onClick=this.read_later))
     if inbox:
         menu_options.append(e(ui.List.Item, content=tr(
-            this, "ui.b-send-library", "Send to library"), icon="grid layout"))
+            this, "ui.b-send-library", "Send to library"), onClick=this.send_to_library, icon="grid layout"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-filter", "Add to filter"), icon="filter"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-collection",
                                                    "Add to collection"), icon="plus square outline"))
@@ -236,10 +236,19 @@ Gallery = createReactClass({
     'update_metatags': update_metatags,
     'get_item': get_item,
 
-    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}), this.get_item())),
-    'send_to_trash': lambda e, d: all(( this.update_metatags({'trash': True}), this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None)),
-    'restore_from_trash': lambda e, d: this.update_metatags({'trash': False}),
-    'read_later': lambda e, d: this.update_metatags({'readlater': True}),
+    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
+                                  this.get_item(),
+                                  e.preventDefault())),
+    'send_to_library': lambda e, d: all(( this.update_metatags({'inbox': False}),
+                                         this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None,
+                                         e.preventDefault())),
+    'send_to_trash': lambda e, d: all(( this.update_metatags({'trash': True}),
+                                       this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None,
+                                       e.preventDefault())),
+    'restore_from_trash': lambda e, d: all(( this.update_metatags({'trash': False}),
+                                            e.preventDefault())),
+    'read_later': lambda e, d: all((this.update_metatags({'readlater': True}),
+                                    e.preventDefault())),
 
     'dimmer_show': lambda: this.setState({'dimmer': True}),
     'dimmer_hide': lambda: this.setState({'dimmer': False}),
