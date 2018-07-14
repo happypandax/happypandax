@@ -5,6 +5,7 @@ from src.react_utils import (e,
                              NavLink,
                              Link,
                              Switch,
+                             Prompt,
                              createReactClass)
 from src.ui import ui, Pagination, TitleChange
 from src.client import (client, ItemType, Command,
@@ -431,6 +432,7 @@ def load_gallery(data=None, error=None):
             client.call_func("load_gallery_from_path", this.load_gallery,
                                 path=this.state.load_gallery_path)
 
+__pragma__("tconv")
 def creategallery_render():
     gallery_data = this.state.data.gallery
 
@@ -485,6 +487,7 @@ def creategallery_render():
 
     return e("div",
              e(TitleChange, title=tr(this, "ui.t-create-gallery", "Create a gallery")),
+             e(Prompt, when=bool(this.state.data), message=tr(this, "ui.t-page-changes-prompt", "Are you sure?")),
              e(ui.Container,
                  e(ui.Form,
                    e(ui.Form.Group,
@@ -513,6 +516,7 @@ def creategallery_render():
                ),
              )
 
+__pragma__("notconv")
 
 CreateGallery = createReactClass({
     'displayName': 'CreateGallery',

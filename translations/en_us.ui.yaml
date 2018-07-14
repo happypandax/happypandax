@@ -21,6 +21,7 @@ t-unknown: Unknown
 t-bracket-unknown: <Unknown>
 t-or: Or
 t-submit: Submit
+t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
 
 # Menu Item
 mi-dashboard: Dashboard

@@ -18,6 +18,7 @@ Router = require("react-router-dom").BrowserRouter
 Link = require("react-router-dom").Link
 NavLink = require("react-router-dom").NavLink
 Route = require("react-router-dom").Route
+Prompt = require("react-router-dom").Prompt
 Switch = require("react-router-dom").Switch
 withRouter = require("react-router").withRouter
 Redirect = require("react-router-dom").Redirect
