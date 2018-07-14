@@ -735,7 +735,7 @@ class MostCommonTags(Command):
 
 def _get_item_options():
     return {
-        config.add_to_inbox.name: config.add_to_inbox.value,
+        config.add_to_inbox.fullname: config.add_to_inbox.value,
     }
 
 class AddItem(AsyncCommand):
@@ -753,7 +753,7 @@ class AddItem(AsyncCommand):
                         i.load_all()
                         i = i.gallery
                     if isinstance(i, db.Gallery):
-                        if options.get(config.add_to_inbox.name):
+                        if options.get(config.add_to_inbox.fullname):
                             i.update('metatags', name=db.MetaTag.names.inbox)
                     obj_types.add(type(i))
                     i_sess = db.object_session(i)

@@ -256,6 +256,7 @@ class Client(Base):
         self._poll_interval = 5
         self._poll_timeout = 1000 * 60 * 120
         self._last_retry = __new__(Date()).getTime()
+        self._prev_retry_interval = 0
 
         self.polling = False
         if not Client.polling:
@@ -302,19 +303,22 @@ class Client(Base):
             last_interval = 100
             if self._retries is None:
                 self._retries = list(range(10, last_interval + 10, 10))  # secs
-            i = self._retries.pop(0) if self._retries else last_interval
+            self._prev_retry_interval = self._retries.pop(0) if self._retries else last_interval
             if self._connection_status:
-                i = 0
+                self._prev_retry_interval = 0
             else:
-                self.reconnect(i)
+                self.reconnect(self._prev_retry_interval)
         else:
-            i = 5
-        return i * 1000
+            if not self._prev_retry_interval:
+                self._prev_retry_interval = 5
+        return self._prev_retry_interval * 1000
     __pragma__("notconv")
 
     __pragma__("kwargs")
 
     def reconnect(self, interval=None):
+        if not state['active']:
+            return
         if state.app:
             state.app.notif("Trying to establish server connection{}".format(
                 ", trying again in {} seconds".format(interval) if interval else ""

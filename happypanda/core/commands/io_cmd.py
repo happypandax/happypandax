@@ -977,6 +977,8 @@ class GalleryFS(CoreCommand):
             self.path = CoreFS(path_or_dbitem)
 
         self.pages = {}  # number : db.Page
+        self.metadata_from_file = False
+        self.exists = None
         self._sources = None
         self._evaluated = None
         self._loaded_metadata = False
@@ -1001,7 +1003,7 @@ class GalleryFS(CoreCommand):
                 self.gallery.titles.clear()
             for p in sources:
                 with self._parse_metadata_file.call(p, self.gallery) as plg:
-                    from_file_data = any(plg.all(default=True))  # TODO: stop at first handler that returns true
+                    self.metadata_from_file = any(plg.all(default=True))  # TODO: stop at first handler that returns true
 
                 n = NameParser(os.path.split(p)[1])
                 langs = []
@@ -1013,7 +1015,7 @@ class GalleryFS(CoreCommand):
                     lang = langs[0]
                 if lang and not self.gallery.language:
                     self.gallery.language = lang
-                if not self.gallery.titles or not from_file_data:
+                if not self.gallery.titles or not self.metadata_from_file:
                     for t in n.extract_title():
                         dbtitle = db.Title()
                         dbtitle.name = t
@@ -1024,7 +1026,7 @@ class GalleryFS(CoreCommand):
                 for t in n.extract_circle():
                     circles.append(db.Circle.as_unique(name=t, session=sess))
 
-                if not self.gallery.artists or not from_file_data:
+                if not self.gallery.artists or not self.metadata_from_file:
                     for t in n.extract_artist():
                         dbartist = db.Artist.as_unique(name=t)
                         for an in dbartist.names:
@@ -1041,12 +1043,12 @@ class GalleryFS(CoreCommand):
                             dbartistname.language = lang
 
                 for a in self.gallery.artists:
-                    if not a.circles or not from_file_data:
+                    if not a.circles or not self.metadata_from_file:
                         for c in circles:
                             if c not in a.circles:
                                 a.circles.append(c)
 
-                if not self.gallery.collections.count() or not from_file_data:
+                if not self.gallery.collections.count() or not self.metadata_from_file:
                     for col_name, cat_name in n.extract_collection():
                         dbcollection = db.Collection.as_unique(name=col_name, session=sess)
                         if cat_name:
@@ -1110,9 +1112,11 @@ class GalleryFS(CoreCommand):
         self._evaluated = r
         return self._evaluated
 
-    def get_gallery(self, load=True, update=True):
+    def get_gallery(self, load=True, update=True, check_exists=False):
         self.load_metadata(update=update)
         self.load_pages()
+        if check_exists:
+            self.check_exists()
         return self.gallery
 
     def get_sources(self, only_single=False):
@@ -1142,14 +1146,21 @@ class GalleryFS(CoreCommand):
 
         return tuple(paths)
 
-    def _check_exists(self):
-        return False
+    def check_exists(self):
+        if self.exists is not None:
+            return self.exists
+        v = False
+        for p in self.get_sources():
+            if db.Gallery.exists_by_path(p, obj=False):
+                v = True
+        self.exists = v
+        return self.exists
 
-    def add(self, view_id=constants.default_temp_view_id):
+    def add(self, view_id=constants.default_temp_view_id, skip_if_exists=False):
         """
         """
         assert isinstance(view_id, int)
-        if not self._check_exists():
+        if not skip_if_exists or not self.check_exists():
             self.detach()
             constants.store.galleryfs_addition.get().setdefault(view_id, set()).add(self)
 

@@ -294,4 +294,5 @@ def load_gallery_from_path(path: str = ""):
     gfs = io_cmd.GalleryFS(path)
     gfs.load_metadata()
     gfs.load_pages()
+    gfs.check_exists()
     return message.GalleryFS(gfs)

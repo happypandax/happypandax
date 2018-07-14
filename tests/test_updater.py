@@ -13,11 +13,6 @@ import updater as happyupd
 from happypanda.common import constants, utils, clsutils
 from happypanda.core import updater
 
-def compare_json_dicts(a, b):
-    a_j = json.dumps(a, sort_keys=True, indent=2)
-    b_j = json.dumps(a, sort_keys=True, indent=2)
-    return a_j == b_j
-
 github_repo_tags = [
   {
     "name": "v0.0.2",
@@ -197,7 +192,7 @@ class TestUpdating:
         with mock.patch("happypanda.common.constants.version", (0, 0, 0)):
             r = updater.check_release()
             assert r is not None
-            assert compare_json_dicts(r, {'url':asset_url_platform, 'changes':'test', 'tag':'v0.0.2', 'version':(0, 0, 2)})
+            assert utils.compare_json_dicts(r, {'url':asset_url_platform, 'changes':'test', 'tag':'v0.0.2', 'version':(0, 0, 2)})
 
         with mock.patch("happypanda.common.constants.version", (2, 0, 0)):
             r = updater.check_release()
@@ -221,7 +216,7 @@ class TestUpdating:
             assert r is None
             r = updater.get_release(asset_url_platform)
             assert r is not None
-            assert compare_json_dicts(r, old_r)
+            assert utils.compare_json_dicts(r, old_r)
 
     def test_register_release(self, tmp_update_folder, app_path):
         p = str(tmp_update_folder.mkdir("updater_register"))
@@ -239,7 +234,7 @@ class TestUpdating:
             assert constants.internal_db_path == str(db_p)
             db = constants.internaldb
             d = db[constants.updater_key]
-            assert compare_json_dicts(d, {'from': utils_temp.return_value,
+            assert utils.compare_json_dicts(d, {'from': utils_temp.return_value,
                                                 'to': os.path.abspath(constants.app_path),
                                                 'restart': False,
                                                 'app': sys.argv[0],

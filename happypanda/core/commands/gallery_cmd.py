@@ -19,7 +19,7 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 def _get_scan_options():
     return {
-        config.skip_existing_galleries.name:config.skip_existing_galleries.value,
+        config.skip_existing_galleries.fullname:config.skip_existing_galleries.value,
     }
 
 
@@ -62,7 +62,7 @@ class ScanGallery(AsyncCommand):
         with db.no_autoflush(sess):
             for n, p in enumerate(found_paths, 1):
                 self.next_progress(text=f"[{n}/{paths_len}] {p}")
-                if options.get(config.skip_existing_galleries.name):
+                if options.get(config.skip_existing_galleries.fullname):
                     if db.Gallery.exists_by_path(p):
                         continue
                 g = io_cmd.GalleryFS(p)

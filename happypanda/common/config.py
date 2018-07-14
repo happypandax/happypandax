@@ -30,6 +30,7 @@ class ConfigNode:
         self.isolation = isolation
         self.namespace = ns
         self.name = name
+        self.fullname = self.namespace+'.'+self.name
         self.default = value
         self.description = description
         self.type_ = type(value) if type_ is None else type_
@@ -516,7 +517,9 @@ with config.namespace(gallery_ns):
         gallery_ns,
         "add_to_inbox",
         True,
-        "Add new galleries to inbox")
+        "Add new galleries to inbox",
+        isolation=ConfigIsolation.client
+        )
 
     auto_rate_gallery_on_favorite = config.create(
         gallery_ns,

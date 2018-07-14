@@ -802,3 +802,11 @@ def dict_merge(dct, merge_dct):
         else:
             dct[k] = merge_dct[k]
     return dct
+
+def compare_json_dicts(a, b):
+    """
+    Compare two JSON compatible dicts
+    """
+    a_j = json.dumps(a, sort_keys=True, indent=2)
+    b_j = json.dumps(a, sort_keys=True, indent=2)
+    return a_j == b_j

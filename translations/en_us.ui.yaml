@@ -211,6 +211,7 @@ t-trashed-collection: This collection is set to be deleted
 t-galleries: Galleries
 
 # Scan Page
+t-scan-for-new-galleries: Scan only for new galleries
 de-scan-info: |-
     Scan for new galleries in a given path
 
@@ -220,6 +221,11 @@ de-scan-info: |-
     **Note:** Path must exist on the server-located system if a directory or file.
 
 # New Item Page
+t-add-to-inbox: Add to Inbox
+t-new-gallery-added: A new gallery was added!
+t-metadata-file: Metadata File
+t-already-exists: Already exists
+t-metadata-from-file: Metadata was retrieved from an accompanying file
 t-load-gallery: Load a gallery from path (Path must exist on the server system)
 
 # Page Reader Page

@@ -44,6 +44,7 @@ from sqlalchemy.orm import (
     object_session,
     scoped_session,
     attributes,
+    properties,
     state,
     collections,
     dynamic,
@@ -1697,6 +1698,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             lcode = config.translation_locale.value
             title.language = Language(lcode)
         pref_title.replace_with(title)
+        pref_title.gallery = self
 
     @preferred_title.expression
     def preferred_title(cls):
@@ -2245,7 +2247,7 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True, exclude=tu
         id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
         descriptors -- include hybrid attributes and association proxies
     """
-    assert isinstance(model, Base) or issubclass(model, Base)
+    assert isinstance(model, Base) or issubclass(model, Base), f"{model}"
     exclude = tuple(exclude)
     d = {}
     obj = model
@@ -2256,9 +2258,12 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True, exclude=tu
         with no_autoflush(sess):
             attr = list(in_obj.attrs)
 
-            ex = tuple(y.key for y in attr if y.key.endswith('_id') and y.key[:-3] not in allow)
-            if id:
-                ex = tuple(x[:-3] for x in ex)  # -3 for '_id'
+            if id is None:
+                ex = tuple()
+            else:
+                ex = tuple(y.key for y in attr if y.key.endswith('_id') and y.key[:-3] not in allow)
+                if id:
+                    ex = tuple(x[:-3] for x in ex)  # -3 for '_id'
 
             exclude += ex
 
@@ -2282,7 +2287,10 @@ def table_attribs(model, id=False, descriptors=False, raise_err=True, exclude=tu
         for name, value in model.__dict__.items():
             if name not in exclude and isinstance(value, (hybrid_property, AssociationProxy, index_property)):
                 try:
-                    d[name] = getattr(obj, name)
+                    if pyinspect.isclass(obj):
+                        d[name] = value
+                    else:
+                        d[name] = getattr(obj, name)
                 except exc_orm.DetachedInstanceError:
                     if raise_err:
                         raise
@@ -2302,14 +2310,37 @@ def is_instanced(obj):
         return isinstance(inspect(obj), state.InstanceState)
     return False
 
+def is_descriptor(obj):
+    "Check if db object is a descriptor"
+    if isinstance(obj, (hybrid_property, AssociationProxy, index_property)):
+        return True
+    return False
 
-def is_list(obj):
+def descriptor_has_getter(obj):
+    "Check if db object is descriptor has a getter"
+    assert is_descriptor(obj) and not isinstance(obj, AssociationProxy)
+    return True if obj.fget else False
+
+def descriptor_has_setter(obj):
+    "Check if db object is descriptor has a setter"
+    assert is_descriptor(obj) and not isinstance(obj, AssociationProxy)
+    return True if obj.fset else False
+
+def is_list(obj, strict=False):
     "Check if db object is a db list"
+    if not strict and isinstance(obj, attributes.InstrumentedAttribute):
+        if isinstance(obj.property, properties.RelationshipProperty):
+            if obj.property.uselist and obj.property.lazy not in ('dynamic',):
+                return True
     return isinstance(obj, collections.InstrumentedList)
 
 
-def is_query(obj):
+def is_query(obj, strict=False):
     "Check if db object is a dynamic query object (issued by lazy='dynamic')"
+    if not strict and isinstance(obj, attributes.InstrumentedAttribute):
+        if isinstance(obj.property, properties.RelationshipProperty):
+            if obj.property.lazy in ('dynamic',):
+                return True
     return isinstance(obj, dynamic.AppenderQuery)
 
 
@@ -2337,7 +2368,10 @@ def relationship_column(objA, objB):
 
 def column_model(obj):
     "Return model class for given model attribute/column"
-    return get_type(obj)
+    try:
+        return get_type(obj)
+    except TypeError:
+        raise TypeError(f"Couldn't inspect type: {obj}")
 
 
 def column_name(obj):

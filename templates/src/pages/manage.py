@@ -25,6 +25,34 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+__pragma__("kwargs")
+
+def get_config(data=None, error=None, cfg={}):
+    if data is not None and not error:
+        this.setState({"config": data})
+    elif error:
+        state.app.notif("Failed to retrieve configuration", level="warning")
+    else:
+        client.call_func("get_config", this.get_config, cfg=cfg)
+
+
+def set_config(data=None, error=None, cfg={}, save=True):
+    if data is not None and not error:
+        pass
+    elif error:
+        state.app.notif("Failed to update setting", level="warning")
+    else:
+        client.call_func("set_config", this.set_config, cfg=cfg)
+        if save:
+            client.call_func("save_config")
+
+
+__pragma__("nokwargs")
+
+def update_options(key, value):
+    d = utils.JSONCopy(this.state.options)
+    d[key] = value
+    this.setState({'options': d})
 
 def scan_galleries(data=None, error=None):
     if data is not None and not error:
@@ -208,84 +236,109 @@ def scanpage_render():
             items.append(
                 e(ui.List.Item,
                   e(ui.List.Content,
-                    *(h("p", x, className="sub-text") for x in t.sources),
-                    *[e(ui.List.Header, x.js_name) for x in t.gallery.titles],
-                    e(ui.Divider, hidden=True),
+                    *(e(ui.Header, x, className="sub-text", as_="h5") for x in t.sources),
                     e(ui.List.Description,
-                      h("span", h("span", tr(this, "ui.t-artist", "Artist") + ':', size="tiny", className="sub-text"),
-                        *(e(artistitem.ArtistLabel, data=x) for x in t.gallery.artists)),
-                        h("span", h("span", "   " + tr(this, "ui.t-circle", "Circle") + ':', size="tiny", className="sub-text"),
-                          *((e(circleitem.CircleLabel, data=x) for x in circles)) if circles else []),
-                        h("span", h("span", "   " + tr(this, "general.db-item-collection", "Collection") + ':', size="tiny", className="sub-text"),
-                          *(e(ui.Label, x.js_name) for x in t.gallery.collections)),
-                        h("span", h("span", "   " + tr(this, "ui.t-language", "Language") + ':', size="tiny", className="sub-text"),
-                          *([e(ui.Label, t.gallery.language.js_name)] if t.gallery.language else [])),
-                        h("br"),
-                        h("p", h("span", tr(this, "ui.t-pages", "Pages") + ': ', size="tiny", className="sub-text"),
-                          t.page_count),
-                      ),
+                      e(ui.List,[e(ui.List.Item, e(ui.Header, x.js_name, size="tiny"),) for x in t.gallery.titles],
+                        size="tiny", relaxed=True, bulleted=True),
+                      e(ui.Divider, hidden=True),
+                      e(ui.List,
+                        e(ui.List.Item, h("span", tr(this, "ui.t-artist", "Artist") + ':', size="tiny", className="sub-text"), *(e(artistitem.ArtistLabel, data=x) for x in t.gallery.artists)),
+                        e(ui.List.Item, h("span", tr(this, "ui.t-circle", "Circle") + ':', size="tiny", className="sub-text"), *((e(circleitem.CircleLabel, data=x) for x in circles)) if circles else []),
+                        e(ui.List.Item, h("span", tr(this, "general.db-item-collection", "Collection") + ':', size="tiny", className="sub-text"), *(e(ui.Label, x.js_name) for x in t.gallery.collections)),
+                        e(ui.List.Item, h("span", tr(this, "ui.t-language", "Language") + ':', size="tiny", className="sub-text"), *([e(ui.Label, t.gallery.language.js_name)] if t.gallery.language else [])),
+                        e(ui.List.Item, h("span", tr(this, "ui.t-pages", "Pages") + ': ', size="tiny", className="sub-text"), t.page_count),
+                        horizontal=True, relaxed=True, divided=True,
+                        ),
+                    *((e(ui.Label,
+                      e(ui.Icon, js_name="checkmark"),
+                      tr(this, "ui.t-metadata-file", "Metadata file"),
+                      title=tr(this, "ui.t-metadata-from-file", "Metadata was retrieved from file"),
+                      color="green", basic=True,
+                      className="right", size="small"),) if t.metadata_from_file else []),
+                    e(ui.Divider, hidden=True, clearing=True),
                     )
-                  )
-            )
-
-    return e("div", e(TitleChange, title=tr(this, "ui.mi-scan", "Scan")),
-             e(ui.Container, e(ui.Message, e("div", dangerouslySetInnerHTML={
-               '__html': utils.marked(tr(this, "ui.de-scan-info", ""))}))),
-             e(ui.Divider, hidden=True),
-             e(ui.Form,
-                 e(ui.Container,
-                   e(ui.Form.Input,
-                     width=16,
-                     # fluid=True,
-                     action=tr(this, "ui.mi-scan", "Scan"),
-                     placeholder=tr(this, "", "Directory"),
-                     onChange=this.set_path,
+                  ),
+                  ),
+                )
+    options_el = e(ui.Segment,
+                   e(ui.Form,
+                   e(ui.Form.Group,
+                        e(ui.Form.Checkbox,
+                            toggle=True,
+                            label=tr(this, "ui.t-add-to-inbox", "Add to inbox"),
+                            checked=this.state['gallery.add_to_inbox'] if utils.defined(this.state['gallery.add_to_inbox']) else this.state.config['gallery.add_to_inbox'] if utils.defined(this.state.config['gallery.add_to_inbox']) else False,
+                            onChange=this.on_add_to_inbox,
+                            ),
+                        e(ui.Form.Checkbox,
+                            toggle=True,
+                            label=tr(this, "ui.t-scan-for-new-galleries", "Only show new"),
+                            checked=not (this.state['scan.skip_existing_galleries'] if utils.defined(this.state['scan.skip_existing_galleries']) else not this.state.config['scan.skip_existing_galleries'] if utils.defined(this.state.config['scan.skip_existing_galleries']) else False),
+                            onChange=this.on_only_new,
+                            ),
+                        inline=True,
                      ),
-                   textAlign="center"
-                   ),
-                 onSubmit=this.on_scan_submit,
-               ),
-             e(ui.Form,
-                 *([e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=submitted_view_data,
-                                    primary=True, js_type="submit"), horizontal=True)] if view_data and view_data['items'] else []),
-                 *view_progress_el,
-                 e(ui.Grid,
-                   *([e(ui.Label, title, attached="top")] if title else []),
-                   e(ui.Dimmer,
-                     e(ui.Loader,
-                       e(ui.Statistic,
-                         e(ui.Statistic.Value, "{}%".format(int(percent))),
-                         e(ui.Statistic.Label, progress_text),
-                         inverted=True,
-                         size="mini"
+                     ),
+                secondary=True)
+
+    return h("div",
+             e(TitleChange, title=tr(this, "ui.mi-scan", "Scan")),
+             e(ui.Container,
+                 e(ui.Message, e("div", dangerouslySetInnerHTML={
+                   '__html': utils.marked(tr(this, "ui.de-scan-info", ""))})),
+                 e(ui.Divider, hidden=True),
+                 e(ui.Form,
+                     e(ui.Form.Group,
+                       e(ui.Form.Input,
+                         width=16,
+                         fluid=True,
+                         action=tr(this, "ui.mi-scan", "Scan"),
+                         placeholder=tr(this, "", "Directory"),
+                         onChange=this.set_path,
                          ),
                        ),
-                     active=this.state.loading,
-                     ),
-                   e(ui.Divider, hidden=True),
-                   *count_el,
-                   *pages_el,
-                   e(ui.Grid.Row,
-                     e(ui.Grid.Column,
-                       e(ui.List, *items,
-                         relaxed=True,
-                         divided=True,
-                         animated=True),
-                       ),
-                     ),
-                   *pages_el,
-                   *count_el,
-                   container=True,
-                   as_=ui.Segment,
-                   loading=this.state.view_loading,
-                   secondary=True,
-                   className="min-300-h",
+                     onSubmit=this.on_scan_submit,
                    ),
-                 *([e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=submitted_view_data,
-                                    primary=True, js_type="submit"), horizontal=True)] if view_data and view_data['items'] else []),
-                 onSubmit=this.on_view_submit,
-               )
-             )
+                 options_el,
+                 e(ui.Form,
+                     *([e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=submitted_view_data,
+                                        primary=True, js_type="submit"), horizontal=True)] if view_data and view_data['items'] else []),
+                     *view_progress_el,
+                     e(ui.Grid,
+                       *([e(ui.Label, title, attached="top")] if title else []),
+                       e(ui.Dimmer,
+                         e(ui.Loader,
+                           e(ui.Statistic,
+                             e(ui.Statistic.Value, "{}%".format(int(percent))),
+                             e(ui.Statistic.Label, progress_text),
+                             inverted=True,
+                             size="mini"
+                             ),
+                           ),
+                         active=this.state.loading,
+                         ),
+                       e(ui.Divider, hidden=True),
+                       *count_el,
+                       *pages_el,
+                       e(ui.Grid.Row,
+                         e(ui.Grid.Column,
+                           e(ui.List, *items,
+                             relaxed=True,
+                             divided=True,
+                             animated=True),
+                           ),
+                         ),
+                       *pages_el,
+                       *count_el,
+                       as_=ui.Segment,
+                       loading=this.state.view_loading,
+                       secondary=True,
+                       className="min-300-h",
+                       ),
+                     *([e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=submitted_view_data,
+                                        primary=True, js_type="submit"), horizontal=True)] if view_data and view_data['items'] else []),
+                     onSubmit=this.on_view_submit,
+                   ),
+             ))
 
 
 __pragma__("notconv")
@@ -299,6 +352,7 @@ ScanPage = createReactClass({
     'view_cmd': None,
 
     'getInitialState': lambda: {
+        'config': {},
         'limit': 50,
         'page': utils.get_query("page", 1),
         'loading': False,
@@ -309,6 +363,8 @@ ScanPage = createReactClass({
         'view_data': {},
         'path': "",
         'submitted_path': '',
+        'gallery.add_to_inbox': js_undefined,
+        'scan.skip_existing_galleries': js_undefined,
     },
 
     'set_path': lambda e, d: all((this.setState({'path': d.value}), )),
@@ -327,18 +383,48 @@ ScanPage = createReactClass({
     'on_scan_progress': on_scan_progress,
     'on_view_progress': on_view_progress,
 
+    'on_add_to_inbox': lambda e,d: all((this.setState({'gallery.add_to_inbox': d.checked}), this.set_config(cfg={'gallery.add_to_inbox': d.checked}, save=False), )),
+    'on_only_new': lambda e,d: all((this.setState({'scan.skip_existing_galleries': not d.checked}), this.set_config(cfg={'scan.skip_existing_galleries': d.checked}, save=False), )),
+
+    'get_config': get_config,
+    'set_config': set_config,
+
     'componentDidUpdate': scanpage_update,
 
-    'componentDidMount': lambda: all((this.get_view(),)),
+    'componentDidMount': lambda: all((this.get_view(), this.get_config(cfg={'gallery.add_to_inbox': True,
+                                                                            'scan.skip_existing_galleries': True,
+                                                                            }),
+                                      )),
 
     'render': scanpage_render
 })
 
+def submit_gallery(data=None, error=None):
+    if data is not None and not error:
+        this.submit_txt = tr(this, "ui.t-new-gallery-added", "A new gallery was added"),
+        Command(data, daemon=False).poll_progress(
+            interval=200,
+            callback=this.on_submitted)
+    elif error:
+        state.app.notif("Failed to submit new gallery", level="error")
+        this.setState({'submitting': False})
+    else:
+        if this.state.data.gallery:
+            this.setState({'submitting': True})
+            client.call_func("new_item", this.submit_gallery,
+                             item_type=ItemType.Gallery,
+                             item=this.state.data.gallery,
+                             options=this.state.options,
+                             )
+
+
 def load_gallery(data=None, error=None):
     if data is not None and not error:
-        this.setState({'data': data, 'load_gallery_loading': False})
+        this.setState({'data': data, 'load_gallery_loading': False, 'submitting': False})
+
     elif error:
         state.app.notif("Failed to load gallery", level="error")
+        this.setState({'load_gallery_loading': False, 'submitting': False})
     else:
         this.setState({'load_gallery_loading': True})
         if this.state.load_gallery_path:
@@ -346,9 +432,39 @@ def load_gallery(data=None, error=None):
                                 path=this.state.load_gallery_path)
 
 def creategallery_render():
-    ginfo_el = e(ui.Segment, e(gallerypropsview.NewGalleryProps,
-                               data=this.state.data.gallery,
-                               sources=this.state.data.sources))
+    gallery_data = this.state.data.gallery
+
+    options_el = e(ui.Segment,
+                    e(ui.Form,
+                      e(ui.Form.Group,
+                        e(ui.Form.Checkbox,
+                            toggle=True,
+                            label=tr(this, "ui.t-add-to-inbox", "Add to inbox"),
+                            checked=this.state.options['gallery.add_to_inbox'],
+                            onChange=this.on_add_to_inbox,
+                            ),
+                        inline=True
+                        ),
+                    ),
+                    secondary=True)
+
+    ginfo_el = e(ui.Segment,
+                 *((e(ui.Label,
+                      e(ui.Icon, js_name="checkmark"),
+                      tr(this, "ui.t-metadata-file", "Metadata file"),
+                      title=tr(this, "ui.t-metadata-from-file", "Metadata was retrieved from file"),
+                      color="green", basic=True,
+                      className="right"),) if this.state.data.metadata_from_file else []),
+                 *((e(ui.Label,
+                      e(ui.Icon, js_name="warning circle"),
+                      tr(this, "ui.t-already-exists", "Exists"),
+                      color="orange", basic=True,
+                      className="right"),) if this.state.data.exists else []),
+                 e(gallerypropsview.NewGalleryProps,
+                    data=this.state.data.gallery,
+                    sources=this.state.data.sources),
+                 loading=this.state.submitting,
+                 )
     pages_el = []
     if this.state.data.gallery and this.state.data.gallery.pages:
         for p in this.state.data.gallery.pages:
@@ -364,7 +480,8 @@ def creategallery_render():
                             )
 
     gpages_el = e(ui.Segment, e(ui.Label, tr(this, "ui.t-pages", "Pages"), e(ui.Label.Detail, this.state.data.page_count), attached="top"),
-                  e(ui.Item.Group, *pages_el, divided=True, relaxed=True, className="max-800-h"))
+                  e(ui.Item.Group, *pages_el, divided=True, relaxed=True, className="max-800-h"),
+                  loading=this.state.submitting,)
 
     return e("div",
              e(TitleChange, title=tr(this, "ui.t-create-gallery", "Create a gallery")),
@@ -383,8 +500,16 @@ def creategallery_render():
                      ),
                    onSubmit=this.on_load_gallery_submit,
                    ),
-                 ginfo_el,
-                 gpages_el,
+                 options_el,
+                 e(ui.Form,
+                    *((e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=this.state.submitting,
+                                    primary=True, js_type="submit"), horizontal=True),) if gallery_data else []),
+                    ginfo_el,
+                    gpages_el,
+                    *((e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=this.state.submitting,
+                                    primary=True, js_type="submit"), horizontal=True),) if gallery_data else []),
+                    onSubmit=this.on_gallery_submit,
+                   )
                ),
              )
 
@@ -396,11 +521,22 @@ CreateGallery = createReactClass({
         'data': {},
         'load_gallery_path': '',
         'load_gallery_loading': False,
+        'options': {'gallery.add_to_inbox': utils.storage.get('new_gallery.add_to_inbox', this.props.config['gallery.add_to_inbox'] if utils.defined(this.props.config['gallery.add_to_inbox']) else False),
+                    },
+        'submitting': False,
     },
 
     'load_gallery': load_gallery,
+    'update_options': update_options,
+
+    'on_add_to_inbox': lambda e,d: all((this.update_options('gallery.add_to_inbox', d.checked), utils.storage.set('new_gallery.add_to_inbox', d.checked))),
+
     'on_load_gallery_submit': lambda e,d: this.load_gallery(),
     'set_path': lambda e, d: this.setState({'load_gallery_path': d.value}),
+
+    'submit_gallery': submit_gallery,
+    'on_gallery_submit': lambda: all((this.submit_gallery(),)),
+    'on_submitted': lambda cmd: all((this.setState({'data': {}, 'submitting': False}), state.app.notif(this.submit_txt, level="success", icon="checkmark"))) if cmd.finished() else None,
     'render': creategallery_render
 })
 
@@ -429,9 +565,9 @@ def createpage_render():
                                                         ItemType.Gallery)
 
     if item_type == ItemType.Gallery:
-        el = e(CreateGallery,)
+        el = e(CreateGallery, config=this.state.config, set_config=this.set_config)
     elif item_type == ItemType.Collection:
-        el = e(CreateCollection,)
+        el = e(CreateCollection, config=this.state.config, set_config=this.set_config)
 
     return e(ui.Container,
              e(ui.Container,
@@ -464,10 +600,16 @@ CreatePage = createReactClass({
     'displayName': 'CreatePage',
 
     'getInitialState': lambda: {
+        'config': {},
         'data': {},
         'item_type': this.props.item_type or ItemType.Gallery,
     },
     'set_item_type': lambda e, d: this.setState({'item_type': d.value}),
+    'get_config': get_config,
+    'set_config': set_config,
+
+    'componentDidMount': lambda: all((this.get_config(cfg={'gallery.add_to_inbox': True,
+                                                           }),)),
 
     'render': createpage_render
 })

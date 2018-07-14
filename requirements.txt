@@ -33,3 +33,4 @@ natsort==5.3.2
 ordered-set==3.0.0
 tinydb==3.9.0.post1
 pprintpp==0.4.0
+multidict==4.3.1

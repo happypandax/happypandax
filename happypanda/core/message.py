@@ -5,6 +5,7 @@ import inspect
 import arrow
 import os
 import itertools
+import multidict
 
 from datetime import datetime
 from sqlalchemy import inspect as sa_inspect
@@ -184,6 +185,7 @@ class Error(CoreMessage):
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
 
+    _msg_path = []
     _clsmembers = None  # not all classes have been defined yet
     _db_clsmembers = [
         x for x in inspect.getmembers(
@@ -194,8 +196,8 @@ class DatabaseMessage(CoreMessage):
 
     def __init__(self, key, db_item):
         super().__init__(key)
-        assert isinstance(db_item, self.db_type) if self.db_type else isinstance(db_item, db.Base)
-        assert db.is_instanced(db_item), "must be instanced database object"
+        assert db.is_instanced(db_item), f"must be instanced database object not '{db_item}'"
+        assert isinstance(db_item, self.db_type) if self.db_type else isinstance(db_item, db.Base), f"a {self.db_type} is required not '{type(db_item)}'"
         self.item = db_item
         self._recursive_depth = 2
         self._indirect = False
@@ -208,21 +210,32 @@ class DatabaseMessage(CoreMessage):
                 globals()[x])}
 
     def properties(self):
-        return {'exclusions': {},
+        return {'exclusions': multidict.MultiDict(),
                 'force_value_load': {}}
 
     def exclude_attributes(self, exclusions=tuple()):
         self.exclusions = exclusions
-        self._properties['exclusions'] = self._dict_tree_unpack(exclusions, {})
+        self._properties['exclusions'].update(self._dict_tree_unpack(exclusions, multidict.MultiDict()))
 
-    def _dict_tree_unpack(self, t, d={}):
+    def _dict_tree_unpack(self, t, d=None):
         """
         a.b.c -> {'a': {'b': {'c': {}}}}
         """
+        if d is None:
+            d = {}
         for x in t:
             v = d
             for k in x.split('.'):
-                v = v.setdefault(k, {})
+                if isinstance(v, multidict.MultiDict) and len(v.getall(k, [])) > 1:
+                    a = v.getall(k)
+                    for a_v in a:
+                        if a_v:
+                            v = a_v
+                            break
+                    else:
+                        v = v.getone(k)
+                else:
+                    v = v.setdefault(k, {})
         return d
 
     def _before_data(self):
@@ -245,7 +258,7 @@ class DatabaseMessage(CoreMessage):
             self._properties['force_value_load'] = self._dict_tree_unpack(force_value_load)
 
         with db.no_autoflush(self._sess):
-            ex = tuple(self._properties['exclusions'].keys())
+            ex = tuple(x for x, y in self._properties['exclusions'].items() if not y)
             gattribs = db.table_attribs(self.item, not load_values, descriptors=True, raise_err=not self._detached,
                                         exclude=ex if not bypass_exclusions else tuple(),
                                         allow=tuple(self._properties['force_value_load'].keys()))
@@ -300,55 +313,80 @@ class DatabaseMessage(CoreMessage):
             name)
 
     @classmethod
-    def from_json(self, msg, ignore_empty=True):
+    def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True, skip_descriptors=False, _type=None):
         db_obj = None
-        if not self.db_type:
-            raise ValueError("A database type has not been set")
-        item_attrs = db.table_attribs(self.db_type, descriptors=True)
+        with db.no_autoflush(constants.db_session()) as sess:
+            if not cls.db_type and _type is None:
+                raise ValueError("A database type has not been set")
+            db_type = _type or cls.db_type
+            item_attrs = db.table_attribs(db_type, id=None, descriptors=True)
 
-        if msg and not all((k in item_attrs.keys() for k in msg.keys())): 
-            raise exceptions.InvalidMessage(utils.this_function(), "Message object mismatch. Message contains keys that are not present in the corresponding database item.")
+            if msg and not all((k in item_attrs.keys() for k in msg.keys())):
+                m_keys = set(msg.keys()).difference(set(item_attrs.keys()))
+                raise exceptions.InvalidMessage(utils.this_function(), f"Message object mismatch. Message contains keys that are not present in the corresponding database item: {m_keys}")
 
-        if msg:
-            obj_id = msg.get('id', False)
-            if obj_id:
-                with db.no_autoflush(constants.db_session()) as sess:
-                    db_obj = sess.query(self.db_type).get(obj_id)
-            else:
-                db_obj = self.db_type()
-
-            for attr, value in msg.items():
-                if ignore_empty:
-                    if value is None:
-                        continue
-                    elif isinstance(value, (list, dict)) and not value:
-                        continue
-
-                cls_attr = item_attrs[attr]
-                obj_attr = getattr(db_obj, attr)
-                col_model = db.column_model(cls_attr)
-                if not isinstance(col_model, db.Base):
-                    if isinstance(col_model, (db.Boolean, db.Integer, db.Password,
-                                              db.String, db.Text, db.LowerCaseString,
-                                              db.CapitalizedString)):
-                        setattr(db_obj, attr, value)
-                    elif isinstance(col_model, db.ArrowType):
-                        setattr(db_obj, attr, arrow.Arrow.fromtimestamp(value))
-                    else:
-                        raise NotImplementedError(f"Value deserializing for this database type does not exist ({col_model})")
-                    continue
-
-                msg_obj = self._get_message_object(attr, col_model, check_recursive=False, class_type=True)
-
-                if db.is_list(cls_attr) or db.is_query(cls_attr):
-                    for v in value:
-                        obj_attr.append(msg_obj.from_json(value))
+            if msg:
+                obj_id = msg.get('id', False)
+                if obj_id:
+                    db_obj = sess.query(db_type).get(obj_id)
                 else:
-                    setattr(db_obj, attr, msg_obj.from_json(value))
+                    db_obj = db_type()
+
+                if not (obj_id and db_obj and skip_updating_existing):
+                    for attr, value in msg.items():
+                        if ignore_empty:
+                            if value is None:
+                                continue
+                            elif isinstance(value, (list, dict)) and not value:
+                                continue
+
+                        cls_attr = item_attrs[attr]
+                        if skip_descriptors and db.is_descriptor(cls_attr):
+                            continue
+                        obj_attr = getattr(db_obj, attr)
+                        try:
+                            col_model = db.column_model(cls_attr)
+                        except TypeError: # most likely a hybrid_property descriptor
+                            col_model = None
+                        if not issubclass(col_model, db.Base) if inspect.isclass(col_model) else not isinstance(col_model, db.Base):
+                            if isinstance(col_model, (db.Boolean, db.Integer, db.Password,
+                                                      db.String, db.Text, db.LowerCaseString,
+                                                      db.CapitalizedString)):
+                                setattr(db_obj, attr, value)
+                            elif isinstance(col_model, db.ArrowType):
+                                setattr(db_obj, attr, arrow.Arrow.fromtimestamp(value))
+                            elif db.is_descriptor(cls_attr):
+                                if db.descriptor_has_setter(cls_attr):
+                                    raise NotImplementedError
+                            else:
+                                raise NotImplementedError(f"Value deserializing for this database type does not exist ({col_model})")
+                            continue
+
+                        msg_obj = cls._get_message_object(cls, attr, col_model, check_recursive=False, class_type=True)
+                        if issubclass(col_model, db.MetaTag):
+                            setattr(db_obj, attr, msg_obj._pack_metatags(value))
+                        elif db.is_list(cls_attr) or db.is_query(cls_attr):
+                            for v in value:
+                                obj_attr.append(msg_obj.from_json(v, _type=col_model, ignore_empty=ignore_empty, skip_updating_existing=skip_updating_existing, skip_descriptors=skip_descriptors))
+                        elif db.is_descriptor(cls_attr):
+                            if db.descriptor_has_setter(cls_attr):
+                                raise NotImplementedError
+                        else:
+                            setattr(db_obj, attr, msg_obj.from_json(value, _type=col_model, ignore_empty=ignore_empty, skip_updating_existing=skip_updating_existing, skip_descriptors=skip_descriptors))
 
         return db_obj
 
-    def _unpack_metatags(self, attrib):
+    @classmethod
+    def _pack_metatags(cls, msg_obj):
+        assert isinstance(msg_obj, dict)
+        m_tags = []
+        for k, v in msg_obj.items():
+            if v:
+                m_tags.append(db.MetaTag.as_unique(name=k))
+        return m_tags
+
+    @classmethod
+    def _unpack_metatags(cls, attrib):
         m_tags = {x: False for x in db.MetaTag.all_names()}
         names = []
         if db.is_query(attrib):
@@ -359,6 +397,7 @@ class DatabaseMessage(CoreMessage):
             m_tags[n] = True
         return m_tags
 
+    @staticmethod
     def _get_message_object(self, name, attrib, check_recursive=True, class_type=False):
         msg_obj = None
 
@@ -374,12 +413,12 @@ class DatabaseMessage(CoreMessage):
             if cls_name not in exclude:
                 if check_true(attrib, cls_obj):
                     if cls_name in self._clsmembers:
-                        msg_obj = self._clsmembers[cls_name](attrib)
+                        msg_obj = self._clsmembers[cls_name] if class_type else self._clsmembers[cls_name](attrib)
                         break
 
         if not msg_obj:
             if check_true(attrib, db.NameMixin):
-                msg_obj = NameMixin(attrib, name)
+                msg_obj = NameMixin if class_type else NameMixin(attrib, name)
             else:
                 raise NotImplementedError(
                     "Message encapsulation for this database object does not exist ({})".format(
@@ -391,13 +430,16 @@ class DatabaseMessage(CoreMessage):
         if attrib is None:
             return
 
+        if name == "user":
+            return None
+
         if name == "metatags":
             return self._unpack_metatags(attrib)
 
         #log.d("name:", name, "attrib:", attrib)
         # beware lots of recursion
         if db.is_instanced(attrib):
-            msg_obj = self._get_message_object(name, attrib)
+            msg_obj = self._get_message_object(self, name, attrib)
             if msg_obj is False: # recursive checked
                 return None
 
@@ -406,8 +448,8 @@ class DatabaseMessage(CoreMessage):
             msg_obj._properties['exclusions'] = self._properties['exclusions'].get(name, {})
             msg_obj._detached = self._detached
             msg_obj._msg_path = self._msg_path.copy()
-            # note: don't pass load_values and load_collections here. use the force_value_load param
-            return msg_obj.data(bypass_exclusions=propagate_bypass, propagate_bypass=propagate_bypass) if msg_obj else None
+            # note: don't pass load_collections here. use the force_value_load param
+            return msg_obj.data(load_values=load_values, bypass_exclusions=propagate_bypass, propagate_bypass=propagate_bypass) if msg_obj else None
             
 
         elif db.is_list(attrib) or isinstance(attrib, list):
@@ -417,7 +459,7 @@ class DatabaseMessage(CoreMessage):
             can_load = False
             if name in self._properties['force_value_load']:
                 can_load = True
-            if can_load or (load_collections and not self._detached and not self._prevent_unpacking(name)):
+            if can_load or (load_collections and not self._detached):
                 return [self._unpack(name, x, load_values, load_collections, propagate_bypass)
                         for x in attrib.all()]
             else:
@@ -452,8 +494,25 @@ class Gallery(DatabaseMessage):
 
     def __init__(self, db_gallery):
         super().__init__('gallery', db_gallery)
-        self.exclude_attributes(("first_page",))
+        self.exclude_attributes(("first_page",
+                                 "pages.gallery",
+                                 "titles.gallery",
+                                 "preferred_title.gallery"
+                                 ))
 
+    @classmethod
+    def from_json(cls, msg, ignore_empty = True, skip_updating_existing = True, skip_descriptors = False, **kwargs):
+        pref_title = msg.pop('preferred_title', False)
+        obj = super().from_json(msg, ignore_empty, skip_updating_existing, skip_descriptors, **kwargs)
+        if not skip_descriptors and pref_title:
+            for mt in msg.get('titles', []):
+                if utils.compare_json_dicts(mt, pref_title):
+                    break
+            else:
+                t = Title.from_json(pref_title, ignore_empty=ignore_empty, skip_updating_existing=skip_updating_existing,
+                                                               skip_descriptors=skip_descriptors, **kwargs)
+                setattr(obj, 'preferred_title', t)
+        return obj
 
 class Artist(DatabaseMessage):
     "Encapsulates database artist object"
@@ -510,6 +569,7 @@ class NameMixin(DatabaseMessage):
         if not name:
             name = db_item.__tablename__
         super().__init__(name, db_item)
+        self.db_type = type(db_item)
 
 class NamespaceTags(DatabaseMessage):
     "Encapsulates database namespacetag object"
@@ -604,6 +664,11 @@ class Title(DatabaseMessage):
     def __init__(self, db_item):
         super().__init__('title', db_item)
 
+    def properties(self):
+        d = super().properties()
+        d['force_value_load'] = self._dict_tree_unpack(('language',))
+        return d
+
 class Url(DatabaseMessage):
     "Encapsulates database url object"
     
@@ -676,17 +741,21 @@ class Plugin(CoreMessage):
 class GalleryFS(CoreMessage):
     ""
 
-    def __init__(self, gfs):
+    def __init__(self, gfs, **kwargs):
         super().__init__('galleryfs')
         assert isinstance(gfs, io_cmd.GalleryFS)
         self._gfs = gfs
+        self._kwargs = kwargs
 
     def data(self, **kwargs):
-        g = Gallery(self._gfs.gallery).data(load_values=True,
-                                            propagate_bypass=True,
+        g = Gallery(self._gfs.gallery).data(load_values=self._kwargs.get('load_values', True),
+                                            load_collections=self._kwargs.get('load_collections', False),
+                                            propagate_bypass=self._kwargs.get('propagate_bypass', False),
                                             force_value_load=("taggable.tags",
                                                               "pages",))
         d = {'sources': self._gfs.get_sources(),
              'page_count': len(self._gfs.pages),
+             'metadata_from_file': self._gfs.metadata_from_file,
+             'exists': self._gfs.exists,
              'gallery': g}
         return d
