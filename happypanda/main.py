@@ -151,11 +151,16 @@ def start(argv=None, db_kwargs={}):
         if cmd_commands(args):
             return
 
-        if not args.only_web: # can't init earlier because of cmd_commands 
+        if not args.only_web:  # can't init earlier because of cmd_commands
             hlogger.Logger.init_listener(args=args, debug=config.debug.value, dev=constants.dev)
-        
+
         # setup logger with multiprocessing
-        hlogger.Logger.setup_logger(args, main=True, dev=constants.dev, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
+        hlogger.Logger.setup_logger(
+            args,
+            main=True,
+            dev=constants.dev,
+            debug=config.debug.value,
+            logging_queue=hlogger.Logger._queue)
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 
@@ -186,12 +191,12 @@ def start(argv=None, db_kwargs={}):
             web_kwargs = {
                 'dev': constants.dev,
                 'debug': config.debug.value,
-                }
+            }
             if args.only_web:
                 server.WebServer().run(*web_args, **web_kwargs)
             else:
                 web_kwargs.update({'logging_queue': hlogger.Logger._queue,
-                                   'cmd_args': args,})
+                                   'cmd_args': args, })
                 constants.web_proc = Process(target=server.WebServer().run,
                                              args=web_args,
                                              kwargs=web_kwargs,

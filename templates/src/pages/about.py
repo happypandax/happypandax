@@ -183,6 +183,17 @@ def about_plugins(props):
              )
 
 
+def about_trash(props):
+
+    plugin_els = []
+
+    return e(ui.Card.Group,
+             *plugin_els,
+             stackable=True,
+             doubling=True,
+             )
+
+
 def about_license(props):
 
     return e(ui.Grid,
@@ -326,7 +337,8 @@ def abouttab_render():
                  {'menuItem': {'key': 'statistics', 'icon': 'bar chart',
                                'content': tr(this, "ui.mi-about-stats", "Statistics")}, },
                  {'menuItem': {'key': 'bug', 'icon': 'bug', 'content': tr(this, "ui.mi-about-bug", "Report bug")}, },
-                 {'menuItem': {'key': 'trash', 'icon': 'trash', 'content': tr(this, "ui.mi-about-trash", "Trash")}, },
+                 {'menuItem': {'key': 'trash', 'icon': 'trash', 'content': tr(this, "ui.mi-about-trash", "Trash")},
+                     'render': lambda: e(about_trash, that=this,)},
                  {'menuItem': {'key': 'changelog', 'icon': 'announcement', 'content': tr(this, "ui.mi-about-changelog", "Changelog")},
                      'render': lambda: e(about_changelog, that=this, changelog=changelog)},
                  {'menuItem': {'key': 'license', 'icon': 'copyright', 'content': tr(this, "ui.mi-about-license", "License")},

@@ -19,7 +19,7 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 def _get_scan_options():
     return {
-        config.skip_existing_galleries.fullname:config.skip_existing_galleries.value,
+        config.skip_existing_galleries.fullname: config.skip_existing_galleries.value,
     }
 
 

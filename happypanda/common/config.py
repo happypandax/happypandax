@@ -30,7 +30,7 @@ class ConfigNode:
         self.isolation = isolation
         self.namespace = ns
         self.name = name
-        self.fullname = self.namespace+'.'+self.name
+        self.fullname = self.namespace + '.' + self.name
         self.default = value
         self.description = description
         self.type_ = type(value) if type_ is None else type_
@@ -511,7 +511,7 @@ with config.namespace(gallery_ns):
         "send_path_to_first_file",
         False,
         "Send path to first file when opening a gallery in external viewer",
-        )
+    )
 
     add_to_inbox = config.create(
         gallery_ns,
@@ -519,7 +519,7 @@ with config.namespace(gallery_ns):
         True,
         "Add new galleries to inbox",
         isolation=ConfigIsolation.client
-        )
+    )
 
     auto_rate_gallery_on_favorite = config.create(
         gallery_ns,

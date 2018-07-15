@@ -76,13 +76,14 @@ def galleryprops_render():
     status = this.props.status or this.state.status_data
     language = this.props.language or this.state.lang_data
     tags = this.props.tags
+    titles = []
     if this.props.data:
         if this.props.data.id:
             item_id = this.props.data.id
         if this.props.data.parodies:
             parodies = this.props.data.parodies
         if this.props.data.titles:
-            titles = this.props.data.titles
+            titles = this.props.data.titles # noqa: F841
 
         if this.props.data.pub_date:
             date_pub = this.props.data.pub_date
@@ -218,19 +219,21 @@ GalleryProps = createReactClass({
     'render': galleryprops_render
 })
 
+
 def update_data(g):
     new_g = utils.JSONCopy(g)
     this.setState({'data': new_g})
     if this.props.on_data_update:
         this.props.on_data_update(new_g)
 
+
 def on_rate(e, d):
     this.state.data.rating = d.rating
     this.update_data(this.state.data)
 
+
 def newgalleryprops_render():
 
-    title = ""
     rating = this.props.rating
     artists = []
     item_id = this.props.id
@@ -258,17 +261,15 @@ def newgalleryprops_render():
         if this.props.data.pub_date:
             date_pub = this.props.data.pub_date
         if this.props.data.last_updated:
-            date_upd = this.props.data.last_updated
+            date_upd = this.props.data.last_updated # noqa: F841
         if this.props.data.last_read:
-            date_read = this.props.data.last_read
+            date_read = this.props.data.last_read # noqa: F841
         if this.props.data.timestamp:
-            date_added = this.props.data.timestamp
+            date_added = this.props.data.timestamp # noqa: F841
         if this.props.data.read_count:
-            read_count = this.props.data.times_read
+            read_count = this.props.data.times_read # noqa: F841
         if this.props.data.info:
             info = this.props.data.info
-        if this.props.data.preferred_title:
-            title = this.props.data.preferred_title.js_name
 
         if this.props.data.artists:
             artists = this.props.data.artists
@@ -307,15 +308,14 @@ def newgalleryprops_render():
     rows = []
 
     rows.append(e(ui.Table.Row,
-                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-title", "Title") +
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-title", "Title") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                    e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, e(ui.Header, x.js_name, size="tiny"),) for x in titles], size="small", relaxed=True, divided=True))))
+                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, e(ui.Header, x.js_name, size="tiny"),) for x in titles], size="small", relaxed=True, divided=True))))
 
     rows.append(e(ui.Table.Row,
-                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-description", "Description") +
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-description", "Description") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                    e(ui.Table.Cell, e(ui.Header, info, size="tiny", className="sub-text"))))
-
+                  e(ui.Table.Cell, e(ui.Header, info, size="tiny", className="sub-text"))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-artist", "Artist") +
@@ -323,14 +323,14 @@ def newgalleryprops_render():
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
 
     rows.append(e(ui.Table.Row,
-                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
-                                        ':', size="tiny", className="sub-text"), collapsing=True),
-                    e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
 
     rows.append(e(ui.Table.Row,
-                    e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") +
-                                        ':', size="tiny", className="sub-text"), collapsing=True),
-                    e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") +
@@ -369,7 +369,6 @@ def newgalleryprops_render():
                                          ':', size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, e(ui.Header, x, size="tiny", className="sub-text"),) for x in paths], size="tiny", relaxed=True, divided=True))))
 
-
     return e(ui.Table,
              e(ui.Table.Body,
                *rows
@@ -394,7 +393,7 @@ NewGalleryProps = createReactClass({
                                 'sources': this.props.sources,
                                 },
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
-    #'componentDidMount': lambda: all((this.get_lang(), this.get_status())),
+    # 'componentDidMount': lambda: all((this.get_lang(), this.get_status())),
     'get_lang': get_lang,
     'get_status': get_status,
     'update_data': update_data,

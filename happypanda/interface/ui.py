@@ -12,7 +12,7 @@ from collections import OrderedDict
 from happypanda.common import utils, exceptions, hlogger, config, constants
 from happypanda.core import message, db, services
 from happypanda.interface import enums, helpers
-from happypanda.core.commands import database_cmd, search_cmd, gallery_cmd
+from happypanda.core.commands import database_cmd, search_cmd
 
 log = hlogger.Logger(__name__)
 
@@ -97,7 +97,6 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
     elif view_filter == enums.ViewType.All:
         if hasattr(db_model, "metatags"):
             filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.trash))
-
 
     if related_type:
         filter_op.append(parent_model.id == item_id)

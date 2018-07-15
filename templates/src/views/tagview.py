@@ -43,6 +43,7 @@ def tag_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data})
 
+
 def tag_render():
 
     tag_rows = []
@@ -55,7 +56,6 @@ def tag_render():
                 d[nstag.namespace.js_name] = []
             d[nstag.namespace.js_name].append(nstag.tag)
         data = d
-
 
     if data.__namespace__:  # somehow transcrypt ignores this in the loop below
         ns_tags = data.__namespace__

@@ -719,8 +719,14 @@ def parse_args(args=sys.argv[1:]):
     parser.add_argument('source', help="Path to old HP database")
     parser.add_argument('destination', help="Desired path to new HPX database")
     parser.add_argument('-r', '--rar', help="Path to unrar tool", default=config.unrar_tool_path.value)
-    parser.add_argument('-l', '--limit', type=int, default=-1, help="Limit the amount of galleries being added (inclusive)")
-    parser.add_argument('-o', '--offset', type=int, default=0, help="Offset the amount of galleries being added (exclusive)")
+    parser.add_argument('-l', '--limit', type=int, default=-
+                        1, help="Limit the amount of galleries being added (inclusive)")
+    parser.add_argument(
+        '-o',
+        '--offset',
+        type=int,
+        default=0,
+        help="Offset the amount of galleries being added (exclusive)")
     parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
     parser.add_argument(
         '-a',
@@ -850,9 +856,10 @@ def main(args=sys.argv[1:]):
 
         try:
             is_rfc = os.path.exists(dst)
-        except:
+        except BaseException:
             is_rfc = None
-        is_rfc = False if is_rfc else any(dst.lower().startswith(x) for x in ('postgres:', 'mysql+pymysql:', 'sqlite:', 'mysql:'))
+        is_rfc = False if is_rfc else any(dst.lower().startswith(x)
+                                          for x in ('postgres:', 'mysql+pymysql:', 'sqlite:', 'mysql:'))
 
         if dst.startswith('mysql://'):
             dst = dst.replace('mysql://', 'mysql+pymysql://')
@@ -979,14 +986,17 @@ def main(args=sys.argv[1:]):
                     gallery = db.Gallery()
 
                     if ch.in_archive:
-                        real_path = pathlib.Path(path).joinpath(ch.path[1:] if ch.path.startswith(('/', '\\')) else ch.path)
+                        real_path = pathlib.Path(path).joinpath(
+                            ch.path[1:] if ch.path.startswith(('/', '\\')) else ch.path)
                     else:
                         real_path = pathlib.Path(ch.path)
 
                     if not args.delete_target or is_new_db:
                         if db.Gallery.exists_by_path(real_path, obj=False):
                             try:
-                                print("\nSkipping '{}' because gallery path already exists in target database.".format(ch.title))
+                                print(
+                                    "\nSkipping '{}' because gallery path already exists in target database.".format(
+                                        ch.title))
                             except UnicodeError:
                                 print(
                                     "\nSkipping '{}' because gallery path already exists in target database".format(

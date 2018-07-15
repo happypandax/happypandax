@@ -29,8 +29,10 @@ def get_config(data=None, error=None):
     else:
         pass
 
+
 __pragma__('kwargs')
 __pragma__("tconv")
+
 
 def update_menu(data={}):
     if not data and this.state.data:
@@ -47,36 +49,36 @@ def update_menu(data={}):
                                                 tr(this, "ui.b-send-library", "Send to Library"),
                                                 onClick=this.send_to_library,
                                                 color="green", basic=True),
-                                as_=ui.Menu.Item,
-                                minWidth=min_width,
-                                ))
+                               as_=ui.Menu.Item,
+                               minWidth=min_width,
+                               ))
         menu_items.append(e(ui.Menu.Menu, *menu_left))
         menu_right = []
         menu_right.append(
             e(ui.Responsive,
                 e(ui.Button, e(ui.Icon, js_name="trash" if not trash else "reply"),
-                tr(this, "ui.b-send-trash", "Send to Trash") if not trash else tr(this, "ui.b-restore", "Restore"),
-                color="red" if not trash else "teal", basic=True, onClick=this.send_to_trash if not trash else this.restore_from_trash),
+                  tr(this, "ui.b-send-trash", "Send to Trash") if not trash else tr(this, "ui.b-restore", "Restore"),
+                  color="red" if not trash else "teal", basic=True, onClick=this.send_to_trash if not trash else this.restore_from_trash),
                 as_=ui.Menu.Item,
                 minWidth=min_width,
-                ))
+              ))
 
         if trash:
             menu_right.append(
                 e(ui.Responsive,
                     e(ui.Button.Group,
                         e(ui.Button,
-                        e(ui.Icon, js_name="close"), tr(this, "ui.b-delete", "Delete"), color="red"),
+                          e(ui.Icon, js_name="close"), tr(this, "ui.b-delete", "Delete"), color="red"),
                         e(ui.Button, icon="remove circle", toggle=True, active=this.state.delete_files,
-                        title=tr(this, "ui.t-delete-files", "Delete files")),
+                          title=tr(this, "ui.t-delete-files", "Delete files")),
                         e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
-                        title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"),
-                        ),
+                          title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"),
+                          ),
                         basic=True,
-                    ),
+                      ),
                     as_=ui.Menu.Item,
                     minWidth=min_width,
-                    ))
+                  ))
 
         menu_right.append(e(ui.Responsive,
                             e(ui.Button, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit"), basic=True),
@@ -92,7 +94,9 @@ def update_menu(data={}):
     else:
         this.props.menu(e(ui.Menu.Menu))
 
+
 __pragma__("notconv")
+
 
 def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
     if not this.mounted:
@@ -162,7 +166,7 @@ def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
-        ctx = {'only_gallery': only_gallery,}
+        ctx = {'only_gallery': only_gallery, }
         item_id = this.state.id
         if utils.defined(this.props.location):
             if this.props.location.state and this.props.location.state.gallery:
@@ -314,6 +318,7 @@ def gallery_on_update(p_props, p_state):
             this.props.location.state.gallery = this.state.data
             this.props.history.js_replace(this.props.location)
 
+
 __pragma__("tconv")
 
 
@@ -380,7 +385,7 @@ def page_render():
     read_btn['onClick'] = this.on_read
     if not this.state.external_viewer:
         read_btn['as'] = Link
-        read_btn['to'] = { 'pathname': "/item/gallery/{}/page/1".format(item_id), 'state': {'gallery': this.state.data} }
+        read_btn['to'] = {'pathname': "/item/gallery/{}/page/1".format(item_id), 'state': {'gallery': this.state.data}}
 
     buttons.append(
         e(ui.Grid.Row,
@@ -715,7 +720,7 @@ Page = createReactClass({
     'read_event': galleryitem.read_event,
 
     'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
-                                  this.setState({'fav':d.rating}),
+                                  this.setState({'fav': d.rating}),
                                   this.get_item(only_gallery=True, force=True),
                                   e.preventDefault())),
     'send_to_library': lambda e, d: all((this.update_metatags({'inbox': False}),

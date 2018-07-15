@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui, TitleChange, TR
+from src.ui import ui, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import (ItemType, ImageSize, client, Command)
@@ -144,6 +144,7 @@ def get_page_count(data=None, error=None, gid=None):
             client.call_func("get_related_count", this.get_page_count, item_type=item, item_id=item_id,
                              related_type=this.state.item_type)
 
+
 def get_gallery(data=None, error=None):
     if data is not None and not error:
         this.setState({"gallery": data})
@@ -156,6 +157,7 @@ def get_gallery(data=None, error=None):
         gid = int(this.props.match.params.gallery_id)
         if gid:
             client.call_func("get_item", this.get_gallery, item_type=ItemType.Gallery, item_id=gid)
+
 
 def get_page_url(number, gid=None):
     return "/item/gallery/{}/page/{}".format(
@@ -483,8 +485,8 @@ Page = createReactClass({
     'componentWillMount': lambda: all((this.props.menu([
         e(ui.Menu.Item, e(ui.Icon, js_name="ellipsis vertical", size="large"),
           icon=True, onClick=this.toggle_pages, position="left"),
-        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, as_=Link, to={'pathname':"/item/gallery/{}".format(this.props.match.params.gallery_id),
-                                                                                                               'state':{'gallery':this.state.gallery}})),
+        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, as_=Link, to={'pathname': "/item/gallery/{}".format(this.props.match.params.gallery_id),
+                                                                                                               'state': {'gallery': this.state.gallery}})),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
           icon=True, onClick=this.toggle_config, position="right"),
     ]),

@@ -69,7 +69,9 @@ class QueueHandler(logging.Handler):
         except BaseException:
             self.handleError(record)
 
+
 getNativeLogger = logging.getLogger
+
 
 class Logger:
 
@@ -180,7 +182,7 @@ class Logger:
             lg = QueueHandler(cls._queue)
             log_handlers.append(lg)
         else:
-            filemode = "w" if main else "a" # setup_logger is being two times
+            filemode = "w" if main else "a"  # setup_logger is being two times
             if argsdev:
                 log_handlers.append(logging.StreamHandler())
 
@@ -288,6 +290,7 @@ class Logger:
                 cls._queue.get(timeout=3)
             except (EOFError, BrokenPipeError, TimeoutError, queues.Empty):
                 pass
+
 
 def getLogger(name, *args, **kwargs):
     return Logger(name, *args, **kwargs)

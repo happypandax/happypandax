@@ -733,10 +733,12 @@ class MostCommonTags(Command):
             db.desc_expr(db.func.count(db.NamespaceTags.id))).limit(limit).all()
         return tuple(r)
 
-def _get_item_options():
+
+def _get_add_item_options():
     return {
         config.add_to_inbox.fullname: config.add_to_inbox.value,
     }
+
 
 class AddItem(AsyncCommand):
     """
@@ -758,7 +760,7 @@ class AddItem(AsyncCommand):
                     obj_types.add(type(i))
                     i_sess = db.object_session(i)
                     if i_sess and i_sess != sess:
-                        i_sess.expunge_all() # HACK: what if other sess was in use?
+                        i_sess.expunge_all()  # HACK: what if other sess was in use?
                     sess.add(i)
                     self.next_progress()
                 sess.commit()
@@ -771,7 +773,41 @@ class AddItem(AsyncCommand):
             items = [items]
         self.set_progress(type_=enums.ProgressType.ItemAdd)
         self.set_max_progress(len(items))
-        item_options = _get_item_options()
+        item_options = _get_add_item_options()
         item_options.update(options)
         self._add_to_db(items, item_options).get()
         return True
+
+
+def _get_del_item_options():
+    return {
+    }
+
+# class DeleteItem(AsyncCommand):
+#    """
+#    Delete a database item
+#    """
+
+#    @async_utils.defer
+#    def _del_from_db(self, items, options):
+#        with db.safe_session() as sess:
+#            with db.no_autoflush(sess):
+#                obj_types = set()
+#                for i in items:
+#                    obj_types.add(type(i))
+#                    i.delete()
+#                    self.next_progress()
+#                sess.commit()
+#                if db.Gallery in obj_types:
+#                    constants.invalidator.similar_gallery = True
+
+#    def main(self, items: typing.List[db.Base], options: dict={}) -> bool:
+#        assert isinstance(items, (list, tuple, db.Base)), f"not {items}"
+#        if not isinstance(items, (list, tuple)):
+#            items = [items]
+#        self.set_progress(type_=enums.ProgressType.ItemRemove)
+#        self.set_max_progress(len(items))
+#        item_options = _get_del_item_options()
+#        item_options.update(options)
+#        self._del_from_db(items, item_options).get()
+#        return True

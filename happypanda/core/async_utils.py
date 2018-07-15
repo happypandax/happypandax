@@ -10,7 +10,7 @@ from psycopg2 import extensions
 from gevent.socket import wait_read, wait_write
 from gevent import monkey
 
-from happypanda.common import hlogger, utils, constants, patch
+from happypanda.common import hlogger, utils, constants
 from happypanda.core import db
 
 log = hlogger.Logger(constants.log_ns_core + __name__)
@@ -84,6 +84,7 @@ class CPUThread():
         daemon_gevent = None
         try:
             self.in_async = gevent.get_hub().loop.async()
+
             def _daemon():
                 while True:
                     gevent.sleep(0.1)

@@ -119,7 +119,7 @@ log_namespaces = (x[:-1] for x in (
     log_ns_search,
     log_ns_misc,
     log_ns_plugincontext
-    ))
+))
 
 task_command = None  # TaskService.TaskList of TaskService commands
 
@@ -170,7 +170,7 @@ image_sizes = {
 
 translations = None  # dict of available translation files
 
-services = weakref.WeakValueDictionary() # servicetype.service_name (all lowercase)
+services = weakref.WeakValueDictionary()  # servicetype.service_name (all lowercase)
 
 # PLUGIN
 

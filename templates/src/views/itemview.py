@@ -87,8 +87,8 @@ def Itemviewvonfig_render():
     sort_order_el.append(
         e(ui.Form.Select,
             label=h("label", tr(this, "ui.t-default-sort-order", "Default sort order")),
-            options=[{'key':0, 'text':tr(this, "ui.t-ascending", "Ascending"), 'value':0},
-                     {'key':1, 'text':tr(this, "ui.t-descending", "Descending"), 'value':1}],
+            options=[{'key': 0, 'text': tr(this, "ui.t-ascending", "Ascending"), 'value': 0},
+                     {'key': 1, 'text': tr(this, "ui.t-descending", "Descending"), 'value': 1}],
             defaultValue=utils.storage.get(default_sort_order_cfg + cfg_suffix, 0),
             onChange=lambda e, d: utils.storage.set(default_sort_order_cfg + cfg_suffix, d.value)
           ),
@@ -494,9 +494,11 @@ def get_more():
         if this.props.history:
             utils.go_to(this.props.history, query={'page': next_page}, push=False)
 
+
 def remove_item(d):
     items = this.state['items']
     this.setState({'items': [x for x in items if x.id != d.id]})
+
 
 def item_view_on_update(p_props, p_state):
     if p_props.item_type != this.props.item_type:
@@ -664,7 +666,7 @@ ItemView = createReactClass({
                                 'item_type': utils.session_storage.get("item_type" + this.config_suffix(), int(utils.get_query("item_type", ItemType.Gallery))),
                                 'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id" + this.config_suffix(), 0))),
                                 'sort_by': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery)) + this.config_suffix(), int(utils.get_query("sort_idx", 0))),
-                                'sort_desc': utils.session_storage.get("sort_desc" + this.config_suffix(), bool(utils.get_query("sort_desc",  utils.storage.get("def_sort_order" + this.config_suffix(), 0)))),
+                                'sort_desc': utils.session_storage.get("sort_desc" + this.config_suffix(), bool(utils.get_query("sort_desc", utils.storage.get("def_sort_order" + this.config_suffix(), 0)))),
                                 'search_query': this.props.search_query if utils.defined(this.props.search_query) else utils.session_storage.get("search_query" + this.config_suffix(), utils.get_query("search", "") if this.query() else "", True),
                                 'search_options': utils.storage.get("search_options", {}),
                                 },

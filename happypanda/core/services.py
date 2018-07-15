@@ -6,7 +6,7 @@ import pytz
 
 from gevent import pool, queue, event
 from apscheduler.schedulers.gevent import GeventScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+#from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from cachetools import LRUCache
 
 from happypanda.common import hlogger, constants, config, exceptions, utils, clsutils
@@ -207,19 +207,19 @@ class Scheduler(Service):
     def __init__(self, name):
         super().__init__(name)
         self._commands = {}  # cmd_id : command
-        #self._jobstores = {'default': SQLAlchemyJobStore(url=constants.scheduler_database_url,
+        # self._jobstores = {'default': SQLAlchemyJobStore(url=constants.scheduler_database_url,
         #                                                 tablename="jobs")}
         self._jobstores = {}
         self._executors = {}
         self._job_defaults = {
             'max_instances': 10,
             'coalesce': True,
-            }
+        }
         self._triggers = {}  # cmd_id : trigger
         self._scheduler = GeventScheduler(jobstores=self._jobstores,
                                           executors=self._executors,
                                           job_defaults=self._job_defaults,
-                                          timezone=pytz.utc, # TODO: make user configurable
+                                          timezone=pytz.utc,  # TODO: make user configurable
                                           )
         self._schedulers.add(self)
         s_cmds = constants.internaldb.scheduler_commands.get({})
@@ -276,9 +276,9 @@ class Scheduler(Service):
         "Start running a command in this scheduler, returns command state"
         cmd = self.get_command(cmd_id)
         j_id = self._scheduler.add_job(cmd._run,
-                                            self._triggers[cmd_id],
-                                            args, kwargs,
-                                            name=cmd.__class__.__name__)
+                                       self._triggers[cmd_id],
+                                       args, kwargs,
+                                       name=cmd.__class__.__name__)
         self._set_job_id(cmd_id, j_id)
 
     def stop_command(self, cmd_id):

@@ -64,6 +64,36 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     return message.Identity('image', content)
 
+# def delete_item(item_type: enums.ItemType=enums.ItemType.Gallery,
+#             item_id: int=0,
+#             options: dict={}):
+#    """
+#    Create a new item and add it to the database
+
+#    Args:
+#        item_type: type of item to create
+#        item_id: id of item
+
+#    Returns:
+#        []
+
+#    |async command|
+
+#    """
+
+#    item_type = enums.ItemType.get(item_type)
+#    db_msg, db_model = item_type._msg_and_model()
+
+#    item = database_cmd.GetModelItems().run(db_model, {item_id})[0]
+#    if not item:
+#        raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+#                                                   "'{}' with id '{}' was not found".format(item_type.name,
+#                                                                                            item_id))
+
+
+#    cmd_id = database_cmd.DeleteItem(services.AsyncService.generic).run(item, options=options)
+#    return message.Identity('command_id', cmd_id)
+
 def new_item(item_type: enums.ItemType=enums.ItemType.Gallery,
              item: dict={},
              options: dict={}):
@@ -85,7 +115,7 @@ def new_item(item_type: enums.ItemType=enums.ItemType.Gallery,
         raise exceptions.APIError(utils.this_function(), "item must be a message object")
     if item.get('id', False) and not constants.dev:
         raise exceptions.APIError(utils.this_function(), "cannot create item with an id")
-        
+
     item_type = enums.ItemType.get(item_type)
     db_msg, db_model = item_type._msg_and_model()
 
@@ -93,6 +123,7 @@ def new_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     cmd_id = database_cmd.AddItem(services.AsyncService.generic).run(db_obj, options=options)
     return message.Identity('command_id', cmd_id)
+
 
 def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
              item_id: int=0):
@@ -120,7 +151,7 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     return db_msg(item)
 
-#def new_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+# def new_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 #             items: list={}):
 #    """
 #    Create new items and add them to the database
@@ -370,8 +401,8 @@ def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 #    """
 
 def update_metatags(item_type: enums.ItemType=enums.ItemType.Gallery,
-                   item_id: int=0,
-                   metatags: dict={}):
+                    item_id: int=0,
+                    metatags: dict={}):
     """
     Update metatags for an item
 
@@ -402,7 +433,7 @@ def update_metatags(item_type: enums.ItemType=enums.ItemType.Gallery,
     mtags = {}
     anames = db.MetaTag.all_names()
     for m, v in metatags.items():
-        if not m in anames:
+        if m not in anames:
             raise exceptions.APIError(utils.this_function(), f"Metatag name '{m}' does not exist")
         mtags[m] = v
 
@@ -411,4 +442,3 @@ def update_metatags(item_type: enums.ItemType=enums.ItemType.Gallery,
     db.object_session(t).commit()
 
     return message.Identity('status', True)
-

@@ -77,7 +77,7 @@ def enable_loggers(logs):
     log_level = logging.WARNING
     if logs:
         for l in constants.log_namespaces:
-            if not l in logs:
+            if l not in logs:
                 hlogger.Logger(l).setLevel(log_level)
                 if l in constants.log_ns_core:
                     hlogger.Logger("apscheduler").setLevel(log_level)
@@ -780,16 +780,19 @@ def get_real_file(path):
             path = fp.read()
     return path
 
+
 def is_collection(obj):
     if isinstance(obj, str):
         return False
     return hasattr(type(obj), '__iter__')
+
 
 def is_url(url, strict=False):
     t = ("https://", "http://")
     if not strict:
         t += ("www.",)
     return url.lower().startswith(t)
+
 
 def dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -806,6 +809,7 @@ def dict_merge(dct, merge_dct):
         else:
             dct[k] = merge_dct[k]
     return dct
+
 
 def compare_json_dicts(a, b):
     """

@@ -234,6 +234,8 @@ class ProgressType(_APIEnum):
     GalleryScan = 5
     #: Adding items to the database
     ItemAdd = 6
+    #: Removing items from the database
+    ItemRemove = 7
 
 
 class PluginState(_APIEnum):

@@ -1003,7 +1003,8 @@ class GalleryFS(CoreCommand):
                 self.gallery.titles.clear()
             for p in sources:
                 with self._parse_metadata_file.call(p, self.gallery) as plg:
-                    self.metadata_from_file = any(plg.all(default=True))  # TODO: stop at first handler that returns true
+                    # TODO: stop at first handler that returns true
+                    self.metadata_from_file = any(plg.all(default=True))
 
                 n = NameParser(os.path.split(p)[1])
                 langs = []

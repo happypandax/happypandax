@@ -3,6 +3,7 @@ from src.react_utils import (h,
                              createReactClass,
                              Link)
 from src import utils
+from src.state import state
 from src.ui import ui
 from src.client import (ItemType, ImageSize, client)
 from src.single import thumbitem
@@ -41,6 +42,7 @@ def read_event(e, d):
     if this.state.data:
         client.call_func("gallery_read_event", None, item_id=this.state.data.id)
 
+
 def update_metatags(mtags):
     if this.state.data:
         client.call_func("update_metatags", None, item_type=ItemType.Gallery,
@@ -50,7 +52,9 @@ def update_metatags(mtags):
         d.metatags.update(mtags)
         this.setState({'data': d})
 
+
 __pragma__("notconv")
+
 
 def get_item(data=None, error=None):
     if not this.mounted:
@@ -142,7 +146,8 @@ def gallery_render():
     menu_options = []
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"),
                           icon="envelope open outline", **read_button_args))
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline", onClick=this.read_later))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"),
+                          icon="bookmark outline", onClick=this.read_later))
     if inbox:
         menu_options.append(e(ui.List.Item, content=tr(
             this, "ui.b-send-library", "Send to library"), onClick=this.send_to_library, icon="grid layout"))
@@ -150,13 +155,15 @@ def gallery_render():
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-collection",
                                                    "Add to collection"), icon="plus square outline"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-series", "Add to series"), icon="add square"))
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-trash", "Send to Trash"), icon="trash", onClick=this.send_to_trash))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-trash", "Send to Trash"),
+                          icon="trash", onClick=this.send_to_trash))
 
     return e(ui.Card,
              e(ui.Dimmer.Dimmable,
                  h("div",
                    thumb,
-                   e(ui.Rating, icon="heart", onRate=this.favorite, size="massive", className="card-item top left above-dimmer", rating=fav),
+                   e(ui.Rating, icon="heart", onRate=this.favorite, size="massive",
+                     className="card-item top left above-dimmer", rating=fav),
                    *([e(ui.Icon,
                         js_name="inbox",
                         title=tr(this, "ui.t-inboxed-gallery", "This gallery is in your inbox"),
@@ -197,25 +204,25 @@ def gallery_render():
                  onMouseLeave=this.dimmer_hide,
                ),
              e(ui.Modal,
-                  e(ui.Modal.Content,
-                    e(gallerypropsview.GalleryProps,
-                         compact=True,
-                         data=data,
-                         rating=rating,
-                         tags=this.state.tags,
-                         on_tags=this.on_tags,
-                         size="small"),
-                    ),
-                    trigger=e(ui.Card.Content,
+               e(ui.Modal.Content,
+                 e(gallerypropsview.GalleryProps,
+                   compact=True,
+                   data=data,
+                   rating=rating,
+                   tags=this.state.tags,
+                   on_tags=this.on_tags,
+                   size="small"),
+                 ),
+               trigger=e(ui.Card.Content,
                          e(ui.Card.Header, title, className="text-ellipsis card-header"),
                          e(ui.Card.Meta, *[h("span", x) for x in artist_names], className="text-ellipsis"),
                          ),
-                    #dimmer="inverted",
-                    size="small",
-                    closeOnDocumentClick=True,
-                    closeIcon=True,
-                    centered=False,
-                  ),
+               # dimmer="inverted",
+               size="small",
+               closeOnDocumentClick=True,
+               closeIcon=True,
+               centered=False,
+               ),
              centered=this.props.centered,
              className=add_cls,
              # color="pink",
@@ -244,13 +251,15 @@ Gallery = createReactClass({
     'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
                                   this.get_item(),
                                   e.preventDefault())),
-    'send_to_library': lambda e, d: all(( this.update_metatags({'inbox': False}),
-                                         this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None,
-                                         e.preventDefault())),
-    'send_to_trash': lambda e, d: all(( this.update_metatags({'trash': True}),
-                                       this.props.remove_item(this.props.data or this.state.data) if this.props.remove_item else None,
-                                       e.preventDefault())),
-    'restore_from_trash': lambda e, d: all(( this.update_metatags({'trash': False}),
+    'send_to_library': lambda e, d: all((this.update_metatags({'inbox': False}),
+                                         this.props.remove_item(
+        this.props.data or this.state.data) if this.props.remove_item else None,
+        e.preventDefault())),
+    'send_to_trash': lambda e, d: all((this.update_metatags({'trash': True}),
+                                       this.props.remove_item(
+        this.props.data or this.state.data) if this.props.remove_item else None,
+        e.preventDefault())),
+    'restore_from_trash': lambda e, d: all((this.update_metatags({'trash': False}),
                                             e.preventDefault())),
     'read_later': lambda e, d: all((this.update_metatags({'readlater': True}),
                                     e.preventDefault())),

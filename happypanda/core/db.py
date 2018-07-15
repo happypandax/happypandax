@@ -16,7 +16,6 @@ import alembic.command
 import alembic.script
 import alembic.migration
 import datetime
-import types
 
 from contextlib import contextmanager
 from sqlalchemy.engine import Engine
@@ -31,13 +30,11 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.indexable import index_property
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.ext.associationproxy import AssociationProxy
-from sqlalchemy.sql.expression import BinaryExpression, func, literal, join
+from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.ext import orderinglist
 from sqlalchemy.orm import (
-    configure_mappers,
-    clear_mappers,
     sessionmaker,
     relationship,
     validates,
@@ -50,7 +47,7 @@ from sqlalchemy.orm import (
     dynamic,
     backref,
     exc as exc_orm,
-    deferred)
+)
 from sqlalchemy import (
     create_engine,
     event,
@@ -487,11 +484,11 @@ class Base:
                         if isinstance(x, dict) and len(x.keys()) == 1 and 'name' in x:
                             x = x['name']
 
-                        if isinstance(x, dict): # {tag_name: True, tag_name:False, etc.} 
+                        if isinstance(x, dict):  # {tag_name: True, tag_name:False, etc.}
                             for m_name, m_value in x.items():
                                 mtag = col_model.as_unique(name=m_name)
                                 if m_value:
-                                    if not mtag in attr_value:
+                                    if mtag not in attr_value:
                                         attr_value.append(mtag)
                                 else:
                                     if mtag in attr_value:
@@ -837,6 +834,7 @@ def profile_association(cls, bref="items"):
         cascade="all")
     return assoc
 
+
 def metatag_association(cls, bref="items"):
     if not issubclass(cls, Base):
         raise ValueError("Must be subbclass of Base")
@@ -876,8 +874,6 @@ def metatag_association(cls, bref="items"):
     @event.listens_for(cls.metatags, 'append', retval=True, propagate=True)
     def rec_append(target, value, initator):
         return target.on_metatag_event(value, False)
-
-
 
     return assoc
 
@@ -1649,14 +1645,13 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
     first_page = relationship(lambda: Page,
                               primaryjoin=lambda: and_op(
-                                  Gallery.id==Page.gallery_id,
-                                  Page.number==select([func.min(Page.number)]).
-                                                where(Page.gallery_id==Gallery.id).
-                                                correlate(Gallery.__table__)
-                                                ),
+                                  Gallery.id == Page.gallery_id,
+                                  Page.number == select([func.min(Page.number)]).
+                                  where(Page.gallery_id == Gallery.id).
+                                  correlate(Gallery.__table__)
+                              ),
                               uselist=False,
                               )
-
 
     def read(self, user_id=None, datetime=None):
         "Creates a read event for user"
@@ -1703,8 +1698,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     @preferred_title.expression
     def preferred_title(cls):
         lcode = utils.get_language_code(config.translation_locale.value)
-        j = Title.__table__.join(Language.__table__, Title.__table__.c.language_id==Language.__table__.c.id)
-        return select([Title]).select_from(j).where(Title.gallery_id == cls.id).where(Language.code == lcode).label("preffered_title")
+        j = Title.__table__.join(Language.__table__, Title.__table__.c.language_id == Language.__table__.c.id)
+        return select([Title]).select_from(j).where(Title.gallery_id == cls.id).where(
+            Language.code == lcode).label("preffered_title")
 
     @hybrid_method
     def title_by_language(self, language_code):
@@ -1737,12 +1733,13 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         s = constants.db_session()
         with s.no_autoflush:
             page_expr = Page.path.like if case else Page.path.ilike
-            page_expr = page_expr(path+'%')
+            page_expr = page_expr(path + '%')
             if obj:
                 e = s.query(Gallery).join(Gallery.pages).filter(page_expr).first()
             else:
                 e = bool(s.query(Page.id).filter(page_expr).count())
             return e
+
 
 metatag_association(Gallery, "galleries")
 profile_association(Gallery, "galleries")
@@ -2102,7 +2099,8 @@ def check_db_version(sess):
             log.w(msg, stdout=True)
             return False
         else:
-            raise exceptions.DatabaseInitError("Invalid database. Momo says she thinks this database is not HPX-compatible.")
+            raise exceptions.DatabaseInitError(
+                "Invalid database. Momo says she thinks this database is not HPX-compatible.")
     if life:
         if life.version != constants.version_db_str:
             if constants.preview:
@@ -2176,6 +2174,7 @@ def make_db_url(db_name=None, dev_db=None):
             query=db_query,
         )
     return db_url
+
 
 def migrate():
     if hasattr(sys, "_called_from_test"):
@@ -2317,21 +2316,25 @@ def is_instanced(obj):
         return isinstance(inspect(obj), state.InstanceState)
     return False
 
+
 def is_descriptor(obj):
     "Check if db object is a descriptor"
     if isinstance(obj, (hybrid_property, AssociationProxy, index_property)):
         return True
     return False
 
+
 def descriptor_has_getter(obj):
     "Check if db object is descriptor has a getter"
     assert is_descriptor(obj) and not isinstance(obj, AssociationProxy)
     return True if obj.fget else False
 
+
 def descriptor_has_setter(obj):
     "Check if db object is descriptor has a setter"
     assert is_descriptor(obj) and not isinstance(obj, AssociationProxy)
     return True if obj.fset else False
+
 
 def is_list(obj, strict=False):
     "Check if db object is a db list"
@@ -2457,6 +2460,7 @@ def cleanup_session_wrap(f=None):
             with cleanup_session():
                 return f(*args, **kwargs)
         return wrapper
+
 
 @contextmanager
 def no_autoflush(sess=None):

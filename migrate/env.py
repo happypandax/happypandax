@@ -3,14 +3,13 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 import logging
-import re
 import os
 import sys
 
 sys.path.insert(0, os.getcwd())
 
-from happypanda.common import constants, config as hpx_config
-from happypanda.core import db
+from happypanda.common import constants, config as hpx_config # noqa: E402
+from happypanda.core import db # noqa: E402
 
 USE_TWOPHASE = False
 
@@ -22,7 +21,7 @@ if config.attributes.get('configure_logger', True):
     # Interpret the config file for Python logging.
     # This line sets up loggers basically.
     fileConfig(config.config_file_name)
-logger = logging.getLogger(constants.log_ns_database+'alembic.env')
+logger = logging.getLogger(constants.log_ns_database + 'alembic.env')
 
 # gather section names referring to different
 # databases.  These are named "engine1", "engine2"
@@ -51,6 +50,7 @@ if context.get_x_argument(as_dictionary=True).get('dev', None):
 else:
     dev_db = hpx_config.dev_db.value
 
+
 def get_engines(offline=False):
     db_url = str(db.make_db_url(dev_db=dev_db))
     engines = {}
@@ -58,10 +58,11 @@ def get_engines(offline=False):
         engines = {'main': {'url': db_url}}
     else:
         engines = {'main': {'engine': engine_from_config(
-                                    {'here': os.getcwd(), 'sqlalchemy.url': db_url},
-                                    prefix='sqlalchemy.',
-                                    poolclass=pool.NullPool)}}
+            {'here': os.getcwd(), 'sqlalchemy.url': db_url},
+            prefix='sqlalchemy.',
+            poolclass=pool.NullPool)}}
     return engines
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -139,7 +140,7 @@ def run_migrations_online():
 
         for rec in engines.values():
             rec['transaction'].commit()
-    except:
+    except BaseException:
         for rec in engines.values():
             rec['transaction'].rollback()
         raise
@@ -152,4 +153,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
