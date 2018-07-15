@@ -207,8 +207,9 @@ class Scheduler(Service):
     def __init__(self, name):
         super().__init__(name)
         self._commands = {}  # cmd_id : command
-        self._jobstores = {'default': SQLAlchemyJobStore(url=constants.scheduler_database_url,
-                                                         tablename="jobs")}
+        #self._jobstores = {'default': SQLAlchemyJobStore(url=constants.scheduler_database_url,
+        #                                                 tablename="jobs")}
+        self._jobstores = {}
         self._executors = {}
         self._job_defaults = {
             'max_instances': 10,

@@ -673,6 +673,6 @@ class WebServer:
             self._ssl_args['ssl_context'] = utils.create_ssl_context(webserver=True, server_side=True)
             self._ssl_args['suppress_ragged_eofs'] = True
         try:
-            self.socketio.run(self.happyweb, host, port, debug=debug, **self._ssl_args)
+            self.socketio.run(self.happyweb, host, port, debug=False, **self._ssl_args)
         except KeyboardInterrupt:
             pass

@@ -2181,15 +2181,20 @@ def migrate():
     if hasattr(sys, "_called_from_test"):
         return
     log.i("Checking for database update", stdout=True)
-    log.d("Initiating db migration")
     a_cfg = alembic.config.Config(constants.migration_config_path)
     a_cfg.attributes['configure_logger'] = False
     script = alembic.script.ScriptDirectory.from_config(a_cfg)
     ctx = alembic.migration.MigrationContext.configure(constants.db_engine.connect())
-    log.d("Current db migration BASE:", tuple(script.get_bases()))
-    log.d("Current db migration rev:", tuple(ctx.get_current_heads()))
-    log.d("Current db migration HEAD:", tuple(script.get_heads()))
-    alembic.command.stamp(a_cfg, "head")
+    log.d("Database BASE revision:", tuple(script.get_bases()))
+    current_rev = tuple(ctx.get_current_heads())
+    head_rev = tuple(script.get_heads())
+    log.d("Database current revision:", current_rev)
+    log.d("Database HEAD revision:", head_rev)
+    if current_rev != head_rev:
+        log.i("Database update found. Updating...", stdout=True)
+    alembic.command.upgrade(a_cfg, "head")
+    if current_rev != head_rev:
+        log.i("Database has been updated!", stdout=True)
 
 
 def init(**kwargs):

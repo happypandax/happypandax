@@ -180,6 +180,7 @@ class Logger:
             lg = QueueHandler(cls._queue)
             log_handlers.append(lg)
         else:
+            filemode = "w" if main else "a" # setup_logger is being two times
             if argsdev:
                 log_handlers.append(logging.StreamHandler())
 
@@ -190,7 +191,7 @@ class Logger:
                 except FileExistsError:
                     pass
 
-                lg = logging.FileHandler(constants.log_debug, 'w', 'utf-8')
+                lg = logging.FileHandler(constants.log_debug, filemode, 'utf-8')
                 lg.setLevel(logging.DEBUG)
                 log_handlers.append(lg)
 
@@ -205,7 +206,7 @@ class Logger:
                 except FileExistsError:
                     pass
 
-                lg = logging.FileHandler(constants.log_plugin, 'w', 'utf-8')
+                lg = logging.FileHandler(constants.log_plugin, filemode, 'utf-8')
                 lg.setLevel(logging.DEBUG)
                 lg.addFilter(plugin_filter)
                 log_handlers.append(lg)
@@ -238,11 +239,6 @@ class Logger:
         if main:
             Logger("sqlalchemy.orm.relationships").setLevel(logging.ERROR)
             Logger("sqlalchemy.orm.mapper").setLevel(logging.ERROR)
-            if argsdev:
-                Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
-                Logger("sqlalchemy.engine").setLevel(logging.INFO)
-                Logger("sqlalchemy.orm").setLevel(logging.INFO)
-
             if debug and first_time:
                 Logger(__name__).i(
                     os.path.split(
@@ -265,14 +261,14 @@ class Logger:
                 if record is None:
                     break
                 Logger(record.name).handle(record)
-            except (BrokenPipeError, KeyboardInterrupt, SystemExit):
+            except (EOFError, BrokenPipeError, KeyboardInterrupt, SystemExit):
                 break
             except BaseException:
                 traceback.print_exc(file=sys.stderr)
         shutdown()
         try:
             queue.put(None)
-        except (BrokenPipeError,):
+        except (EOFError, BrokenPipeError,):
             pass
 
     @classmethod
