@@ -34,7 +34,7 @@ added_files = [
     ('translations', 'translations'),
     ('static', 'static'),
     ('migrate', 'migrate'),
-    ('alembic.ini', ''),
+    ('alembic.ini', '.'),
   ]
 
 interface_files = exec_statement("""
@@ -56,7 +56,9 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
   a_kwargs = dict(binaries=[],
                datas=added_files,
-               hiddenimports=['engineio.async_gevent', 'sqlalchemy.ext.baked']+interface_files,
+               hiddenimports=['engineio.async_gevent',
+                              'logging.config',
+                              'sqlalchemy.ext.baked']+interface_files,
                hookspath=[],
                runtime_hooks=[],
                excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter'],
