@@ -7,7 +7,7 @@ from happypanda.common.hlogger import eprint
 pytestmark = pytest.mark.utilstest
 
 
-@mock.patch('happypanda.common.hlogger.print')
+@mock.patch('happypanda.common.hlogger.pprintpp.pprint')
 @mock.patch('happypanda.common.hlogger.sys')
 def test_eprint(m_sys, m_print):
     """test eprint."""
@@ -17,4 +17,4 @@ def test_eprint(m_sys, m_print):
     args_input = [m_arg]
     kwargs_input = {m_key: m_value}
     eprint(*args_input, **kwargs_input)
-    m_print.assert_called_once_with(m_arg, file=m_sys.stderr, **kwargs_input)
+    m_print.assert_called_once_with(m_arg, stream=m_sys.stderr, **kwargs_input)
