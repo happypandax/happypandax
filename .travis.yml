@@ -44,7 +44,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then npm install -g gulp; fi
 
 install:
-    - pip3 install --user -r requirements-dev.txt
+    - pip install --user -r requirements-dev.txt
 
 script:
     - python lint.py
