@@ -432,6 +432,11 @@ def load_gallery(data=None, error=None):
             client.call_func("load_gallery_from_path", this.load_gallery,
                                 path=this.state.load_gallery_path)
 
+def on_gallery_update(g):
+    new_data = utils.JSONCopy(this.state.data)
+    new_data.gallery = g
+    this.setState({'data': new_data})
+
 __pragma__("tconv")
 def creategallery_render():
     gallery_data = this.state.data.gallery
@@ -464,7 +469,8 @@ def creategallery_render():
                       className="right"),) if this.state.data.exists else []),
                  e(gallerypropsview.NewGalleryProps,
                     data=this.state.data.gallery,
-                    sources=this.state.data.sources),
+                    sources=this.state.data.sources,
+                    on_data_update=this.on_gallery_update),
                  loading=this.state.submitting,
                  )
     pages_el = []
@@ -532,6 +538,8 @@ CreateGallery = createReactClass({
 
     'load_gallery': load_gallery,
     'update_options': update_options,
+
+    'on_gallery_update': on_gallery_update,
 
     'on_add_to_inbox': lambda e,d: all((this.update_options('gallery.add_to_inbox', d.checked), utils.storage.set('new_gallery.add_to_inbox', d.checked))),
 

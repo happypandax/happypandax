@@ -165,6 +165,8 @@ class InternalDatabase(InternalTinyDB):
 
         self.plugins_state = self.GetSet(self, "plugins_state")
 
+        self.scheduler_commands = self.GetSet(self, "scheduler_commands")
+
 
 class InternalStore(InternalTinyDB):
 

@@ -77,8 +77,12 @@ def galleryprops_render():
     language = this.props.language or this.state.lang_data
     tags = this.props.tags
     if this.props.data:
-        item_id = this.props.data.id
-        parodies = this.props.data.parodies
+        if this.props.data.id:
+            item_id = this.props.data.id
+        if this.props.data.parodies:
+            parodies = this.props.data.parodies
+        if this.props.data.titles:
+            titles = this.props.data.titles
 
         if this.props.data.pub_date:
             date_pub = this.props.data.pub_date
@@ -88,27 +92,29 @@ def galleryprops_render():
             date_read = this.props.data.last_read
         if this.props.data.timestamp:
             date_added = this.props.data.timestamp
-        read_count = this.props.data.times_read
-        info = this.props.data.info
+        if this.props.data.read_count:
+            read_count = this.props.data.times_read
+        if this.props.data.info:
+            info = this.props.data.info
         if this.props.data.preferred_title:
             title = this.props.data.preferred_title.js_name
-        if not item_id:
-            item_id = this.props.data.id
 
-        artists = this.props.data.artists
-        circle_ids = []
-        for a in artists:
-            if a.circles:
-                for c in a.circles:
-                    if c.id in circle_ids:
-                        continue
-                    circles.append(c)
-                    circle_ids.append(c.id)
+        if this.props.data.artists:
+            artists = this.props.data.artists
+            circle_ids = []
+            for a in artists:
+                if a.circles:
+                    for c in a.circles:
+                        if c.id in circle_ids:
+                            continue
+                        circles.append(c)
+                        circle_ids.append(c.id)
 
-        for u in this.props.data.urls:
-            urls.append(u.js_name)
+        if this.props.data.urls:
+            for u in this.props.data.urls:
+                urls.append(u.js_name)
 
-        if not utils.defined(rating):
+        if not utils.defined(rating) and this.props.data.rating:
             rating = this.props.data.rating
 
     status = status.js_name if status else tr(this, "ui.t-unknown", "Unknown")
@@ -212,6 +218,15 @@ GalleryProps = createReactClass({
     'render': galleryprops_render
 })
 
+def update_data(g):
+    new_g = utils.JSONCopy(g)
+    this.setState({'data': new_g})
+    if this.props.on_data_update:
+        this.props.on_data_update(new_g)
+
+def on_rate(e, d):
+    this.state.data.rating = d.rating
+    this.update_data(this.state.data)
 
 def newgalleryprops_render():
 
@@ -233,9 +248,12 @@ def newgalleryprops_render():
     language = this.props.language or this.state.lang_data
     tags = this.props.tags
     if this.props.data:
-        item_id = this.props.data.id
-        parodies = this.props.data.parodies
-        titles = this.props.data.titles
+        if this.props.data.id:
+            item_id = this.props.data.id
+        if this.props.data.parodies:
+            parodies = this.props.data.parodies
+        if this.props.data.titles:
+            titles = this.props.data.titles
 
         if this.props.data.pub_date:
             date_pub = this.props.data.pub_date
@@ -245,27 +263,29 @@ def newgalleryprops_render():
             date_read = this.props.data.last_read
         if this.props.data.timestamp:
             date_added = this.props.data.timestamp
-        read_count = this.props.data.times_read
-        info = this.props.data.info
+        if this.props.data.read_count:
+            read_count = this.props.data.times_read
+        if this.props.data.info:
+            info = this.props.data.info
         if this.props.data.preferred_title:
             title = this.props.data.preferred_title.js_name
-        if not item_id:
-            item_id = this.props.data.id
 
-        artists = this.props.data.artists
-        circle_ids = []
-        for a in artists:
-            if a.circles:
-                for c in a.circles:
-                    if c.id in circle_ids:
-                        continue
-                    circles.append(c)
-                    circle_ids.append(c.id)
+        if this.props.data.artists:
+            artists = this.props.data.artists
+            circle_ids = []
+            for a in artists:
+                if a.circles:
+                    for c in a.circles:
+                        if c.id in circle_ids:
+                            continue
+                        circles.append(c)
+                        circle_ids.append(c.id)
 
-        for u in this.props.data.urls:
-            urls.append(u.js_name)
+        if this.props.data.urls:
+            for u in this.props.data.urls:
+                urls.append(u.js_name)
 
-        if not utils.defined(rating):
+        if not utils.defined(rating) and this.props.data.rating:
             rating = this.props.data.rating
 
         if not language and this.props.data.language:
@@ -274,7 +294,7 @@ def newgalleryprops_render():
         if not status and this.props.data.status:
             status = this.props.data.status
 
-        if not tags and this.props.data.taggable.tags:
+        if not tags and this.props.data.taggable and this.props.data.taggable.tags:
             tags = this.props.data.taggable.tags
 
     paths = []
@@ -320,7 +340,7 @@ def newgalleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
+                  e(ui.Table.Cell, e(ui.Rating, onRate=this.on_rate, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
@@ -367,7 +387,7 @@ NewGalleryProps = createReactClass({
     'displayName': 'NewGalleryProps',
 
     'getInitialState': lambda: {'id': None,
-                                'data': this.props.data,
+                                'data': this.props.data or {},
                                 'item_type': ItemType.Gallery,
                                 'lang_data': this.props.language,
                                 'status_data': this.props.status,
@@ -377,6 +397,8 @@ NewGalleryProps = createReactClass({
     #'componentDidMount': lambda: all((this.get_lang(), this.get_status())),
     'get_lang': get_lang,
     'get_status': get_status,
+    'update_data': update_data,
+    'on_rate': on_rate,
 
     'render': newgalleryprops_render
 })

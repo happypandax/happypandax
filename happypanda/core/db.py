@@ -2150,9 +2150,11 @@ def _get_current():
     return l_obj
 
 
-def make_db_url(db_name=None):
+def make_db_url(db_name=None, dev_db=None):
+    if dev_db is None:
+        dev_db = constants.dev_db
     if db_name is None:
-        db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
+        db_name = constants.db_name_dev if dev_db and config.db_name.value == constants.db_name else config.db_name.value
     db_query = {}
     if config.dialect.value == constants.Dialect.MYSQL:
         db_query.update({'charset': 'utf8mb4'})
@@ -2162,7 +2164,7 @@ def make_db_url(db_name=None):
         drivername += '+pymysql'
 
     if drivername == constants.Dialect.SQLITE:
-        db_url = sa_make_url(os.path.join("sqlite:///", constants.db_path_dev if constants.dev else constants.db_path))
+        db_url = sa_make_url(os.path.join("sqlite:///", constants.db_path_dev if dev_db else constants.db_path))
     else:
         db_url = URL(
             drivername,

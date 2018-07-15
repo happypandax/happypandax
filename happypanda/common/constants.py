@@ -3,6 +3,7 @@ import sys
 import rarfile
 import enum
 import itertools
+import weakref
 
 rarfile.PATH_SEP = '/'
 
@@ -169,6 +170,8 @@ image_sizes = {
 
 translations = None  # dict of available translation files
 
+services = weakref.WeakValueDictionary() # servicetype.service_name (all lowercase)
+
 # PLUGIN
 
 plugin_interface_name = "__hpx__"
@@ -182,6 +185,8 @@ db_session = None
 _db_scoped_session = None
 default_user = None
 special_namespace = "__namespace__"
+
+scheduler_database_url = os.path.join("sqlite:///", dir_data, "scheduler.db")
 
 # SERVER
 

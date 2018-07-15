@@ -106,7 +106,8 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
     Returns:
         item message object
     """
-
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), f"A valid item id is required, not {item_id}")
     item_type = enums.ItemType.get(item_type)
 
     db_msg, db_model = item_type._msg_and_model()

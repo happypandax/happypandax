@@ -80,21 +80,26 @@ def gallery_render():
     data = this.state.data
 
     if data:
-        rating = data.rating
-        title = data.titles[0].js_name
-        inbox = data.metatags.inbox
+        if data.rating:
+            rating = data.rating
+        if data.preferred_title:
+            title = data.preferred_title.js_name
+        if data.metatags:
+            inbox = data.metatags.inbox
 
-        if data.metatags.favorite:
-            fav = 1
-        if not item_id:
+            if data.metatags.favorite:
+                fav = 1
+        if not item_id and data.id:
             item_id = data.id
 
-        for a in data.artists:
-            if len(a.names) > 0:
-                artist_names.append(a.names[0].js_name)
+        if data.artists:
+            for a in data.artists:
+                if len(a.names) > 0:
+                    artist_names.append(a.names[0].js_name)
 
-        for u in data.urls:
-            urls.append(u.js_name)
+        if data.urls:
+            for u in data.urls:
+                urls.append(u.js_name)
 
     gallery_url = '/item/gallery/' + str(item_id)
 

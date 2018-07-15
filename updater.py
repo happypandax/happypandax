@@ -4,7 +4,7 @@ import shutil
 import atexit
 import subprocess
 
-from happypanda.common import constants, hlogger, clsutils, utils
+from happypanda.common import constants, hlogger, clsutils, utils, config
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
@@ -36,7 +36,7 @@ def launch_app(*args, **kwargs):
 
 def main():
     utils.setup_dirs()
-    log.setup_logger()
+    log.setup_logger(dev=constants.dev, debug=config.debug.value)
     try:
         update_info = clsutils.internaldb.update_info.get({})
         if not update_info:

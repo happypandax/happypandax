@@ -131,7 +131,7 @@ def start(argv=None, db_kwargs={}):
         args = parser.parse_args(argv)
         utils.parse_options(args)
         # setup logger without multiprocessing
-        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
+        hlogger.Logger.setup_logger(args, main=True, dev=constants.dev, debug=config.debug.value)
         utils.enable_loggers(config.enabled_loggers.value)
         db_inited = False
         if constants.dev:
@@ -152,10 +152,10 @@ def start(argv=None, db_kwargs={}):
             return
 
         if not args.only_web: # can't init earlier because of cmd_commands 
-            hlogger.Logger.init_listener(args)
+            hlogger.Logger.init_listener(args=args, debug=config.debug.value, dev=constants.dev)
         
         # setup logger with multiprocessing
-        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
+        hlogger.Logger.setup_logger(args, main=True, dev=constants.dev, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 
@@ -182,14 +182,19 @@ def start(argv=None, db_kwargs={}):
             init_commands(args)
 
             log.i("Starting webserver... ({}:{})".format(config.host_web.value, config.port_web.value), stdout=True)
-            web_args = (config.host_web.value, config.port_web.value, constants.dev if args.only_web else False)
+            web_args = (config.host_web.value, config.port_web.value)
+            web_kwargs = {
+                'dev': constants.dev,
+                'debug': config.debug.value,
+                }
             if args.only_web:
-                server.WebServer().run(*web_args)
+                server.WebServer().run(*web_args, **web_kwargs)
             else:
+                web_kwargs.update({'logging_queue': hlogger.Logger._queue,
+                                   'cmd_args': args,})
                 constants.web_proc = Process(target=server.WebServer().run,
                                              args=web_args,
-                                             kwargs={'logging_queue': hlogger.Logger._queue,
-                                                     'cmd_args': args},
+                                             kwargs=web_kwargs,
                                              daemon=True,
                                              name="gevent")
                 constants.web_proc.start()
@@ -214,6 +219,7 @@ def start(argv=None, db_kwargs={}):
             log.i("Restarting...", stdout=True)
         if not args.only_web:
             config.config.save()
+            services.Scheduler.shutdown_all()
             hlogger.Logger.shutdown_listener()
 
         hlogger.shutdown()

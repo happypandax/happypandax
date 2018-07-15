@@ -9,7 +9,7 @@ import sys
 
 sys.path.insert(0, os.getcwd())
 
-from happypanda.common import constants
+from happypanda.common import constants, config as hpx_config
 from happypanda.core import db
 
 USE_TWOPHASE = False
@@ -39,7 +39,7 @@ db_names = config.get_main_option('databases')
 #       'engine1':mymodel.metadata1,
 #       'engine2':mymodel.metadata2
 # }
-target_metadata = {'dbengine': db.Base.metadata}
+target_metadata = {'main': db.Base.metadata}
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -47,15 +47,17 @@ target_metadata = {'dbengine': db.Base.metadata}
 # ... etc.
 
 if context.get_x_argument(as_dictionary=True).get('dev', None):
-    constants.dev = True
+    dev_db = True
+else:
+    dev_db = hpx_config.dev_db.value
 
 def get_engines(offline=False):
-    db_url = str(db.make_db_url())
+    db_url = str(db.make_db_url(dev_db=dev_db))
     engines = {}
     if offline:
-        engines = {'dbengine': {'url': db_url}}
+        engines = {'main': {'url': db_url}}
     else:
-        engines = {'dbengine': {'engine': engine_from_config(
+        engines = {'main': {'engine': engine_from_config(
                                     {'here': os.getcwd(), 'sqlalchemy.url': db_url},
                                     prefix='sqlalchemy.',
                                     poolclass=pool.NullPool)}}

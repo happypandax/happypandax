@@ -33,6 +33,8 @@ added_files = [
     ('templates/base.html', 'templates'),
     ('translations', 'translations'),
     ('static', 'static'),
+    ('migrate', 'migrate'),
+    ('alembic.ini', ''),
   ]
 
 interface_files = exec_statement("""

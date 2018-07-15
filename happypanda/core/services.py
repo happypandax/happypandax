@@ -2,9 +2,11 @@ import gevent
 import weakref
 import functools
 import itertools
+import pytz
 
 from gevent import pool, queue, event
 from apscheduler.schedulers.gevent import GeventScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from cachetools import LRUCache
 
 from happypanda.common import hlogger, constants, config, exceptions, utils, clsutils
@@ -19,12 +21,14 @@ class Service:
     generic = None
     _id_counter = itertools.count(100)
 
-    services = []
     _all_commands = weakref.WeakValueDictionary()
 
     def __init__(self, name):
         self.name = name
-        self.services.append(weakref.ref(self))
+        constants.services[self.identifier()] = self
+
+    def identifier(self):
+        return f"{self.__class__.__name__.lower()}.{self.name.lower()}"
 
     def add_command(self, cmd):
         command_id = next(self._id_counter)
@@ -198,17 +202,40 @@ class Scheduler(Service):
     Service running scheduled and periodic commands
     """
 
+    _schedulers = weakref.WeakSet()
+
     def __init__(self, name):
         super().__init__(name)
         self._commands = {}  # cmd_id : command
-        self._scheduler = GeventScheduler({
-            'apscheduler.timezone': 'UTC',  # TODO: locatime or user configurable
-        })
-        self._jobstores = {}
+        self._jobstores = {'default': SQLAlchemyJobStore(url=constants.scheduler_database_url,
+                                                         tablename="jobs")}
         self._executors = {}
-        self._job_defaults = {}
-        self._jobs = {}  # cmd_id : job
+        self._job_defaults = {
+            'max_instances': 10,
+            'coalesce': True,
+            }
         self._triggers = {}  # cmd_id : trigger
+        self._scheduler = GeventScheduler(jobstores=self._jobstores,
+                                          executors=self._executors,
+                                          job_defaults=self._job_defaults,
+                                          timezone=pytz.utc, # TODO: make user configurable
+                                          )
+        self._schedulers.add(self)
+        s_cmds = constants.internaldb.scheduler_commands.get({})
+        v = s_cmds.setdefault(self.identifier(), {})
+        if not v:
+            constants.internaldb.scheduler_commands.set(s_cmds)
+
+    def _get_job_id(self, cmd_id):
+        s_cmds = constants.internaldb.scheduler_commands.get()
+        return s_cmds[self.identifier()].get(cmd_id)
+
+    def _set_job_id(self, cmd_id, job_id):
+        if not isinstance(job_id, int):
+            job_id = job_id.id
+        s_cmds = constants.internaldb.scheduler_commands.get()
+        s_cmds[self.identifier()][cmd_id] = job_id
+        constants.internaldb.scheduler_commands.set(s_cmds)
 
     def start(self):
         "Start the scheduler"
@@ -233,7 +260,8 @@ class Scheduler(Service):
 
     def remove_command(self, cmd_id):
         "Remove a command from this scheduler"
-        raise NotImplementedError
+        j_id = self._get_job_id(cmd_id)
+        self._scheduler.remove_job(j_id)
 
     def pause_command(self, cmd_id):
         "Pause a command in this scheduler, returns command state"
@@ -246,19 +274,26 @@ class Scheduler(Service):
     def start_command(self, cmd_id, *args, **kwargs):
         "Start running a command in this scheduler, returns command state"
         cmd = self.get_command(cmd_id)
-        self._jobs[cmd_id] = self._scheduler.add_job(cmd._run,
-                                                     self._triggers[cmd_id],
-                                                     args, kwargs,
-                                                     name=cmd.__class__.__name__)
+        j_id = self._scheduler.add_job(cmd._run,
+                                            self._triggers[cmd_id],
+                                            args, kwargs,
+                                            name=cmd.__class__.__name__)
+        self._set_job_id(cmd_id, j_id)
 
     def stop_command(self, cmd_id):
         "alias for remove_command"
         self.remove_command(cmd_id)
 
-    def shutdown(self, wait=False):
+    def shutdown(self, wait=True):
         "Shutdown scheduler"
         self._scheduler.shutdown(wait=wait)
         return self
+
+    @classmethod
+    def shutdown_all(cls, wait=True):
+        "Shutdown all schedulers"
+        for s in cls._schedulers:
+            s.shutdown(wait=wait)
 
     def pause(self):
         "Pause scheduler"

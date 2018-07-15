@@ -35,6 +35,7 @@ class QueueHandler(logging.Handler):
     def __init__(self, queue):
         super().__init__()
         self.queue = queue
+        self.lock = None
 
     def createLock(self):
         return
@@ -158,10 +159,10 @@ class Logger:
         return getattr(self._logger, name)
 
     @classmethod
-    def setup_logger(cls, args=None, logging_queue=None, main=False, debug=False):
+    def setup_logger(cls, args=None, logging_queue=None, main=False, debug=False, dev=False):
         assert isinstance(args, argparse.Namespace) or args is None
-        argsdev = getattr(args, 'dev', False)
-        argsdebug = getattr(args, 'debug', False)
+        argsdev = dev
+        argsdebug = debug
         if logging_queue:
             cls._queue = logging_queue
 
@@ -256,8 +257,8 @@ class Logger:
                 l._log(log[1], *log[2], stdout=log[3], stderr=log[4])
 
     @staticmethod
-    def _listener(args, queue):
-        Logger.setup_logger(args)
+    def _listener(queue, args, kwargs):
+        Logger.setup_logger(*args, **kwargs)
         while True:
             try:
                 record = queue.get()
@@ -275,12 +276,11 @@ class Logger:
             pass
 
     @classmethod
-    def init_listener(cls, args):
-        assert isinstance(args, argparse.Namespace)
+    def init_listener(cls, *args, **kwargs):
         "Start a listener in a child process, returns queue"
         cls._manager = mp.Manager()
         q = cls._manager.Queue()
-        Process(target=Logger._listener, args=(args, q,), daemon=True, name="HPX Logger").start()
+        Process(target=Logger._listener, args=(q, args, kwargs), daemon=True, name="HPX Logger").start()
         cls._queue = q
         return cls._queue
 

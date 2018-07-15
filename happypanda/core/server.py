@@ -658,9 +658,9 @@ class WebServer:
     happyweb.config['PROPAGATE_EXCEPTIONS'] = True  # enable only on debug?
     socketio = SocketIO(happyweb, async_mode="gevent")
 
-    def run(self, host, port, debug=False, logging_queue=None, cmd_args=None):
+    def run(self, host, port, dev=False, debug=False, logging_queue=None, cmd_args=None):
         if logging_queue:
-            hlogger.Logger.setup_logger(cmd_args, logging_queue, debug=debug)
+            hlogger.Logger.setup_logger(cmd_args, logging_queue, dev=dev, debug=debug)
             utils.setup_online_reporter()
             utils.enable_loggers(config.enabled_loggers.value)
 

@@ -817,6 +817,12 @@ advanced_ns = "advanced"
 
 with config.namespace(advanced_ns):
 
+    dev_db = config.create(
+        advanced_ns,
+        "dev_db",
+        False,
+        "Use a dev database", hidden=True)
+
     rollbar_access_token = config.create(
         advanced_ns,
         "rollbar_access_token",

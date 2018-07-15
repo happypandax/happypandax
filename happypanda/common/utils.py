@@ -164,14 +164,15 @@ def parse_options(args):
     assert isinstance(args, argparse.Namespace)
 
     constants.dev = args.dev
-    constants.dev_db = args.dev_db
 
     cfg = config.config
 
     cmd_args = {}
-
-    if args.debug is not None:
+    if args.debug:
         cmd_args.setdefault(config.debug.namespace, {})[config.debug.name] = args.debug
+
+    if args.dev_db:
+        cmd_args.setdefault(config.dev_db.namespace, {})[config.dev_db.name] = args.dev_db
 
     if args.host is not None:
         cmd_args.setdefault(config.host.namespace, {})[config.host.name] = args.host
@@ -190,6 +191,8 @@ def parse_options(args):
 
     if cmd_args:
         cfg.apply_commandline_args(cmd_args)
+
+    constants.dev_db = config.dev_db.value
 
     if constants.dev:
         sys.displayhook == pprint.pprint
@@ -627,7 +630,8 @@ def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_
             create_self_signed_cert(certfile, keyfile, pemfile, pfxfile)
         if not os.path.exists(pfxfile):
             export_cert_to_pfx(pfxfile, certfile, keyfile)
-        log.i("Certs not provided, using self-signed certificate", stdout=True)
+        if server_side and not webserver:
+            log.i("Certs not provided, using self-signed certificate", stdout=True)
     else:
         if not os.path.exists(certfile) and not (os.path.exists(keyfile) if keyfile else False):
             raise exceptions.CoreError(this_function(), "Non-existent certificate or private key file")
