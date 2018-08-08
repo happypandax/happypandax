@@ -443,7 +443,10 @@ class Base:
         if value is None and kw:
             value = kw
 
-        col_model = column_model(getattr(self.__class__, attr_name))
+        col_attr = getattr(self.__class__, attr_name)
+        if is_descriptor(col_attr):
+            raise NotImplementedError("updating of descriptors has not yet been implemented")
+        col_model = column_model(col_attr)
 
         def do_op(x, v, o, check=True):
             if is_list(x) or is_query(x):
@@ -1253,7 +1256,10 @@ class TaggableMixin(UpdatedMixin):
 
     @hybrid_property
     def tags(self):
-        return self.taggable.tags
+        if isinstance(self.taggable, Taggable):
+            return self.taggable.tags
+        else:
+            return Taggable.tags
 
     compact_tags = Taggable.compact_tags
 
@@ -2108,9 +2114,10 @@ def check_db_version(sess):
                 log.w(msg, stdout=True)
                 return False
             else:
-                msg = 'Found database version {}. Your database has been upgraded/downgraded to version {}.'.format(
-                    life.version, constants.version_db_str)
+                msg = 'Your database will be upgraded to version {} from {}.'.format(
+                    constants.version_db_str, life.version)
                 log.i(msg, stdout=True)
+                life.version = constants.version_db_str
     else:
         life = Life()
         sess.add(life)

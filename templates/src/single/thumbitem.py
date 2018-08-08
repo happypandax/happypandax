@@ -109,6 +109,7 @@ def thumbnail_render():
            centered=this.props.centered,
            bordered=this.props.bordered,
            rounded=this.props.rounded,
+           floated=this.props.floated,
            avatar=this.props.avatar,
            dimmer=this.props.dimmer,
            height=this.props.height,

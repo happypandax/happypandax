@@ -179,7 +179,7 @@ ItemViewPage = createReactClass({
             on_search=this.on_search,
             on_toggle_config=this.toggle_config,
             cfg_suffix=this.config_suffix,
-        )),
+        ), fixed=True),
 
     'componentWillMount': lambda: this.update_menu(),
 

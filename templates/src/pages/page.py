@@ -5,7 +5,7 @@ from src.ui import ui, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import (ItemType, ImageSize, client, Command)
-from src.single import thumbitem, pageitem
+from src.single import thumbitem, pageitem, galleryitem
 from src.views import tagview, itemview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -18,13 +18,38 @@ JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
 
-def PageNav(props):
+def pagenav_render():
     els = []
+    props = this.props
+
     if props.number > 1:
-        els.append(e(ui.Button, icon="arrow left", as_=Link, to=props.p_url))
-    els.append(e(ui.Button, str(props.number) + "/" + str(props.count) if props.count else props.number))
+        els.append(e(ui.Button, icon="long arrow alternate left", as_=Link, to=props.p_url))
+
+    curr_page_txt = str(props.number) + "/" + str(props.count) if props.count else props.number
+
+    els.append( e(ui.Popup,
+              e(ui.Form,
+                  e(ui.Form.Field,
+                    e(ui.Input,
+                      onChange=this.on_page_input,
+                      size="mini",
+                      js_type="number",
+                      placeholder=props.number,
+                      action=e(ui.Button, js_type="submit", compact=True,
+                               icon="share",
+                               onClick=this.go_to_page),
+                      min=1, max=str(props.count) if props.count else props.number),
+                    ),
+                  onSubmit=this.go_to_page
+                ),
+              on="click",
+              hoverable=True,
+              position="top center",
+              trigger=e(ui.Button, curr_page_txt, basic=True))
+               )
+
     if props.number < props.count and props.n_url:
-        els.append(e(ui.Button, icon="arrow right", as_=Link, to=props.n_url))
+        els.append(e(ui.Button, icon="long arrow alternate right", as_=Link, to=props.n_url))
 
     return e(ui.Grid.Row,
              e(ui.Grid.Column,
@@ -33,6 +58,19 @@ def PageNav(props):
                ),
              columns=1
              )
+
+PageNav = createReactClass({
+    'displayName': 'PageNav',
+
+    'getInitialState': lambda: {
+                                'go_to_page': None,
+                                },
+
+    'on_page_input': lambda e, d: this.setState({'go_to_page': d.value}),
+    'go_to_page': lambda: utils.go_to(this.props.history, this.props.get_page_url(this.state.go_to_page)) if this.state.go_to_page and this.props.get_page_url else None,
+
+    'render': pagenav_render,
+}, pure=True)
 
 
 __pragma__("iconv")
@@ -382,13 +420,15 @@ def page_render():
                ),
              e(ui.Sidebar.Pusher,
                  e(PageNav, number=number, count=this.state.page_count,
-                   n_url=n_url, p_url=p_url),
+                   n_url=n_url, p_url=p_url,
+                   get_page_url=this.get_page_url,
+                   history=this.props.history),
                  e(ui.Grid.Row,
                    e(ui.Ref,
                      e(ui.Grid.Column,
                        e(ui.Segment,
                          thumb,
-                         className="no-padding-segment",
+                         className="no-padding-segment force-viewport-size",
                          basic=True,
                          inverted=this.state.cfg_invert,
                          ),
@@ -402,7 +442,9 @@ def page_render():
                    textAlign="center",
                    ),
                  e(PageNav, number=number, count=this.state.page_count,
-                   n_url=n_url, p_url=p_url),
+                   n_url=n_url, p_url=p_url,
+                   get_page_url=this.get_page_url,
+                   history=this.props.history),
                  e(ui.Grid.Row,
                    e(ui.Grid.Column,
                      e(ui.Segment,
@@ -485,7 +527,7 @@ Page = createReactClass({
     'componentWillMount': lambda: all((this.props.menu([
         e(ui.Menu.Item, e(ui.Icon, js_name="ellipsis vertical", size="large"),
           icon=True, onClick=this.toggle_pages, position="left"),
-        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, as_=Link, to={'pathname': "/item/gallery/{}".format(this.props.match.params.gallery_id),
+        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="level up alternate", size="large"), icon=True, as_=Link, to={'pathname': "/item/gallery/{}".format(this.props.match.params.gallery_id),
                                                                                                                'state': {'gallery': this.state.gallery}})),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
           icon=True, onClick=this.toggle_config, position="right"),

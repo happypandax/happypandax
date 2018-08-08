@@ -1,12 +1,13 @@
 from src.react_utils import (h,
                              e,
                              createReactClass)
+from src import utils
 from src.state import state
-from src.ui import ui, DateLabel
+from src.ui import ui
 from src.client import ItemType, client
 from src.single import artistitem, parodyitem, circleitem
-from src import utils
 from src.views import tagview
+from src.props import galleryprops, simpleprops
 from src.i18n import tr
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -77,6 +78,7 @@ def galleryprops_render():
     language = this.props.language or this.state.lang_data
     tags = this.props.tags
     titles = []
+    title_data = None
     if this.props.data:
         if this.props.data.id:
             item_id = this.props.data.id
@@ -94,11 +96,12 @@ def galleryprops_render():
         if this.props.data.timestamp:
             date_added = this.props.data.timestamp
         if this.props.data.read_count:
-            read_count = this.props.data.times_read
+            read_count = this.props.data.read_count
         if this.props.data.info:
             info = this.props.data.info
         if this.props.data.preferred_title:
             title = this.props.data.preferred_title.js_name
+            title_data = this.props.data.preferred_title
 
         if this.props.data.artists:
             artists = this.props.data.artists
@@ -112,31 +115,52 @@ def galleryprops_render():
                         circle_ids.append(c.id)
 
         if this.props.data.urls:
-            for u in this.props.data.urls:
-                urls.append(u.js_name)
+            urls = this.props.data.urls
 
         if not utils.defined(rating) and this.props.data.rating:
             rating = this.props.data.rating
 
-    status = status.js_name if status else tr(this, "ui.t-unknown", "Unknown")
-    language = language.js_name if language else tr(this, "ui.t-unknown", "Unknown")
-
     rows = []
-
     if this.props.compact:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, title, size="small"), colSpan="2", textAlign="center",
+                      e(ui.Table.Cell, e(galleryprops.Titles,
+                                         data=titles,
+                                         preferred=title_data,
+                                         update_data=this.props.update_data,
+                                         data_key="titles",
+                                         edit_mode=this.props.edit_mode,
+                                         size="small"), colSpan="2",
                         verticalAlign="middle")))
-    if info:
+    if info or this.props.edit_mode:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, info, size="tiny", className="sub-text"), colSpan="2")))
+                      e(ui.Table.Cell, e(galleryprops.Description,
+                                         data=info,
+                                         update_data=this.props.update_data,
+                                         data_key="info",
+                                         edit_mode=this.props.edit_mode), colSpan="2")))
 
     if this.props.compact:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell,
-                        e(DateLabel, tr(this, "ui.t-date-added", "Date added"), timestamp=date_added, format="LLL"),
-                        e(DateLabel, tr(this, "ui.t-last-read", "Last read"), timestamp=date_read, format="LLL"),
-                        e(DateLabel, tr(this, "ui.t-last-updated", "Last updated"), timestamp=date_upd, format="LLL"),
+                        e(simpleprops.DateLabel,
+                          update_data=this.props.update_data,
+                          data_key="timestamp",
+                          edit_mode=this.props.edit_mode,
+                          text=tr(this, "ui.t-date-added","Date added"),
+                          data=date_added, format="LLL"),
+                        e(simpleprops.DateLabel,
+                          update_data=this.props.update_data,
+                          data_key="last_read",
+                          edit_mode=this.props.edit_mode,
+                          text=tr(this, "ui.t-last-read", "Last read"),
+                          data=date_read, format="LLL"),
+                        e(simpleprops.DateLabel,
+                          update_data=this.props.update_data,
+                          data_key="last_updated",
+                          edit_mode=this.props.edit_mode,
+                          text=tr(this, "ui.t-last-updated", "Last updated"),
+                          data=date_upd, format="LLL",
+                          disabled=True if this.props.edit_mode else False),
                         colSpan="2",
                         textAlign="center",
                         )))
@@ -144,21 +168,29 @@ def galleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-artist", "Artist") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
-    if circles:
+                  e(ui.Table.Cell, e(galleryprops.Artists,
+                                     data=artists,
+                                     update_data=this.props.update_data,
+                                     data_key="artists",
+                                     edit_mode=this.props.edit_mode))))
+    if circles and not this.props.edit_mode:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
                                          ':', size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
-    if parodies:
+    if parodies or this.props.edit_mode:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") +
                                          ':', size="tiny", className="sub-text"), collapsing=True),
-                      e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
+                      e(ui.Table.Cell, *(e(parodyitem.ParodyLabel,data=x) for x in parodies))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, language)))
+                  e(ui.Table.Cell, e(simpleprops.Language,
+                                     data=language,
+                                     update_data=this.props.update_data,
+                                     data_key="language",
+                                     edit_mode=this.props.edit_mode))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
@@ -166,27 +198,45 @@ def galleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green",
-                                                                                                                       "ongoing": "orange",
-                                                                                                                       "unreleased": "red",
-                                                                                                                       "unknown": "grey"}.get(status.lower(), "blue")))))
+                  e(ui.Table.Cell, e(galleryprops.Status,
+                                     update_data=this.props.update_data,
+                                     data_key="language",
+                                     data=status,
+                                     edit_mode=this.props.edit_mode))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
+                  e(ui.Table.Cell, e(simpleprops.DateLabel,
+                                     update_data=this.props.update_data,
+                                     data_key="pub_date",
+                                     edit_mode=this.props.edit_mode,
+                                     data=date_pub, full=True))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
+                  e(ui.Table.Cell, e(simpleprops.EditNumber,
+                                     data_key="read_count",
+                                     update_data=this.props.update_data,
+                                     data=read_count,
+                                     edit_mode=this.props.edit_mode))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
+                  e(ui.Table.Cell, e(tagview.TagView,
+                                     data_key="tags",
+                                     update_data=this.props.update_data,
+                                     edit_mode=this.props.edit_mode,
+                                     item_id=item_id,
+                                     item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") +
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-external-links", "External") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls], size="small", relaxed=True))))
+                  e(ui.Table.Cell, e(simpleprops.URLs,
+                                     data_key="urls",
+                                     update_data=this.props.update_data,
+                                     edit_mode=this.props.edit_mode,
+                                     data=urls, relaxed=True, size="small"))))
 
     return e(ui.Table,
              e(ui.Table.Body,
@@ -310,7 +360,11 @@ def newgalleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-title", "Title") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, e(ui.Header, x.js_name, size="tiny"),) for x in titles], size="small", relaxed=True, divided=True))))
+                  e(ui.Table.Cell, e(galleryprops.Titles,
+                                     data=titles,
+                                     update_data=this.props.update_data,
+                                     data_key="titles",
+                                     size="small"))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-description", "Description") +
@@ -351,7 +405,7 @@ def newgalleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
+                  e(ui.Table.Cell, e(simpleprops.DateLabel, data=date_pub, full=True))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") +
@@ -359,7 +413,7 @@ def newgalleryprops_render():
                   e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") +
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-external-links", "External") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls], size="small", relaxed=True))))
 

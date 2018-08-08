@@ -38,6 +38,9 @@ SearchOptions = createReactClass({
                         )
 })
 
+def Identity(props):
+    return props.children
+
 
 def search_get_config(data=None, error=None):
     if data is not None and not error:
@@ -70,35 +73,39 @@ def search_render():
                size=this.props.size,
                input=e(ui.Input,
                        fluid=this.props.fluid,
-                       transparent=this.props.transparent if utils.defined(this.props.transparent) else True,
+                       className="secondary" if (this.props.transparent if utils.defined(this.props.transparent) else True) else "",
                        placeholder=tr(this, "ui.t-search-main-placeholder", "Search title, artist, namespace & tags"),
-                       label=e(ui.Popup,
-                               e(SearchOptions,
-                                 history=this.props.history,
-                                 query=this.props.query,
-                                 on_change=this.on_search_options,
-                                 case_=this.state['case'],
-                                 regex=this.state.regex,
-                                 whole=this.state.whole,
-                                 all=this.state.all,
-                                 desc=this.state.desc,
-                                 suggest=this.state.suggest,
-                                 on_key=this.state.on_key,
-                                 ),
-                               trigger=e(ui.Button, icon=e(ui.Icon.Group,
-                                                           e(ui.Icon, js_name="options"),
-                                                           e(ui.Icon, js_name="search", corner=True)),
-                                         js_type="button", basic=True, size=this.props.size),
-                               hoverable=True,
-                               on="click",
-                               hideOnScroll=True,),
+                       label=e(Identity,
+                               e("div",
+                                 e(ui.Popup,
+                                   e(SearchOptions,
+                                     history=this.props.history,
+                                     query=this.props.query,
+                                     on_change=this.on_search_options,
+                                     case_=this.state['case'],
+                                     regex=this.state.regex,
+                                     whole=this.state.whole,
+                                     all=this.state.all,
+                                     desc=this.state.desc,
+                                     suggest=this.state.suggest,
+                                     on_key=this.state.on_key,
+                                     ),
+                                   trigger=e(ui.Button, icon=e(ui.Icon.Group,
+                                                               e(ui.Icon, js_name="options"),
+                                                               e(ui.Icon, js_name="search", corner=True)),
+                                             js_type="button", basic=True, size=this.props.size),
+                                   hoverable=True,
+                                   on="click",
+                                   hideOnScroll=True,),
+                                 e(ui.Icon, js_name="remove", link=True, onClick=this.search_empty) if this.state.query else None
+                               )),
+                       icon={'name': 'search', 'link': True, 'onClick': this.on_search},
                        ),
                minCharacters=3,
                fluid=this.props.fluid,
-               action={'icon': 'search'},
                open=this.state.suggest if not this.state.suggest else js_undefined,
                onSearchChange=this.on_search_change,
-               defaultValue=this.state.query
+               value=this.state.query
                ),
              className=cls_name,
              onSubmit=this.on_search
@@ -107,13 +114,14 @@ def search_render():
 
 def on_search_change(e, d):
     this.search_data = d.value
+    this.setState({'query': this.search_data})
     if this.state.on_key:
         clearTimeout(this.search_timer_id)
         this.search_timer_id = setTimeout(this.search_timer, 400)
 
 
 def on_search(e, d):
-    e.preventDefault()
+    e.preventDefault() if e else None
     if e is not None:
         d = this.search_data
     if this.props.query and this.props.history:
@@ -171,6 +179,8 @@ Search = createReactClass({
     'on_search_options': search_option_change,
 
     'on_search': on_search,
+
+    'search_empty': lambda: all((this.on_search_change(None, {'value': ''}), this.on_search(None, ''))),
 
     'render': search_render
 })

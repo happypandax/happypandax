@@ -155,7 +155,6 @@ ItemViewConfig = createReactClass({
     'render': Itemviewvonfig_render
 }, pure=True)
 
-
 def itemviewbase_render():
     props = this.props
     pagination = []
@@ -332,9 +331,9 @@ def itemviewbase_render():
                *nav_els,
                *count_el,
                *pagination,
-               *[e(ui.Grid.Column, c, verticalAlign="middle",
+               [e(ui.Grid.Column, c, verticalAlign="middle",
                    computer=4, tablet=3, mobile=6,
-                   largeScreen=lscreen, widescreen=wscreen) for c in els],
+                   largeScreen=lscreen, widescreen=wscreen, key=k) for k, c in els],
                *infinite_el,
                *pagination,
                *count_el,
@@ -590,10 +589,10 @@ def item_view_render():
                                        on_blur=this.on_blur,
                                        )
 
-    el_items = [e(el, data=x, size_type=size_type, remove_item=remove_item, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
-                for n, x in enumerate(items)]
+    el_items = [(x.id, e(el, data=x, size_type=size_type, remove_item=remove_item, blur=blur, centered=True, className="medium-size", key=x.id, external_viewer=ext_viewer))
+                for x in items]
     if len(el_items) == 0 and count != 0:
-        el_items = [e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x)
+        el_items = [(x.id, e(el, size_type=size_type, blur=blur, centered=True, className="medium-size", key=x))
                     for x in range(min(limit, 30))]
 
     return e(ItemViewBase,

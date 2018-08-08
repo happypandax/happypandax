@@ -306,7 +306,8 @@ def scanpage_render():
              e(TitleChange, title=tr(this, "ui.mi-scan", "Scan")),
              e(ui.Container,
                  e(ui.Message, e("div", dangerouslySetInnerHTML={
-                   '__html': utils.marked(tr(this, "ui.de-scan-info", ""))})),
+                   '__html': utils.marked(tr(this, "ui.de-scan-info", ""))}),
+                   ),
                  e(ui.Divider, hidden=True),
                  e(ui.Form,
                      e(ui.Form.Group,

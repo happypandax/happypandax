@@ -9,9 +9,16 @@ __pragma__('noskip')
 
 query_string = require("query-string")
 marked = require("marked")
+memoize = require("memoizee")
 moment = require("moment")
 isEqual = require('lodash/isEqual')
 stringify = require('json-stable-stringify')
+object_hash = require('object-hash')
+LRU = require("lru-cache")
+lodash_collection = require("lodash/collection")
+lodash_find = lodash_collection.find
+lodash_array = require("lodash/array")
+lodash_lang = require("lodash/lang")
 
 syntax_highlight = __pragma__('js', '{}',
                               """
@@ -234,6 +241,9 @@ def scroll_to_element(el):
     if el:
         el.scrollIntoView({'behavior': 'smooth'})
 
+def scroll_to_top():
+    scroll_to_element(document.getElementById("root"))
+
 
 def is_same_machine():
     return document.getElementById('root').dataset.machine == "True"
@@ -309,6 +319,73 @@ def either(a, b=None):
 
 __pragma__("nokwargs")
 
+__pragma__("kwargs")
+
+
+def defined_or(a, default=None):
+    if defined(a):
+        return a
+    return default
+
+
+__pragma__("nokwargs")
+
 
 def JSONCopy(obj):
     return JSON.parse(JSON.stringify(obj))
+
+__pragma__("kwargs")
+
+def update_object(path, fullobj, new_value, op="add", create=True):
+    if path == None:
+        path = ""
+    path = str(path).split('.')
+    lastkey = lodash_array.last(path)
+    path = path[:-1]
+    curr_obj = fullobj
+    if len(path):
+        for p in path:
+            if create and not defined(curr_obj[p]):
+                curr_obj[p] = {}
+            curr_obj = curr_obj[p]
+    if curr_obj:
+        curr_obj[lastkey] = new_value
+        fullobj = JSONCopy(fullobj)
+    return fullobj
+
+__pragma__("nokwargs")
+
+__pragma__("kwargs")
+def remove_from_list(l, obj_or_id, key='id'):
+    it = obj_or_id[key] if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
+    return lodash_array.remove(l, lambda i: i[key] == it if key else i == it)
+__pragma__("nokwargs")
+
+__pragma__("kwargs")
+def update_in_iterable(i, obj_or_id, key=None):
+    it = obj_or_id[key] if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
+    return lodash_array.remove(l, lambda i: i[key] == it if key else i == it)
+__pragma__("nokwargs")
+
+__pragma__("kwargs")
+def simple_memoize(func, timeout=60*5):
+    """
+    timeout in seconds
+    """
+    return memoize(func, {'primitive': True,
+                          'maxAge': 1000*timeout if timeout > 0 else timeout,
+                          'preFetch': 0.15})
+__pragma__("nokwargs")
+
+__pragma__("kwargs")
+def update_data(value, key=None, op="add"):
+    key = key if key != None else this.props.data_key
+    if this.props.update_data:
+        this.props.update_data(value, key, op=op)
+    else:
+        print(key, value)
+        data = this.state.data or {}
+        data = update_object(key, data, value, op=op)
+        this.setState({'data': data})
+__pragma__("nokwargs")
+

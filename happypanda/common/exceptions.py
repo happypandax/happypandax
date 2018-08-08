@@ -327,7 +327,8 @@ class ServerDisconnectError(ConnectionError):
 class ArchiveError(CoreError):
     """Base archive exception, all archive exceptions will derive from this
     """
-    pass
+    def __init__(self, message):
+        return super().__init__("archive", message)
 
 
 @_error_code(601)

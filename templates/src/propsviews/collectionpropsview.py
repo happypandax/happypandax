@@ -1,10 +1,11 @@
 from src.react_utils import (e,
                              createReactClass)
 from src.state import state
-from src.ui import ui, DateLabel
+from src.ui import ui
 from src.client import ItemType, client
 from src import utils
 from src.i18n import tr
+from src.props import simpleprops
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
@@ -77,16 +78,16 @@ def collectionprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
+                  e(ui.Table.Cell, e(simpleprops.DateLabel, data=date_pub, full=True))))
     if this.props.compact:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") +
                                          ':', size="tiny", className="sub-text"), collapsing=True),
-                      e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
+                      e(ui.Table.Cell, e(simpleprops.DateLabel, data=date_added, format="LLL"))))
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") +
                                          ':', size="tiny", className="sub-text"), collapsing=True),
-                      e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
+                      e(ui.Table.Cell, e(simpleprops.DateLabel, data=date_upd, format="LLL"))))
 
     return e(ui.Table,
              e(ui.Table.Body,

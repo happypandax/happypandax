@@ -25,8 +25,11 @@ class ConfigNode:
     _cfg_nodes = {}
 
     def __init__(self, cfg, ns, name, value, description="", type_=None,
-                 isolation=ConfigIsolation.server, hidden=False, only=None):
+                 isolation=ConfigIsolation.server, hidden=False, only=None,
+                 validator=None):
+        assert callable(validator) or validator is None
         self._cfg = cfg
+        self.validator = validator
         self.isolation = isolation
         self.namespace = ns
         self.name = name
@@ -69,6 +72,12 @@ class ConfigNode:
             v = self._cfg.get(*args, **kwargs)
         return v
 
+    def validate(self, value):
+        if self.validator:
+            if not self.validator(value):
+                raise ValueError
+        return True
+
     @classmethod
     def get_all(cls):
         return cls._cfg_nodes
@@ -84,6 +93,8 @@ class ConfigNode:
         if self.only is not None and new_value not in self.only:
             log.w("Ignoring config value assignment {}:{} to {}".format(self.namespace, self.name, new_value))
             return
+
+        self.validate(new_value)
 
         if self.isolation == ConfigIsolation.client:
             with self._cfg.tmp_config(self.namespace, self._get_ctx_config()):
@@ -112,6 +123,7 @@ class Config:
         self._default_config = OrderedDict()
         self._loaded = False
         self._cmd_args_applied = False
+        self._validated = {}
 
     def create(self, ns, key, default=None, description="", type_=None, **kwargs):
         if ns is None:
@@ -285,7 +297,8 @@ class Config:
         yield
         self._current_ns = self._prev_ns
 
-    def get(self, ns, key, default=None, description="", create=False, type_=None, only=None):
+    def get(self, ns, key, default=None, description="", create=False, type_=None, only=None,
+            validator=None):
         ""
         if not self._loaded:
             self.load()
@@ -315,6 +328,7 @@ class Config:
                     "Setting '{}:{}' expected one of {}, using default value '{}'".format(
                         ns, key, only, default), stderr=True)
                 return default
+
             return v
 
     def get_all(self):
@@ -743,6 +757,14 @@ with config.namespace(scan_ns):
         "skip_existing_galleries",
         True,
         "Skip galleries that have already been added to HPX",
+        isolation=ConfigIsolation.client)
+
+    scan_component_path = config.create(
+        None,
+        "scan_component_path",
+        "{gallery}",
+        "Determine how the single components of a path are treated. Available tokens: " +
+        "*, {gallery}, {series}, {collection}",
         isolation=ConfigIsolation.client)
 
 client_ns = "client"

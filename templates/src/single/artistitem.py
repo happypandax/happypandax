@@ -25,18 +25,16 @@ def artistlbl_render():
             if data.metatags.favorite:
                 fav = 1
 
-    lbl_args = {'content': name}
-    if fav:
-        lbl_args['icon'] = "star"
-    else:
-        lbl_args['icon'] = "user circle outline"
     return e(ui.Popup,
              e(artistpropsview.ArtistProps, data=data, tags=this.props.tags or this.state.tags),
              trigger=e(ui.Label,
+                       e(ui.Icon, js_name="user circle outline"),
+                       name,
+                       e(ui.Icon, js_name="delete", color=this.props.color, link=True, onClick=this.props.onRemove, **{'data-id': data.id}) if this.props.edit_mode else None,
+                       e(ui.Icon, js_name="star") if fav else None,
                        basic=True,
                        color="blue",
                        as_="a",
-                       **lbl_args,
                        ),
              hoverable=True,
              hideOnScroll=True,

@@ -184,7 +184,9 @@ t-times-read: Times read
 t-rating: Rating
 t-tags: Tags
 t-url: URL
+t-external-links: External Links
 t-path: Path
+t-unread-gallery: This gallery has not been read yet
 t-inboxed-gallery: This gallery is in your inbox
 t-trashed-gallery: This gallery is set to be deleted
 b-restore: Restore
@@ -205,6 +207,7 @@ h-more-like-this: More like this
 h-more-same-artist:
     one: More from same artist
     many: More from same artists
+t-tag-edit-placeholder: Write new tags (comma separated)
 
 # Collection Page
 t-inboxed-collection: This collection is in your inbox

@@ -67,9 +67,10 @@ def menu_nav_render():
            *elements,
            *menu_contents,
            *elements_right,
-           secondary=True,
+           secondary=False if this.props.fixed else True,
            borderless=True,
            stackable=True,
+           fixed="top" if this.props.fixed is True else this.props.fixed if this.props.fixed else js_undefined,
            size="tiny",
            **menu_args
            )

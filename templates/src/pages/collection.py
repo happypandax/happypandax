@@ -7,6 +7,7 @@ from src.single import thumbitem
 from src.client import ItemType, ImageSize, client
 from src.propsviews import collectionpropsview
 from src.views import itemview
+from src.props import simpleprops
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -268,10 +269,10 @@ def page_render():
                ),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
-                 e(DateLabel, tr(this, "ui.t-date-added", "Date added"), timestamp=date_added, format="LLL"),
+                 e(simpleprops.DateLabel, text=tr(this, "ui.t-date-added", "Date added"), data=date_added, format="LLL"),
                  textAlign="center"),
                e(ui.Grid.Column,
-                 e(DateLabel, tr(this, "ui.t-last-updated", "Last updated"), timestamp=date_upd, format="LLL"),
+                 e(simpleprops.DateLabel, text=tr(this, "ui.t-last-updated", "Last updated"), data=date_upd, format="LLL"),
                  textAlign="center"),
                columns=2
                ),

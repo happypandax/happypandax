@@ -155,6 +155,14 @@ i.medium-size {
     margin: 0 !important;
 }
 
+.bottom-right-sticky {
+    position: fixed !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    margin-right: 20px !important;
+    margin-bottom: 30px !important;
+}
+
 [class*='hpx-'] {
     &:before {
         display: inline-block;
@@ -245,6 +253,11 @@ h6 {
 .reader-fitheight {
     max-height: 100vh !important;
     width: auto !important;
+}
+
+.force-viewport-size {
+    min-height: 100vh !important;
+    min-width: 100vw !important;
 }
 
 /*--------------
@@ -357,4 +370,26 @@ h6 {
 .max-1000-h {
     max-height: 1000pt;
     overflow-y: auto;
+}
+
+.editable {
+    padding: 2.5pt;
+}
+
+.editable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.ui.secondary.input > input {
+    border-color: transparent;
+    background-color: transparent !important;
+    padding: 0em !important;
+    box-shadow: none !important;
+    border-radius: 0px !important;
+    border-bottom: 1px solid rgba(34, 36, 38, 0.15) !important;
+}
+
+.ui.secondary.input > input:focus {
+    border-color: transparent;
+    border-bottom: 1px solid rgba(34, 36, 38, 0.5) !important;
 }

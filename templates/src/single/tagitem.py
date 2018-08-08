@@ -40,6 +40,7 @@ def taglbl_render():
            e(tagpropsview.TagProps, tag=tag, namespace=ns, data=this.state.data, id=this.state.id),
            trigger=e(ui.Label,
                      *lbl_args,
+                     e(ui.Icon, js_name="delete", color=this.props.color, link=True, onClick=this.props.onRemove, **{'data-id': this.props.id}) if this.props.edit_mode else None,
                      as_="a",
                      size=this.props.size,
                      ),

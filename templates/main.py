@@ -145,10 +145,28 @@ def server_notifications_reply(data=None, error=None, msg_id=0, values={}):
 
 __pragma__("nokwargs")
 
+def page_visibility_update(e, d):
+    calc = d.calculations
+    can_fix_menu = this.state.fixable_menu and window.matchMedia("(min-width: 768px)").matches
+    if calc.pixelsPassed > 80 and can_fix_menu:
+        this.setState({'fixed_menu': True})
+    elif calc.pixelsPassed < 80 and calc.direction == "up" and can_fix_menu:
+        if calc.pixelsPassed < 20:
+            this.setState({'fixed_menu': False})
+    else:
+        this.setState({'fixed_menu': False})
+
+    if calc.pixelsPassed > 500:
+        this.setState({'scroll_up_sticky': True})
+    elif calc.pixelsPassed < 500 and calc.pixelsPassed > 50 and calc.direction == "up":
+        pass
+    else:
+        this.setState({'scroll_up_sticky': False})
 
 def app_will_mount():
     state['app'] = this
     this.notif = notif
+
 
 
 def app_did_mount():
@@ -168,8 +186,10 @@ def get_container_ref(ctx):
 __pragma__("kwargs")
 
 
-def app_menu_contents(el, **kwargs):
-    this.setState({'menu_nav_contents': el, 'menu_nav_args': kwargs})
+def app_menu_contents(el, fixed=False, **kwargs):
+    this.setState({'menu_nav_contents': el,
+                   'menu_nav_args': kwargs,
+                   'fixable_menu': fixed})
 
 
 __pragma__("nokwargs")
@@ -188,7 +208,8 @@ def app_render():
             'location': this.props.location,
             'toggler': this.toggle_sidebar,
             'contents': this.state["menu_nav_contents"],
-            'menu_args': this.state["menu_nav_args"]
+            'menu_args': this.state["menu_nav_args"],
+            'fixed': this.state.fixed_menu,
         }
 
         server_push_close = this.server_push_close
@@ -235,38 +256,42 @@ def app_render():
                e(Route, component=PathChange),
                e(ui.Ref,
                    e(ui.Sidebar.Pusher,
+                     h("div", className="ui secondary menu" if this.state.fixed_menu else ""),
+                     e(ui.Responsive,
+                        e(menu.Menu, **menu_args), minWidth=767),
+                     e(ui.Responsive,
+                        e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
                      e(ui.Visibility,
-                       e(ui.Responsive,
-                         e(menu.Menu, **menu_args), minWidth=767),
-                       e(ui.Responsive,
-                         e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
-                       onBottomPassed=this.toggle_scroll_up,
-                       once=False,
+                         e(Switch,
+                           *api_route,
+                           e(Route, path="/manage", component=this.manage_page),
+                           e(Route, path="/dashboard", component=this.dashboard_page),
+                           e(Route, path="/library", component=this.library_page),
+                           e(Route, path="/favorite", component=this.favorites_page),
+                           e(Route, path="/directory", component=this.directory_page),
+                           e(Route, path="/activity", component=this.activity_page),
+                           e(Route, path="/item/gallery/:gallery_id(\d+)/page/:page_number(\d+)", component=this.page_page),
+                           e(Route, path="/item/gallery/:item_id(\d+)", component=this.gallery_page),
+                           e(Route, path="/item/collection/:item_id(\d+)", component=this.collection_page),
+                           e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
+                           ),
+                      onUpdate=this.page_visibility_update,
                        ),
-                     e(Switch,
-                       *api_route,
-                       e(Route, path="/manage", component=this.manage_page),
-                       e(Route, path="/dashboard", component=this.dashboard_page),
-                       e(Route, path="/library", component=this.library_page),
-                       e(Route, path="/favorite", component=this.favorites_page),
-                       e(Route, path="/directory", component=this.directory_page),
-                       e(Route, path="/activity", component=this.activity_page),
-                       e(Route, path="/item/gallery/:gallery_id(\d+)/page/:page_number(\d+)", component=this.page_page),
-                       e(Route, path="/item/gallery/:item_id(\d+)", component=this.gallery_page),
-                       e(Route, path="/item/collection/:item_id(\d+)", component=this.collection_page),
-                       e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
-                       ),
-                     # e(ui.Sticky,
-                     #  e(ui.Button, icon="chevron up", size="large", floated="right"),
-                     #   bottomOffset=55,
-                     #   context=this.state.container_ref,
-                     #   className="foreground-sticky"),
+                      e(ui.Portal,
+                       e(ui.Button,
+                         onClick=utils.scroll_to_top,
+                         basic=True,
+                         icon="chevron up",
+                         size="small",
+                         className="bottom-right-sticky"),
+                        open=this.state.scroll_up_sticky,
+                        ),
                      e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
                      *modal_els,
 
                      dimmed=this.state.sidebar_toggled,
                      as_=ui.Dimmer.Dimmable,
-                     className="min-fullheight",
+                     className="force-viewport-size",
                      ),
                    innerRef=this.get_context_ref,
                  ),
@@ -302,11 +327,13 @@ App = createReactClass({
         "container_ref": None,
         "sidebar_toggled": False,
         "menu_nav_contents": None,
+        "fixed_menu": False,
+        "fixable_menu": False,
+        "scroll_up_sticky": False,
         "menu_nav_args": {},
         'server_push': False,
         'server_push_msg': {},
         'preview_msg': True,
-        'scroll_up': False,
         'logged_in': js_undefined,
         'debug': state.debug,
         "changelog": "",
@@ -315,8 +342,6 @@ App = createReactClass({
     'componentWillUnMount': app_will_unmount,
     'componentWillMount': app_will_mount,
     'componentDidMount': app_did_mount,
-
-    'toggle_scroll_up': lambda: this.setState({'scroll_up': not this.state.scroll_up}),
 
     "notif": None,
 
@@ -329,7 +354,7 @@ App = createReactClass({
     'on_login': lambda s: this.setState({'logged_in': s}),
 
     'toggle_sidebar': lambda: (this.setState({'sidebar_toggled': not this.state['sidebar_toggled']})),
-
+    'page_visibility_update': page_visibility_update,
     'set_menu_contents': app_menu_contents,
     'get_context_ref': get_container_ref,
     'get_root_ref': lambda c: this.setState({'root_ref': c}),

@@ -3,6 +3,7 @@ from src.ui import ui
 from src.client import client
 from src.state import state
 from src import utils
+from src.i18n import tr
 from src.single import tagitem
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -45,9 +46,18 @@ def tag_on_update(p_props, p_state):
 
 
 def tag_render():
-
+    ns_tags
     tag_rows = []
+    edit_row = []
     data = this.state.data
+    edit_mode = this.props.edit_mode
+
+    if edit_mode:
+        edit_row.append(
+            e(ui.Table.Row,
+              e(ui.Table.Cell,
+                e(ui.Input, fluid=True, className="secondary", placeholder=tr(this, "ui.t-tag-edit-placeholder", "")),
+                colSpan="2")))
 
     if isinstance(data, list):
         d = {}
@@ -64,23 +74,26 @@ def tag_render():
             e(ui.Table.Row,
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
-                    *[e(tagitem.TagLabel, tag=x, show_ns=False) for x in ns_tags],
+                    *[e(tagitem.TagLabel, tag=x, show_ns=False, edit_mode=edit_mode) for x in ns_tags],
                     ),
                   colSpan="2",
                   )))
-    for ns in sorted(dict(data).keys()):
-        ns_tags = this.state.data[ns]
-        ns_tags = sorted([x.js_name for x in ns_tags])
-        tag_rows.append(
-            e(ui.Table.Row,
-                e(ui.Table.Cell, ns, className="sub-text", collapsing=True),
-                e(ui.Table.Cell,
-                  e(ui.Label.Group,
-                    *[e(tagitem.TagLabel, namespace=ns, tag=x, show_ns=False) for x in ns_tags],
-                    ),
-                  )))
+
+    if data:
+        for ns in sorted(dict(data).keys()):
+            ns_tags = data[ns]
+            ns_tags = sorted([x.js_name for x in ns_tags])
+            tag_rows.append(
+                e(ui.Table.Row,
+                    e(ui.Table.Cell, ns, className="sub-text", collapsing=True),
+                    e(ui.Table.Cell,
+                      e(ui.Label.Group,
+                        *[e(tagitem.TagLabel, namespace=ns, tag=x, show_ns=False, edit_mode=edit_mode) for x in ns_tags],
+                        ),
+                      )))
 
     return e(ui.Table,
+             *edit_row,
              e(ui.Transition.Group, *tag_rows, as_=ui.Table.Body, duration=1000),
              basic="very", celled=True, compact="very", size="small")
 

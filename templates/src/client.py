@@ -188,10 +188,15 @@ class Base:
 
 class ServerMsg:
     msg_id = 0
-
+    default_age = 1000*60*60
+    server_results = utils.LRU({
+        'max': 500,
+        'maxAge': 1000*60*30, # 30min
+        })
     __pragma__('kwargs')
 
-    def __init__(self, data, callback=None, func_name=None, contextobj=None):
+    def __init__(self, data, callback=None, func_name=None, contextobj=None,
+                 memoize=False):
         ServerMsg.msg_id += 1
         self.id = self.msg_id
         self.data = data
@@ -199,13 +204,25 @@ class ServerMsg:
         self.func_name = func_name
         self.contextobj = contextobj
         self._msg = {}
-    __pragma__('nokwargs')
+        self.memoize = memoize * 1000 if isinstance(memoize, int) else memoize
+        self._called = False
+        if self.memoize:
+            r = ServerMsg.server_results.js_get(utils.object_hash(self.data))
+            if utils.defined(r):
+                self.call_callback(r[0], r[1], skip_memoize=True)
 
-    def call_callback(self, data, err):
-        if self.contextobj is not None:
-            self.callback(self.contextobj, data, err)
-        else:
-            self.callback(data, err)
+    def call_callback(self, data, err, skip_memoize=False):
+        if self.callback:
+            if self.contextobj is not None:
+                self.callback(self.contextobj, data, err)
+            else:
+                self.callback(data, err)
+        if not skip_memoize and self.memoize:
+            if not isinstance(self.memoize, int):
+                self.memoize = ServerMsg.default_age
+            ServerMsg.server_results.set(utils.object_hash(self.data), (data, err), self.memoize)
+        self._called = True
+    __pragma__('nokwargs')
 
 
 class Client(Base):
@@ -429,18 +446,20 @@ class Client(Base):
 
     __pragma__('kwargs')
 
-    def call_func(self, func_name, callback=None, ctx=None, **kwargs):
+    def call_func(self, func_name, callback=None, ctx=None, _memoize=False, **kwargs):
         "Call function on server. Calls callback with function data and error"
         f_dict = {
             'fname': func_name
         }
         f_dict.update(kwargs)
-        return self.call(ServerMsg([f_dict], callback, func_name, ctx))
+        return self.call(ServerMsg([f_dict], callback, func_name, ctx, memoize=_memoize))
     __pragma__('nokwargs')
 
     def call(self, servermsg):
         "Send data to server. Calls callback with received data."
         assert isinstance(servermsg, ServerMsg)
+        if servermsg._called:
+            return servermsg
         self._response_cb[servermsg.id] = servermsg
         final_msg = {
             'session_id': self.session_id,

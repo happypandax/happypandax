@@ -1,13 +1,14 @@
 from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange
+from src.ui import ui, Slider, LabelAccordion, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
 from src.single import galleryitem, thumbitem, collectionitem
 from src.propsviews import gallerypropsview
 from src.views import itemview
+from src.props import galleryprops, simpleprops
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -43,6 +44,7 @@ def update_menu(data={}):
         menu_items = []
         menu_left = []
         min_width = 768
+        btn_size = "small"
         if inbox:
             menu_left.append(e(ui.Responsive, e(ui.Button,
                                                 e(ui.Icon, js_name="grid layout"),
@@ -75,16 +77,33 @@ def update_menu(data={}):
                           title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"),
                           ),
                         basic=True,
+                        size=btn_size
                       ),
                     as_=ui.Menu.Item,
                     minWidth=min_width,
                   ))
 
         menu_right.append(e(ui.Responsive,
-                            e(ui.Button, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit"), basic=True),
+                            e(ui.Button,
+                              e(ui.Icon, js_name="edit") if not this.state.edit_mode else e(ui.Icon, js_name="delete"),
+                              tr(this, "ui.b-edit", "Edit") if not this.state.edit_mode else tr(this, "ui.b-cancel", "Cancel"),
+                              onClick=this.on_edit if not this.state.edit_mode else this.on_cancel_edit,
+                              basic=True,
+                              size=btn_size),
                             as_=ui.Menu.Item,
                             minWidth=min_width,
                             ))
+        if this.state.edit_mode:
+            menu_right.append(e(ui.Responsive,
+                                e(ui.Button,
+                                  e(ui.Icon, js_name="checkmark"),
+                                  tr(this, "ui.b-save", "Save"),
+                                  onClick=this.on_save_edit,
+                                  color="green",
+                                  size=btn_size),
+                                as_=ui.Menu.Item,
+                                minWidth=min_width,
+                                ))
 
         menu_items.append(e(ui.Menu.Menu, *menu_right, position="right"))
 
@@ -105,7 +124,6 @@ def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
         this.setState({"data": data,
                        "loading": False,
                        "rating": data.rating,
-                       'loading_group': True,
                        })
 
         if not ctx.only_gallery:
@@ -117,6 +135,7 @@ def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
                 this.setState({"fav": 0})
 
             if data.grouping_id:
+                this.setState({"loading_group": True})
                 client.call_func("get_related_items", this.get_grouping,
                                  item_type=ItemType.Grouping,
                                  related_type=this.state.item_type,
@@ -190,6 +209,7 @@ def get_grouping(data=None, error=None):
     if data is not None and not error:
         this.setState({"group_data": data, "loading_group": False})
     elif error:
+        this.setState({"loading_group": False})
         state.app.notif("Failed to fetch grouping ({})".format(this.state.id), level="error")
 
 
@@ -300,6 +320,17 @@ def toggle_external_viewer(e, d):
 
 __pragma__("tconv")
 
+def gallery_favorite(e, d):
+    e.preventDefault()
+    this.setState({'fav': d.rating})
+    if this.state.edit_mode:
+        this.update_data(bool(d.rating), "metatags.favorite")
+    else:
+        this.update_metatags({'favorite': bool(d.rating)})
+        this.get_item(only_gallery=True, force=True)
+
+
+
 
 def gallery_on_update(p_props, p_state):
     if p_props.location.pathname != this.props.location.pathname:
@@ -318,9 +349,12 @@ def gallery_on_update(p_props, p_state):
             this.props.location.state.gallery = this.state.data
             this.props.history.js_replace(this.props.location)
 
+    if any((
+        p_state.edit_mode != this.state.edit_mode,
+    )):
+        this.update_menu()
 
 __pragma__("tconv")
-
 
 def page_willmount():
     this.update_menu()
@@ -343,8 +377,12 @@ def page_render():
     date_upd = None
     date_read = None
     date_added = None
+    titles = []
+    title_data = None
     if this.state.data:
         item_id = this.state.data.id
+        if this.state.data.titles:
+            titles = this.state.data.titles
 
         if this.state.data.last_updated:
             date_upd = this.state.data.last_updated
@@ -354,6 +392,7 @@ def page_render():
             date_added = this.state.data.timestamp
         if this.state.data.preferred_title:
             title = this.state.data.preferred_title.js_name
+            title_data = this.state.data.preferred_title
         inbox = this.state.data.metatags.inbox
         trash = this.state.data.metatags.trash
         if not item_id:
@@ -487,9 +526,9 @@ def page_render():
                                   ))
 
     series_accordion = []
-    if len(series_data) > 1:
+    if len(series_data) > 1 or this.state.edit_mode:
         series_accordion.append(e(ui.Grid.Row, e(ui.Grid.Column,
-                                                 e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
+                                                 e(Slider, [e(galleryitem.Gallery, data=x, className="small-size", key=x.id) for x in series_data],
                                                    loading=this.state.loading_group,
                                                    basic=False,
                                                    secondary=True,
@@ -500,13 +539,13 @@ def page_render():
 
     collection_accordion = []
 
-    if this.state.collection_count:
+    if this.state.collection_count or this.state.edit_mode:
         collection_data = this.state.collection_data
         collection_accordion.append(e(ui.Grid.Row,
                                       e(ui.Grid.Column,
                                         e(LabelAccordion,
                                           e(Slider,
-                                            *[e(collectionitem.Collection, data=x, className="small-size")
+                                            [e(collectionitem.Collection, data=x, className="small-size", key=x.id)
                                                 for x in collection_data],
                                             secondary=True,
                                             sildesToShow=4),
@@ -529,7 +568,7 @@ def page_render():
                                        e(ui.Grid.Column,
                                          e(LabelAccordion,
                                            e(Slider,
-                                             *[e(galleryitem.Gallery, data=x, className="small-size")
+                                             [e(galleryitem.Gallery, data=x, className="small-size", key=x.id)
                                                for x in same_artist_data],
                                              secondary=True,
                                              sildesToShow=4),
@@ -552,7 +591,7 @@ def page_render():
     if not trash and (len(this.state.similar_gallery_data) or this.state.similar_gallery_loading):
         similar_gallery_data = this.state.similar_gallery_data
         similar_slider_el = e(Slider,
-                              *[e(galleryitem.Gallery, data=x, className="small-size") for x in similar_gallery_data],
+                              [e(galleryitem.Gallery, data=x, className="small-size", key=x.id) for x in similar_gallery_data],
                               secondary=True,
                               sildesToShow=4)
         similar_progress_el = e(ui.Segment, e(ui.Progress,
@@ -612,7 +651,15 @@ def page_render():
                      ),
                    e(ui.Grid.Row,
                      e(ui.Grid,
-                       e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, size="medium"), textAlign="center")),
+                       e(ui.Grid.Row,
+                         e(ui.Grid.Column,
+                           e(galleryprops.Titles,
+                             data=titles,
+                             preferred=title_data,
+                             edit_mode=this.state.edit_mode,
+                             update_data=this.update_data,
+                             data_key="titles",
+                             size="small"))),
                        e(ui.Grid.Row,
                          e(ui.Grid.Column,
                            e(gallerypropsview.GalleryProps,
@@ -620,7 +667,9 @@ def page_render():
                              status=this.state.status_data,
                              language=this.state.lang_data,
                              rating=rating,
-                             size="large"
+                             size="large",
+                             update_data=this.update_data,
+                             edit_mode=this.state.edit_mode
                              ))),
                        stackable=True,
                        padded=False,
@@ -637,13 +686,14 @@ def page_render():
                ),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
-                 e(DateLabel, tr(this, "ui.t-date-added", "Date added"), timestamp=date_added, format="LLL"),
+                 e(simpleprops.DateLabel, edit_mode=this.state.edit_mode, text=tr(this, "ui.t-date-added", "Date added"), data=date_added, format="LLL"),
                  textAlign="center"),
                e(ui.Grid.Column,
-                 e(DateLabel, tr(this, "ui.t-last-read", "Last read"), timestamp=date_read, format="LLL"),
+                 e(simpleprops.DateLabel, edit_mode=this.state.edit_mode, text=tr(this, "ui.t-last-read", "Last read"), data=date_read, format="LLL"),
                  textAlign="center"),
                e(ui.Grid.Column,
-                 e(DateLabel, tr(this, "ui.t-last-updated", "Last updated"), timestamp=date_upd, format="LLL"),
+                 e(simpleprops.DateLabel, edit_mode=this.state.edit_mode, text=tr(this, "ui.t-last-updated", "Last updated"), data=date_upd, format="LLL",
+                   disabled=True if this.state.edit_mode else False),
                  textAlign="center"),
                columns=3
                ),
@@ -686,7 +736,8 @@ Page = createReactClass({
                                 'group_data': this.props.group_data or [],
                                 'item_type': ItemType.Gallery,
                                 'loading': True,
-                                'loading_group': True,
+                                'loading_group': False,
+                                'edit_mode': True,
                                 'external_viewer': utils.storage.get("external_viewer", False),
                                 'send_to_recycle': True,
                                 'delete_files': False,
@@ -719,10 +770,9 @@ Page = createReactClass({
     'open_external': galleryitem.open_external,
     'read_event': galleryitem.read_event,
 
-    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
-                                  this.setState({'fav': d.rating}),
-                                  this.get_item(only_gallery=True, force=True),
-                                  e.preventDefault())),
+    'update_data': utils.update_data,
+
+    'favorite': gallery_favorite,
     'send_to_library': lambda e, d: all((this.update_metatags({'inbox': False}),
                                          e.preventDefault())),
     'send_to_trash': lambda e, d: all((this.update_metatags({'trash': True}),
@@ -731,6 +781,10 @@ Page = createReactClass({
                                             e.preventDefault())),
     'read_later': lambda e, d: all((this.update_metatags({'readlater': True}),
                                     e.preventDefault())),
+
+    'on_edit': lambda e, d: all((this.setState({'edit_mode':True}), )),
+    'on_cancel_edit': lambda e, d: all((this.setState({'edit_mode':False}), )),
+    'on_save_edit': lambda e, d: all((this.setState({'edit_mode':False}), )),
 
     'on_read': lambda e, d: all((this.read_event(e, d),
                                  this.open_external(e, d) if this.state.external_viewer else None,

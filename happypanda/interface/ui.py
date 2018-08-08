@@ -281,7 +281,7 @@ def get_translations(locale: str = None):
         trs = container[locale].copy()
     else:
         try:
-            translate("general.locale")
+            translate("general.locale", locale=locale)
             trs = container[locale].copy()
         except exceptions.APIError:
             pass

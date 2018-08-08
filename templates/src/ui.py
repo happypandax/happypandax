@@ -333,40 +333,6 @@ LabelAccordion = createReactClass({
 }, pure=True)
 
 
-def datelbl_render():
-    if this.props.timestamp:
-        full = utils.moment.unix(this.props.timestamp).format(this.props.format or "LL")
-        relative = utils.moment.unix(this.props.timestamp).fromNow()
-        if this.props.full:
-            date = full + " ({})".format(relative)
-        elif this.state.toggled:
-            date = full
-        else:
-            date = relative
-    else:
-        date = tr(this, "ui.t-unknown", "Unknown")
-
-    items = []
-    if this.props.children:
-        items.append(this.props.children)
-        items.append(e(ui.Label.Detail, date))
-    else:
-        items.append(date)
-
-    return e(ui.Label, *items, onClick=this.toggle, as_="a")
-
-
-DateLabel = createReactClass({
-    'displayName': 'DateLabel',
-
-    'getInitialState': lambda: {'toggled': False},
-
-    'toggle': lambda: this.setState({'toggled': not this.state.toggled}),
-
-    'render': datelbl_render,
-}, pure=True)
-
-
 def TitleChange(props):
     document.title = props.title + ' - ' + state.title if props.title else state.title
     return None
@@ -382,3 +348,29 @@ TR = createReactClass({
 
     'render': tr_render,
 }, pure=True)
+
+
+#def onhover_render():
+#    return h(this.props.as_ or "div", this.props.children,
+#             onMouseEnter=this.on_mouse_over,
+#             onMouseLeave=this.on_mouse_over,
+#             onClick=this.props.onClick,
+#             )
+
+
+#OnHover = createReactClass({
+#    'displayName': 'OnHover',
+#    'getInitialState': lambda: {'hover': False},
+#    'on_mouse_over': lambda e,d: all((this.setState({'hover': not this.state.hover}),
+#                                  this.props.onHover() if this.props.onHover and (not this.state.hover) else None)),
+
+#    'render': onhover_render,
+#}, pure=True)
+
+def RemovableItem(props):
+    return e(ui.Message,
+             props.children,
+             as_=ui.Segment,
+             basic="very",
+             onDismiss=props.onRemove if props.onRemove else lambda: None,
+             color=props.color)
