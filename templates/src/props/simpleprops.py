@@ -119,13 +119,23 @@ def get_items(data=None, error=None):
                          _memoize=60*10)
 
 def language_update(e, d):
-    if this.props.on_update:
-        this.props.on_update({'id': d.value}, "add")
+    if isinstance(d.value, int):
+        data = {'id': d.value}
+    else:
+        data = {'name': d.value}
+    if this.props.update_data:
+        if this.props.data_key:
+            this.props.update_data(data, this.props.data_key)
+        elif this.props.data_id:
+            this.props.update_data(data, this.props.data_id)
+
     this.setState({'edit_mode': False})
 
 def language_render():
     data = this.props.data or this.state.data
     el = None
+    if data.id and not data.js_name:
+        data = utils.lodash_find(this.state.all_data, lambda v, i, c: v['id']==data.id) or data
     lang_name = data.js_name or tr(this, "ui.t-unknown", "Unknown")
     if this.state.edit_mode:
         options = []
@@ -139,7 +149,7 @@ def language_render():
                  basic=this.props.basic,
                  compact=this.props.compact,
                  as_=this.props.as_,
-                 onChange=this.update,
+                 onChange=this.on_update,
                  onBlur=this.on_blur,)
     elif data:
         el = e(ui.Label,
@@ -164,7 +174,7 @@ Language = createReactClass({
 
     "get_items": get_items,
     'componentDidMount': lambda: this.get_items(),
-    'update': language_update,
+    'on_update': language_update,
     'on_click': lambda: this.setState({'edit_mode': True}),
     #'on_blur': lambda: this.setState({'edit_mode': False}),
     'on_remove': lambda: print("remove"),
@@ -268,7 +278,7 @@ URLs = createReactClass({
                                 'data': this.props.data or [],
                                 'edit_mode': False,
                                 },
-    'update': update_url,
+    'on_update': update_url,
     'on_click': lambda: this.setState({'edit_mode': True}),
     'on_remove': remove_url,
     'render': urls_render

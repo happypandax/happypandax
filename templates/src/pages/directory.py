@@ -229,7 +229,7 @@ def get_db_parodies(data=None, error=None):
         state.app.notif("Failed to fetch parodies", level="error")
         this.setState({'data_loading': False})
     else:
-        client.call_func("search_item", this.get_items,
+        client.call_func("search_items", this.get_items,
                          item_type=ItemType.Parody,
                          search_query=this.state.search_query,
                          sort_by=ItemSort.ParodyName,
@@ -388,7 +388,7 @@ def get_db_circles(data=None, error=None):
         state.app.notif("Failed to fetch circles", level="error")
         this.setState({'data_loading': False})
     else:
-        client.call_func("search_item", this.get_items,
+        client.call_func("search_items", this.get_items,
                          item_type=ItemType.Circle,
                          search_query=this.state.search_query,
                          sort_by=ItemSort.CircleName,
@@ -490,7 +490,7 @@ def get_db_artists(data=None, error=None):
         state.app.notif("Failed to fetch artists", level="error")
         this.setState({'data_loading': False})
     else:
-        client.call_func("search_item", this.get_items,
+        client.call_func("search_items", this.get_items,
                          item_type=ItemType.Artist,
                          search_query=this.state.search_query,
                          sort_by=ItemSort.ArtistName,

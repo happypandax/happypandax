@@ -72,6 +72,14 @@ def get_item(data=None, error=None):
         if item and item_id:
             client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
 
+def gallery_rate(e, d):
+    e.preventDefault()
+    rating = d.rating
+    if this.state.data.id:
+        client.call_func("update_item", item_type=this.state.item_type,
+                                item={'id':this.state.data.id, 'rating':rating})
+    this.setState({'data': utils.update_object("rating", this.state.data, rating)})
+    this.get_item()
 
 def gallery_render():
     fav = 0
@@ -169,7 +177,7 @@ def gallery_render():
                    e(ui.Rating, icon="heart", onRate=this.favorite, size="massive",
                      className="card-item top left above-dimmer", rating=fav),
                    e(ui.Popup,
-                         e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, clearable=True, className=""),
+                         e(ui.Rating, onRate=this.rate, icon="star", defaultRating=rating, maxRating=10, clearable=True, className=""),
                          trigger=e(
                              ui.Label,
                              rating,
@@ -236,9 +244,9 @@ def gallery_render():
                  e(gallerypropsview.GalleryProps,
                    compact=True,
                    data=data,
-                   rating=rating,
                    tags=this.state.tags,
                    on_tags=this.on_tags,
+                   on_rate=this.rate,
                    size="small"),
                  ),
                trigger=e(ui.Card.Content,
@@ -275,7 +283,7 @@ Gallery = createReactClass({
     'on_tags': on_tags,
     'update_metatags': update_metatags,
     'get_item': get_item,
-
+    'rate': gallery_rate,
     'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
                                   this.get_item(),
                                   e.preventDefault())),
@@ -414,7 +422,7 @@ GalleryItem = createReactClass({
     'on_tags': on_tags,
     'update_metatags': update_metatags,
     'get_item': get_item,
-
+    'rate': gallery_rate,
     'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
                                   this.get_item(),
                                   e.preventDefault())),

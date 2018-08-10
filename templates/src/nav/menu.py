@@ -12,6 +12,35 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+def connect_render():
+    ic_kwargs = {'size': "large"}
+    if this.state.loading:
+        ic_kwargs['name'] = "circle notch"
+        ic_kwargs['loading'] = True
+        ic_kwargs['color'] = "orange"
+        del ic_kwargs['size']
+    else:
+        if this.state.connected:
+            ic_kwargs['name'] = "circle notch"
+            ic_kwargs['color'] = "green"
+        else:
+            ic_kwargs['name'] = "circle notch"
+            ic_kwargs['color'] = "red"
+
+    return e(ui.Menu.Item,
+                icon=e(ui.Icon, **ic_kwargs),
+                )
+
+Connect = createReactClass({
+    'displayName': 'Connect',
+
+    'getInitialState': lambda: {'connected': True,
+                                'loading': False},
+
+    'render': connect_render,
+
+}, pure=False)
+
 
 def menu_nav_render():
     icon_size = "large"
@@ -23,6 +52,9 @@ def menu_nav_render():
     elements = []
     elements_left = []
     elements_right = []
+
+    #elements_right.append(e(Connect))
+
     for n, x in enumerate(items, 1):
         menu_name = x.name
         menu_icon = x.icon

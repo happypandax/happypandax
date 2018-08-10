@@ -387,6 +387,9 @@ h6 {
     box-shadow: none !important;
     border-radius: 0px !important;
     border-bottom: 1px solid rgba(34, 36, 38, 0.15) !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
 }
 
 .ui.secondary.input > input:focus {

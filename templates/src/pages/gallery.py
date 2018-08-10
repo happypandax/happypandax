@@ -1,5 +1,6 @@
 from src.react_utils import (e,
                              createReactClass,
+                             Prompt,
                              Link)
 from src.ui import ui, Slider, LabelAccordion, TitleChange
 from src.i18n import tr
@@ -123,36 +124,35 @@ def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
     if data is not None and not error:
         this.setState({"data": data,
                        "loading": False,
-                       "rating": data.rating,
                        })
+
+        if data.metatags.favorite:
+            this.setState({"fav": 1})
+        else:
+            this.setState({"fav": 0})
+
+        if data.grouping_id:
+            this.setState({"loading_group": True})
+            client.call_func("get_related_items", this.get_grouping,
+                                item_type=ItemType.Grouping,
+                                related_type=this.state.item_type,
+                                item_id=data.grouping_id)
+            client.call_func("get_related_items", this.get_status,
+                                item_type=ItemType.Grouping,
+                                related_type=ItemType.Status,
+                                item_id=data.grouping_id)
+        if data.language_id:
+            client.call_func("get_item", this.get_lang,
+                                item_type=ItemType.Language,
+                                item_id=data.language_id)
+
+        if data.category_id:
+            client.call_func("get_item", this.get_category,
+                                item_type=ItemType.Category,
+                                item_id=data.category_id)
 
         if not ctx.only_gallery:
             trash = data.metatags.trash
-
-            if data.metatags.favorite:
-                this.setState({"fav": 1})
-            else:
-                this.setState({"fav": 0})
-
-            if data.grouping_id:
-                this.setState({"loading_group": True})
-                client.call_func("get_related_items", this.get_grouping,
-                                 item_type=ItemType.Grouping,
-                                 related_type=this.state.item_type,
-                                 item_id=data.grouping_id)
-                client.call_func("get_related_items", this.get_status,
-                                 item_type=ItemType.Grouping,
-                                 related_type=ItemType.Status,
-                                 item_id=data.grouping_id)
-            if data.language_id:
-                client.call_func("get_item", this.get_lang,
-                                 item_type=ItemType.Language,
-                                 item_id=data.language_id)
-
-            if data.category_id:
-                client.call_func("get_item", this.get_category,
-                                 item_type=ItemType.Category,
-                                 item_id=data.category_id)
 
             if not trash and data.id:
                 client.call_func("get_related_count", this.get_filter_count,
@@ -204,6 +204,24 @@ def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
 
 __pragma__('nokwargs')
 
+__pragma__('kwargs')
+def update_item(data=None, error=None, new_data=None):
+    if data is not None and not error:
+        if data:
+            state.app.notif(tr(None, "ui.t-gallery-updated", "Updated!"), level="success")
+        else:
+            state.app.notif(tr(None, "ui.t-gallery-updated-fail", "Failed!"), level="warning")
+        if this.state.new_data:
+            this.setState({'new_data': None})
+    elif error:
+        state.app.notif("Failed to update item ({})".format(this.state.id), level="error")
+    else:
+        new_data = new_data or this.state.new_data
+        if new_data.id:
+            client.call_func("update_item", this.update_item,
+                             item_type=this.state.item_type,
+                             item=new_data)
+__pragma__('nokwargs')
 
 def get_grouping(data=None, error=None):
     if data is not None and not error:
@@ -329,8 +347,17 @@ def gallery_favorite(e, d):
         this.update_metatags({'favorite': bool(d.rating)})
         this.get_item(only_gallery=True, force=True)
 
-
-
+def gallery_rate(e, d):
+    e.preventDefault()
+    rating = d.rating
+    if this.state.edit_mode:
+        this.update_data(rating, "rating")
+    else:
+        if this.state.data.id:
+            client.call_func("update_item", item_type=this.state.item_type,
+                                 item={'id':this.state.data.id, 'rating':rating})
+        this.setState({'data': utils.update_object("rating", this.state.data, rating)})
+        this.get_item(only_gallery=True, force=True)
 
 def gallery_on_update(p_props, p_state):
     if p_props.location.pathname != this.props.location.pathname:
@@ -370,7 +397,6 @@ def page_render():
 
     fav = this.state.fav
     title = ""
-    rating = this.state.rating
     item_id = this.state.id
     inbox = False
     trash = False
@@ -616,6 +642,8 @@ def page_render():
 
     return e(ui.Grid,
              e(TitleChange, title=title if title else tr(this, "general.db-item-gallery", "Gallery")),
+             #e(Prompt, when=this.state.edit_mode and bool(this.state.new_data) and not utils.lodash_lang.isEmpty(this.state.new_data),
+             #  message=tr(this, "ui.t-page-changes-prompt", "Are you sure?")),
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
@@ -666,10 +694,10 @@ def page_render():
                              data=this.state.data,
                              status=this.state.status_data,
                              language=this.state.lang_data,
-                             rating=rating,
                              size="large",
                              update_data=this.update_data,
-                             edit_mode=this.state.edit_mode
+                             on_rate=this.rate,
+                             edit_mode=this.state.edit_mode,
                              ))),
                        stackable=True,
                        padded=False,
@@ -728,7 +756,8 @@ Page = createReactClass({
 
     'getInitialState': lambda: {'id': int(this.props.match.params.item_id),
                                 'data': this.props.data,
-                                'rating': 0,
+                                'new_data': None,
+                                'old_data': None,
                                 'fav': 0,
                                 'category_data': this.props.category_data or {},
                                 'lang_data': this.props.lang_data or {},
@@ -753,6 +782,7 @@ Page = createReactClass({
                                 },
 
     'update_menu': update_menu,
+    'update_item': update_item,
     'get_item': get_item,
     'get_grouping': get_grouping,
     'get_lang': get_lang,
@@ -773,6 +803,7 @@ Page = createReactClass({
     'update_data': utils.update_data,
 
     'favorite': gallery_favorite,
+    'rate': gallery_rate,
     'send_to_library': lambda e, d: all((this.update_metatags({'inbox': False}),
                                          e.preventDefault())),
     'send_to_trash': lambda e, d: all((this.update_metatags({'trash': True}),
@@ -782,9 +813,10 @@ Page = createReactClass({
     'read_later': lambda e, d: all((this.update_metatags({'readlater': True}),
                                     e.preventDefault())),
 
-    'on_edit': lambda e, d: all((this.setState({'edit_mode':True}), )),
-    'on_cancel_edit': lambda e, d: all((this.setState({'edit_mode':False}), )),
-    'on_save_edit': lambda e, d: all((this.setState({'edit_mode':False}), )),
+    'on_edit': lambda e, d: all((this.setState({'edit_mode':True, 'old_data': utils.JSONCopy(this.state.data)}), )),
+    'on_cancel_edit': lambda e, d: all((this.setState({'data': this.state.old_data}) if this.state.old_data else None, this.setState({'edit_mode':False, 'old_data': None}))),
+    'on_save_edit': lambda e, d: all((this.setState({'edit_mode':False, 'old_data': None}),
+                                      this.update_item(), this.get_item(only_gallery=True, force=True))),
 
     'on_read': lambda e, d: all((this.read_event(e, d),
                                  this.open_external(e, d) if this.state.external_viewer else None,

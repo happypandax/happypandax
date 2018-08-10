@@ -21,14 +21,20 @@ def update_title(value, id):
     t = utils.lodash_find(this.state.data, lambda v, i, c: v['id']==id)
     if t:
         t.js_name = value
-        this.update_data(this.state.data, this.props.data_key)
+        this.update_data(this.state.data)
+
+def update_title_language(value, id):
+    t = utils.lodash_find(this.state.data, lambda v, i, c: v['id']==id)
+    if t:
+        t.language = value
+        this.update_data(this.state.data)
 
 def remove_title(e, d):
     tid = e.target.dataset.id
     data = this.props.data or this.state.data
     if tid and data:
         ndata = utils.remove_from_list(data, {'id': tid})
-        this.setState({'data': ndata})
+        this.update_data(ndata)
             
 
 def titles_render():
@@ -51,7 +57,7 @@ def titles_render():
             if t.js_name == pref_title and not this.props.edit_mode:
                 continue
             els.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(simpleprops.Language, edit_mode=this.props.edit_mode, data=t.language, size="tiny", className="sub-text" if not this.props.edit_mode else ""), collapsing=True),
+                        e(ui.Table.Cell, e(simpleprops.Language, data_id=t.id, update_data=this.update_language, edit_mode=this.props.edit_mode, data=t.language, size="tiny", className="sub-text" if not this.props.edit_mode else ""), collapsing=True),
                         e(ui.Table.Cell, e(ui.Header, h("span", e(ui.Icon, js_name="remove", onClick=this.on_remove, link=True, **{'data-id': t.id}), className="right") if this.props.edit_mode else None,
                                            e(simpleprops.EditText,
                                              defaultValue=t.js_name,
@@ -79,6 +85,7 @@ Titles = createReactClass({
                                 'data': this.props.data or [],
                                 },
     'update_title': update_title,
+    'update_language': update_title_language,
     'on_click': lambda: this.setState({'edit_mode': True}),
     'update_data': utils.update_data,
     'on_remove': remove_title,
@@ -139,12 +146,25 @@ def get_status(data=None, error=None):
                          _memoize=60*10)
 
 def status_update(e, d):
-    if this.props.on_update:
-        this.props.on_update({'id': d.value}, "add")
+    if isinstance(d.value, int):
+        data = {'id': d.value}
+    else:
+        data = {'name': d.value}
+    create_val = {}
+    if this.props.grouping_id:
+        create_val = {'id': this.props.grouping_id}
+    if this.props.update_data:
+        if this.props.data_key:
+            this.props.update_data(data, this.props.data_key, new_data_key="grouping", create=create_val)
+        elif this.props.data_id:
+            this.props.update_data(data, this.props.data_id, new_data_key="grouping", create=create_val)
+
     this.setState({'edit_mode': False})
 
 def status_render():
     data = this.props.data or this.state.data
+    if data.id and not data.js_name:
+        data = utils.lodash_find(this.state.all_data, lambda v, i, c: v['id']==data.id) or data
     el = None
     stat_name = data.js_name or tr(this, "ui.t-unknown", "Unknown")
     if this.state.edit_mode:
@@ -159,7 +179,7 @@ def status_render():
                  basic=this.props.basic,
                  compact=this.props.compact,
                  as_=this.props.as_,
-                 onChange=this.update,
+                 onChange=this.on_update,
                  onBlur=this.on_blur,)
     elif data:
         el = e(ui.Label,
@@ -188,7 +208,7 @@ Status = createReactClass({
 
     "get_items": get_status,
     'componentDidMount': lambda: this.get_items(),
-    'update': status_update,
+    'on_update': status_update,
     'on_click': lambda: this.setState({'edit_mode': True}),
     #'on_blur': lambda: this.setState({'edit_mode': False}),
     'on_remove': lambda: print("remove"),
@@ -209,7 +229,7 @@ def description_render():
                as_=ui.TextArea),
                className="ui form")
     else:
-        el = e(ui.Header, info, size="tiny", className="sub-text")
+        el = e(ui.Header, data, size="tiny", className="sub-text")
 
     return el
 

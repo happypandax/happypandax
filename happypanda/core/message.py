@@ -184,6 +184,8 @@ class Error(CoreMessage):
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
 
+    class NoUnpack(Exception): pass
+
     _msg_path = []
     _clsmembers = None  # not all classes have been defined yet
     _db_clsmembers = [
@@ -262,11 +264,15 @@ class DatabaseMessage(CoreMessage):
             gattribs = db.table_attribs(self.item, not load_values, descriptors=True, raise_err=not self._detached,
                                         exclude=ex if not bypass_exclusions else tuple(),
                                         allow=tuple(self._properties['force_value_load'].keys()))
-            r = {
-                x: self._unpack(
-                    x,
-                    gattribs[x],
-                    load_values, load_collections, propagate_bypass) for x in gattribs}
+            for i in ('_properties',):
+                gattribs.pop(i, False)
+
+            r = {}
+            for x, v in gattribs.items():
+                try:
+                    r[x] = self._unpack(x, v, load_values, load_collections, propagate_bypass)
+                except DatabaseMessage.NoUnpack:
+                    pass
         return r
 
     def json_friendly(
@@ -313,7 +319,9 @@ class DatabaseMessage(CoreMessage):
             name)
 
     @classmethod
-    def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True, skip_descriptors=False, _type=None):
+    def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True,
+                  skip_descriptors=False, _type=None,
+                  ignore_private=True):
         db_obj = None
         with db.no_autoflush(constants.db_session()) as sess:
             if not cls.db_type and _type is None:
@@ -336,6 +344,8 @@ class DatabaseMessage(CoreMessage):
 
                 if not (obj_id and db_obj and skip_updating_existing):
                     for attr, value in msg.items():
+                        if ignore_private and attr.startswith('_'):
+                            continue
                         if ignore_empty:
                             if value is None:
                                 continue
@@ -482,7 +492,7 @@ class DatabaseMessage(CoreMessage):
                 return [self._unpack(name, x, load_values, load_collections, propagate_bypass)
                         for x in attrib.all()]
             else:
-                return []
+                raise DatabaseMessage.NoUnpack
 
         elif isinstance(attrib, enum.Enum):
             return attrib.name

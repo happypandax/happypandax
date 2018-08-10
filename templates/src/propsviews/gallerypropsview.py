@@ -66,7 +66,7 @@ def galleryprops_render():
     artists = []
     item_id = this.props.id
     info = ""
-    read_count = 0
+    times_read = 0
     date_pub = None
     date_upd = None
     date_read = None
@@ -79,9 +79,13 @@ def galleryprops_render():
     tags = this.props.tags
     titles = []
     title_data = None
+    grouping_id = None
     if this.props.data:
         if this.props.data.id:
             item_id = this.props.data.id
+        if this.props.data.grouping_id:
+            grouping_id = this.props.data.grouping_id
+
         if this.props.data.parodies:
             parodies = this.props.data.parodies
         if this.props.data.titles:
@@ -95,8 +99,8 @@ def galleryprops_render():
             date_read = this.props.data.last_read
         if this.props.data.timestamp:
             date_added = this.props.data.timestamp
-        if this.props.data.read_count:
-            read_count = this.props.data.read_count
+        if this.props.data.times_read:
+            times_read = this.props.data.times_read
         if this.props.data.info:
             info = this.props.data.info
         if this.props.data.preferred_title:
@@ -113,6 +117,12 @@ def galleryprops_render():
                             continue
                         circles.append(c)
                         circle_ids.append(c.id)
+
+        if this.props.data.language:
+            language = this.props.data.language
+
+        if this.props.data.grouping and this.props.data.grouping.status:
+            status = this.props.data.grouping.status
 
         if this.props.data.urls:
             urls = this.props.data.urls
@@ -194,13 +204,14 @@ def galleryprops_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
+                  e(ui.Table.Cell, e(ui.Rating, onRate=this.props.on_rate, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(galleryprops.Status,
                                      update_data=this.props.update_data,
-                                     data_key="language",
+                                     grouping_id=grouping_id,
+                                     data_key="grouping.status",
                                      data=status,
                                      edit_mode=this.props.edit_mode))))
     rows.append(e(ui.Table.Row,
@@ -215,16 +226,16 @@ def galleryprops_render():
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(simpleprops.EditNumber,
-                                     data_key="read_count",
+                                     data_key="times_read",
                                      update_data=this.props.update_data,
-                                     data=read_count,
+                                     data=times_read,
                                      edit_mode=this.props.edit_mode))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView,
-                                     data_key="tags",
-                                     update_data=this.props.update_data,
+                                     data_id=None,
+                                     #update_data=this.props.update_data,
                                      edit_mode=this.props.edit_mode,
                                      item_id=item_id,
                                      item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))

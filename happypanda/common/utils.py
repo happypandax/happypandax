@@ -305,7 +305,7 @@ def random_name():
 
 def this_function():
     "Return name of current function"
-    return getframeinfo(currentframe()).function
+    return "function" # getframeinfo(currentframe()).function
 
 
 def this_command(command_cls):

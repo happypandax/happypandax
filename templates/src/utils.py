@@ -334,9 +334,7 @@ __pragma__("nokwargs")
 def JSONCopy(obj):
     return JSON.parse(JSON.stringify(obj))
 
-__pragma__("kwargs")
-
-def update_object(path, fullobj, new_value, op="add", create=True):
+def get_object_value(path, fullobj):
     if path == None:
         path = ""
     path = str(path).split('.')
@@ -345,11 +343,61 @@ def update_object(path, fullobj, new_value, op="add", create=True):
     curr_obj = fullobj
     if len(path):
         for p in path:
-            if create and not defined(curr_obj[p]):
+            curr_obj = curr_obj[p]
+    return curr_obj[lastkey]
+
+def set_object_value(path, fullobj, value):
+    if path == None:
+        path = ""
+    path = str(path).split('.')
+    lastkey = lodash_array.last(path)
+    path = path[:-1]
+    curr_obj = fullobj
+    if len(path):
+        for p in path:
+            if not defined(curr_obj[p]):
                 curr_obj[p] = {}
             curr_obj = curr_obj[p]
+    curr_obj[lastkey] = value
+    return fullobj
+
+__pragma__("kwargs")
+
+def update_object(path,
+                  fullobj,
+                  new_value,
+                  op="add",
+                  create=True,
+                  unique=False):
+    if path == None:
+        path = ""
+    path = str(path).split('.')
+    lastkey = lodash_array.last(path)
+    path = path[:-1]
+    curr_obj = fullobj
+    if len(path):
+        for p in path:
+            if create not in (False, None) and not defined(curr_obj[p]):
+                curr_obj[p] = {} if create in (True,) else create
+
+            curr_obj = curr_obj[p]
     if curr_obj:
-        curr_obj[lastkey] = new_value
+        if op == 'add':
+            curr_obj[lastkey] = new_value
+        elif op == 'append':
+            if not curr_obj[lastkey]:
+                curr_obj[lastkey] = []
+            curr_obj[lastkey].append(new_value)
+            if unique and unique is not True:
+                curr_obj[lastkey] = lodash_array.uniqWith(curr_obj[lastkey], unique)
+            elif unique:
+                curr_obj[lastkey] = lodash_array.uniq(curr_obj[lastkey])
+        elif op == "delete":
+            del curr_obj[lastkey]
+        elif op in ("remove", "pop"):
+            if curr_obj[lastkey]:
+                curr_obj[lastkey].remove(new_value)
+
         fullobj = JSONCopy(fullobj)
     return fullobj
 
@@ -378,14 +426,25 @@ def simple_memoize(func, timeout=60*5):
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
-def update_data(value, key=None, op="add"):
+def update_data(value, key=None, op="add", new_data_key=None, **kwargs):
     key = key if key != None else this.props.data_key
     if this.props.update_data:
-        this.props.update_data(value, key, op=op)
+        this.props.update_data(value, key, op=op, **kwargs)
     else:
         print(key, value)
         data = this.state.data or {}
-        data = update_object(key, data, value, op=op)
+        data = update_object(key, data, value, op=op, **kwargs)
         this.setState({'data': data})
+        if not this.state.new_data:
+            if data.id:
+                new_data = {'id': data.id}
+            else:
+                new_data = {}
+        else:
+            new_data = this.state.new_data
+        new_data = set_object_value(new_data_key or key, new_data, get_object_value(new_data_key or key, data))
+        print(new_data)
+        this.setState({'new_data': new_data})
+
 __pragma__("nokwargs")
 

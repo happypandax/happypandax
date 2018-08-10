@@ -247,10 +247,10 @@ def sortdropdown_get(data=None, error=None):
     if data is not None and not error:
         this.setState({"sort_items": data, "loading": False})
     elif error:
-        pass
+        this.setState({"loading": False})
     else:
-        client.call_func("get_sort_indexes", this.get_items)
         this.setState({"loading": True})
+        client.call_func("get_sort_indexes", this.get_items, _memoize=60*60) # 60 min
 
 
 def sortdropdown_change(e, d):
@@ -311,10 +311,14 @@ def filterdropdown_get(data=None, error=None):
             items[d['name']] = d
         this.setState({"db_items": items, "loading": False})
     elif error:
-        pass
+        this.setState({"loading": False})
     else:
-        client.call_func("get_items", this.get_items, item_type=ItemType.GalleryFilter, limit=999)
         this.setState({"loading": True})
+        client.call_func("get_items",
+                         this.get_items,
+                         item_type=ItemType.GalleryFilter,
+                         limit=999,
+                         _memoize=60*60) # 60 min
 
 
 def filterdropdown_change(e, d):

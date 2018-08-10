@@ -15,6 +15,36 @@ JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
 
+def tag_on_input(e, d):
+    idata = this.state.tags_input
+    itags = [x.strip() for x in str(idata).split(',')]
+
+    data = this.state.data or {}
+    special_namespace = "__namespace__"
+
+    for t in itags:
+        if ':' in t:
+            t = t.split(':', 1)
+            ns = t[0].capitalize()
+            tag = t[1]
+        else:
+            ns = None
+            tag = t
+        tag = tag.lower()
+
+        tag = {'name': tag}
+
+        data = utils.update_object(ns if ns else special_namespace,
+                            data,
+                            tag,
+                            op="append",
+                            create_value=[],
+                            unique=lambda a,b: a['name'] == b['name'])
+
+    this.setState({'tags_input': ''})
+    this.update_data(data)
+
+
 def get_tags(data=None, error=None):
     if data is not None and not error:
         this.setState({"data": data})
@@ -56,7 +86,15 @@ def tag_render():
         edit_row.append(
             e(ui.Table.Row,
               e(ui.Table.Cell,
-                e(ui.Input, fluid=True, className="secondary", placeholder=tr(this, "ui.t-tag-edit-placeholder", "")),
+                e(ui.Form,
+                    e(ui.Input,
+                      onChange=this.on_input,
+                      value=this.state.tags_input,
+                      fluid=True,
+                      className="secondary",
+                      placeholder=tr(this, "ui.t-tag-edit-placeholder", "")),
+                    onSubmit=this.on_input_submit,
+                  ),
                 colSpan="2")))
 
     if isinstance(data, list):
@@ -101,9 +139,14 @@ def tag_render():
 TagView = createReactClass({
     'displayName': 'TagView',
 
-    'getInitialState': lambda: {'data': this.props.data or {}},
+    'getInitialState': lambda: {'data': this.props.data or {},
+                                'tags_input': ''},
 
     'get_tags': get_tags,
+    'update_data': utils.update_data,
+
+    'on_input_submit': tag_on_input,
+    'on_input': lambda e, d: this.setState({'tags_input': d.value}),
 
     'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.data) else None,
     'componentDidUpdate': tag_on_update,

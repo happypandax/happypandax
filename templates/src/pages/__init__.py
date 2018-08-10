@@ -93,6 +93,17 @@ __pragma__("nokwargs")
 def itemviewpage_update(p_p, p_s):
 
     if any((
+        p_s.view_type != this.state.view_type,
+        p_p.view_type != this.props.view_type,
+        p_s.item_type != this.state.item_type,
+        p_s.filter_id != this.state.filter_id,
+        p_s.sort_desc != this.state.sort_desc,
+        p_s.sort_idx != this.state.sort_idx,
+        p_s.visible_config != this.state.visible_config and this.state.visible_config,
+    )):
+        utils.scroll_to_top()
+
+    if any((
         p_p.view_type != this.props.view_type,
     )):
         this.setState({'view_type': this.default_view()})
@@ -128,7 +139,7 @@ def itemviewpage_render():
              toggle_config=this.toggle_config,
              visible_config=this.state.visible_config,
              config_suffix=this.config_suffix,
-             )
+             ),
 
 
 ItemViewPage = createReactClass({

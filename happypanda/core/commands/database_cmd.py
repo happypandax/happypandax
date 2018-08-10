@@ -742,7 +742,7 @@ def _get_add_item_options():
 
 class AddItem(AsyncCommand):
     """
-    Add a database item
+    Add database items
     """
 
     @async_utils.defer
@@ -778,10 +778,49 @@ class AddItem(AsyncCommand):
         self._add_to_db(items, item_options).get()
         return True
 
+def _get_upd_item_options():
+    return {
+    }
 
 def _get_del_item_options():
     return {
     }
+
+class UpdateItem(AsyncCommand):
+    """
+    Update database items
+    """
+
+    @async_utils.defer
+    def _update(self, items, options):
+        with db.safe_session() as sess:
+            with db.no_autoflush(sess):
+                obj_types = set()
+                for i in items:
+                    if not i.id:
+                        raise exceptions.CoreError(utils.this_function(), "Cannot update an item without an id")
+                    if isinstance(i, io_cmd.GalleryFS):
+                        i = i.gallery
+                    obj_types.add(type(i))
+                    i_sess = db.object_session(i)
+                    if i_sess and i_sess != sess:
+                        i_sess.expunge_all()  # HACK: what if other sess was in use?
+                    sess.add(i)
+                    self.next_progress()
+                sess.commit()
+                if db.Gallery in obj_types:
+                    constants.invalidator.similar_gallery = True
+
+    def main(self, items: typing.List[typing.Union[db.Base, io_cmd.GalleryFS]], options: dict={}) -> bool:
+        assert isinstance(items, (list, tuple, db.Base, io_cmd.GalleryFS)), f"not {items}"
+        if not isinstance(items, (list, tuple)):
+            items = [items]
+        self.set_progress(type_=enums.ProgressType.ItemAdd)
+        self.set_max_progress(len(items))
+        item_options = _get_add_item_options()
+        item_options.update(options)
+        self._update(items, item_options).get()
+        return True
 
 # class DeleteItem(AsyncCommand):
 #    """
