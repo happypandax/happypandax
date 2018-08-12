@@ -98,11 +98,13 @@ def update_artist(e, d):
     this.setState({'edit_mode': False})
 
 def remove_artist(e, d):
+    e.preventDefault()
     tid = e.target.dataset.id
     data = this.props.data or this.state.data
     if tid and data:
-        ndata = utils.remove_from_list(data, {'id': tid})
-        this.setState({'data': ndata})
+        tid = int(tid)
+        ndata = utils.remove_from_list(data, tid, key="id")
+        this.update_data(ndata)
             
 
 def artists_render():
@@ -116,6 +118,8 @@ def artists_render():
                          data=a,
                          key=a.id,
                          edit_mode=this.props.edit_mode,
+                         update_data=this.props.update_data,
+                         data_key=this.props.data_key,
                          onRemove=this.on_remove
                         )
                         )
@@ -129,9 +133,10 @@ Artists = createReactClass({
                                 'data': this.props.data or [],
                                 'edit_mode': False,
                                 },
-    'update': update_artist,
+    'on_update': update_artist,
     'on_click': lambda: this.setState({'edit_mode': True}),
     'on_remove': remove_artist,
+    'update_data': utils.update_data,
     'render': artists_render
 })
 

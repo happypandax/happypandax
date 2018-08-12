@@ -126,7 +126,7 @@ def artistprops_render():
 
     return e(ui.Grid,
              e(ui.Grid.Row,
-                 e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav),
+                 e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav, onRate=this.props.on_favorite),
                    floated="left", verticalAlign="middle", width=2),
                  e(ui.Grid.Column,
                    e(ui.Button.Group,

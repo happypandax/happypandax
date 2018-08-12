@@ -24,11 +24,20 @@ import OpenSSL
 import errno
 import collections
 import langcodes
+import ipaddress
+import datetime
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
 from collections import namedtuple
 from gevent import ssl
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes
 
 from happypanda.common import constants, exceptions, hlogger, config
 try:
@@ -657,48 +666,72 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
     self-signed cert
     """
 
-    # create a key pair
-    k = OpenSSL.crypto.PKey()
-    k.generate_key(OpenSSL.crypto.TYPE_RSA, 2048)
+    # create a key
+    key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048,
+                backend=default_backend()
+            )
 
     # create a self-signed cert
-    cert = OpenSSL.crypto.X509()
-    cert.set_version(2)
-    cert.get_subject().C = "HP"
-    cert.get_subject().ST = "HappyPanda X"
-    cert.get_subject().L = "HappyPanda X"
-    cert.get_subject().O = "HappyPanda X"
-    cert.get_subject().OU = "Twiddly Inc"
-    cert.get_subject().CN = "localhost"
-    cert.set_serial_number(1000)
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(k)
-
-    san_list = ["DNS:localhost",
-                "DNS:happypanda.local",
-                "DNS:happypandax.local",
-                "IP:127.0.0.1",
-                "IP:::1",  # IPv6
-                ]
-    l_ip = get_local_ip()
-    if l_ip != "127.0.0.1":
-        san_list.append("IP:{}".format(l_ip))
-
-    cert.add_extensions([
-        OpenSSL.crypto.X509Extension(b"basicConstraints", False, "CA:TRUE, pathlen:0".encode()),
-        OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode()),
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u"HP"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"HappyPanda X"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, u"HappyPanda X"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Twiddly Inc"),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
     ])
 
-    cert.sign(k, 'sha256')
+    cert_builder = x509.CertificateBuilder().subject_name(
+            subject
+            ).issuer_name(
+                issuer
+            ).public_key(
+                key.public_key()
+            ).serial_number(
+                x509.random_serial_number()
+            ).not_valid_before(
+                datetime.datetime.utcnow()
+            ).not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=360*100)
+            )
+
+    san_list = [
+        x509.DNSName(u"localhost"),
+        x509.DNSName(u"happypanda.local"),
+        x509.DNSName(u"happypandax.local"),
+        x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+        x509.IPAddress(ipaddress.IPv6Address("::1")),
+        ]
+    l_ip = get_local_ip()
+    if l_ip != "127.0.0.1":
+        san_list.append(x509.IPAddress(ipaddress.IPv4Address(l_ip)))
+
+    cert_builder.add_extension(
+        x509.SubjectAlternativeName(san_list),
+        critical=False
+        )
+
+    # Sign our certificate with our private key
+    cert = cert_builder.sign(key, hashes.SHA256(), default_backend())
+
+
+    #cert.add_extensions([
+    #    OpenSSL.crypto.X509Extension(b"basicConstraints", False, "CA:TRUE, pathlen:0".encode()),
+    #    OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode()),
+    #])
+
+    with open(key_file, "wb") as f:
+        key_pem = key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption() #encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
+        )
+        f.write(key_pem)
 
     with open(cert_file, "wb") as f:
-        cert_pem = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+        cert_pem = cert.public_bytes(serialization.Encoding.PEM)
         f.write(cert_pem)
-    with open(key_file, "wb") as f:
-        key_pem = OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k)
-        f.write(key_pem)
 
     if pem_file:
         with open(pem_file, "wb") as f:
@@ -717,7 +750,7 @@ def export_cert_to_pfx(pfx_file, cert_file, key_file):
     pfx.set_certificate(c)
     pfx.set_privatekey(k)
     with open(pfx_file, "wb") as f:
-        f.write(pfx.export())  # pfx.export("password")
+        f.write(pfx.export("happypandax"))  # pfx.export("password")
 
 
 def log_exception(f=None, log=log):

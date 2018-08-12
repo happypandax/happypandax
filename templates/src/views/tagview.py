@@ -44,6 +44,16 @@ def tag_on_input(e, d):
     this.setState({'tags_input': ''})
     this.update_data(data)
 
+def remove_tag(e, d):
+    e.preventDefault()
+    tag = e.target.dataset.tag
+    ns = e.target.dataset.namespace or '__namespace__'
+    data = this.state.data
+    if tag and ns and data:
+        tags = data[ns]
+        data[ns] = utils.remove_from_list(tags, tag, key="name")
+        this.update_data(data)
+
 
 def get_tags(data=None, error=None):
     if data is not None and not error:
@@ -75,12 +85,14 @@ def tag_on_update(p_props, p_state):
         this.setState({'data': this.props.data})
 
 
+
 def tag_render():
     ns_tags
     tag_rows = []
     edit_row = []
     data = this.state.data
     edit_mode = this.props.edit_mode
+    remove_tag = this.remove_tag
 
     if edit_mode:
         edit_row.append(
@@ -107,12 +119,19 @@ def tag_render():
 
     if data.__namespace__:  # somehow transcrypt ignores this in the loop below
         ns_tags = data.__namespace__
-        ns_tags = sorted([x.js_name for x in ns_tags])
+        ns_tags = sorted(list(ns_tags), key=lambda x: x.js_name)
         tag_rows.append(
             e(ui.Table.Row,
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
-                    *[e(tagitem.TagLabel, tag=x, show_ns=False, edit_mode=edit_mode) for x in ns_tags],
+                    [e(tagitem.TagLabel,
+                        tag=x.js_name,
+                        key=x.id,
+                        id=x.id+'-'+'__namespace__',
+                        show_ns=False,
+                        onRemove=remove_tag,
+
+                        edit_mode=edit_mode) for x in ns_tags],
                     ),
                   colSpan="2",
                   )))
@@ -120,13 +139,20 @@ def tag_render():
     if data:
         for ns in sorted(dict(data).keys()):
             ns_tags = data[ns]
-            ns_tags = sorted([x.js_name for x in ns_tags])
+            ns_tags = sorted(list(ns_tags), key=lambda x: x.js_name)
             tag_rows.append(
                 e(ui.Table.Row,
                     e(ui.Table.Cell, ns, className="sub-text", collapsing=True),
                     e(ui.Table.Cell,
                       e(ui.Label.Group,
-                        *[e(tagitem.TagLabel, namespace=ns, tag=x, show_ns=False, edit_mode=edit_mode) for x in ns_tags],
+                        [e(tagitem.TagLabel,
+                            namespace=ns,
+                            tag=x.js_name,
+                            key=x.id,
+                            id=x.id+'-'+ns,
+                            onRemove=remove_tag,
+                            show_ns=False,
+                            edit_mode=edit_mode) for x in ns_tags],
                         ),
                       )))
 
@@ -143,6 +169,7 @@ TagView = createReactClass({
                                 'tags_input': ''},
 
     'get_tags': get_tags,
+    'remove_tag': remove_tag,
     'update_data': utils.update_data,
 
     'on_input_submit': tag_on_input,

@@ -241,6 +241,15 @@ def on_key(ev):
         ev.preventDefault()
         this.go_left()
 
+def update_metatags(mtags):
+    if this.state.data:
+        client.call_func("update_metatags", None, item_type=this.state.item_type,
+                         item_id=this.state.data.id, metatags=mtags)
+        d = this.state.data
+        d.metatags = dict(d.metatags)
+        d.metatags.update(mtags)
+        d = utils.JSONCopy(d)
+        this.setState({'data': d})
 
 def on_canvas_click(ev):
     if this.state.context:
@@ -268,7 +277,6 @@ def on_update(p_props, p_state):
         if scroll_top:
             el = this.props.context or this.state.context or state.container_ref
             utils.scroll_to_element(el)
-
 
 class ReaderDirection:
     left_to_right = 1
@@ -347,7 +355,7 @@ def page_render():
     rows = []
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Rating, icon="heart", size="massive", rating=fav),
+                  e(ui.Table.Cell, e(ui.Rating, icon="heart", size="massive", rating=fav, onRate=this.favorite),
                     colSpan="2", collapsing=True)))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
@@ -497,6 +505,9 @@ Page = createReactClass({
     'go_left': go_left,
     'go_right': go_right,
     'set_pagelist_ref': lambda r: this.setState({'page_list_ref': r}),
+    'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
+                            e.preventDefault())),
+    'update_metatags': update_metatags,
     'set_thumbs': set_thumbs,
     'get_thumbs': get_thumbs,
     'get_item': get_item,

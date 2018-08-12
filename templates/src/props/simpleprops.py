@@ -181,10 +181,16 @@ Language = createReactClass({
     'render': language_render
 })
 
+def datelbl_update(e, d):
+    if this.state.data:
+        this.update_data(this.state.data)
+    this.setState({'edit_mode': False})
+
 def datelbl_render():
     m = None
-    if this.props.data:
-        m = utils.moment.unix(this.props.data)
+    data = this.state.data or this.props.data
+    if data:
+        m = utils.moment.unix(data)
         full = m.format(this.props.format or "LL")
         relative = m.fromNow()
         if this.props.full or this.props.edit_mode:
@@ -201,9 +207,11 @@ def datelbl_render():
         el = e(ui.Input,
                defaultValue=m.format(utils.moment.HTML5_FMT.DATE) if m else js_undefined,
                onChange=this.on_change,
+               onBlur=this.on_submit,
                size=this.props.size or "small",
                js_type="date",
                fluid=this.props.fluid)
+
     else:
         items = []
         if this.props.text:
@@ -226,10 +234,14 @@ DateLabel = createReactClass({
 
     'getInitialState': lambda: {'toggled': False,
                                 'edit_mode': False,
+                                'data': None,
                                 },
 
     'toggle': lambda: this.setState({'toggled': not this.state.toggled}),
     'on_click': lambda: this.setState({'edit_mode': True}),
+    'update_data': utils.update_data,
+    'on_submit': datelbl_update,
+    'on_change': lambda e, d: this.setState({'data': utils.moment(d.value, "YYYY-MM-DD").unix()}),
 
     'render': datelbl_render,
 }, pure=True)

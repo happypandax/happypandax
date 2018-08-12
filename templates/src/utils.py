@@ -383,20 +383,37 @@ def update_object(path,
             curr_obj = curr_obj[p]
     if curr_obj:
         if op == 'add':
-            curr_obj[lastkey] = new_value
+            if lastkey:
+                curr_obj[lastkey] = new_value
+            else:
+                fullobj = new_value
         elif op == 'append':
-            if not curr_obj[lastkey]:
-                curr_obj[lastkey] = []
-            curr_obj[lastkey].append(new_value)
+            if lastkey:
+                if not curr_obj[lastkey]:
+                    curr_obj[lastkey] = []
+                l_obj = curr_obj[lastkey]
+            else:
+                l_obj = curr_obj
+            l_obj.append(new_value)
             if unique and unique is not True:
-                curr_obj[lastkey] = lodash_array.uniqWith(curr_obj[lastkey], unique)
+                l_obj = lodash_array.uniqWith(l_obj, unique)
             elif unique:
-                curr_obj[lastkey] = lodash_array.uniq(curr_obj[lastkey])
+                l_obj = lodash_array.uniq(l_obj)
+            if lastkey:
+                curr_obj[lastkey] = l_obj
+            else:
+                fullobj = l_obj
+
         elif op == "delete":
-            del curr_obj[lastkey]
+            if lastkey:
+                del curr_obj[lastkey]
         elif op in ("remove", "pop"):
-            if curr_obj[lastkey]:
-                curr_obj[lastkey].remove(new_value)
+            if lastkey:
+                if curr_obj[lastkey]:
+                    curr_obj[lastkey].remove(new_value)
+            else:
+                curr_obj.remove(new_value)
+                fullobj = curr_obj
 
         fullobj = JSONCopy(fullobj)
     return fullobj
@@ -405,8 +422,8 @@ __pragma__("nokwargs")
 
 __pragma__("kwargs")
 def remove_from_list(l, obj_or_id, key='id'):
-    it = obj_or_id[key] if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
-    return lodash_array.remove(l, lambda i: i[key] == it if key else i == it)
+    it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
+    return lodash_collection.filter(l, lambda i: not (get_object_value(key, i) == it if key else i == it))
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
@@ -427,11 +444,19 @@ __pragma__("nokwargs")
 
 __pragma__("kwargs")
 def update_data(value, key=None, op="add", new_data_key=None, **kwargs):
-    key = key if key != None else this.props.data_key
+    if key is not None and this.props.data_key is not None:
+        key = this.props.data_key + '.' + key if this.props.data_key else key
+    elif key is not None:
+        key = key
+    elif this.props.data_key is not None:
+        key = this.props.data_key
+    elif this.props.data_id is not None:
+        key = this.props.data_id
+
     if this.props.update_data:
         this.props.update_data(value, key, op=op, **kwargs)
     else:
-        print(key, value)
+        print(key, JSON.stringify(value))
         data = this.state.data or {}
         data = update_object(key, data, value, op=op, **kwargs)
         this.setState({'data': data})
@@ -442,8 +467,9 @@ def update_data(value, key=None, op="add", new_data_key=None, **kwargs):
                 new_data = {}
         else:
             new_data = this.state.new_data
-        new_data = set_object_value(new_data_key or key, new_data, get_object_value(new_data_key or key, data))
-        print(new_data)
+        key = new_data_key or key
+        new_data = data if not key else set_object_value(key, new_data, get_object_value(new_data_key or key, data))
+        print(JSON.stringify(new_data))
         this.setState({'new_data': new_data})
 
 __pragma__("nokwargs")
