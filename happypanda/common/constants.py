@@ -166,6 +166,11 @@ image_sizes = {
     "big": (300, 416),
     "medium": (200, 276),
     "small": (100, 136),
+    "x2400": (2400, 0),
+    "x1600": (1600, 0),
+    "x1280": (1280, 0),
+    "x960": (960, 0),
+    "x768": (768, 0),
 }
 
 translations = None  # dict of available translation files

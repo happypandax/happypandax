@@ -246,6 +246,7 @@ def itemviewbase_render():
                              e(ui.Visibility,
                                e(ui.Loader, active=props.loading_more if utils.defined(
                                    props.loading_more) else (props.infinite_scroll and props.loading)),
+                               context=this.props.infinite_scroll_context,
                                onTopVisible=this.props.on_load_more,
                                once=False,
                                ),))
@@ -614,6 +615,7 @@ def item_view_render():
              infinite_scroll=this.state.infinite_scroll,
              on_load_more=this.get_more,
              loading_more=this.state.loading_more,
+             infinite_scroll_context=this.props.infinite_scroll_context,
              query=this.query(),
              context=this.props.context,
              show_count=this.props.show_count,

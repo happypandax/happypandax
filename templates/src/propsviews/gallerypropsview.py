@@ -187,7 +187,7 @@ def galleryprops_render():
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
                                          ':', size="tiny", className="sub-text"), collapsing=True),
-                      e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
+                      e(ui.Table.Cell, e(ui.Label.Group, [e(circleitem.CircleLabel, data=x, key=x) for x in circles]))))
     if parodies or this.props.edit_mode:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") +

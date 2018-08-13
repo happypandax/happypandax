@@ -23,6 +23,7 @@ t-unknown: Unknown
 t-bracket-unknown: <Unknown>
 t-or: Or
 t-submit: Submit
+t-select: Select
 t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
 
 # Menu Item
@@ -209,7 +210,7 @@ h-more-like-this: More like this
 h-more-same-artist:
     one: More from same artist
     many: More from same artists
-t-tag-edit-placeholder: Write new tags (comma separated)
+t-tag-edit-placeholder: Write tags (comma separated)
 t-gallery-updated: Gallery has been updated!
 t-gallery-updated-fail: Failed to update gallery!
 
@@ -238,6 +239,20 @@ t-load-gallery: Load a gallery from path (Path must exist on the server system)
 
 # Page Reader Page
 t-page: Page
+
+# Page Reader Options
+t-reading-direction: Reading Direction
+t-scaling: Scaling
+t-left-to-right: Left to Right
+t-rigt-to-left: Right to Left
+t-default: Default
+t-fit-width: Fit Width
+t-fit-height: Fit Height
+t-stretch-pages: Stretch small pages
+t-invert-bg-color: Invert background color
+t-keep-pagelist-open: Keep pagelist open
+t-size: Size
+t-original: Original
 
 # Item
 b-read: Read

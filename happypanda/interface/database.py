@@ -465,8 +465,12 @@ def update_metatags(item_type: enums.ItemType=enums.ItemType.Gallery,
             raise exceptions.APIError(utils.this_function(), f"Metatag name '{m}' does not exist")
         mtags[m] = v
 
-    t.update("metatags", mtags)
+    st = True
+    if t:
+        t.update("metatags", mtags)
 
-    db.object_session(t).commit()
+        db.object_session(t).commit()
+    else:
+        st = False
 
-    return message.Identity('status', True)
+    return message.Identity('status', st)

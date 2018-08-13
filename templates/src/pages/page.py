@@ -108,7 +108,7 @@ def get_thumbs(data=None, error=None, other=None):
             item_ids = [x.id for x in other]
             client.call_func("get_image", this.get_thumbs,
                              item_ids=item_ids,
-                             size=ImageSize.Original, url=True, uri=True,
+                             size=this.state.image_size, url=True, uri=True,
                              item_type=this.state.item_type)
 
 
@@ -342,7 +342,7 @@ def page_render():
               img=img,
               item_id=p_id,
               item_type=this.state.item_type,
-              size_type=ImageSize.Original,
+              size_type=this.state.image_size,
               centered=True,
               fluid=False,
               bordered=True,
@@ -370,15 +370,25 @@ def page_render():
     # config
 
     cfg_direction = [
-        {'key': 1, 'text': tr(this, "", 'Left to Right'), 'value': ReaderDirection.left_to_right},
-        {'key': 2, 'text': tr(this, "", 'Right to Left'), 'value': ReaderDirection.right_to_left},
+        {'key': 1, 'text': tr(this, "ui.t-left-to-right", 'Left to Right'), 'value': ReaderDirection.left_to_right},
+        {'key': 2, 'text': tr(this, "ui.t-rigt-to-left", 'Right to Left'), 'value': ReaderDirection.right_to_left},
     ]
 
     cfg_scaling = [
-        {'key': 1, 'text': tr(this, "", 'Default'), 'value': ReaderScaling.default},
-        {'key': 2, 'text': tr(this, "", 'Fit Width'), 'value': ReaderScaling.fit_width},
-        {'key': 3, 'text': tr(this, "", 'Fit Height'), 'value': ReaderScaling.fit_height},
+        {'key': 1, 'text': tr(this, "ui.t-default", 'Default'), 'value': ReaderScaling.default},
+        {'key': 2, 'text': tr(this, "ui.t-fit-width", 'Fit Width'), 'value': ReaderScaling.fit_width},
+        {'key': 3, 'text': tr(this, "ui.t-fit-height", 'Fit Height'), 'value': ReaderScaling.fit_height},
     ]
+
+    cfg_size = [
+        {'key': 1, 'text': tr(this, "ui.t-original", 'Original'), 'value': ImageSize.Original},
+        {'key': 2, 'text': "x2400", 'value': ImageSize.x2400},
+        {'key': 3, 'text': "x1600", 'value': ImageSize.x1600},
+        {'key': 4, 'text': "x1280", 'value': ImageSize.x1280},
+        {'key': 5, 'text': "x960", 'value': ImageSize.x960},
+        {'key': 5, 'text': "x768", 'value': ImageSize.x768},
+    ]
+
 
     return e(ui.Sidebar.Pushable,
              e(TitleChange, title=page_title),
@@ -407,15 +417,17 @@ def page_render():
                ),
              e(ui.Sidebar,
                e(ui.Form,
-                 e(ui.Form.Select, options=cfg_direction, label=tr(this, "", "Reading Direction"),
+                 e(ui.Form.Select, options=cfg_direction, label=tr(this, "ui.t-reading-direction", "Reading Direction"),
                    defaultValue=this.state.cfg_direction, onChange=this.set_cfg_direction),
-                 e(ui.Form.Select, options=cfg_scaling, label=tr(this, "", "Scaling"),
+                 e(ui.Form.Select, options=cfg_scaling, label=tr(this, "ui.t-scaling", "Scaling"),
                    defaultValue=this.state.cfg_scaling, onChange=this.set_cfg_scaling),
-                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "", "Stretch small pages"), toggle=True,
+                 e(ui.Form.Select, options=cfg_size, label=tr(this, "ui.t-size", "Size"),
+                   defaultValue=this.state.image_size, onChange=this.set_cfg_size),
+                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-stretch-pages", "Stretch small pages"), toggle=True,
                    defaultChecked=this.state.cfg_strecth, onChange=this.set_cfg_stretch),
-                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "", "Invert background color"), toggle=True,
+                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-invert-bg-color", "Invert background color"), toggle=True,
                    defaultChecked=this.state.cfg_invert, onChange=this.set_cfg_invert),
-                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "", "Keep pagelist open"), toggle=True,
+                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-keep-pagelist-open", "Keep pagelist open"), toggle=True,
                    defaultChecked=this.state.cfg_pagelist_open, onChange=this.set_cfg_pagelist_open),
                  e(ui.Form.Field, "Close", control=ui.Button),
                  onSubmit=this.toggle_config,
@@ -476,6 +488,8 @@ Page = createReactClass({
 
     'get_page_url': get_page_url,
 
+    'get_default_size': lambda: ImageSize.Original,
+
     'getInitialState': lambda: {'gid': int(this.props.match.params.gallery_id),
                                 'number': int(this.props.match.params.page_number),
                                 'gallery': None,
@@ -487,6 +501,7 @@ Page = createReactClass({
                                 'data': this.props.data or {},
                                 'tag_data': this.props.tag_data or {},
                                 'item_type': ItemType.Page,
+                                'image_size': utils.storage.get("reader_size", this.get_default_size()),
                                 'loading': True,
                                 'context': None,
                                 'config_visible': False,
@@ -519,6 +534,7 @@ Page = createReactClass({
     'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery/{}".format(this.props.match.params.gallery_id), keep_query=False),
 
     'set_cfg_direction': lambda e, d: all((this.setState({'cfg_direction': d.value}), utils.storage.set("reader_direction", d.value))),
+    'set_cfg_size': lambda e, d: all((this.setState({'image_size': d.value}), utils.storage.set("reader_size", d.value))),
     'set_cfg_scaling': lambda e, d: all((this.setState({'cfg_scaling': d.value}), utils.storage.set("reader_scaling", d.value))),
     'set_cfg_stretch': lambda e, d: all((this.setState({'cfg_stretch': d.checked}), utils.storage.set("reader_stretch", d.checked))),
     'set_cfg_invert': lambda e, d: all((this.setState({'cfg_invert': d.checked}), utils.storage.set("reader_invert", d.checked))),

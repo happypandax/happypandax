@@ -267,7 +267,7 @@ def init_views(flask_app, socketio_app):
             if not img_file.exists:
                 img_file = None
 
-            if img_file.path.endswith(constants.link_ext):
+            if img_file and img_file.path.endswith(constants.link_ext):
                 img_file = io_cmd.CoreFS(utils.get_real_file(img_file.path))
                 if not img_file.exists:
                     img_file = None

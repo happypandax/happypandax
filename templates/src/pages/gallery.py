@@ -6,7 +6,7 @@ from src.ui import ui, Slider, LabelAccordion, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
-from src.single import galleryitem, thumbitem, collectionitem
+from src.single import galleryitem, thumbitem, collectionitem, artistitem
 from src.propsviews import gallerypropsview
 from src.views import itemview
 from src.props import galleryprops, simpleprops
@@ -405,6 +405,7 @@ def page_render():
     date_added = None
     titles = []
     title_data = None
+    category_data = this.state.category_data
     if this.state.data:
         item_id = this.state.data.id
         if this.state.data.titles:
@@ -424,6 +425,9 @@ def page_render():
         if not item_id:
             item_id = this.state.data.id
 
+        if this.state.data.category:
+            category_data = this.state.data.category
+
     series_data = []
     if this.state.group_data:
         series_data = this.state.group_data
@@ -438,7 +442,12 @@ def page_render():
                             title=tr(this, "ui.t-trashed-gallery", "This gallery is set to be deleted")))
 
     if this.state.category_data:
-        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True, size="large"))
+        indicators.append(e(galleryprops.Category,
+                            data=category_data,
+                            data_key="category",
+                            update_data=this.update_data,
+                            edit_mode=this.state.edit_mode,
+                            basic=True, size="large"))
 
     buttons = []
     external_view = []
@@ -639,6 +648,8 @@ def page_render():
                                      )
                                    )
                                  )
+
+    data = this.state.data
 
     return e(ui.Grid,
              e(TitleChange, title=title if title else tr(this, "general.db-item-gallery", "Gallery")),

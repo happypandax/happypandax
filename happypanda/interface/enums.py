@@ -158,6 +158,17 @@ class ImageSize(_APIEnum):
     Medium = 3
     #: Small image size
     Small = 4
+    #: A maximum width of 2400
+    x2400 = 10
+    #: A maximum width of 2400
+    x1600 = 11
+    #: A maximum width of 1280
+    x1280 = 12
+    #: A maximum width of 960
+    x960  = 13
+    #: A maximum width of 768
+    x768  = 14
+
 
 
 class ServerCommand(_APIEnum):

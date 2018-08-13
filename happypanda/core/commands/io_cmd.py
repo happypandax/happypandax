@@ -161,22 +161,29 @@ class ImageItem(AsyncCommand):
                 image_path = BytesIO()
 
             save_image = True
-            if size.width and size.height:
+            use_original = False
+            if size.width or size.height:
                 im = Image.open(fs_bytes)
-                im = self._convert(im, img_ext=ext)
+                im_size = (size.width or 999999999, size.height or 999999999)
+                if im.size > im_size:
+                    im = self._convert(im, img_ext=ext)
 
-                if ext.lower().endswith(".gif"):
-                    new_frame = Image.new('RGBA', im.size)
-                    new_frame.paste(im, (0, 0), im.convert('RGBA'))
-                    im.close()
-                    im = new_frame
-                im.thumbnail((size.width, size.height), Image.ANTIALIAS)
+                    if ext.lower().endswith(".gif"):
+                        new_frame = Image.new('RGBA', im.size)
+                        new_frame.paste(im, (0, 0), im.convert('RGBA'))
+                        im.close()
+                        im = new_frame
+                    im.thumbnail(im_size, Image.ANTIALIAS)
+                else:
+                    use_original = True
             else:
-                if self.properties.create_symlink and isinstance(image_path, str):
-                    image_path = image_path + constants.link_ext
-                    with open(image_path, 'w', encoding='utf-8') as f:
-                        f.write(fs.path)
-                    save_image = False
+                use_original = True
+
+            if use_original and self.properties.create_symlink and isinstance(image_path, str):
+                image_path = image_path + constants.link_ext
+                with open(image_path, 'w', encoding='utf-8') as f:
+                    f.write(fs.path)
+                save_image = False
 
             if save_image and im:
                 im.save(image_path)

@@ -6,6 +6,7 @@ from src.state import state
 from src.ui import ui, RemovableItem
 from src.i18n import tr
 from src.single import artistitem, parodyitem, circleitem
+from src.selectors import artistselector
 from src.client import ItemType, client
 from src.props import simpleprops
 from org.transcrypt.stubs.browser import __pragma__
@@ -69,6 +70,14 @@ def titles_render():
                         key=t.id,
                         )
                         )
+    if this.props.edit_mode:
+        els.append(e(ui.Table.Row,
+                     e(ui.Table.Cell,
+                       e(ui.Header, h("span", e(ui.Icon, color="green", js_name="plus", onClick=this.on_remove, link=True), className="right"),
+                         size="tiny"),
+                       #e(ui.Icon, js_name="plus", color="green"),
+                      colSpan="2"),
+                    key="add"))
 
     return e(ui.Table,
              *pref_el,
@@ -92,10 +101,9 @@ Titles = createReactClass({
     'render': titles_render
 })
 
-def update_artist(e, d):
-    if this.props.on_update:
-        this.props.on_update({'id': d.value}, "add")
-    this.setState({'edit_mode': False})
+def on_new_artist(e, data):
+    for a in data:
+        this.update_data(a, op="append")
 
 def remove_artist(e, d):
     e.preventDefault()
@@ -111,7 +119,6 @@ def artists_render():
     data = this.props.data or this.state.data
 
     els = []
-
     if data:
         for a in data:
             els.append(e(artistitem.ArtistLabel,
@@ -124,6 +131,26 @@ def artists_render():
                         )
                         )
 
+    if this.props.edit_mode:
+        els.append(e(ui.Modal,
+              e(ui.Modal.Content,
+                onSubmit=this.on_new_artist,
+                scrolling=True,
+                onClose=this.on_modal_toggle,
+                defaultSelected=data,
+                as_=artistselector.ArtistSelector),
+                trigger=e(ui.Icon, onClick=this.on_modal_toggle, size="small", link=True, js_name="plus", color="blue"),
+                dimmer="inverted",
+                size="small",
+                closeOnDocumentClick=True,
+                centered=False,
+                closeIcon=True,
+                open=this.state.modal_open,
+                onClose=this.on_modal_toggle,
+              ))
+
+    els = e(ui.Label.Group, els)
+
     return els
 
 Artists = createReactClass({
@@ -131,10 +158,11 @@ Artists = createReactClass({
 
     'getInitialState': lambda: {
                                 'data': this.props.data or [],
-                                'edit_mode': False,
+                                'modal_open': False,
                                 },
-    'on_update': update_artist,
+    'on_new_artist': on_new_artist,
     'on_click': lambda: this.setState({'edit_mode': True}),
+    'on_modal_toggle': lambda: this.setState({'modal_open': not this.state.modal_open}),
     'on_remove': remove_artist,
     'update_data': utils.update_data,
     'render': artists_render
@@ -142,10 +170,11 @@ Artists = createReactClass({
 
 def get_status(data=None, error=None):
     if data is not None and not error:
-        this.setState({'all_data': data})
+        this.setState({'all_data': data, 'loading': False})
     elif error:
         pass
     else:
+        this.setState({'loading': True})
         client.call_func("get_items", this.get_items,
                          item_type=ItemType.Status,
                          _memoize=60*10)
@@ -185,6 +214,7 @@ def status_render():
                  compact=this.props.compact,
                  as_=this.props.as_,
                  onChange=this.on_update,
+                 loading=this.state.loading,
                  onBlur=this.on_blur,)
     elif data:
         el = e(ui.Label,
@@ -209,6 +239,7 @@ Status = createReactClass({
                                 'data': this.props.data or {},
                                 'all_data': [],
                                 'edit_mode': False,
+                                'loading': True,
                                 },
 
     "get_items": get_status,
@@ -246,4 +277,80 @@ Description = createReactClass({
                                 },
     'on_change': lambda e, d: this.setState({'data': d.value}),
     'render': description_render
+})
+
+def get_category_items(data=None, error=None):
+    if data is not None and not error:
+        this.setState({'all_data': data, 'loading': False})
+    elif error:
+        pass
+    else:
+        this.setState({'loading': True})
+        client.call_func("get_items", this.get_items,
+                         item_type=ItemType.Category,
+                         _memoize=60*10)
+
+def category_update(e, d):
+    if isinstance(d.value, int):
+        data = {'id': d.value}
+    else:
+        data = {'name': d.value}
+    if this.props.update_data:
+        if this.props.data_key:
+            this.props.update_data(data, this.props.data_key)
+        elif this.props.data_id:
+            this.props.update_data(data, this.props.data_id)
+
+    this.setState({'edit_mode': False})
+
+def category_render():
+    data = this.props.data or this.state.data
+    el = None
+    if data.id and not data.js_name:
+        data = utils.lodash_find(this.state.all_data, lambda v, i, c: v['id']==data.id) or data
+    cat_name = data.js_name or tr(this, "ui.t-unknown", "Unknown")
+    if this.state.edit_mode:
+        options = []
+        for i in this.state.all_data:
+            options.append({'key': i.id, 'value': i.id, 'text': i.js_name})
+        el = e(ui.Select,
+                options=options,
+                placeholder=tr(this, "ui.t-category", "Category"),
+                 defaultValue=data.id,
+                 size=this.props.size,
+                 basic=this.props.basic,
+                 compact=this.props.compact,
+                 as_=this.props.as_,
+                 onChange=this.on_update,
+                 loading=this.state.loading,
+                 onBlur=this.on_blur,)
+    elif not utils.lodash_lang.isEmpty(data) or this.props.edit_mode:
+        el = e(ui.Label,
+                 cat_name,
+                 color="red",
+                 basic=this.props.basic,
+                 size=this.props.size,
+                 className=this.props.className,
+                 onClick=this.on_click if this.props.edit_mode else js_undefined,
+                 onRemove=this.on_remove if this.props.edit_mode else js_undefined,
+                 as_=this.props.as_ if utils.defined(this.props.as_) else "a" if this.props.edit_mode else js_undefined)
+    return el
+
+Category = createReactClass({
+    'displayName': 'Category',
+
+    'getInitialState': lambda: {
+                                'data': this.props.data or {},
+                                'all_data': [],
+                                'edit_mode': False,
+                                'loading': True,
+                                },
+
+    "get_items": get_category_items,
+    'componentDidMount': lambda: this.get_items(),
+    'on_update': category_update,
+    'on_click': lambda: this.setState({'edit_mode': True}),
+    #'on_blur': lambda: this.setState({'edit_mode': False}),
+    'on_remove': lambda: print("remove"),
+    'render': category_render
 })

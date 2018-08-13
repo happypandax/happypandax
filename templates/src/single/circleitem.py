@@ -19,10 +19,12 @@ def circlelbl_render():
     if data:
         name = data.js_name
 
-    lbl_args = {'content': name}
+    lbl_args = {}
     return e(ui.Popup,
              e(circlepropsview.CircleProps, data=data),
              trigger=e(ui.Label,
+                       e(ui.Icon, js_name="group"),
+                       name,
                        basic=True,
                        color="teal",
                        as_="a",

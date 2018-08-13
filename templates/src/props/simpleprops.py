@@ -108,12 +108,13 @@ EditNumber = createReactClass({
     'render': editnumber_render
 })
 
-def get_items(data=None, error=None):
+def get_lang_items(data=None, error=None):
     if data is not None and not error:
-        this.setState({'all_data': data})
+        this.setState({'all_data': data, 'loading': False})
     elif error:
         pass
     else:
+        this.setState({'loading': True})
         client.call_func("get_items", this.get_items,
                          item_type=ItemType.Language,
                          _memoize=60*10)
@@ -150,6 +151,7 @@ def language_render():
                  compact=this.props.compact,
                  as_=this.props.as_,
                  onChange=this.on_update,
+                 loading=this.state.loading,
                  onBlur=this.on_blur,)
     elif data:
         el = e(ui.Label,
@@ -170,9 +172,10 @@ Language = createReactClass({
                                 'data': this.props.data or {},
                                 'all_data': [],
                                 'edit_mode': False,
+                                'loading': False,
                                 },
 
-    "get_items": get_items,
+    "get_items": get_lang_items,
     'componentDidMount': lambda: this.get_items(),
     'on_update': language_update,
     'on_click': lambda: this.setState({'edit_mode': True}),
@@ -253,12 +256,12 @@ def update_url(e, d):
         this.update_data(this.state.data, this.props.data_key)
 
 def remove_url(e, d):
+    e.preventDefault()
     tid = e.target.dataset.id
     data = this.props.data or this.state.data
     if tid and data:
         ndata = utils.remove_from_list(data, {'id': tid})
-        this.setState({'data': ndata})
-            
+        this.update_data(ndata)
 
 def urls_render():
     data = this.props.data or this.state.data
@@ -292,6 +295,7 @@ URLs = createReactClass({
                                 },
     'on_update': update_url,
     'on_click': lambda: this.setState({'edit_mode': True}),
+    'update_data': utils.update_data,
     'on_remove': remove_url,
     'render': urls_render
 })

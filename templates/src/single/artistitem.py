@@ -4,6 +4,7 @@ from src.react_utils import (e,
 from src.ui import ui
 from src.client import ItemType
 from src.propsviews import artistpropsview
+from src.single import circleitem
 from src.client import ItemType, client
 
 from org.transcrypt.stubs.browser import __pragma__
@@ -27,10 +28,10 @@ def update_metatags(mtags):
 
 def item_favorite(e, d):
     e.preventDefault()
-    if this.props.edit_mode:
-        this.update_data(bool(d.rating), "metatags.favorite")
-    else:
-        this.update_metatags({'favorite': bool(d.rating)})
+    #if this.props.edit_mode:
+    #    this.update_data(bool(d.rating), "metatags.favorite")
+    #else:
+    this.update_metatags({'favorite': bool(d.rating)})
 
 def artistlbl_render():
     name = ""
@@ -50,14 +51,14 @@ def artistlbl_render():
                edit_mode=this.props.edit_mode,
                on_favorite=this.favorite),
              trigger=e(ui.Label,
-                       e(ui.Icon, js_name="star") if fav else None,
-                       e(ui.Icon, js_name="user circle outline"),
+                       e(ui.Icon, js_name="heart outline") if fav else None,
+                       e(ui.Icon, js_name="user"),
                        name,
                        e(ui.Icon, js_name="delete",
                          color=this.props.color,
                          link=True,
                          onClick=this.props.onRemove,
-                         **{'data-id': data.id, 'data-name': name}) if this.props.edit_mode else None,
+                         **{'data-id': data.id, 'data-name': name}) if this.props.edit_mode or this.props.showRemove else None,
                        basic=True,
                        color="blue",
                        as_="a",
@@ -93,4 +94,84 @@ ArtistLabel = createReactClass({
     'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
 
     'render': artistlbl_render
+}, pure=True)
+
+def artistitem_render():
+    name = ""
+    fav = 0
+    data = this.props.data or this.state.data
+    circles = []
+    if data:
+        if data.preferred_name:
+            name = data.preferred_name.js_name
+        if data.metatags:
+            if data.metatags.favorite:
+                fav = 1
+        circle_ids = []
+        if data.circles:
+            for c in data.circles:
+                if c.id in circle_ids:
+                    continue
+                circles.append(c)
+                circle_ids.append(c.id)
+
+    el_kwargs = {'active': this.props.active}
+    el = e(this.props.as_ if this.props.as_ else ui.List.Item,
+           e(ui.List.Content,
+             e(ui.Rating, icon="heart", size="massive", rating=fav, onRate=this.favorite),
+             floated="left",
+             ),
+           e(ui.List.Content,
+             e(ui.Label.Group, [e(circleitem.CircleLabel, data=x, key=x) for x in circles]),
+             floated="right",
+             ),
+           e(ui.Icon, js_name="user circle", size="big", disabled=True),
+           e(ui.List.Content,
+            e(ui.Header, name, size="tiny"),
+             ),
+           className=this.props.className,
+           onClick=this.on_click,
+           **el_kwargs if not this.props.as_ else None
+           )
+
+    if not this.props.selection:
+        el = e(ui.Popup,
+                 e(artistpropsview.ArtistProps,
+                   data=data,
+                   tags=this.props.tags or this.state.tags,
+                   edit_mode=this.props.edit_mode,
+                   on_favorite=this.favorite),
+                 trigger=el,
+                 hoverable=True,
+                 hideOnScroll=True,
+                 wide="very",
+                 on="click",
+                 position="top center"
+             )
+
+    return el
+
+ArtistItem = createReactClass({
+    'displayName': 'ArtistItem',
+
+    'getInitialState': lambda: {
+        'id': this.props.id,
+        'data': this.props.data,
+        'tags': this.props.tags,
+        'item_type': ItemType.Artist,
+    },
+
+    'get_tags': artistpropsview.get_tags,
+
+    'update_data': utils.update_data,
+
+    'on_click': lambda e, d: all((this.props.onClick(e, this.props.data or this.state.data) if this.props.onClick else None,)),
+
+    'update_metatags': update_metatags,
+
+    'favorite': item_favorite,
+
+    'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
+
+    'render': artistitem_render
 }, pure=True)
