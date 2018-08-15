@@ -339,11 +339,15 @@ class DatabaseMessage(CoreMessage):
                 obj_id = msg.get('id', False)
                 if obj_id:
                     db_obj = sess.query(db_type).get(obj_id)
+                    if not db_obj:
+                        raise exceptions.CoreError(utils.this_function(), f"Existing item from message object with id '{obj_id}' was not found")
                 else:
                     db_obj = db_type()
 
-                if not (obj_id and db_obj and skip_updating_existing):
+                if db_obj and not (obj_id and db_obj and skip_updating_existing):
                     for attr, value in msg.items():
+                        if attr == 'id':
+                            continue
                         if ignore_private and attr.startswith('_'):
                             continue
                         if ignore_empty:
@@ -380,14 +384,21 @@ class DatabaseMessage(CoreMessage):
                         if issubclass(col_model, db.MetaTag):
                             setattr(db_obj, attr, msg_obj._pack_metatags(value))
                         elif db.is_list(cls_attr) or db.is_query(cls_attr):
-                            for v in value:
-                                obj_attr.append(
-                                    msg_obj.from_json(
-                                        v,
-                                        _type=col_model,
-                                        ignore_empty=ignore_empty,
-                                        skip_updating_existing=skip_updating_existing,
-                                        skip_descriptors=skip_descriptors))
+                            if db.is_list(cls_attr):
+                                n_l = []
+                                for v in value:
+                                    o = msg_obj.from_json(
+                                            v,
+                                            _type=col_model,
+                                            ignore_empty=ignore_empty,
+                                            skip_updating_existing=skip_updating_existing,
+                                            skip_descriptors=skip_descriptors)
+                                    if o is not None:
+                                        n_l.append(o)
+                                setattr(db_obj, attr, n_l)
+                            else:
+                                raise NotImplementedError
+
                         elif db.is_descriptor(cls_attr):
                             if db.descriptor_has_setter(cls_attr):
                                 raise NotImplementedError

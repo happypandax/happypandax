@@ -49,11 +49,10 @@ def get_artists_count(data=None, error=None):
 
 def get_more():
     pages = math.ceil(this.state.item_count / this.state.limit)
-    if this.state.page < pages:
+    if this.state.page < pages or not this.state.item_count:
         next_page = int(this.state.page) + 1
         this.setState({'page': next_page,
                        'loading_more': True})
-        print("getting more")
         this.get_items()
 
 def artistselector_update(p_p, p_s):
@@ -148,6 +147,7 @@ def artistselector_render():
                          context=this.state.context_el,
                         onTopVisible=this.get_more,
                         once=False,
+                        fireOnMount=True,
                         ),
                         key="inf",
                         basic=True,

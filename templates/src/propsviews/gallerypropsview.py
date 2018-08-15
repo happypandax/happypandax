@@ -192,7 +192,11 @@ def galleryprops_render():
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") +
                                          ':', size="tiny", className="sub-text"), collapsing=True),
-                      e(ui.Table.Cell, *(e(parodyitem.ParodyLabel,data=x) for x in parodies))))
+                      e(ui.Table.Cell, e(galleryprops.Parodies,
+                                         data=parodies,
+                                         update_data=this.props.update_data,
+                                         data_key="parodies",
+                                         edit_mode=this.props.edit_mode))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),

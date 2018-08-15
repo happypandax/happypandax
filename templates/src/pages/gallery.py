@@ -109,7 +109,7 @@ def update_menu(data={}):
         menu_items.append(e(ui.Menu.Menu, *menu_right, position="right"))
 
         if len(menu_items):
-            this.props.menu(menu_items)
+            this.props.menu(menu_items, fixed=this.state.edit_mode)
 
     else:
         this.props.menu(e(ui.Menu.Menu))

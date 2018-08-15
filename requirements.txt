@@ -35,3 +35,4 @@ pprintpp==0.4.0
 multidict==4.3.1
 cryptography==2.3
 pyopenssl==18.0.0
+dogpile.cache==0.6.7

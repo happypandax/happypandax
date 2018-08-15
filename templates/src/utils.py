@@ -271,7 +271,7 @@ class Storage:
     def get(self, key, default=None, local=False):
         if self.enabled and not local:
             r = self.lstorage.getItem(key)
-            if r is None and default is not None:
+            if r is None and not is_invalid(default):
                 r = default
             elif r == "undefined":
                 r = None
@@ -443,23 +443,38 @@ def simple_memoize(func, timeout=60*5):
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
-def update_data(value, key=None, op="add", new_data_key=None, **kwargs):
-    if key is not None and this.props.data_key is not None:
+def update_data(value, key=None, op="add", new_data_key=None,
+                only_new_data=False, with_new_item=True, new_item=None,
+                _caller=True,
+                **kwargs):
+    if not is_invalid(key) and not is_invalid(this.props.data_key):
         key = this.props.data_key + '.' + key if this.props.data_key else key
-    elif key is not None:
+    elif not is_invalid(key):
         key = key
-    elif this.props.data_key is not None:
+    elif not is_invalid(this.props.data_key):
         key = this.props.data_key
-    elif this.props.data_id is not None:
+    elif not is_invalid(this.props.data_id):
         key = this.props.data_id
 
+    if _caller:
+        if with_new_item:
+            new_item = new_item or this.state.new_item
+
     if this.props.update_data:
-        this.props.update_data(value, key, op=op, **kwargs)
+        this.props.update_data(value, key, op=op, new_data_key=new_data_key,
+                               only_new_data=only_new_data, with_new_item=with_new_item,
+                               new_item=new_item,
+                               _caller=False,
+                              **kwargs)
     else:
         print(key, JSON.stringify(value))
         data = this.state.data or {}
+        if only_new_data:
+            data = JSONCopy(data)
+
         data = update_object(key, data, value, op=op, **kwargs)
-        this.setState({'data': data})
+        if not only_new_data:
+            this.setState({'data': data})
         if not this.state.new_data:
             if data.id:
                 new_data = {'id': data.id}
@@ -468,9 +483,18 @@ def update_data(value, key=None, op="add", new_data_key=None, **kwargs):
         else:
             new_data = this.state.new_data
         key = new_data_key or key
-        new_data = data if not key else set_object_value(key, new_data, get_object_value(new_data_key or key, data))
+        new_value = get_object_value(new_data_key or key, data)
+        if with_new_item and new_item:
+            if lodash_lang.isArray(new_value) and lodash_lang.isArray(new_item):
+                new_value = JSONCopy(new_value)
+                new_value.extend(new_item)
+        new_data = data if not key else set_object_value(key, new_data, new_value)
         print(JSON.stringify(new_data))
         this.setState({'new_data': new_data})
 
 __pragma__("nokwargs")
 
+def is_invalid(v):
+    if not defined(v) or v is None:
+        return True
+    return False

@@ -6,7 +6,7 @@ from src.state import state
 from src.ui import ui, RemovableItem
 from src.i18n import tr
 from src.single import artistitem, parodyitem, circleitem
-from src.selectors import artistselector
+from src.selectors import artistselector, parodyselector
 from src.client import ItemType, client
 from src.props import simpleprops
 from org.transcrypt.stubs.browser import __pragma__
@@ -18,17 +18,47 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
-def update_title(value, id):
-    t = utils.lodash_find(this.state.data, lambda v, i, c: v['id']==id)
+def update_new_title(value, id):
+    data = this.props.data or this.state.data
+    t = this.state.new_item[id]
     if t:
         t.js_name = value
-        this.update_data(this.state.data)
+        n_data = utils.JSONCopy(this.state.new_item)
+        this.setState({'new_item': n_data})
+        this.update_data(data, new_item=n_data, only_new_data=True)
 
-def update_title_language(value, id):
-    t = utils.lodash_find(this.state.data, lambda v, i, c: v['id']==id)
+def update_title(value, id):
+    data = this.props.data or this.state.data
+    t = utils.lodash_find(data, lambda v, i, c: v['id']==id)
+    if t:
+        t.js_name = value
+        this.update_data(data)
+
+def update_new_title_language(value, id):
+    data = this.props.data or this.state.data
+    t = this.state.new_item[id]
     if t:
         t.language = value
-        this.update_data(this.state.data)
+        n_data = utils.JSONCopy(this.state.new_item)
+        this.setState({'new_item': n_data})
+        this.update_data(data, new_item=n_data, only_new_data=True)
+
+def update_title_language(value, id):
+    data = this.props.data or this.state.data
+    t = utils.lodash_find(data, lambda v, i, c: v['id']==id)
+    if t:
+        t.language = value
+        this.update_data(data)
+
+def remove_new_title(e, d):
+    tid = e.target.dataset.id
+    data = this.props.data or this.state.data
+    t = this.state.new_item[tid]
+    if t:
+        this.state.new_item.remove(t)
+        n_data = utils.JSONCopy(this.state.new_item)
+        this.setState({'new_item': n_data})
+        this.update_data(data, new_item=n_data, only_new_data=True)
 
 def remove_title(e, d):
     tid = e.target.dataset.id
@@ -37,6 +67,11 @@ def remove_title(e, d):
         ndata = utils.remove_from_list(data, {'id': tid})
         this.update_data(ndata)
             
+def titles_update(p_p, p_s):
+    if any((
+        p_p.edit_mode != this.props.edit_mode,
+    )):
+        this.setState({'new_item': []})
 
 def titles_render():
     data = this.props.data or this.state.data
@@ -70,13 +105,29 @@ def titles_render():
                         key=t.id,
                         )
                         )
+    if this.state.new_item:
+        for tid, t in enumerate(this.state.new_item):
+            els.append(e(ui.Table.Row,
+                        e(ui.Table.Cell, e(simpleprops.Language, data_key=None, data_id=tid, update_data=this.update_new_language, edit_mode=this.props.edit_mode, data=t.language, size="tiny", className="sub-text" if not this.props.edit_mode else ""), collapsing=True),
+                        e(ui.Table.Cell, e(ui.Header, h("span", e(ui.Icon, js_name="remove", onClick=this.on_remove_new, link=True, **{'data-id': tid}), className="right") if this.props.edit_mode else None,
+                                            e(simpleprops.EditText,
+                                                defaultOpen=True,
+                                                defaultValue=t.js_name,
+                                                edit_mode=this.props.edit_mode,
+                                                update_data=this.update_new_title,
+                                                data_id=tid,
+                                                fluid=True),
+                                            size="tiny", className="sub-text" if not this.props.edit_mode else "")),
+                        key=t.js_name or Math.random(),
+                        )
+                        )
     if this.props.edit_mode:
         els.append(e(ui.Table.Row,
-                     e(ui.Table.Cell,
-                       e(ui.Header, h("span", e(ui.Icon, color="green", js_name="plus", onClick=this.on_remove, link=True), className="right"),
-                         size="tiny"),
-                       #e(ui.Icon, js_name="plus", color="green"),
-                      colSpan="2"),
+                        e(ui.Table.Cell,
+                        e(ui.Header, h("span", e(ui.Icon, color="green", js_name="plus", onClick=this.on_create_item, link=True), className="right"),
+                            size="tiny"),
+                        #e(ui.Icon, js_name="plus", color="green"),
+                        colSpan="2"),
                     key="add"))
 
     return e(ui.Table,
@@ -92,12 +143,18 @@ Titles = createReactClass({
 
     'getInitialState': lambda: {
                                 'data': this.props.data or [],
+                                'new_item': []
                                 },
+    'update_new_title': update_new_title,
     'update_title': update_title,
+    'update_new_language': update_new_title_language,
     'update_language': update_title_language,
-    'on_click': lambda: this.setState({'edit_mode': True}),
+    'on_create_item': lambda: all((this.state.new_item.append({}), this.setState({'new_item': utils.JSONCopy(this.state.new_item)}))),
+    #'cancel_create_item': lambda: this.setState({'create_item': False}),
     'update_data': utils.update_data,
     'on_remove': remove_title,
+    'on_remove_new': remove_new_title,
+    'componentDidUpdate': titles_update,
     'render': titles_render
 })
 
@@ -353,4 +410,71 @@ Category = createReactClass({
     #'on_blur': lambda: this.setState({'edit_mode': False}),
     'on_remove': lambda: print("remove"),
     'render': category_render
+})
+
+def on_new_parody(e, data):
+    for a in data:
+        this.update_data(a, op="append")
+
+def remove_parody(e, d):
+    e.preventDefault()
+    tid = e.target.dataset.id
+    data = this.props.data or this.state.data
+    if tid and data:
+        tid = int(tid)
+        ndata = utils.remove_from_list(data, tid, key="id")
+        this.update_data(ndata)
+            
+
+def parodies_render():
+    data = this.props.data or this.state.data
+
+    els = []
+    if data:
+        for a in data:
+            els.append(e(parodyitem.ParodyLabel,
+                         data=a,
+                         key=a.id,
+                         edit_mode=this.props.edit_mode,
+                         update_data=this.props.update_data,
+                         data_key=this.props.data_key,
+                         onRemove=this.on_remove
+                        )
+                        )
+
+    if this.props.edit_mode:
+        els.append(e(ui.Modal,
+              e(ui.Modal.Content,
+                onSubmit=this.on_new_parody,
+                scrolling=True,
+                onClose=this.on_modal_toggle,
+                defaultSelected=data,
+                as_=parodyselector.ParodySelector),
+                trigger=e(ui.Icon, onClick=this.on_modal_toggle, size="small", link=True, js_name="plus", color="purple"),
+                dimmer="inverted",
+                size="small",
+                closeOnDocumentClick=True,
+                centered=False,
+                closeIcon=True,
+                open=this.state.modal_open,
+                onClose=this.on_modal_toggle,
+              ))
+
+    els = e(ui.Label.Group, els)
+
+    return els
+
+Parodies = createReactClass({
+    'displayName': 'Parodies',
+
+    'getInitialState': lambda: {
+                                'data': this.props.data or [],
+                                'modal_open': False,
+                                },
+    'on_new_parody': on_new_parody,
+    'on_click': lambda: this.setState({'edit_mode': True}),
+    'on_modal_toggle': lambda: this.setState({'modal_open': not this.state.modal_open}),
+    'on_remove': remove_parody,
+    'update_data': utils.update_data,
+    'render': parodies_render
 })

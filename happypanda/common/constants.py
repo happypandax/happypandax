@@ -84,6 +84,8 @@ internaldb = None
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
 
+cache_regions = {} # will be clsutils.AttributeDict
+
 general_counter = itertools.count(50)
 default_temp_view_id = 1
 

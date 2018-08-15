@@ -47,6 +47,7 @@ from sqlalchemy.orm import (
     dynamic,
     backref,
     exc as exc_orm,
+    interfaces,
 )
 from sqlalchemy import (
     create_engine,
@@ -76,6 +77,7 @@ from sqlalchemy_utils import (
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from happypanda.common import constants, exceptions, hlogger, clsutils, config, utils
+from happypanda.core import db_cache
 
 force_instant_defaults()
 force_auto_coercion()
@@ -89,6 +91,7 @@ desc_expr = desc
 
 expunge_cascade = "save-update, merge, refresh-expire, expunge"
 default_cascade = "save-update, merge, refresh-expire"
+
 
 
 class OrderingQuery(dynamic.AppenderQuery):
@@ -1848,9 +1851,28 @@ for y in metalist_mappers:
 
 # Note: necessary to put in function because there is no Session object yet
 
+def init_invalidation_event(cls, invalidation_name):
+
+    @event.listens_for(cls, 'after_delete', propagate=True, retval=True)
+    def cls_after_delete(mapper, conn, target):
+        constants.invalidator.set(invalidation_name, True)
+        return interfaces.EXT_STOP
+
+    @event.listens_for(cls, 'after_insert', propagate=True, retval=True)
+    def cls_after_insert(mapper, conn, target):
+        constants.invalidator.set(invalidation_name, True)
+        return interfaces.EXT_STOP
+
+    @event.listens_for(cls, 'after_update', propagate=True, retval=True)
+    def cls_after_update(mapper, conn, target):
+        constants.invalidator.set(invalidation_name, True)
+        return interfaces.EXT_STOP
 
 def initEvents(sess):
     "Initializes events"
+
+    init_invalidation_event(Base, 'dirty_database')
+    init_invalidation_event(NamespaceTags, 'dirty_tags')
 
     @event.listens_for(sess, 'after_flush')
     def aliasmixin_delete(s, ctx):
@@ -2208,7 +2230,8 @@ def init(**kwargs):
     db_path = kwargs.get("path")
     if not db_path:
         db_path = constants.db_path_dev if constants.dev_db else constants.db_path
-    Session = scoped_session(sessionmaker(), scopefunc=_get_current)
+    Session = scoped_session(sessionmaker(query_cls=db_cache.query_callable(constants.cache_regions)),
+                             scopefunc=_get_current)
     constants._db_scoped_session = Session
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)

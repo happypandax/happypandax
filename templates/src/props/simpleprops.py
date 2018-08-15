@@ -16,10 +16,7 @@ JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
 def edittext_update():
-    if this.props.data_key:
-        this.update_data(this.state.data, this.props.data_key)
-    elif this.props.data_id:
-        this.update_data(this.state.data, this.props.data_id)
+    this.update_data(this.state.data)
     this.setState({'edit_mode': False})
 
 def edittext_render():
@@ -48,7 +45,7 @@ EditText = createReactClass({
     'displayName': 'EditText',
 
     'getInitialState': lambda: {
-                                'edit_mode': False,
+                                'edit_mode': utils.defined_or(this.props.defaultOpen, False),
                                 'data': this.props.defaultValue,
                                 },
     'on_click': lambda: this.setState({'edit_mode': True}),
@@ -59,10 +56,7 @@ EditText = createReactClass({
 })
 
 def editnumber_update():
-    if this.props.data_key:
-        this.update_data(this.state.data, this.props.data_key)
-    elif this.props.data_id:
-        this.update_data(this.state.data, this.props.data_id)
+    this.update_data(this.state.data)
     this.setState({'edit_mode': False})
 
 def editnumber_render():
@@ -98,7 +92,7 @@ EditNumber = createReactClass({
     'displayName': 'EditNumber',
 
     'getInitialState': lambda: {
-                                'edit_mode': False,
+                                'edit_mode': utils.defined_or(this.props.defaultOpen, False),
                                 'data': this.props.defaultValue,
                                 },
     'on_click': lambda: this.setState({'edit_mode': True}),
@@ -125,9 +119,9 @@ def language_update(e, d):
     else:
         data = {'name': d.value}
     if this.props.update_data:
-        if this.props.data_key:
+        if not utils.is_invalid(this.props.data_key):
             this.props.update_data(data, this.props.data_key)
-        elif this.props.data_id:
+        elif not utils.is_invalid(this.props.data_id):
             this.props.update_data(data, this.props.data_id)
 
     this.setState({'edit_mode': False})
@@ -249,11 +243,21 @@ DateLabel = createReactClass({
     'render': datelbl_render,
 }, pure=True)
 
-def update_url(e, d):
-    t = utils.lodash_find(this.state.data, lambda v, i, c: v['id']==id)
+def update_url(value, id):
+    data = this.props.data or this.state.data
+    t = utils.lodash_find(data, lambda v, i, c: v['id']==id)
     if t:
         t.js_name = value
-        this.update_data(this.state.data, this.props.data_key)
+        this.update_data(data)
+
+def update_new_url(value, id):
+    data = this.props.data or this.state.data
+    t = this.state.new_item[id]
+    if t:
+        t.js_name = value
+        n_data = utils.JSONCopy(this.state.new_item)
+        this.setState({'new_item': n_data})
+        this.update_data(data, new_item=n_data, only_new_data=True)
 
 def remove_url(e, d):
     e.preventDefault()
@@ -263,6 +267,22 @@ def remove_url(e, d):
         ndata = utils.remove_from_list(data, {'id': tid})
         this.update_data(ndata)
 
+def remove_new_url(e, d):
+    tid = e.target.dataset.id
+    data = this.props.data or this.state.data
+    t = this.state.new_item[tid]
+    if t:
+        this.state.new_item.remove(t)
+        n_data = utils.JSONCopy(this.state.new_item)
+        this.setState({'new_item': n_data})
+        this.update_data(data, new_item=n_data, only_new_data=True)
+
+def urls_update(p_p, p_s):
+    if any((
+        p_p.edit_mode != this.props.edit_mode,
+    )):
+        this.setState({'new_item': []})
+
 def urls_render():
     data = this.props.data or this.state.data
 
@@ -270,14 +290,48 @@ def urls_render():
 
     if data:
         for u in data:
+            if this.props.edit_mode:
+                u_el = e(EditText,
+                                    defaultValue=u.js_name,
+                                    edit_mode=this.props.edit_mode,
+                                    update_data=this.on_update,
+                                    data_id=u.id,
+                                    fluid=True)
+            else:
+                u_el = h("a", u.js_name, href=u.js_name, target="_blank")
             els.append(e(ui.List.Item,
-                         e(ui.List.Icon, js_name="external share"),
+                         e(ui.List.Icon, js_name="external share") if not this.props.edit_mode else \
+                                e(ui.List.Icon, js_name="remove", onClick=this.on_remove, link=True, **{'data-id': u.id}),
                          e(ui.List.Content,
-                            h("a", u.js_name, href=u.js_name, target="_blank"),
-                            h("span", e(ui.Icon, js_name="remove", onClick=this.on_remove, link=True, **{'data-id': u.id}), className="right") if this.props.edit_mode else None,
+                            u_el,
+                            className="fullwidth",
                            ),
                         key=u.id)
                         )
+
+    if this.state.new_item:
+        for uid, u in enumerate(this.state.new_item):
+            u_el = e(EditText,
+                        defaultOpen=True,
+                        defaultValue=u.js_name,
+                        edit_mode=this.props.edit_mode,
+                        update_data=this.on_update_new,
+                        data_id=uid,
+                        fluid=True)
+            els.append(e(ui.List.Item,
+                         e(ui.List.Icon, js_name="remove", onClick=this.on_remove_new, link=True, **{'data-id': uid}),
+                         e(ui.List.Content,
+                            u_el,
+                            className="fullwidth",
+                           ),
+                        key=uid)
+                        )
+
+    if this.props.edit_mode:
+        els.append(e(ui.List.Item,
+                         e(ui.List.Icon, js_name="plus", onClick=this.on_create_item, color="green", link=True),
+                    key="new")
+                    )
 
     return e(ui.List,
              this.props.children if this.props.children else els,
@@ -291,11 +345,14 @@ URLs = createReactClass({
 
     'getInitialState': lambda: {
                                 'data': this.props.data or [],
-                                'edit_mode': False,
+                                'new_item': []
                                 },
+    'on_update_new': update_new_url,
     'on_update': update_url,
-    'on_click': lambda: this.setState({'edit_mode': True}),
+    'on_create_item': lambda: all((this.state.new_item.append({}), this.setState({'new_item': utils.JSONCopy(this.state.new_item)}))),
     'update_data': utils.update_data,
     'on_remove': remove_url,
+    'on_remove_new': remove_new_url,
+    'componentDidUpdate': urls_update,
     'render': urls_render
 })

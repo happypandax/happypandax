@@ -162,6 +162,11 @@ def start(argv=None, db_kwargs={}):
             debug=config.debug.value,
             logging_queue=hlogger.Logger._queue)
 
+        # invalidate all cache
+        if constants.dev or config.debug.value:
+            for n, c in constants.cache_regions.items():
+                c.invalidate()
+
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 
         if not update_state == constants.UpdateState.Installing.value and db_inited:

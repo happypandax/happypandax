@@ -205,6 +205,22 @@ def get_page_url(number, gid=None):
 
 __pragma__("nokwargs")
 
+def get_default_size():
+    w = window.innerWidth
+    s = screen.width
+    if w > 2400 or s > 2400:
+        return ImageSize.Original
+    if w > 1600 or s > 1600:
+        return ImageSize.x2400
+    elif w > 1280 or s > 1600:
+        return ImageSize.x1600
+    elif w > 980:
+        return ImageSize.x1280
+    elif w > 768:
+        return ImageSize.x960
+    else:
+        return ImageSize.x768
+
 
 def go_next():
     if int(this.state.data.number) < int(this.state.page_count):
@@ -488,7 +504,7 @@ Page = createReactClass({
 
     'get_page_url': get_page_url,
 
-    'get_default_size': lambda: ImageSize.Original,
+    'get_default_size': get_default_size,
 
     'getInitialState': lambda: {'gid': int(this.props.match.params.gallery_id),
                                 'number': int(this.props.match.params.page_number),

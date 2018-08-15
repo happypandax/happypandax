@@ -6,11 +6,12 @@ import __main__
 
 from tinydb.storages import MemoryStorage
 from collections import UserList
+from dogpile.cache.region import make_region
+from dogpile.cache.util import kwarg_function_key_generator
 
 from happypanda.common import constants, hlogger
 
 log = hlogger.Logger(constants.log_ns_misc + __name__)
-
 
 class AttributeList(UserList):
     """
@@ -51,6 +52,16 @@ class AttributeDict(dict):
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
 
 
+constants.cache_regions = AttributeDict()
+constants.cache_regions['db'] = make_region(
+    name='db',
+    function_key_generator=kwarg_function_key_generator,
+    ).configure(
+        'dogpile.cache.memory',
+        expiration_time=60*60 # 1 hour
+        )
+
+
 class Invalidator:
     """
     An invalidation implementation.
@@ -81,8 +92,20 @@ class Invalidator:
             c._set(value)
 
 
-class CacheInvalidation:
-    similar_gallery = Invalidator()
+class BaseInvalidation:
+
+    @classmethod
+    def set(cls, name, value):
+        cls.__dict__[name]._set(value)
+
+    @classmethod
+    def get(cls, name):
+        return getattr(cls, name)
+
+class CacheInvalidation(BaseInvalidation):
+    dirty_tags = Invalidator()
+    similar_gallery = Invalidator(dirty_tags)
+    dirty_database = Invalidator(dirty_tags)
 
 
 constants.invalidator = CacheInvalidation()
