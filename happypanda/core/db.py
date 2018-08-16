@@ -66,7 +66,8 @@ from sqlalchemy import (
     Enum,
     TypeDecorator,
     text,
-    select)
+    select,
+    Index)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
@@ -576,7 +577,7 @@ class UniqueMixin:
 
 
 class NameMixin(UniqueMixin):
-    name = Column(String, nullable=False, default='', unique=True)
+    name = Column(String, nullable=False, default='', unique=True, index=True)
 
     def __init__(self, *args, name="", **kwargs):
         super().__init__(*args, **kwargs)
@@ -627,7 +628,7 @@ class NameMixin(UniqueMixin):
 
 
 class LowerNameMixin(NameMixin):
-    name = Column(LowerCaseString, nullable=False, default='', unique=True)
+    name = Column(LowerCaseString, nullable=False, default='', unique=True, index=True)
 
     @classmethod
     def as_unique(cls, *args, **kwargs):
@@ -649,7 +650,7 @@ class LowerNameMixin(NameMixin):
 
 
 class CapitalizedNameMixin(NameMixin):
-    name = Column(CapitalizedString, nullable=False, default='', unique=True)
+    name = Column(CapitalizedString, nullable=False, default='', unique=True, index=True)
 
     @classmethod
     def as_unique(cls, *args, **kwargs):
@@ -674,7 +675,7 @@ class AliasMixin:
 
     @declared_attr
     def language_id(cls):
-        return Column(Integer, ForeignKey('language.id'))
+        return Column(Integer, ForeignKey('language.id'), index=True)
 
     @declared_attr
     def language(cls):
@@ -682,7 +683,7 @@ class AliasMixin:
 
     @declared_attr
     def alias_for_id(cls):
-        return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__)), nullable=True)  # has one-child policy
+        return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__)), nullable=True, index=True)  # has one-child policy
 
     @declared_attr
     def alias_for(cls):
@@ -736,7 +737,7 @@ class UserMixin:
 
     @declared_attr
     def user_id(cls):
-        return Column(Integer, ForeignKey('user.id'), default=cls.current_user)
+        return Column(Integer, ForeignKey('user.id'), index=True, default=cls.current_user)
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -827,9 +828,9 @@ def profile_association(cls, bref="items"):
     column = '{}_id'.format(table_name)
     assoc = Table(
         '{}_profiles'.format(table_name), Base.metadata, Column(
-            'profile_id', Integer, ForeignKey('profile.id')), Column(
+            'profile_id', Integer, ForeignKey('profile.id'), index=True), Column(
             column, Integer, ForeignKey(
-                '{}.id'.format(table_name))), UniqueConstraint(
+                '{}.id'.format(table_name)), index=True), UniqueConstraint(
                     'profile_id', column))
 
     cls.profiles = relationship(
@@ -848,9 +849,9 @@ def metatag_association(cls, bref="items"):
     column = '{}_id'.format(table_name)
     assoc = Table(
         '{}_metatags'.format(table_name), Base.metadata, Column(
-            'metatag_id', Integer, ForeignKey('metatag.id')), Column(
+            'metatag_id', Integer, ForeignKey('metatag.id'), index=True), Column(
             column, Integer, ForeignKey(
-                '{}.id'.format(table_name))), UniqueConstraint(
+                '{}.id'.format(table_name)), index=True), UniqueConstraint(
                     'metatag_id', column))
 
     cls.metatags = relationship(
@@ -891,9 +892,9 @@ def metalist_association(cls, bref="items"):
     column = '{}_id'.format(table_name)
     assoc = Table(
         '{}_metalists'.format(table_name), Base.metadata, Column(
-            'metalist_id', Integer, ForeignKey('metalist.id')), Column(
+            'metalist_id', Integer, ForeignKey('metalist.id'), index=True), Column(
             column, Integer, ForeignKey(
-                '{}.id'.format(table_name))), UniqueConstraint(
+                '{}.id'.format(table_name)), index=True), UniqueConstraint(
                     'metalist_id', column))
 
     cls.metalists = relationship(
@@ -932,9 +933,9 @@ def url_association(cls, bref="items"):
     column = '{}_id'.format(table_name)
     assoc = Table(
         '{}_url'.format(table_name), Base.metadata, Column(
-            'url_id', Integer, ForeignKey('url.id')), Column(
+            'url_id', Integer, ForeignKey('url.id'), index=True), Column(
             column, Integer, ForeignKey(
-                '{}.id'.format(table_name))), UniqueConstraint(
+                '{}.id'.format(table_name)), index=True), UniqueConstraint(
                     'url_id', column))
 
     cls.urls = relationship(
@@ -1016,6 +1017,9 @@ metatag_association(User, "users")
 @generic_repr
 class Profile(Base):
     __tablename__ = 'profile'
+    __table_args__ = (
+        Index('idx_data_size', 'data', 'size'),
+        )
 
     path = Column(Text, nullable=False, default='')
     data = Column(String, nullable=False, index=True)
@@ -1038,7 +1042,7 @@ class Event(Base):
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     action = Column(String, nullable=False)
     extra = Column(JSONType, nullable=False, default={})
-    user_id = Column(Integer, ForeignKey('user.id'), default=UserMixin.current_user)
+    user_id = Column(Integer, ForeignKey('user.id'), index=True, default=UserMixin.current_user)
     user = relationship(
         "User",
         back_populates="events",
@@ -1066,16 +1070,19 @@ class Hash(NameMixin, Base):
 @generic_repr
 class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
     __tablename__ = 'namespace_tags'
+    __table_args__ = (
+        UniqueConstraint('tag_id', 'namespace_id'),
+        Index('idx_tag_namespace', 'tag_id', 'namespace_id', unique=True),
+        )
 
-    tag_id = Column(Integer, ForeignKey('tag.id'))
-    namespace_id = Column(Integer, ForeignKey('namespace.id'))
-    __table_args__ = (UniqueConstraint('tag_id', 'namespace_id'),)
+    tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
+    namespace_id = Column(Integer, ForeignKey('namespace.id'), index=True)
 
     tag = relationship("Tag", cascade=expunge_cascade)
     namespace = relationship("Namespace",
                              cascade=expunge_cascade)
 
-    parent_id = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("namespace_tags.id"), index=True, nullable=True)
     parent = relationship("NamespaceTags",
                           primaryjoin=('namespace_tags.c.id==namespace_tags.c.parent_id'),
                           remote_side='NamespaceTags.id',
@@ -1173,7 +1180,6 @@ class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
         return query.join(cls.namespace).join(cls.tag).filter(and_op(Namespace.name == Namespace.format(ns),
                                                                      Tag.name == Tag.format(tag)))
 
-
 metatag_association(NamespaceTags, "namespacetags")
 
 
@@ -1217,9 +1223,9 @@ class Namespace(CapitalizedNameMixin, AliasMixin, Base):
 taggable_tags = Table(
     'taggable_tags', Base.metadata,
     Column(
-        'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
+        'namespace_tag_id', Integer, ForeignKey('namespace_tags.id'), index=True),
     Column(
-        'taggable_id', Integer, ForeignKey('taggable.id')),
+        'taggable_id', Integer, ForeignKey('taggable.id'), index=True),
     Column('timestamp', ArrowType, nullable=False, default=arrow.now),
     UniqueConstraint(
         'namespace_tag_id', 'taggable_id'))
@@ -1251,7 +1257,7 @@ class TaggableMixin(UpdatedMixin):
 
     @declared_attr
     def taggable_id(cls):
-        return Column(Integer, ForeignKey('taggable.id'), nullable=False)
+        return Column(Integer, ForeignKey('taggable.id'), index=True, nullable=False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1269,24 +1275,24 @@ class TaggableMixin(UpdatedMixin):
 
 gallery_artists = Table(
     'gallery_artists', Base.metadata, Column(
-        'artist_id', Integer, ForeignKey('artist.id')), Column(
-            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
+        'artist_id', Integer, ForeignKey('artist.id'), index=True), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id'), index=True), UniqueConstraint(
                 'artist_id', 'gallery_id'))
 
 artist_circles = Table(
     'artist_circles', Base.metadata, Column(
         'circle_id', Integer, ForeignKey(
-            'circle.id',)), Column(
+            'circle.id',), index=True), Column(
                 'artist_id', Integer, ForeignKey(
-                    'artist.id',)), UniqueConstraint(
+                    'artist.id',), index=True), UniqueConstraint(
                         'circle_id', 'artist_id'))
 
 artist_names = Table(
     'artist_names', Base.metadata, Column(
         'artistname_id', Integer, ForeignKey(
-            'artistname.id',)), Column(
+            'artistname.id',), index=True), Column(
                 'artist_id', Integer, ForeignKey(
-                    'artist.id',)), UniqueConstraint(
+                    'artist.id',), index=True), UniqueConstraint(
                         'artistname_id', 'artist_id'))
 
 
@@ -1371,16 +1377,16 @@ class Circle(NameMixin, UserMixin, Base):
 
 gallery_parodies = Table(
     'gallery_parodies', Base.metadata, Column(
-        'parody_id', Integer, ForeignKey('parody.id')), Column(
-            'gallery_id', Integer, ForeignKey('gallery.id')), PrimaryKeyConstraint(
+        'parody_id', Integer, ForeignKey('parody.id'), index=True), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id'), index=True), PrimaryKeyConstraint(
                 'parody_id', 'gallery_id'))
 
 parody_names = Table(
     'parody_names', Base.metadata, Column(
         'parodyname_id', Integer, ForeignKey(
-            'parodyname.id',)), Column(
+            'parodyname.id',), index=True), Column(
                 'parody_id', Integer, ForeignKey(
-                    'parody.id',)), UniqueConstraint(
+                    'parody.id',), index=True), UniqueConstraint(
                         'parodyname_id', 'parody_id'))
 
 
@@ -1440,11 +1446,11 @@ setup_preffered_name(Parody)
 profile_association(Parody, "parodies")
 
 gallery_filters = Table('gallery_filters', Base.metadata,
-                        Column('filter_id', Integer, ForeignKey('filter.id')),
+                        Column('filter_id', Integer, ForeignKey('filter.id'), index=True),
                         Column(
                             'gallery_id',
                             Integer,
-                            ForeignKey('gallery.id')),
+                            ForeignKey('gallery.id'), index=True),
                         Column('timestamp', ArrowType, nullable=False, default=arrow.now),
                         UniqueConstraint('filter_id', 'gallery_id'))
 
@@ -1485,7 +1491,7 @@ class Status(NameMixin, UserMixin, Base):
 @generic_repr
 class Grouping(ProfileMixin, NameMixin, Base):
     __tablename__ = 'grouping'
-    status_id = Column(Integer, ForeignKey('status.id'))
+    status_id = Column(Integer, ForeignKey('status.id'), index=True)
 
     galleries = relationship(
         "Gallery",
@@ -1555,8 +1561,8 @@ class Category(NameMixin, UserMixin, Base):
 
 gallery_collections = Table(
     'gallery_collections', Base.metadata, Column(
-        'collection_id', Integer, ForeignKey('collection.id')), Column(
-            'gallery_id', Integer, ForeignKey('gallery.id')), Column(
+        'collection_id', Integer, ForeignKey('collection.id'), index=True), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id'), index=True), Column(
                 'timestamp', ArrowType, nullable=False, default=arrow.now),
     UniqueConstraint('collection_id', 'gallery_id'))
 
@@ -1567,7 +1573,7 @@ class Collection(ProfileMixin, UpdatedMixin, NameMixin, UserMixin, Base):
 
     info = Column(Text, nullable=False, default='')
     pub_date = Column(ArrowType)
-    category_id = Column(Integer, ForeignKey('category.id'))
+    category_id = Column(Integer, ForeignKey('category.id'), index=True)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     category = relationship(
@@ -1591,18 +1597,18 @@ metatag_association(Collection, "collections")
 class Gallery(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'gallery'
 
-    last_read = Column(ArrowType)
-    pub_date = Column(ArrowType)
+    last_read = Column(ArrowType, index=True)
+    pub_date = Column(ArrowType, index=True)
     info = Column(Text, nullable=False, default='')
     single_source = Column(Boolean, default=True)
     phantom = Column(Boolean, default=False)
-    rating = Column(Integer, nullable=False, default=0)
-    times_read = Column(Integer, nullable=False, default=0)
-    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
-    number = Column(Integer, nullable=False, default=0)
-    category_id = Column(Integer, ForeignKey('category.id'))
-    language_id = Column(Integer, ForeignKey('language.id'))
-    grouping_id = Column(Integer, ForeignKey('grouping.id'))
+    rating = Column(Integer, nullable=False, default=0, index=True)
+    times_read = Column(Integer, nullable=False, default=0, index=True)
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now, index=True)
+    number = Column(Integer, nullable=False, default=0, index=True)
+    category_id = Column(Integer, ForeignKey('category.id'), index=True)
+    language_id = Column(Integer, ForeignKey('language.id'), index=True)
+    grouping_id = Column(Integer, ForeignKey('grouping.id'), index=True)
 
     grouping = relationship(
         "Grouping",
@@ -1661,6 +1667,17 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                               ),
                               uselist=False,
                               )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.grouping = Grouping()
+
+    @validates('titles')
+    def validate_title(self, key, title):
+        # can't add to myself
+        if self.grouping and not self.grouping.name and title.name:
+            self.grouping.name = title.name
+        return title
 
     def read(self, user_id=None, datetime=None):
         "Creates a read event for user"
@@ -1761,8 +1778,8 @@ class Page(TaggableMixin, ProfileMixin, Base):
     number = Column(Integer, nullable=False, index=True, default=-1)
     name = Column(String, nullable=False, default='')
     path = Column(Text, nullable=False, default='')
-    hash_id = Column(Integer, ForeignKey('hash.id'))
-    gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
+    hash_id = Column(Integer, ForeignKey('hash.id'), index=True)
+    gallery_id = Column(Integer, ForeignKey('gallery.id'), index=True, nullable=False)
     in_archive = Column(Boolean, default=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
@@ -1817,8 +1834,8 @@ profile_association(Page, "pages")
 class Title(AliasMixin, UserMixin, Base):
     __tablename__ = 'title'
     name = Column(String, nullable=False, default="")  # OBS: not unique
-    language_id = Column(Integer, ForeignKey('language.id'))
-    gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
+    language_id = Column(Integer, ForeignKey('language.id'), index=True)
+    gallery_id = Column(Integer, ForeignKey('gallery.id'), index=True, nullable=False)
 
     language = relationship(
         "Language",

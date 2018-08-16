@@ -37,7 +37,7 @@ updater_key = "updater"
 ## VERSIONING ##
 build = 134
 version = (0, 2, 0)
-version_db = (0, 1, 1)
+version_db = (0, 1, 2)
 version_web = (0, 2, 0)
 version_str = ".".join(str(x) for x in version)
 version_db_str = ".".join(str(x) for x in version_db)
@@ -159,6 +159,8 @@ class PushID(enum.Enum):
 super_user_name = "default"
 
 maximum_native_workers = 15
+
+maximum_cpu_threads = 2
 
 command_progress_removal_time = 60 * 5  # seconds
 
