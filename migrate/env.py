@@ -130,7 +130,8 @@ def run_migrations_online():
                 upgrade_token="%s_upgrades" % name,
                 downgrade_token="%s_downgrades" % name,
                 target_metadata=target_metadata.get(name),
-                process_revision_directives=process_revision_directives
+                process_revision_directives=process_revision_directives,
+                render_as_batch=True
             )
             context.run_migrations(engine_name=name)
 

@@ -239,8 +239,11 @@ class CoreFS(CoreCommand):
     CBR = '.cbr'
     CBZ = '.cbz'
     TARGZ = '.tar.gz'
+    TGZ = '.tgz'
     TARBZ2 = '.tar.bz2'
+    TBZ = '.tbz'
     TARXZ = '.tar.xz'
+    TXZ = '.txz'
 
     JPG = '.jpg'
     JPEG = '.jpeg'
@@ -302,8 +305,7 @@ class CoreFS(CoreCommand):
 
     @_archive_formats.default()
     def _archive_formats_def():
-        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBR, CoreFS.CBZ, CoreFS.TARGZ,
-                CoreFS.TARBZ2, CoreFS.TARXZ)
+        return Archive._def_formats()
 
     @_image_formats.default()
     def _image_formats_def():
@@ -715,8 +717,9 @@ class Archive(CoreCommand):
     _archive_obj_ref_count = {}
 
     def _def_formats():
-        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR, CoreFS.TARBZ2,
-                CoreFS.TARGZ, CoreFS.TARXZ)
+        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR,
+                CoreFS.TARBZ2,CoreFS.TARGZ, CoreFS.TARXZ,
+                CoreFS.TBZ, CoreFS.TGZ, CoreFS.TXZ)
 
     def __init__(self, fpath: str):
         self._opened = False

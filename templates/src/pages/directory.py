@@ -136,12 +136,15 @@ def statuspage_render():
         items.append(
             e(ui.Card,
                 e(ui.Card.Content, e(ui.Card.Description, item['name'])),
-              centered=True, link=True, className="default-card")
+              centered=True,
+              link=True,
+              className="default-card",
+              key=item.id)
         )
 
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-status", "Status")),
-             e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
+             e(ui.Card.Group, items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
@@ -190,12 +193,15 @@ def languagespage_render():
         items.append(
             e(ui.Card,
                 e(ui.Card.Content, e(ui.Card.Description, item['name'])),
-              centered=True, link=True, className="default-card")
+              centered=True,
+              link=True,
+              className="default-card",
+              key=item.id)
         )
 
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-languages", "Languages")),
-             e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
+             e(ui.Card.Group, items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
@@ -264,18 +270,19 @@ def parodiespage_render():
                 e(parodypropsview.ParodyProps, data=parody),
               trigger=e(ui.Card,
                         e(ui.Card.Content, e(ui.Card.Description, aname)),
-                        centered=True, link=True, className="default-card"),
+                        centered=True,link=True, className="default-card"),
               hoverable=True,
               wide="very",
               on="click",
               hideOnScroll=True,
-              position="top center"
+              position="top center",
+              key=parody.id
               )
         )
 
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-parodies", "Parodies")),
-             e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
+             e(ui.Card.Group, items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
@@ -350,12 +357,15 @@ def categorypage_render():
         items.append(
             e(ui.Card,
                 e(ui.Card.Content, e(ui.Card.Description, cat['name'])),
-              centered=True, link=True, className="default-card")
+              centered=True,
+              link=True,
+              className="default-card",
+              key=cat.id)
         )
 
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-categories", "Categories")),
-             e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
+             e(ui.Card.Group, items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
@@ -425,13 +435,14 @@ def circlespage_render():
               wide="very",
               on="click",
               hideOnScroll=True,
-              position="top center"
+              position="top center",
+              key=item.id,
               )
         )
 
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-circles", "Circles")),
-             e(ui.Card.Group, *items, itemsPerRow=2, doubling=True, stackable=True,
+             e(ui.Card.Group, items, itemsPerRow=2, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
@@ -530,11 +541,12 @@ def artistpage_render():
                 size="small",
                 closeOnDocumentClick=True,
                 closeIcon=True,
+                key=artist.id,
               )
         )
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-artists", "Artists")),
-             e(ui.Card.Group, *items, itemsPerRow=2, doubling=True, stackable=True,
+             e(ui.Card.Group, items, itemsPerRow=2, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
@@ -626,43 +638,43 @@ def tagspage_render():
     nstags = this.state.data
 
     if nstags.__namespace__:  # somehow transcrypt ignores this in the loop below
-        tags = sorted([x.js_name for x in nstags.__namespace__])
-        for t in tags:
+        for t in sorted(nstags.__namespace__, key=lambda x: x.js_name):
             tag_lbl.append(
                 e(ui.Modal,
                   e(ui.Modal.Content,
-                    e(tagpropsview.TagProps, tag=t, namespace=""),
+                    e(tagpropsview.TagProps, tag=t.js_name, namespace=""),
                     ),
                     trigger=e(ui.Card,
-                              e(ui.Card.Content, e(ui.Card.Description, t)),
+                              e(ui.Card.Content, e(ui.Card.Description, t.js_name)),
                               centered=True, link=True, className="default-card"),
                     dimmer="inverted",
                     size="small",
                     closeOnDocumentClick=True,
                     closeIcon=True,
+                    key=t.id,
                   ))
 
     for ns in sorted(dict(nstags).keys()):
-        tags = [x.js_name for x in nstags[ns]]
-        for t in sorted(tags):
+        for t in sorted(nstags[ns], key=lambda x: x.js_name):
             tag_lbl.append(
                 e(ui.Modal,
                   e(ui.Modal.Content,
-                    e(tagpropsview.TagProps, tag=t, namespace=ns),
+                    e(tagpropsview.TagProps, tag=t.js_name, namespace=ns),
                     ),
                     trigger=e(ui.Card,
                               e(ui.Card.Content,
-                                e(ui.Card.Description, h("span", ns + ':', className="sub-text"), t)),
+                                e(ui.Card.Description, h("span", ns + ':', className="sub-text"), t.js_name)),
                               centered=True, link=True, className="default-card"),
                     dimmer="inverted",
                     size="small",
                     closeOnDocumentClick=True,
                     closeIcon=True,
+                    key=t.id,
                   ))
 
     return e(SimpleLayout,
              e(TitleChange, title=tr(this, "ui.mi-dir-tags", "Tags")),
-             e(ui.Card.Group, *tag_lbl, itemsPerRow=4, doubling=True, stackable=True,
+             e(ui.Card.Group, tag_lbl, itemsPerRow=4, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),

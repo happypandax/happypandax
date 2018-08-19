@@ -23,6 +23,7 @@ t-unknown: Unknown
 t-bracket-unknown: <Unknown>
 t-or: Or
 t-submit: Submit
+t-add: Add
 t-select: Select
 t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
 
@@ -258,10 +259,10 @@ t-original: Original
 b-read: Read
 b-save-later: Save for later
 b-send-library: Send to Library
-b-add-to-filter: Add to filter
-b-add-to-collection: Add to collection
-b-add-to-series: Add to series
-b-send-trash: Send to Trash
+b-add-to-filter: Add to Filter
+b-add-to-collection: Add to Collection
+b-add-to-series: Add to Series
+b-send-trash: Send to trash
 
 # Artist View
 t-galleries: Galleries

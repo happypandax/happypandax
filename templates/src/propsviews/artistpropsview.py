@@ -20,7 +20,9 @@ __pragma__('noskip')
 
 def get_tags(data=None, error=None):
     if data is not None and not error:
-        this.setState({"tags": data})
+        this.setState({"tags": data, "loading_tags": False})
+        if this.props.on_tags:
+            this.props.on_tags(data)
     elif error:
         state.app.notif("Failed to fetch tags ({})".format(this.props.id), level="error")
     else:
@@ -29,6 +31,7 @@ def get_tags(data=None, error=None):
         if data:
             id = data.id
         if id:
+            this.setState({"loading_tags": True})
             client.call_func("get_common_tags", this.get_tags,
                              item_type=this.state.item_type,
                              item_id=id, limit=10)
@@ -44,9 +47,10 @@ def get_gallery_count(data=None, error=None):
         data = this.props.data or this.state.data
         if data:
             id = data.id
-        client.call_func("get_related_count", this.get_gallery_count,
-                         item_type=this.state.item_type,
-                         item_id=id, related_type=ItemType.Gallery)
+        if id:
+            client.call_func("get_related_count", this.get_gallery_count,
+                             item_type=this.state.item_type,
+                             item_id=id, related_type=ItemType.Gallery)
 
 
 __pragma__("tconv")
@@ -63,11 +67,12 @@ def artistprops_render():
     if data:
         if data.names:
             name = data.names[0].js_name
-        if data.metatags.favorite:
+        if data.metatags and data.metatags.favorite:
             fav = 1
 
-        for u in data.urls:
-            urls.append(u.js_name)
+        if data.urls:
+            for u in data.urls:
+                urls.append(u.js_name)
 
         if data.circles:
             for c in data.circles:
@@ -159,6 +164,7 @@ def artistprops_render():
                                     *tag_lbl
                                     ),
                                   basic=True,
+                                  loading=this.state.loading_tags,
                                 ),
                               width=16), columns=1),
              *slider_el,
@@ -174,6 +180,7 @@ ArtistProps = createReactClass({
         'tags': this.props.tags,
         'item_type': ItemType.Artist,
         'gallery_count': 0,
+        'loading_tags': False,
     },
 
     'get_tags': get_tags,

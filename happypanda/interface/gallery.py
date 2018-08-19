@@ -297,3 +297,80 @@ def load_gallery_from_path(path: str = ""):
     gfs.load_pages()
     gfs.check_exists()
     return message.GalleryFS(gfs)
+
+def add_to_filter(gallery_id: int=0,
+             item_id: int=0,
+             item: dict={}):
+    """
+    Add a gallery to a galleryfilter
+
+    Args:
+        gallery_id: id of gallery
+        item_id: id of existing galleryfilter, mutually exclusive with ``item`` parameter
+        item: filter message object, mutually exclusive with ``item_id`` parameter
+
+    Returns:
+        bool whether gallery was added to filter or not
+
+    """
+
+    if not gallery_id:
+        raise exceptions.APIError(utils.this_function(), "gallery_id must be a valid gallery id")
+
+    g = database_cmd.GetModelItems().run(db.Gallery, {gallery_id})
+    if not g:
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+                                                "'{}' with id '{}' was not found".format(enums.ItemType.Gallery.name,
+                                                                                            gallery_id))
+    g = g[0]
+
+    if item_id:
+        p = database_cmd.GetModelItems().run(db.GalleryFilter, {item_id})
+        if not p:
+            raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+                                                   "'{}' with id '{}' was not found".format(enums.ItemType.GalleryFilter.name,
+                                                                                            item_id))
+        p = p[0]
+    elif item:
+        p = message.GalleryFilter.from_json(item)
+    g.filters.append(p)
+    s = constants.db_session()
+    s.add(g)
+    s.commit()
+    return message.Identity("status", True)
+
+def remove_from_filter(gallery_id: int=0, item_id: int=0):
+    """
+    Remove a gallery from a galleryfilter
+
+    Args:
+        gallery_id: id of gallery
+        item_id: id of existing galleryfilter
+
+    Returns:
+        bool whether gallery was removed from filter or not
+
+    """
+
+    if not gallery_id:
+        raise exceptions.APIError(utils.this_function(), "gallery_id must be a valid gallery id")
+
+    g = database_cmd.GetModelItems().run(db.Gallery, {gallery_id})
+    if not g:
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+                                                "'{}' with id '{}' was not found".format(enums.ItemType.Gallery.name,
+                                                                                            gallery_id))
+    g = g[0]
+
+    p = database_cmd.GetModelItems().run(db.GalleryFilter, {item_id})
+    if not p:
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+                                                "'{}' with id '{}' was not found".format(enums.ItemType.GalleryFilter.name,
+                                                                                        item_id))
+    p = p[0]
+
+    g.filters.remove(p)
+    s = constants.db_session()
+    s.add(g)
+    s.commit()
+    return message.Identity("status", True)

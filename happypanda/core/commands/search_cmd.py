@@ -470,7 +470,7 @@ class PartialModelFilter(Command):
         if col_on_parent and parent_model != child_model:
             q = q.join(col_on_parent)
         if col_on_child and parent_model != child_model:
-            q = q.join(col_on_child)
+            q = q.join(db.aliased(db.NamespaceTags), col_on_child)
         if term.namespace:
             col_ns = db.relationship_column(db.NamespaceTags, db.Namespace)
             items = q.join(col_ns).join(col_tag).filter(db.and_op(

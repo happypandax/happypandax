@@ -427,6 +427,21 @@ def remove_from_list(l, obj_or_id, key='id'):
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
+def find_in_list(l, obj_or_id, key='id'):
+    it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
+    print(it)
+    return lodash_collection.find(l, lambda i: (get_object_value(key, i) == it if key else i == it))
+__pragma__("nokwargs")
+
+__pragma__("kwargs")
+def unique_list(l, key='id'):
+    if is_invalid(key):
+        return lodash_array.uniq(l)
+    else:
+        return lodash_array.uniqWith(l, lambda a, b: get_object_value(key, a) == get_object_value(key, b))
+__pragma__("nokwargs")
+
+__pragma__("kwargs")
 def update_in_iterable(i, obj_or_id, key=None):
     it = obj_or_id[key] if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
     return lodash_array.remove(l, lambda i: i[key] == it if key else i == it)
@@ -471,7 +486,6 @@ def update_data(value, key=None, op="add", new_data_key=None,
         data = this.state.data or {}
         if only_new_data:
             data = JSONCopy(data)
-
         data = update_object(key, data, value, op=op, **kwargs)
         if not only_new_data:
             this.setState({'data': data})

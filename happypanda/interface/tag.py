@@ -12,19 +12,37 @@ from happypanda.core.commands import database_cmd, search_cmd
 
 def _contruct_tags_msg(nstags):
     msg = {}
-    _msg = {}
     if nstags:
         for nstag in nstags:
-            ns = nstag.namespace.name
-            if ns not in msg:
-                msg[ns] = []
-                _msg[ns] = []
-
-            if nstag.tag.name not in _msg[ns]:
-                msg[ns].append(message.Tag(nstag.tag, nstag).json_friendly(include_key=False))
-                _msg[ns].append(nstag.tag.name)
-
+            tags = msg.setdefault(nstag.namespace.name, [])
+            n = message.NamespaceTags(nstag).json_friendly(include_key=False)
+            del n['tag']
+            del n['namespace']
+            n['name'] = nstag.tag.name
+            tags.append(n)
     return msg
+
+def _decontruct_tags_msg(msg, **msg_kwargs):
+    nstags = []
+    if msg:
+        for n, tags in msg.items():
+            ns = {'name': n}
+            for t in tags:
+                if not ns.get('id', False) and t.get('namespace_id', False):
+                    ns['id'] = t['namespace_id']
+                t['namespace'] = ns
+                tag = {}
+                if t.get('name', False):
+                    tag['name'] = t['name']
+                    del t['name']
+                if t.get('tag_id', False):
+                    tag['id'] = t['tag_id']
+                if tag:
+                    t['tag'] = tag
+
+                nt = message.NamespaceTags.from_json(t, **msg_kwargs)
+                nstags.append(nt)
+    return nstags
 
 
 def get_all_tags(limit: int=100, offset: int=None):
@@ -137,6 +155,8 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
                 ...
             }
     """
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), "item_id must be a valid item id")
 
     item_type = enums.ItemType.get(item_type)
 
@@ -168,6 +188,44 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     return message.Identity('tags', msg)
 
+def update_item_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
+                     item_id: int=0,
+                     tags: dict={}):
+    """
+    Update tags on an item
+
+    Args:
+        item_type: possible items are :attr:`.ItemType.Gallery`, :attr:`.ItemType.Page`,
+            :attr:`.ItemType.Grouping`, :attr:`.ItemType.Collection`
+        item_id: id of item to update tags for
+        tags: tags
+
+    Returns:
+        bool whether tags were updated or not
+
+    """
+
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), "item_id must be a valid item id")
+
+    item_type = enums.ItemType.get(item_type)
+    _, db_item = item_type._msg_and_model(
+        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page))
+
+    db_obj = database_cmd.GetModelItems().run(db_item, {item_id})
+    if not db_obj:
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+                                                "'{}' with id '{}' was not found".format(item_type.name,
+                                                                                            item_id))
+    db_obj = db_obj[0]
+
+    tags = _decontruct_tags_msg(tags)
+    s = constants.db_session()
+    with db.no_autoflush(s):
+        s.add(db_obj)
+        db_obj.tags = tags
+        s.commit()
+    return message.Identity("status", True)
 
 def get_common_tags(item_type: enums.ItemType = enums.ItemType.Collection,
                     item_id: int = 0,
@@ -188,6 +246,9 @@ def get_common_tags(item_type: enums.ItemType = enums.ItemType.Collection,
                 ...
             }
     """
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), "item_id must be a valid item id")
+
     item_type = enums.ItemType.get(item_type)
 
     _, db_item = item_type._msg_and_model(

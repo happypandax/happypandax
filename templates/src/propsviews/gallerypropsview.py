@@ -76,7 +76,7 @@ def galleryprops_render():
     circles = []
     status = this.props.status or this.state.status_data
     language = this.props.language or this.state.lang_data
-    tags = this.props.tags
+    tags = this.props.tags or this.state.tags_data
     titles = []
     title_data = None
     grouping_id = None
@@ -126,6 +126,9 @@ def galleryprops_render():
 
         if this.props.data.urls:
             urls = this.props.data.urls
+
+        if not utils.lodash_lang.isEmpty(this.props.data.tags):
+            tags = this.props.data.tags
 
         if not utils.defined(rating) and this.props.data.rating:
             rating = this.props.data.rating
@@ -238,11 +241,14 @@ def galleryprops_render():
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") +
                                      ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView,
-                                     data_id=None,
-                                     #update_data=this.props.update_data,
+                                     data_key='tags',
+                                     update_data=this.props.update_data,
                                      edit_mode=this.props.edit_mode,
+                                     submitted_data=this.props.submitted_data,
                                      item_id=item_id,
-                                     item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
+                                     item_type=this.state.item_type,
+                                     data=tags,
+                                     on_tags=this.props.on_tags))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-external-links", "External") +
@@ -273,6 +279,7 @@ GalleryProps = createReactClass({
                                 'data': this.props.data,
                                 'item_type': ItemType.Gallery,
                                 'lang_data': this.props.language,
+                                'tags_data': this.props.tags,
                                 'status_data': this.props.status,
                                 },
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
@@ -459,6 +466,7 @@ NewGalleryProps = createReactClass({
                                 'item_type': ItemType.Gallery,
                                 'lang_data': this.props.language,
                                 'status_data': this.props.status,
+                                'tags_data': this.props.tags,
                                 'sources': this.props.sources,
                                 },
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),

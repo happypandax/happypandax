@@ -118,6 +118,10 @@ def language_update(e, d):
         data = {'id': d.value}
     else:
         data = {'name': d.value}
+        this.state.all_data.append(data)
+        all_data = utils.unique_list(this.state.all_data, key='name')
+        this.setState({'all_data': all_data})
+
     if this.props.update_data:
         if not utils.is_invalid(this.props.data_key):
             this.props.update_data(data, this.props.data_key)
@@ -135,7 +139,7 @@ def language_render():
     if this.state.edit_mode:
         options = []
         for i in this.state.all_data:
-            options.append({'key': i.id, 'value': i.id, 'text': i.js_name})
+            options.append({'key': i.id or i.js_name, 'value': i.id or i.js_name, 'text': i.js_name})
         el = e(ui.Select,
                 options=options,
                 placeholder=tr(this, "ui.t-language", "Language"),
@@ -146,7 +150,11 @@ def language_render():
                  as_=this.props.as_,
                  onChange=this.on_update,
                  loading=this.state.loading,
-                 onBlur=this.on_blur,)
+                 onBlur=this.on_blur,
+                 allowAdditions=True,
+                 search=True,
+                 additionLabel=tr(this, "ui.t-add", "add") + ' '
+                 )
     elif data:
         el = e(ui.Label,
                  lang_name,

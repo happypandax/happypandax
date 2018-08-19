@@ -257,6 +257,8 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
                 ...
             ]
     """
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), "item_id must be a valid item id")
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)
 
@@ -326,6 +328,8 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
                 'count' : int
             }
     """
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), "item_id must be a valid item id")
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)
 
@@ -443,6 +447,8 @@ def update_metatags(item_type: enums.ItemType=enums.ItemType.Gallery,
     Returns:
         bool indicating whether metatags were updated
     """
+    if not item_id:
+        raise exceptions.APIError(utils.this_function(), "item_id must be a valid item id")
 
     item_type = enums.ItemType.get(item_type)
 

@@ -13,6 +13,8 @@ from sqlalchemy.orm import sessionmaker
 from happypanda.common import constants
 from happypanda.core.db import *
 
+constants.gallery_grouping_init = False
+
 
 def doublegen(it):
     l = it.copy()
@@ -458,11 +460,19 @@ class ArtistNameRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Artist).count(), 1)
         self.assertEqual(self.session.query(ArtistName).count(), 0)
 
-    def test_no_orphans(self):
+    def test_orphans_when_alias(self):
+        self.session.delete(self.artist)
+        self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 0)
+        self.assertEqual(self.session.query(ArtistName).count(), 9)
+
+    def test_orphans(self):
+        self.session.delete(self.names[0])
         self.session.delete(self.artist)
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 0)
         self.assertEqual(self.session.query(ArtistName).count(), 0)
+
 
     def tearDown(self):
         self.session.close()
@@ -533,7 +543,14 @@ class ParodyNameRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Parody).count(), 1)
         self.assertEqual(self.session.query(ParodyName).count(), 0)
 
+    def test_orphans_when_alias(self):
+        self.session.delete(self.parody)
+        self.session.commit()
+        self.assertEqual(self.session.query(Parody).count(), 0)
+        self.assertEqual(self.session.query(ParodyName).count(), 9)
+
     def test_no_orphans(self):
+        self.session.delete(self.names[0])
         self.session.delete(self.parody)
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 0)
@@ -648,7 +665,7 @@ class GroupingRelationship(unittest.TestCase):
         self.session.commit()
 
         self.assertEqual(self.session.query(Grouping).count(), 1)
-        self.assertEqual(self.session.query(Gallery).count(), 5)
+        self.assertEqual(self.session.query(Gallery).count(), 10)
 
     def test_delete2(self):
         self.session.delete(self.galleries[0])
@@ -856,6 +873,7 @@ class TagRelationship(unittest.TestCase):
         self.nstag1, self.nstag2, self.nstag3, self.nstag4, *_ = self.nstags
 
     def test_tag_parent(self):
+        self.session.autoflush = False
         for x in self.nstags:
             for y in self.galleries:
                 y.tags.remove(x)
@@ -998,6 +1016,17 @@ class TagRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(NamespaceTags).count(), 0)
         self.assertEqual(self.session.query(Tag).count(), 0)
 
+    #def test_no_orphans2(self):
+    #    for g in self.galleries:
+    #        self.session.delete(g)
+    #    self.session.commit()
+    #    self.assertEqual(self.session.query(Gallery).count(), 0)
+
+    #    self.session.commit()
+    #    self.assertEqual(self.session.query(Namespace).count(), 0)
+    #    self.assertEqual(self.session.query(NamespaceTags).count(), 0)
+    #    self.assertEqual(self.session.query(Tag).count(), 0)
+
     def tearDown(self):
         self.session.close()
 
@@ -1062,10 +1091,10 @@ class ProfileRelationship(unittest.TestCase):
                 self.session.delete(y)
         self.session.commit()
 
-        self.assertEqual(self.session.query(Gallery).count(), 0)
+        self.assertEqual(self.session.query(Gallery).count(), 5)
         self.assertEqual(self.session.query(Grouping).count(), 0)
         self.assertEqual(self.session.query(Collection).count(), 5)
-        self.assertEqual(self.session.query(Page).count(), 0)
+        self.assertEqual(self.session.query(Page).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 0)
 
     def tearDown(self):

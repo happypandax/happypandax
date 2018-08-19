@@ -28,7 +28,7 @@ def get_db_items(data=None, error=None):
         new_data.extend(data)
         this.setState({"data": new_data, 'loading': False, 'loading_more': False})
     elif error:
-        state.app.notif("Failed to fetch artists", level="error")
+        state.app.notif("Failed to fetch items", level="error")
         this.setState({'loading': False})
     else:
         client.call_func("search_items", this.get_items,
@@ -42,7 +42,7 @@ def get_items_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"item_count": data['count']})
     elif error:
-        state.app.notif("Failed to fetch artist count", level="error")
+        state.app.notif("Failed to fetch item count", level="error")
     else:
         client.call_func("get_count", this.get_items_count, item_type=this.state.item_type)
 

@@ -165,10 +165,14 @@ def on_new_artist(e, data):
 def remove_artist(e, d):
     e.preventDefault()
     tid = e.target.dataset.id
+    tname = e.target.dataset.js_name
     data = this.props.data or this.state.data
     if tid and data:
         tid = int(tid)
         ndata = utils.remove_from_list(data, tid, key="id")
+        this.update_data(ndata)
+    if tname and data:
+        ndata = utils.remove_from_list(data, tname, key="preferred_name.name")
         this.update_data(ndata)
             
 
@@ -180,7 +184,7 @@ def artists_render():
         for a in data:
             els.append(e(artistitem.ArtistLabel,
                          data=a,
-                         key=a.id,
+                         key=a.id or utils.get_object_value('preferred_name.name', a),
                          edit_mode=this.props.edit_mode,
                          update_data=this.props.update_data,
                          data_key=this.props.data_key,
@@ -241,6 +245,10 @@ def status_update(e, d):
         data = {'id': d.value}
     else:
         data = {'name': d.value}
+        this.state.all_data.append(data)
+        all_data = utils.unique_list(this.state.all_data, key='name')
+        this.setState({'all_data': all_data})
+
     create_val = {}
     if this.props.grouping_id:
         create_val = {'id': this.props.grouping_id}
@@ -261,7 +269,7 @@ def status_render():
     if this.state.edit_mode:
         options = []
         for i in this.state.all_data:
-            options.append({'key': i.id, 'value': i.id, 'text': i.js_name})
+            options.append({'key': i.id or i.js_name, 'value': i.id or i.js_name, 'text': i.js_name})
         el = e(ui.Select,
                 options=options,
                 placeholder=tr(this, "ui.t-status", "Status"),
@@ -272,7 +280,11 @@ def status_render():
                  as_=this.props.as_,
                  onChange=this.on_update,
                  loading=this.state.loading,
-                 onBlur=this.on_blur,)
+                 onBlur=this.on_blur,
+                 allowAdditions=True,
+                 search=True,
+                 additionLabel=tr(this, "ui.t-add", "add") + ' '
+                 )
     elif data:
         el = e(ui.Label,
                  stat_name,
@@ -352,6 +364,10 @@ def category_update(e, d):
         data = {'id': d.value}
     else:
         data = {'name': d.value}
+        this.state.all_data.append(data)
+        all_data = utils.unique_list(this.state.all_data, key='name')
+        this.setState({'all_data': all_data})
+
     if this.props.update_data:
         if this.props.data_key:
             this.props.update_data(data, this.props.data_key)
@@ -369,7 +385,7 @@ def category_render():
     if this.state.edit_mode:
         options = []
         for i in this.state.all_data:
-            options.append({'key': i.id, 'value': i.id, 'text': i.js_name})
+            options.append({'key': i.id or i.js_name, 'value': i.id or i.js_name, 'text': i.js_name})
         el = e(ui.Select,
                 options=options,
                 placeholder=tr(this, "ui.t-category", "Category"),
@@ -380,11 +396,15 @@ def category_render():
                  as_=this.props.as_,
                  onChange=this.on_update,
                  loading=this.state.loading,
-                 onBlur=this.on_blur,)
+                 onBlur=this.on_blur,
+                 allowAdditions=True,
+                 search=True,
+                 additionLabel=tr(this, "ui.t-add", "add") + ' ')
+
     elif not utils.lodash_lang.isEmpty(data) or this.props.edit_mode:
         el = e(ui.Label,
                  cat_name,
-                 color="red",
+                 color="black",
                  basic=this.props.basic,
                  size=this.props.size,
                  className=this.props.className,

@@ -851,3 +851,34 @@ def compare_json_dicts(a, b):
     a_j = json.dumps(a, sort_keys=True, indent=2)
     b_j = json.dumps(a, sort_keys=True, indent=2)
     return a_j == b_j
+
+def get_dict_value(path, fullobj):
+    """
+    """
+    if path == None:
+        path = ""
+    path = str(path).split('.')
+    lastkey = path[-1]
+    path = path[:-1]
+    curr_obj = fullobj
+    if len(path):
+        for p in path:
+            curr_obj = curr_obj[p]
+    return curr_obj[lastkey]
+
+def set_dict_value(path, fullobj, value):
+    """
+    """
+    if path == None:
+        path = ""
+    path = str(path).split('.')
+    lastkey = path[-1]
+    path = path[:-1]
+    curr_obj = fullobj
+    if len(path):
+        for p in path:
+            if not p in curr_obj:
+                curr_obj[p] = {}
+            curr_obj = curr_obj[p]
+    curr_obj[lastkey] = value
+    return fullobj

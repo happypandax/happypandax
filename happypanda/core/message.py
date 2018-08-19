@@ -336,13 +336,42 @@ class DatabaseMessage(CoreMessage):
                     f"Message object mismatch. Message contains keys that are not present in the corresponding database item: {m_keys}")
 
             if msg:
+                new_obj = True
                 obj_id = msg.get('id', False)
                 if obj_id:
                     db_obj = sess.query(db_type).get(obj_id)
                     if not db_obj:
                         raise exceptions.CoreError(utils.this_function(), f"Existing item from message object with id '{obj_id}' was not found")
+                    new_obj = False
                 else:
                     db_obj = db_type()
+
+                if new_obj and isinstance(db_obj, db.UniqueMixin):
+                    if isinstance(db_obj, db.NameMixin) and msg.get('name') is not None:
+                        db_obj = db_type.as_unique(name=msg.get('name'))
+                        new_obj = bool(db_obj.id)
+                    elif isinstance(db_obj, db.NamespaceTags):
+                        ns_name = None
+                        tag_name = None
+                        try:
+                            ns_name = utils.get_dict_value('namespace.name', msg)
+                            tag_name = utils.get_dict_value('tag.name', msg)
+                        except KeyError:
+                            pass
+                        if ns_name is not None and tag_name is not None:
+                            db_obj = db_type.as_unique(ns=ns_name, tag=tag_name)
+                            new_obj = bool(db_obj.id)
+                    elif isinstance(db_obj, (db.Artist, db.Parody)):
+                        a_names = set()
+                        if msg.get('preferred_name') and msg['preferred_name'].get('name') is not None:
+                            a_names.add(msg['preferred_name']['name'])
+                        if msg.get('names'):
+                            for n in msg['names']:
+                                if n.get('name') is not None:
+                                    a_names.add(n['name'])
+                        if a_names:
+                            db_obj = db_type.as_unique(names=a_names)
+                            new_obj = bool(db_obj.id)
 
                 if db_obj and not (obj_id and db_obj and skip_updating_existing):
                     for attr, value in msg.items():
@@ -638,6 +667,12 @@ class Tag(DatabaseMessage):
         super().__init__('tag', db_item)
         self.nstag = nstag
 
+    def data(self, *args, **kwargs):
+        d = super().data(*args, **kwargs)
+        if self.nstag:
+            d['id'] = self.nstag.id
+        return d
+
 
 class Namespace(DatabaseMessage):
     "Encapsulates database tag object"
@@ -804,7 +839,8 @@ class GalleryFS(CoreMessage):
                                             load_collections=self._kwargs.get('load_collections', False),
                                             propagate_bypass=self._kwargs.get('propagate_bypass', False),
                                             force_value_load=("taggable.tags",
-                                                              "pages",))
+                                                              "pages",
+                                                              "collections",))
         d = {'sources': self._gfs.get_sources(),
              'page_count': len(self._gfs.pages),
              'metadata_from_file': self._gfs.metadata_from_file,

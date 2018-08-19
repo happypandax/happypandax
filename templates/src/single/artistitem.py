@@ -49,7 +49,8 @@ def artistlbl_render():
                data=data,
                tags=this.props.tags or this.state.tags,
                edit_mode=this.props.edit_mode,
-               on_favorite=this.favorite),
+               on_favorite=this.favorite,
+               on_tags=this.on_tags),
              trigger=e(ui.Label,
                        e(ui.Icon, js_name="heart outline") if fav else None,
                        e(ui.Icon, js_name="user"),
@@ -83,15 +84,13 @@ ArtistLabel = createReactClass({
         'item_type': ItemType.Artist,
     },
 
-    'get_tags': artistpropsview.get_tags,
-
     'update_data': utils.update_data,
+
+    'on_tags': lambda d: this.setState({"tags": d}),
 
     'update_metatags': update_metatags,
 
     'favorite': item_favorite,
-
-    'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
 
     'render': artistlbl_render
 }, pure=True)
@@ -140,7 +139,8 @@ def artistitem_render():
                    data=data,
                    tags=this.props.tags or this.state.tags,
                    edit_mode=this.props.edit_mode,
-                   on_favorite=this.favorite),
+                   on_favorite=this.favorite,
+                   on_tags=this.on_tags),
                  trigger=el,
                  hoverable=True,
                  hideOnScroll=True,
@@ -161,9 +161,9 @@ ArtistItem = createReactClass({
         'item_type': ItemType.Artist,
     },
 
-    'get_tags': artistpropsview.get_tags,
-
     'update_data': utils.update_data,
+
+    'on_tags': lambda d: this.setState({"tags": d}),
 
     'on_click': lambda e, d: all((this.props.onClick(e, this.props.data or this.state.data) if this.props.onClick else None,)),
 
@@ -171,7 +171,6 @@ ArtistItem = createReactClass({
 
     'favorite': item_favorite,
 
-    'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
 
     'render': artistitem_render
 }, pure=True)

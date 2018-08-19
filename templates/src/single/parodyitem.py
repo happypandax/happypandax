@@ -64,13 +64,6 @@ def parodyitem_render():
     if data:
         if data.preferred_name:
             name = data.preferred_name.js_name
-        circle_ids = []
-        if data.circles:
-            for c in data.circles:
-                if c.id in circle_ids:
-                    continue
-                circles.append(c)
-                circle_ids.append(c.id)
 
     el_kwargs = {'active': this.props.active}
     el = e(this.props.as_ if this.props.as_ else ui.List.Item,

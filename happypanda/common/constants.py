@@ -37,7 +37,7 @@ updater_key = "updater"
 ## VERSIONING ##
 build = 134
 version = (0, 2, 0)
-version_db = (0, 1, 2)
+version_db = (0, 2, 0)
 version_web = (0, 2, 0)
 version_str = ".".join(str(x) for x in version)
 version_db_str = ".".join(str(x) for x in version_db)
@@ -194,6 +194,7 @@ db_session = None
 _db_scoped_session = None
 default_user = None
 special_namespace = "__namespace__"
+gallery_grouping_init = True
 
 scheduler_database_url = os.path.join("sqlite:///", dir_data, "scheduler.db")
 
