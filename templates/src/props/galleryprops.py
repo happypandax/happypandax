@@ -18,60 +18,32 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
-def update_new_title(value, id):
+def update_title(value, n):
     data = this.props.data or this.state.data
-    t = this.state.new_item[id]
-    if t:
-        t.js_name = value
-        n_data = utils.JSONCopy(this.state.new_item)
-        this.setState({'new_item': n_data})
-        this.update_data(data, new_item=n_data, only_new_data=True)
-
-def update_title(value, id):
-    data = this.props.data or this.state.data
-    t = utils.lodash_find(data, lambda v, i, c: v['id']==id)
+    t = utils.find_in_list(data, n, index=True)
     if t:
         t.js_name = value
         this.update_data(data)
 
-def update_new_title_language(value, id):
+def update_title_language(value, n):
     data = this.props.data or this.state.data
-    t = this.state.new_item[id]
-    if t:
-        t.language = value
-        n_data = utils.JSONCopy(this.state.new_item)
-        this.setState({'new_item': n_data})
-        this.update_data(data, new_item=n_data, only_new_data=True)
-
-def update_title_language(value, id):
-    data = this.props.data or this.state.data
-    t = utils.lodash_find(data, lambda v, i, c: v['id']==id)
+    t = utils.find_in_list(data, n, index=True)
     if t:
         t.language = value
         this.update_data(data)
-
-def remove_new_title(e, d):
-    tid = e.target.dataset.id
-    data = this.props.data or this.state.data
-    t = this.state.new_item[tid]
-    if t:
-        this.state.new_item.remove(t)
-        n_data = utils.JSONCopy(this.state.new_item)
-        this.setState({'new_item': n_data})
-        this.update_data(data, new_item=n_data, only_new_data=True)
 
 def remove_title(e, d):
     tid = e.target.dataset.id
     data = this.props.data or this.state.data
     if tid and data:
-        ndata = utils.remove_from_list(data, {'id': tid})
+        ndata = utils.remove_from_list(data, tid, index=True)
         this.update_data(ndata)
             
 def titles_update(p_p, p_s):
     if any((
         p_p.edit_mode != this.props.edit_mode,
     )):
-        this.setState({'new_item': []})
+        this.setState({'data': []})
 
 def titles_render():
     data = this.props.data or this.state.data
@@ -89,38 +61,24 @@ def titles_render():
     els = []
 
     if data:
-        for t in data:
+        for n, t in enumerate(data):
             if t.js_name == pref_title and not this.props.edit_mode:
                 continue
             els.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(simpleprops.Language, data_id=t.id, update_data=this.update_language, edit_mode=this.props.edit_mode, data=t.language, size="tiny", className="sub-text" if not this.props.edit_mode else ""), collapsing=True),
-                        e(ui.Table.Cell, e(ui.Header, h("span", e(ui.Icon, js_name="remove", onClick=this.on_remove, link=True, **{'data-id': t.id}), className="right") if this.props.edit_mode else None,
+                        e(ui.Table.Cell, e(simpleprops.Language, data_id=n, update_data=this.update_language, edit_mode=this.props.edit_mode, data=t.language, size="tiny", className="sub-text" if not this.props.edit_mode else ""), collapsing=True),
+                        e(ui.Table.Cell, e(ui.Header, h("span", e(ui.Icon, js_name="remove", onClick=this.on_remove, link=True, **{'data-id': n}), className="right") if this.props.edit_mode else None,
                                            e(simpleprops.EditText,
                                              defaultValue=t.js_name,
+                                             defaultOpen=not bool(t.js_name),
                                              edit_mode=this.props.edit_mode,
                                              update_data=this.update_title,
-                                             data_id=t.id,
+                                             data_id=n,
                                              fluid=True),
                                            size="tiny", className="sub-text" if not this.props.edit_mode else "")),
-                        key=t.id,
+                        key=n+t.js_name,
                         )
                         )
-    if this.state.new_item:
-        for tid, t in enumerate(this.state.new_item):
-            els.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(simpleprops.Language, data_key=None, data_id=tid, update_data=this.update_new_language, edit_mode=this.props.edit_mode, data=t.language, size="tiny", className="sub-text" if not this.props.edit_mode else ""), collapsing=True),
-                        e(ui.Table.Cell, e(ui.Header, h("span", e(ui.Icon, js_name="remove", onClick=this.on_remove_new, link=True, **{'data-id': tid}), className="right") if this.props.edit_mode else None,
-                                            e(simpleprops.EditText,
-                                                defaultOpen=True,
-                                                defaultValue=t.js_name,
-                                                edit_mode=this.props.edit_mode,
-                                                update_data=this.update_new_title,
-                                                data_id=tid,
-                                                fluid=True),
-                                            size="tiny", className="sub-text" if not this.props.edit_mode else "")),
-                        key=t.js_name or Math.random(),
-                        )
-                        )
+
     if this.props.edit_mode:
         els.append(e(ui.Table.Row,
                         e(ui.Table.Cell,
@@ -143,20 +101,26 @@ Titles = createReactClass({
 
     'getInitialState': lambda: {
                                 'data': this.props.data or [],
-                                'new_item': []
                                 },
-    'update_new_title': update_new_title,
     'update_title': update_title,
-    'update_new_language': update_new_title_language,
     'update_language': update_title_language,
-    'on_create_item': lambda: all((this.state.new_item.append({}), this.setState({'new_item': utils.JSONCopy(this.state.new_item)}))),
+    'on_create_item': lambda: all((this.props.data.append({}), this.setState({'data': utils.JSONCopy(this.props.data)}))),
     #'cancel_create_item': lambda: this.setState({'create_item': False}),
     'update_data': utils.update_data,
     'on_remove': remove_title,
-    'on_remove_new': remove_new_title,
     'componentDidUpdate': titles_update,
     'render': titles_render
 })
+
+__pragma__("kwargs")
+def artist_update_data(*args, **kwargs):
+    kwargs['propagate'] = False
+    kwargs['only_return'] = True
+    kwargs['merge_key'] = False
+    data = this.update_data(*args, **kwargs)
+    this.update_data(data)
+__pragma__("nokwargs")
+
 
 def on_new_artist(e, data):
     for a in data:
@@ -175,19 +139,27 @@ def remove_artist(e, d):
         ndata = utils.remove_from_list(data, tname, key="preferred_name.name")
         this.update_data(ndata)
             
+def artists_update(p_p, p_s):
+    if any((
+        p_s.new_data != this.state.new_data,
+    )):
+        this.update_data(this.state.data)
 
 def artists_render():
     data = this.props.data or this.state.data
 
     els = []
     if data:
-        for a in data:
+        idx = {}
+        for n, x in enumerate(data):
+            idx[x] = n
+        for a in sorted(data, key=lambda x: utils.get_object_value('preferred_name.name')):
             els.append(e(artistitem.ArtistLabel,
                          data=a,
-                         key=a.id or utils.get_object_value('preferred_name.name', a),
+                         key=a.id or utils.get_object_value('preferred_name.name', a) or utils.get_object_value('names[0].name', a),
                          edit_mode=this.props.edit_mode,
-                         update_data=this.props.update_data,
-                         data_key=this.props.data_key,
+                         update_data=this.artist_update_data,
+                         data_key='['+idx[a]+']',
                          onRemove=this.on_remove
                         )
                         )
@@ -225,9 +197,12 @@ Artists = createReactClass({
     'on_click': lambda: this.setState({'edit_mode': True}),
     'on_modal_toggle': lambda: this.setState({'modal_open': not this.state.modal_open}),
     'on_remove': remove_artist,
+    'artist_update_data': artist_update_data,
     'update_data': utils.update_data,
+    'componentDidUpdate': artists_update,
     'render': artists_render
 })
+
 
 def get_status(data=None, error=None):
     if data is not None and not error:
@@ -439,10 +414,14 @@ def on_new_parody(e, data):
 def remove_parody(e, d):
     e.preventDefault()
     tid = e.target.dataset.id
+    tname = e.target.dataset.js_name
     data = this.props.data or this.state.data
     if tid and data:
         tid = int(tid)
         ndata = utils.remove_from_list(data, tid, key="id")
+        this.update_data(ndata)
+    if tname and data:
+        ndata = utils.remove_from_list(data, tname, key="preferred_name.name")
         this.update_data(ndata)
             
 
@@ -451,10 +430,10 @@ def parodies_render():
 
     els = []
     if data:
-        for a in data:
+        for a in sorted(data, key=lambda x: utils.get_object_value('preferred_name.name')):
             els.append(e(parodyitem.ParodyLabel,
                          data=a,
-                         key=a.id,
+                         key=a.id or utils.get_object_value('preferred_name.name', a) or utils.get_object_value('names[0].name', a),
                          edit_mode=this.props.edit_mode,
                          update_data=this.props.update_data,
                          data_key=this.props.data_key,

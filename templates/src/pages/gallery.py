@@ -184,7 +184,7 @@ def get_item(ctx=None, data=None, error=None, force=False, only_gallery=False):
                                          related_type=ItemType.Gallery, item_id=a.id, item_type=ItemType.Artist,
                                          limit=10 if len(data.artists) > 1 else 30)
 
-            this.update_menu(data)
+        this.update_menu(data)
 
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
@@ -213,20 +213,21 @@ __pragma__('kwargs')
 def update_item(data=None, error=None, new_data=None):
     if data is not None and not error:
         if data:
-            state.app.notif(tr(None, "ui.t-gallery-updated", "Updated!"), level="success")
+            state.app.notif(tr(None, "ui.t-updated", "Updated!"), level="success")
         else:
-            state.app.notif(tr(None, "ui.t-gallery-updated-fail", "Failed!"), level="warning")
+            state.app.notif(tr(None, "ui.t-updated-fail", "Failed!"), level="warning")
         if this.state.new_data:
             this.setState({'new_data': None})
     elif error:
         state.app.notif("Failed to update item ({})".format(this.state.id), level="error")
     else:
         new_data = new_data or this.state.new_data
-        if new_data and new_data['tags']:
-            tag_data = new_data['tags']
+        if new_data and (new_data['tags'] or new_data['taggable']['tags'] if new_data['taggable'] else None):
+            tag_data = new_data['tags'] or new_data['taggable']['tags']
             del new_data['tags']
+            del new_data['taggable']
             this.update_tags(new_data=tag_data)
-        if new_data and new_data.id and len(new_data.keys()) > 1:
+        if new_data and new_data.id and utils.lodash_collection.size(new_data) > 1:
             client.call_func("update_item", this.update_item,
                              item_type=this.state.item_type,
                              item=new_data)
@@ -241,7 +242,6 @@ def update_tags(data=None, error=None, new_data=None):
     else:
         new_data = new_data or this.state.new_data
         if new_data:
-            print(JSON.stringify(new_data))
             client.call_func("update_item_tags", this.update_tags,
                                 item_type=this.state.item_type,
                                 item_id=this.state.data.id,
@@ -361,8 +361,6 @@ def toggle_external_viewer(e, d):
     utils.storage.set('external_viewer', v)
 
 
-__pragma__("tconv")
-
 def gallery_favorite(e, d):
     e.preventDefault()
     this.setState({'fav': d.rating})
@@ -397,8 +395,14 @@ def gallery_on_update(p_props, p_state):
         p_state.data != this.state.data,
     )):
         this.update_menu()
-        if this.props.location.state:
-            this.props.location.state.gallery = this.state.data
+        if this.props.location:
+
+            g = utils.JSONCopy(this.state.data)
+            if g.tags:
+                del g['tags']
+            if g.taggable:
+                del g['taggable']
+            this.props.location.state.gallery = g
             this.props.history.js_replace(this.props.location)
 
     if any((
@@ -733,8 +737,10 @@ def page_render():
                          e(ui.Grid.Column,
                            e(gallerypropsview.GalleryProps,
                              data=this.state.data,
+                             main=True,
                              status=this.state.status_data,
                              language=this.state.lang_data,
+                             category=this.state.category_data,
                              tags=this.state.tags_data,
                              on_tags=this.on_tags,
                              size="large",
@@ -828,7 +834,7 @@ Page = createReactClass({
                                 'loading_group': False,
                                 'loading_lang': False,
                                 'loading_category': False,
-                                'edit_mode': True,
+                                'edit_mode': False,
                                 'submitted_data': False,
                                 'external_viewer': utils.storage.get("external_viewer", False),
                                 'send_to_recycle': True,
@@ -877,7 +883,7 @@ Page = createReactClass({
     'read_later': lambda e, d: all((this.update_metatags({'readlater': True}),
                                     e.preventDefault())),
 
-    'on_edit': lambda e, d: all((this.setState({'edit_mode':True, 'submitted_data':False, 'old_data': utils.JSONCopy(this.state.data)}), )),
+    'on_edit': lambda e, d: all((this.setState({'edit_mode':True, 'new_data': {}, 'submitted_data':False, 'old_data': utils.JSONCopy(this.state.data)}), )),
     'on_cancel_edit': lambda e, d: all((this.setState({'data': this.state.old_data}) if this.state.old_data else None, this.setState({'edit_mode':False, 'old_data': None}))),
     'on_save_edit': lambda e, d: all((this.setState({'edit_mode':False, 'submitted_data':True, 'old_data': None}),
                                       this.update_item(), this.get_item(only_gallery=True, force=True))),

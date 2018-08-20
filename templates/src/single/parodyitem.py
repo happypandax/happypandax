@@ -20,6 +20,8 @@ def parodylbl_render():
     if data:
         if data.preferred_name:
             name = data.preferred_name.js_name
+        elif data.names and len(data.names):
+            name = data.names[0]
 
     return e(ui.Popup,
              e(parodypropsview.ParodyProps, data=data),

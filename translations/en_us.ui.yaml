@@ -26,6 +26,8 @@ t-submit: Submit
 t-add: Add
 t-select: Select
 t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
+t-updated: Updated!
+t-updated-fail: Failed to update!
 
 # Menu Item
 mi-dashboard: Dashboard
@@ -183,6 +185,7 @@ t-artist: Artist
 t-circle: Circle
 t-parody: Parody
 t-status: Status
+t-category: Category
 t-published: Published
 t-times-read: Times read
 t-rating: Rating
@@ -212,8 +215,6 @@ h-more-same-artist:
     one: More from same artist
     many: More from same artists
 t-tag-edit-placeholder: Write tags (comma separated)
-t-gallery-updated: Gallery has been updated!
-t-gallery-updated-fail: Failed to update gallery!
 
 # Collection Page
 t-inboxed-collection: This collection is in your inbox

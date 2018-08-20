@@ -19,7 +19,99 @@ JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
 __pragma__('kwargs')
+__pragma__("tconv")
 
+
+def update_menu(data={}):
+    if not data and this.state.data:
+        data = this.state.data
+    if data.id:
+        inbox = data.metatags.inbox
+        trash = data.metatags.trash
+        menu_items = []
+        menu_left = []
+        min_width = 768
+        btn_size = "small"
+        if inbox:
+            menu_left.append(e(ui.Responsive, e(ui.Button,
+                                                e(ui.Icon, js_name="grid layout"),
+                                                tr(this, "ui.b-send-library", "Send to Library"),
+                                                onClick=this.send_to_library,
+                                                color="green", basic=True),
+                               as_=ui.Menu.Item,
+                               minWidth=min_width,
+                               ))
+        menu_items.append(e(ui.Menu.Menu, *menu_left))
+        menu_right = []
+        menu_right.append(
+            e(ui.Responsive,
+                e(ui.Button, e(ui.Icon, js_name="trash" if not trash else "reply"),
+                  tr(this, "ui.b-send-trash", "Send to Trash") if not trash else tr(this, "ui.b-restore", "Restore"),
+                  color="red" if not trash else "teal", basic=True, onClick=this.send_to_trash if not trash else this.restore_from_trash),
+                as_=ui.Menu.Item,
+                minWidth=min_width,
+              ))
+
+        if trash:
+            menu_right.append(
+                e(ui.Responsive,
+                    e(ui.Button.Group,
+                        e(ui.Button,
+                          e(ui.Icon, js_name="close"), tr(this, "ui.b-delete", "Delete"), color="red"),
+                        e(ui.Button, icon="remove circle", toggle=True, active=this.state.delete_files,
+                          title=tr(this, "ui.t-delete-files", "Delete files")),
+                        e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
+                          title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"),
+                          ),
+                        basic=True,
+                        size=btn_size
+                      ),
+                    as_=ui.Menu.Item,
+                    minWidth=min_width,
+                  ))
+
+        menu_right.append(e(ui.Responsive,
+                            e(ui.Button,
+                              e(ui.Icon, js_name="edit") if not this.state.edit_mode else e(ui.Icon, js_name="delete"),
+                              tr(this, "ui.b-edit", "Edit") if not this.state.edit_mode else tr(this, "ui.b-cancel", "Cancel"),
+                              onClick=this.on_edit if not this.state.edit_mode else this.on_cancel_edit,
+                              basic=True,
+                              size=btn_size),
+                            as_=ui.Menu.Item,
+                            minWidth=min_width,
+                            ))
+        if this.state.edit_mode:
+            menu_right.append(e(ui.Responsive,
+                                e(ui.Button,
+                                  e(ui.Icon, js_name="checkmark"),
+                                  tr(this, "ui.b-save", "Save"),
+                                  onClick=this.on_save_edit,
+                                  color="green",
+                                  size=btn_size),
+                                as_=ui.Menu.Item,
+                                minWidth=min_width,
+                                ))
+
+        menu_items.append(e(ui.Menu.Menu, *menu_right, position="right"))
+
+        if len(menu_items):
+            this.props.menu(menu_items, fixed=this.state.edit_mode)
+
+    else:
+        this.props.menu(e(ui.Menu.Menu))
+
+
+def update_metatags(mtags):
+    if this.state.data:
+        client.call_func("update_metatags", None, item_type=this.state.item_type,
+                         item_id=this.state.data.id, metatags=mtags)
+        d = utils.JSONCopy(this.state.data)
+        d.metatags = dict(d.metatags)
+        d.metatags.update(mtags)
+        this.setState({'data': d})
+
+__pragma__("notconv")
+__pragma__('nokwargs')
 
 def get_item(data=None, error=None):
     if data is not None and not error:
@@ -86,8 +178,7 @@ def get_item(data=None, error=None):
 
             menu_items.append(e(ui.Menu.Menu, *menu_right, position="right"))
 
-            if len(menu_items):
-                this.props.menu(menu_items)
+        this.update_menu(data)
 
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
@@ -104,8 +195,6 @@ def get_item(data=None, error=None):
             this.setState({'loading': True})
 
 
-__pragma__('nokwargs')
-
 
 def get_gallery_count(data=None, error=None):
     if data is not None and not error:
@@ -120,6 +209,34 @@ def get_category(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch category ({})".format(this.state.id), level="error")
 
+__pragma__('kwargs')
+def update_item(data=None, error=None, new_data=None):
+    if data is not None and not error:
+        if data:
+            state.app.notif(tr(None, "ui.t-updated", "Updated!"), level="success")
+        else:
+            state.app.notif(tr(None, "ui.t-updated-fail", "Failed!"), level="warning")
+        if this.state.new_data:
+            this.setState({'new_data': None})
+    elif error:
+        state.app.notif("Failed to update item ({})".format(this.state.id), level="error")
+    else:
+        new_data = new_data or this.state.new_data
+        if new_data and new_data.id and utils.lodash_collection.size(new_data) > 1:
+            client.call_func("update_item", this.update_item,
+                             item_type=this.state.item_type,
+                             item=new_data)
+__pragma__('nokwargs')
+
+def collection_favorite(e, d):
+    e.preventDefault()
+    this.setState({'fav': d.rating})
+    if this.state.edit_mode:
+        this.update_data(bool(d.rating), "metatags.favorite")
+    else:
+        this.update_metatags({'favorite': bool(d.rating)})
+        this.get_item(only_gallery=True, force=True)
+
 
 def collection_on_update(p_props, p_state):
     if p_props.location.pathname != this.props.location.pathname:
@@ -130,6 +247,18 @@ def collection_on_update(p_props, p_state):
     )):
         this.get_item()
 
+    if any((
+        p_state.data != this.state.data,
+    )):
+        this.update_menu()
+        if this.props.location:
+            this.props.location.state.gallery = g
+            this.props.history.js_replace(this.props.location)
+
+    if any((
+        p_state.edit_mode != this.state.edit_mode,
+    )):
+        this.update_menu()
 
 __pragma__("tconv")
 
@@ -154,6 +283,8 @@ def page_render():
             title = this.state.data.js_name
         inbox = this.state.data.metatags.inbox
         trash = this.state.data.metatags.trash
+        if not item_id:
+            item_id = this.state.data.id
 
     indicators = []
 
@@ -306,6 +437,8 @@ Page = createReactClass({
 
     'getInitialState': lambda: {'id': int(this.props.match.params.item_id),
                                 'data': this.props.data,
+                                'new_data': None,
+                                'old_data': None,
                                 'rating': 0,
                                 'fav': 0,
                                 'item_type': ItemType.Collection,
@@ -313,16 +446,37 @@ Page = createReactClass({
                                 'gallery_count': 0,
                                 'loading': True,
                                 'loading_group': True,
+                                'edit_mode': False,
+                                'submitted_data': False,
                                 'send_to_recycle': True,
                                 'visible_gallery_cfg': False,
                                 },
 
+    'update_metatags': update_metatags,
+    'update_data': utils.update_data,
+    'update_menu': update_menu,
+    'update_item': update_item,
     'get_item': get_item,
     'get_category': get_category,
+
+    'favorite': collection_favorite,
+
+    'send_to_library': lambda e, d: all((this.update_metatags({'inbox': False}),
+                                         e.preventDefault())),
+    'send_to_trash': lambda e, d: all((this.update_metatags({'trash': True}),
+                                       e.preventDefault())),
+    'restore_from_trash': lambda e, d: all((this.update_metatags({'trash': False}),
+                                            e.preventDefault())),
+
+    'on_edit': lambda e, d: all((this.setState({'edit_mode':True, 'new_data': {}, 'submitted_data':False, 'old_data': utils.JSONCopy(this.state.data)}), )),
+    'on_cancel_edit': lambda e, d: all((this.setState({'data': this.state.old_data}) if this.state.old_data else None, this.setState({'edit_mode':False, 'old_data': None}))),
+    'on_save_edit': lambda e, d: all((this.setState({'edit_mode':False, 'submitted_data':True, 'old_data': None}),
+                                      this.update_item(), this.get_item(only_gallery=True, force=True))),
 
     'toggle_galleries_config': lambda a: this.setState({'visible_gallery_cfg': not this.state.visible_gallery_cfg}),
 
     'componentWillMount': lambda: all(((this.get_item() if not this.state.data else None),
+                                       this.update_menu(),
                                        )),
     'componentDidUpdate': collection_on_update,
 

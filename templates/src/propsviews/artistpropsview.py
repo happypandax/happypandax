@@ -7,6 +7,7 @@ from src.ui import ui
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, client
+from src.props import artistprops
 from src.single import tagitem, circleitem
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -17,6 +18,12 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+def artist_favorite(e, d):
+    if this.props.edit_mode:
+        e.preventDefault()
+        this.update_data(bool(d.rating), "metatags.favorite")
+    elif this.props.on_favorite:
+        this.props.on_favorite(e, d)
 
 def get_tags(data=None, error=None):
     if data is not None and not error:
@@ -65,8 +72,10 @@ def artistprops_render():
     circles = []
 
     if data:
-        if data.names:
-            name = data.names[0].js_name
+        if data.preferred_name:
+            name = data.preferred_name.js_name
+        elif data.names and len(data.names):
+            name = data.names[0]
         if data.metatags and data.metatags.favorite:
             fav = 1
 
@@ -100,11 +109,15 @@ def artistprops_render():
                   e(ui.Table.Cell, e(ui.Header, name, size="medium"), colSpan="2", textAlign="center",
                     verticalAlign="middle")))
 
-    if circles:
+    if circles or this.props.edit_mode:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
                                          ":", size="tiny", className="sub-text"), collapsing=True),
-                      e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
+                      e(ui.Table.Cell, e(artistprops.Circles,
+                                         data=circles,
+                                         update_data=this.update_data,
+                                         data_key="circles",
+                                         edit_mode=this.props.edit_mode))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") +
@@ -131,7 +144,7 @@ def artistprops_render():
 
     return e(ui.Grid,
              e(ui.Grid.Row,
-                 e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav, onRate=this.props.on_favorite),
+                 e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav, onRate=this.favorite),
                    floated="left", verticalAlign="middle", width=2),
                  e(ui.Grid.Column,
                    e(ui.Button.Group,
@@ -181,9 +194,12 @@ ArtistProps = createReactClass({
         'item_type': ItemType.Artist,
         'gallery_count': 0,
         'loading_tags': False,
+        'new_data': {},
     },
 
+    'update_data': utils.update_data,
     'get_tags': get_tags,
+    'favorite': artist_favorite,
     'get_gallery_count': get_gallery_count,
 
 

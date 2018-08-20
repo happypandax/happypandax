@@ -1103,6 +1103,7 @@ class GalleryFS(CoreCommand):
                         dbpage.number = n
                         self.gallery.pages.append(dbpage, enable_count_cache=True)
                         self.pages[n] = p
+                self.gallery.pages.reorder()
             self._loaded_pages = True
 
     def evaluate(self, raise_error=False):

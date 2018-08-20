@@ -19,6 +19,8 @@ lodash_collection = require("lodash/collection")
 lodash_find = lodash_collection.find
 lodash_array = require("lodash/array")
 lodash_lang = require("lodash/lang")
+lodash_object = require("lodash/object")
+lodash_util = require("lodash/util")
 
 syntax_highlight = __pragma__('js', '{}',
                               """
@@ -337,29 +339,12 @@ def JSONCopy(obj):
 def get_object_value(path, fullobj):
     if path == None:
         path = ""
-    path = str(path).split('.')
-    lastkey = lodash_array.last(path)
-    path = path[:-1]
-    curr_obj = fullobj
-    if len(path):
-        for p in path:
-            curr_obj = curr_obj[p]
-    return curr_obj[lastkey]
+    return lodash_object.js_get(fullobj, path)
 
 def set_object_value(path, fullobj, value):
     if path == None:
         path = ""
-    path = str(path).split('.')
-    lastkey = lodash_array.last(path)
-    path = path[:-1]
-    curr_obj = fullobj
-    if len(path):
-        for p in path:
-            if not defined(curr_obj[p]):
-                curr_obj[p] = {}
-            curr_obj = curr_obj[p]
-    curr_obj[lastkey] = value
-    return fullobj
+    return lodash_object.setWith(fullobj, path, value, Object)
 
 __pragma__("kwargs")
 
@@ -371,7 +356,7 @@ def update_object(path,
                   unique=False):
     if path == None:
         path = ""
-    path = str(path).split('.')
+    path = lodash_util.toPath(path)
     lastkey = lodash_array.last(path)
     path = path[:-1]
     curr_obj = fullobj
@@ -415,22 +400,28 @@ def update_object(path,
                 curr_obj.remove(new_value)
                 fullobj = curr_obj
 
-        fullobj = JSONCopy(fullobj)
+    fullobj = JSONCopy(fullobj)
     return fullobj
 
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
-def remove_from_list(l, obj_or_id, key='id'):
-    it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
-    return lodash_collection.filter(l, lambda i: not (get_object_value(key, i) == it if key else i == it))
+def remove_from_list(l, obj_or_id, key='id', index=False):
+    if index:
+        lodash_array.pullAt(l, [int(obj_or_id)])
+        return JSONCopy(l)
+    else:
+        it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
+        return lodash_collection.filter(l, lambda i: not (get_object_value(key, i) == it if key else i == it))
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
-def find_in_list(l, obj_or_id, key='id'):
-    it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
-    print(it)
-    return lodash_collection.find(l, lambda i: (get_object_value(key, i) == it if key else i == it))
+def find_in_list(l, obj_or_id, key='id', index=False):
+    if index:
+        return lodash_array.nth(l, obj_or_id)
+    else:
+        it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
+        return lodash_collection.find(l, lambda i: (get_object_value(key, i) == it if key else i == it))
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
@@ -460,9 +451,11 @@ __pragma__("nokwargs")
 __pragma__("kwargs")
 def update_data(value, key=None, op="add", new_data_key=None,
                 only_new_data=False, with_new_item=True, new_item=None,
-                _caller=True,
+                only_return=False, data=None, _caller=True,
+                data_state_key='data', new_data_state_key='new_data',
+                propagate=True, merge_key=True,
                 **kwargs):
-    if not is_invalid(key) and not is_invalid(this.props.data_key):
+    if not is_invalid(key) and not is_invalid(this.props.data_key) and merge_key:
         key = this.props.data_key + '.' + key if this.props.data_key else key
     elif not is_invalid(key):
         key = key
@@ -475,27 +468,31 @@ def update_data(value, key=None, op="add", new_data_key=None,
         if with_new_item:
             new_item = new_item or this.state.new_item
 
-    if this.props.update_data:
-        this.props.update_data(value, key, op=op, new_data_key=new_data_key,
+    if this.props.update_data and propagate:
+        return this.props.update_data(value, key, op=op, new_data_key=new_data_key,
                                only_new_data=only_new_data, with_new_item=with_new_item,
-                               new_item=new_item,
+                               new_item=new_item, only_return=only_return, data=data,
+                               data_state_key=data_state_key, new_data_state_key=new_data_state_key,
+                               merge_key=merge_key,
                                _caller=False,
                               **kwargs)
     else:
         print(key, JSON.stringify(value))
-        data = this.state.data or {}
+        data = data or this.state[data_state_key] or {}
         if only_new_data:
             data = JSONCopy(data)
         data = update_object(key, data, value, op=op, **kwargs)
+        if not only_new_data and only_return:
+            return data
         if not only_new_data:
-            this.setState({'data': data})
-        if not this.state.new_data:
+            this.setState({data_state_key: data})
+        if not this.state[new_data_state_key] or lodash_lang.isEmpty(this.state[new_data_state_key]):
             if data.id:
                 new_data = {'id': data.id}
             else:
-                new_data = {}
+                new_data = this.state[new_data_state_key] or {}
         else:
-            new_data = this.state.new_data
+            new_data = this.state[new_data_state_key]
         key = new_data_key or key
         new_value = get_object_value(new_data_key or key, data)
         if with_new_item and new_item:
@@ -504,7 +501,9 @@ def update_data(value, key=None, op="add", new_data_key=None,
                 new_value.extend(new_item)
         new_data = data if not key else set_object_value(key, new_data, new_value)
         print(JSON.stringify(new_data))
-        this.setState({'new_data': new_data})
+        if only_return:
+            return new_data
+        this.setState({new_data_state_key: JSONCopy(new_data)})
 
 __pragma__("nokwargs")
 

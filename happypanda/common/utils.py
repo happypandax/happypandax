@@ -26,6 +26,7 @@ import collections
 import langcodes
 import ipaddress
 import datetime
+import functools
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -882,3 +883,10 @@ def set_dict_value(path, fullobj, value):
             curr_obj = curr_obj[p]
     curr_obj[lastkey] = value
     return fullobj
+
+
+def partialclass(cls, *args, **kwds):
+    "Like functools.partial but for classes"
+    class NewCls(cls):
+        __init__ = functools.partialmethod(cls.__init__, *args, **kwds)
+    return NewCls

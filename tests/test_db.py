@@ -166,8 +166,8 @@ class GeneralTest(unittest.TestCase):
         for p in pages:
             self.gallery.pages.append(p)
         self.session.commit()
-        for i in self.gallery.pages.all():
-            self.assertEqual(i.number, -1)
+        for n, i in enumerate(self.gallery.pages.all(), 1):
+            self.assertEqual(i.number, n)
         self.gallery.pages.reorder()
         for n, i in enumerate(self.gallery.pages.all(), 1):
             self.assertEqual(i.number, n)
@@ -189,6 +189,12 @@ class GeneralTest(unittest.TestCase):
         for n, i in enumerate(self.gallery.pages.all(), 1):
             self.assertEqual(i.number, n)
 
+    @unittest.expectedFailure
+    def test_page_numbering2(self):
+        self.session.delete(self.gallery.pages[0])
+        self.session.commit()
+        for n, i in enumerate(self.gallery.pages.all(), 1):
+            self.assertEqual(i.number, n)
 
     def tearDown(self):
         self.session.close()
@@ -288,6 +294,87 @@ class ItemUpdateTest(unittest.TestCase):
         self.assertEqual(len(self.gallery.metatags), 6)
         self.gallery.update("metatags", "test", op="remove")
         self.assertEqual(len(self.gallery.metatags), 5)
+
+    def tearDown(self):
+        self.session.close()
+
+class GalleryRelationship(unittest.TestCase):
+    def setUp(self):
+        self.session = create_db()
+
+        self.pages = [Page(name="p" + str(x)) for x in range(20)]
+        self.galleries = [Gallery() for x in range(10)]
+        nsgen = doublegen(self.pages)
+        for x, g in enumerate(self.galleries):
+            g.pages.extend(next(nsgen))
+
+        self.session.add_all(self.galleries)
+        self.session.commit()
+
+        self.assertEqual(self.session.query(Gallery).count(), 10)
+        self.assertEqual(self.session.query(Page).count(), 20)
+
+    @unittest.expectedFailure
+    def test_first_page(self):
+        self.assertEqual(self.galleries[0].first_page, self.galleries[0].pages[0])
+        self.assertEqual(self.galleries[0].first_page.number, 1)
+        self.assertEqual(self.galleries[0].pages[0].number, 1)
+        self.assertEqual(self.galleries[0].pages[1].number, 2)
+        spage = self.galleries[0].pages[1]
+        self.session.delete(self.galleries[0].first_page)
+        self.session.commit()
+        self.assertEqual(self.galleries[0].pages[0].number, 1)
+        self.assertEqual(self.galleries[0].pages[0], spage)
+        self.assertEqual(self.galleries[0].first_page, spage)
+        self.assertEqual(self.session.query(Gallery).count(), 10)
+        self.assertEqual(self.session.query(Page).count(), 19)
+
+    def test_delete(self):
+        self.session.delete(self.galleries[0])
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 9)
+        self.assertEqual(self.session.query(Page).count(), 18)
+
+    def test_delete2(self):
+        self.session.delete(self.pages[0])
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 10)
+        self.assertEqual(self.session.query(Page).count(), 19)
+        self.assertEqual(self.galleries[9].pages.count(), 1)
+
+    def test_delete4(self):
+        self.session.delete(self.pages[0])
+        self.session.delete(self.pages[1])
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 10)
+        self.assertEqual(self.session.query(Page).count(), 18)
+        self.assertEqual(self.galleries[9].pages.count(), 0)
+
+    def test_no_orphans(self):
+        self.session.query(Gallery).delete()
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 0)
+        self.assertEqual(self.session.query(Page).count(), 0)
+
+    def test_no_orphans2(self):
+        self.session.query(Page).delete()
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 10)
+        self.assertEqual(self.session.query(Page).count(), 0)
+
+    def test_no_orphans3(self):
+        for g in self.galleries:
+            self.session.delete(g)
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 0)
+        self.assertEqual(self.session.query(Page).count(), 0)
+
+    def test_no_orphans4(self):
+        for g in self.pages:
+            self.session.delete(g)
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 10)
+        self.assertEqual(self.session.query(Page).count(), 0)
 
     def tearDown(self):
         self.session.close()
@@ -444,7 +531,7 @@ class ArtistNameRelationship(unittest.TestCase):
         assert not self.names[0].alias_for
 
         self.assertEqual(len(self.artist.names), 1)
-        self.assertEqual(len(root.aliases), 9)
+        self.assertEqual(root.aliases.count(), 9)
         self.assertEqual(self.session.query(ArtistName).count(), 10)
 
     def test_delete(self):
@@ -527,7 +614,7 @@ class ParodyNameRelationship(unittest.TestCase):
         self.session.commit()
 
         self.assertEqual(len(self.parody.names), 1)
-        self.assertEqual(len(root.aliases), 9)
+        self.assertEqual(root.aliases.count(), 9)
         self.assertEqual(self.session.query(ParodyName).count(), 10)
 
     def test_delete(self):
@@ -690,6 +777,31 @@ class GroupingRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Gallery).count(), 10)
         self.assertEqual(self.galleryns[1].galleries.count(), 6)
         self.assertEqual(self.galleryns[0].galleries.count(), 4)
+
+    def test_gallery_numbering(self):
+        for gns in self.galleryns:
+            for n, i in enumerate(gns.galleries.all(), 1):
+                self.assertEqual(i.number, n)
+        self.galleryns[0].galleries.reorder()
+        self.galleryns[1].galleries.reorder()
+        for gns in self.galleryns:
+            for n, i in enumerate(gns.galleries.all(), 1):
+                self.assertEqual(i.number, n)
+        p0 = self.galleryns[0].galleries[0]
+        p1 = self.galleryns[0].galleries[1]
+        self.galleryns[0].galleries.remove(p0)
+        self.assertEqual(p1.number, 1)
+        self.assertEqual(self.galleryns[0].galleries.count(), 4)
+        p = Gallery()
+        self.assertEqual(p.number, -1)
+        self.galleryns[0].galleries.insert(0, p)
+        self.assertEqual(p.number, 1)
+        self.assertEqual(p1.number, 2)
+        self.session.commit()
+        self.assertEqual(self.galleryns[0].galleries.count(), 5)
+        for n, i in enumerate(self.galleryns[0].galleries.all(), 1):
+            self.assertEqual(i.number, n)
+
 
     def tearDown(self):
         self.session.close()
@@ -873,10 +985,9 @@ class TagRelationship(unittest.TestCase):
         self.nstag1, self.nstag2, self.nstag3, self.nstag4, *_ = self.nstags
 
     def test_tag_parent(self):
-        self.session.autoflush = False
-        for x in self.nstags:
+        with no_autoflush(self.session):
             for y in self.galleries:
-                y.tags.remove(x)
+                y.tags = []
         self.gal1, self.gal2, *_ = self.galleries
         self.test_tag_aliases()
         self.nstag2.parent = self.nstag1
@@ -888,15 +999,15 @@ class TagRelationship(unittest.TestCase):
             self.nstag2.parent = self.nstag3
             self.assertTrue("Cannot make NamespaceTag itself's child" in e.msg)
 
-        self.assertEqual(len(self.nstag2.aliases), 2)
+        self.assertEqual(self.nstag2.aliases.count(), 2)
         self.nstag3.alias_for = None
         self.session.flush()
         self.nstag2.parent = self.nstag3
         self.session.commit()
-        self.assertEqual(len(self.nstag2.aliases), 1)
+        self.assertEqual(self.nstag2.aliases.count(), 1)
         self.assertEqual(self.nstag2.parent, self.nstag3)
         self.assertEqual(self.nstag3.children[0], self.nstag2)
-        self.assertEqual(len(self.nstag1.children), 0)
+        self.assertEqual(self.nstag1.children.count(), 0)
 
         # test when alias is given a parent
 
@@ -904,8 +1015,8 @@ class TagRelationship(unittest.TestCase):
         self.nstag4.alias_for = self.nstag1
         self.nstag4.parent = self.nstag2
         self.session.commit()
-        self.assertEqual(len(self.nstag2.aliases), 0)
-        self.assertEqual(len(self.nstag2.children), 1)
+        self.assertEqual(self.nstag2.aliases.count(), 0)
+        self.assertEqual(self.nstag2.children.count(), 1)
         self.assertEqual(self.nstag2.children[0], self.nstag1)
         self.assertEqual(self.nstag4.parent, None)
 
@@ -919,15 +1030,15 @@ class TagRelationship(unittest.TestCase):
         self.assertEqual(self.nstag4.alias_for, self.nstag2)
         self.assertEqual(self.nstag2.aliases[1], self.nstag4)
 
-        self.assertFalse(self.nstag1.tag.aliases)
+        self.assertEqual(self.nstag1.tag.aliases.count(), 0)
         self.assertIsNone(self.nstag2.tag.alias_for)
 
 
     def test_original_tag_galleries(self):
-        for x in self.nstags:
-            for y in self.galleries:
-                y.tags.remove(x)
         self.gal1, self.gal2, *_ = self.galleries
+        with no_autoflush(self.session):
+            for y in self.galleries:
+                y.tags = []
 
         self.test_tag_aliases()
         self.gal1.tags.append(self.nstag3)
@@ -940,9 +1051,9 @@ class TagRelationship(unittest.TestCase):
         self.assertTrue(self.nstag4 not in self.gal1.tags)
 
     def test_append_tag_galleries(self):
-        for x in self.nstags:
+        with no_autoflush(self.session):
             for y in self.galleries:
-                y.tags.remove(x)
+                y.tags = []
         self.gal1, self.gal2, *_ = self.galleries
         
         self.test_tag_aliases()
@@ -1016,16 +1127,40 @@ class TagRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(NamespaceTags).count(), 0)
         self.assertEqual(self.session.query(Tag).count(), 0)
 
-    #def test_no_orphans2(self):
-    #    for g in self.galleries:
-    #        self.session.delete(g)
-    #    self.session.commit()
-    #    self.assertEqual(self.session.query(Gallery).count(), 0)
+    def test_no_orphans2(self):
+        for g in self.namespaces:
+            self.session.delete(g)
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 5)
+        self.assertEqual(self.session.query(Namespace).count(), 0)
+        self.assertEqual(self.session.query(NamespaceTags).count(), 0)
+        self.assertEqual(self.session.query(Tag).count(), 0)
 
-    #    self.session.commit()
-    #    self.assertEqual(self.session.query(Namespace).count(), 0)
-    #    self.assertEqual(self.session.query(NamespaceTags).count(), 0)
-    #    self.assertEqual(self.session.query(Tag).count(), 0)
+    def test_no_orphans3(self):
+        for g in self.nstags:
+            self.session.delete(g)
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 5)
+        self.assertEqual(self.session.query(Namespace).count(), 0)
+        self.assertEqual(self.session.query(NamespaceTags).count(), 0)
+        self.assertEqual(self.session.query(Tag).count(), 0)
+
+    def test_no_orphans4(self):
+        for g in self.nstags[1:]:
+            self.session.delete(g)
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 5)
+        self.assertEqual(self.session.query(Namespace).count(), 1)
+        self.assertEqual(self.session.query(NamespaceTags).count(), 1)
+        self.assertEqual(self.session.query(Tag).count(), 1)
+
+    def test_no_orphans5(self):
+        self.galleries[0].tags.remove(self.nstags[0])
+        self.session.commit()
+        self.assertEqual(self.session.query(Gallery).count(), 5)
+        self.assertEqual(self.session.query(Namespace).count(), 20)
+        self.assertEqual(self.session.query(NamespaceTags).count(), 20)
+        self.assertEqual(self.session.query(Tag).count(), 10)
 
     def tearDown(self):
         self.session.close()
@@ -1083,7 +1218,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 4)
-        self.assertEqual(self.session.query(Profile).count(), 4)
+        self.assertEqual(self.session.query(Profile).count(), 5)
 
     def test_no_orphans(self):
         for x in (self.gns,):
@@ -1095,6 +1230,18 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 0)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 5)
+        self.assertEqual(self.session.query(Profile).count(), 5)
+
+    def test_no_orphans2(self):
+        for x in (self.gns, self.galleries, self.collections):
+            for y in x:
+                self.session.delete(y)
+        self.session.commit()
+
+        self.assertEqual(self.session.query(Gallery).count(), 0)
+        self.assertEqual(self.session.query(Grouping).count(), 0)
+        self.assertEqual(self.session.query(Collection).count(), 0)
+        self.assertEqual(self.session.query(Page).count(), 0)
         self.assertEqual(self.session.query(Profile).count(), 0)
 
     def tearDown(self):

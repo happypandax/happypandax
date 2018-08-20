@@ -29,47 +29,76 @@ def update_tags(data=None, error=None, new_data=None):
                                 tags=new_data)
 __pragma__('nokwargs')
 
-def tag_on_input(e, d):
-    idata = this.state.tags_input
-    itags = [x.strip() for x in str(idata).split(',')]
+def tag_on_input(e):
+    if e.key == 'Enter':
+        e.preventDefault()
+        idata = this.state.tags_input
+        itags = [x.strip() for x in str(idata).split(',')]
 
-    data = this.props.data or this.state.data or {}
-    special_namespace = "__namespace__"
-    for t in itags:
-        if ':' in t:
-            t = t.split(':', 1)
-            ns = t[0].capitalize()
-            tag = t[1]
-        else:
-            ns = None
-            tag = t
+        data = this.props.data or this.state.data or {}
+        special_namespace = "__namespace__"
+        is_list = isinstance(data, list)
+        nstag_names = []
+        if is_list:
+            for t in data:
+                t_ns = utils.get_object_value('namespace.name', t)
+                t_tag = utils.get_object_value('tag.name', t)
+                nstag_names.append(t_ns+t_tag)
 
-        if not tag:
-            continue
+        for t in itags:
+            if ':' in t:
+                t = t.split(':', 1)
+                ns = t[0].capitalize()
+                tag = t[1]
+            else:
+                ns = None
+                tag = t
 
-        tag = tag.lower()
+            if not tag:
+                continue
 
-        tag = {'name': tag}
+            tag = tag.lower()
 
-        data = utils.update_object(ns if ns else special_namespace,
-                            utils.JSONCopy(data),
-                            tag,
-                            op="append",
-                            create_value=[],
-                            unique=lambda a,b: a['name'] == b['name'])
-    this.setState({'tags_input': ''})
-    this.update_data(data)
+            tag = {'name': tag}
+
+            if is_list:
+                nstag = {'tag': tag,
+                         'namespace': {'name': ns or special_namespace}}
+                nstag_name = nstag['namespace']['name']+nstag['tag']['name']
+                if nstag_name not in nstag_names:
+                    nstag_names.append(nstag_name)
+                    data = utils.update_object(None, data, nstag, op="append")
+            else:
+                data = utils.update_object(ns or special_namespace,
+                                    data,
+                                    tag,
+                                    op="append",
+                                    create_value=[],
+                                    unique=lambda a,b: a['name'] == b['name'])
+
+        this.setState({'tags_input': ''})
+        this.update_data(data)
 
 def remove_tag(e, d):
-    e.preventDefault()
     tag = e.target.dataset.tag
     ns = e.target.dataset.namespace or '__namespace__'
     data = this.props.data or this.state.data
     if tag and ns and data:
-        tags = data[ns]
-        data[ns] = utils.remove_from_list(tags, tag, key="name")
-        if not len(data[ns]):
-            del data[ns]
+        if isinstance(data, list):
+            f = None
+            for t in data:
+                has_ns = utils.get_object_value('namespace.name', t) == ns
+                has_tag = utils.get_object_value('tag.name', t) == tag
+                if has_ns and has_tag:
+                    f = t
+                    break
+            if f:
+                data = utils.remove_from_list(data, f, key=None)
+        else:
+            tags = data[ns]
+            data[ns] = utils.remove_from_list(tags, tag, key="name")
+            if not len(data[ns]):
+                del data[ns]
         this.update_data(data)
 
 
@@ -123,15 +152,13 @@ def tag_render():
         edit_row.append(
             e(ui.Table.Row,
               e(ui.Table.Cell,
-                e(ui.Form,
-                    e(ui.Input,
-                      onChange=this.on_input,
-                      value=this.state.tags_input,
-                      fluid=True,
-                      className="secondary",
-                      placeholder=tr(this, "ui.t-tag-edit-placeholder", "new tags")),
-                    onSubmit=this.on_input_submit,
-                  ),
+                e(ui.Input,
+                    onChange=this.on_input,
+                    onKeyPress=this.on_input_submit,
+                    value=this.state.tags_input,
+                    fluid=True,
+                    className="secondary",
+                    placeholder=tr(this, "ui.t-tag-edit-placeholder", "new tags")),
                 colSpan="2")))
 
     if isinstance(data, list):

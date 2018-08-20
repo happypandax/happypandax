@@ -261,8 +261,9 @@ class DatabaseMessage(CoreMessage):
 
         with db.no_autoflush(self._sess):
             ex = tuple(x for x, y in self._properties['exclusions'].items() if not y)
+            default_ex = ('user',)
             gattribs = db.table_attribs(self.item, not load_values, descriptors=True, raise_err=not self._detached,
-                                        exclude=ex if not bypass_exclusions else tuple(),
+                                        exclude=ex + default_ex if not bypass_exclusions else default_ex,
                                         allow=tuple(self._properties['force_value_load'].keys()))
             for i in ('_properties',):
                 gattribs.pop(i, False)
@@ -321,8 +322,16 @@ class DatabaseMessage(CoreMessage):
     @classmethod
     def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True,
                   skip_descriptors=False, _type=None,
-                  ignore_private=True):
+                  ignore_private=True, _from_attr=''):
         db_obj = None
+        if not msg:
+            return db_obj
+
+        if not isinstance(msg, dict):
+            raise exceptions.InvalidMessage(
+                    utils.this_function(),
+                    f"Expected message object on '{_from_attr}' not '{type(msg).__name__}'") 
+
         with db.no_autoflush(constants.db_session()) as sess:
             if not cls.db_type and _type is None:
                 raise ValueError("A database type has not been set")
@@ -333,7 +342,7 @@ class DatabaseMessage(CoreMessage):
                 m_keys = set(msg.keys()).difference(set(item_attrs.keys()))
                 raise exceptions.InvalidMessage(
                     utils.this_function(),
-                    f"Message object mismatch. Message contains keys that are not present in the corresponding database item: {m_keys}")
+                    f"Message object mismatch. '{_from_attr}' contains keys that are not present in the corresponding database item: {m_keys}")
 
             if msg:
                 new_obj = True
@@ -410,24 +419,25 @@ class DatabaseMessage(CoreMessage):
                             continue
 
                         msg_obj = cls._get_message_object(cls, attr, col_model, check_recursive=False, class_type=True)
+                        if col_model == db.Taggable and isinstance(value, dict):
+                            if db_obj.taggable and db_obj.taggable.id:
+                                value['id'] = db_obj.taggable.id
                         if issubclass(col_model, db.MetaTag):
                             setattr(db_obj, attr, msg_obj._pack_metatags(value))
                         elif db.is_list(cls_attr) or db.is_query(cls_attr):
-                            if db.is_list(cls_attr):
-                                n_l = []
-                                for v in value:
-                                    o = msg_obj.from_json(
-                                            v,
-                                            _type=col_model,
-                                            ignore_empty=ignore_empty,
-                                            skip_updating_existing=skip_updating_existing,
-                                            skip_descriptors=skip_descriptors)
-                                    if o is not None:
-                                        n_l.append(o)
-                                setattr(db_obj, attr, n_l)
-                            else:
-                                raise NotImplementedError
-
+                            n_l = []
+                            for v in value:
+                                o = msg_obj.from_json(
+                                        v,
+                                        _type=col_model,
+                                        ignore_empty=ignore_empty,
+                                        skip_updating_existing=skip_updating_existing,
+                                        skip_descriptors=skip_descriptors,
+                                        _from_attr=_from_attr + '.' + attr if _from_attr else attr,
+                                        )
+                                if o is not None:
+                                    n_l.append(o)
+                            setattr(db_obj, attr, n_l)
                         elif db.is_descriptor(cls_attr):
                             if db.descriptor_has_setter(cls_attr):
                                 raise NotImplementedError
@@ -438,6 +448,7 @@ class DatabaseMessage(CoreMessage):
                                 msg_obj.from_json(
                                     value,
                                     _type=col_model,
+                                    _from_attr=_from_attr + '.' + attr if _from_attr else attr,
                                     ignore_empty=ignore_empty,
                                     skip_updating_existing=skip_updating_existing,
                                     skip_descriptors=skip_descriptors))
@@ -498,9 +509,6 @@ class DatabaseMessage(CoreMessage):
         if attrib is None:
             return
 
-        if name == "user":
-            return None
-
         if name == "metatags":
             return self._unpack_metatags(attrib)
 
@@ -515,7 +523,8 @@ class DatabaseMessage(CoreMessage):
             msg_obj._properties['force_value_load'] = utils.dict_merge(
                 msg_obj._properties['force_value_load'], self._properties['force_value_load'].get(name, {}))
             msg_obj._properties['exclusions'] = self._properties['exclusions'].get(name, {})
-            msg_obj._detached = self._detached
+            if self._detached:
+                msg_obj._detached = self._detached
             msg_obj._msg_path = self._msg_path.copy()
             # note: don't pass load_collections here. use the force_value_load param
             return msg_obj.data(load_values=load_values, bypass_exclusions=propagate_bypass,
@@ -573,14 +582,20 @@ class Gallery(DatabaseMessage):
     def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True, skip_descriptors=False, **kwargs):
         pref_title = msg.pop('preferred_title', False)
         obj = super().from_json(msg, ignore_empty, skip_updating_existing, skip_descriptors, **kwargs)
-        if not skip_descriptors and pref_title:
-            for mt in msg.get('titles', []):
-                if utils.compare_json_dicts(mt, pref_title):
-                    break
-            else:
-                t = Title.from_json(pref_title, ignore_empty=ignore_empty, skip_updating_existing=skip_updating_existing,
-                                    skip_descriptors=skip_descriptors, **kwargs)
-                setattr(obj, 'preferred_title', t)
+        with db.no_autoflush(db.object_session(obj) or constants.db_session()) as sess:
+            if not skip_descriptors and pref_title:
+                for mt in msg.get('titles', []):
+                    if utils.compare_json_dicts(mt, pref_title):
+                        break
+                else:
+                    t = Title.from_json(pref_title, ignore_empty=ignore_empty, skip_updating_existing=skip_updating_existing,
+                                        skip_descriptors=skip_descriptors, **kwargs)
+                    setattr(obj, 'preferred_title', t)
+
+            if msg.get('pages'):
+                obj.pages.reorder()
+            if (msg.get('grouping') or msg.get('grouping_id')) and obj.grouping:
+                obj.grouping.galleries.reorder()
         return obj
 
 
@@ -618,6 +633,14 @@ class Grouping(DatabaseMessage):
 
     def __init__(self, db_item):
         super().__init__('grouping', db_item)
+
+    @classmethod
+    def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True, skip_descriptors=False, **kwargs):
+        obj = super().from_json(msg, ignore_empty, skip_updating_existing, skip_descriptors, **kwargs)
+        with db.no_autoflush(db.object_session(obj) or constants.db_session()) as sess:
+            if msg.get('galleries'):
+                obj.galleries.reorder()
+        return obj
 
 
 class Taggable(DatabaseMessage):

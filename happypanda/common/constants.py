@@ -160,7 +160,7 @@ super_user_name = "default"
 
 maximum_native_workers = 15
 
-maximum_cpu_threads = 2
+maximum_cpu_threads = 2 #os.cpu_count() or 1
 
 command_progress_removal_time = 60 * 5  # seconds
 

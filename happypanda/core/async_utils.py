@@ -49,6 +49,9 @@ class Greenlet(gevent.Greenlet):
         if hasattr(greenlet, 'locals'):
             greenlet.locals = {}
 
+def _daemon():
+    while True:
+        gevent.sleep(0.1)
 
 class CPUThread():
     """
@@ -78,6 +81,7 @@ class CPUThread():
         self.worker.start()
         self.notifier = gevent.spawn(self._notify)
         self.worker_count = 0
+        self.last_worker_start = arrow.now()
 
     def _run(self):
         # in_cpubound_thread is sentinel to prevent double thread dispatch
@@ -87,9 +91,6 @@ class CPUThread():
         try:
             self.in_async = gevent.get_hub().loop.async()
 
-            def _daemon():
-                while True:
-                    gevent.sleep(0.1)
             daemon_gevent = gevent.spawn(_daemon)
             self.in_q_has_data = gevent.event.Event()
             self.in_async.start(self.in_q_has_data.set)
@@ -131,6 +132,7 @@ class CPUThread():
             gevent.sleep(0.01)  # poll until worker thread has initialized
         self.in_async.send()
         self.worker_count += 1
+        self.last_worker_start = arrow.now()
         done.wait()
         self.worker_count -= 1
         res = self.results[done]
@@ -204,8 +206,13 @@ def defer(f=None, predicate=None):
             if not CPUThread._threads:
                 for x in range(constants.maximum_cpu_threads):
                     CPUThread._threads.append(CPUThread(f"cpu thread {x}"))
-            cpu_thread = sorted(CPUThread._threads, key=lambda c: c.worker_count)[0] if CPUThread._threads else None
-            if cpu_thread:
+            cpu_threads_by_count = sorted(CPUThread._threads, key=lambda c: c.worker_count) if CPUThread._threads else []
+            cpu_threads_by_time = sorted(cpu_threads_by_count, reverse=True, key=lambda c: c.last_worker_start)
+            if cpu_threads_by_count and cpu_threads_by_time:
+                cpu_thread = cpu_threads_by_count[0]
+                if cpu_thread.worker_count:
+                    cpu_thread = cpu_threads_by_time[0]
+
                 log.d(f"Putting function in {cpu_thread.name}: {f}")
                 r = cpu_thread.apply(f, args, kwargs)
             else:

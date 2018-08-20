@@ -40,36 +40,58 @@ def artistlbl_render():
     if data:
         if data.preferred_name:
             name = data.preferred_name.js_name
+        elif data.names and len(data.names):
+            name = data.names[0].js_name
+
         if data.metatags:
             if data.metatags.favorite:
                 fav = 1
 
-    return e(ui.Popup,
-             e(artistpropsview.ArtistProps,
-               data=data,
-               tags=this.props.tags or this.state.tags,
-               edit_mode=this.props.edit_mode,
-               on_favorite=this.favorite,
-               on_tags=this.on_tags),
-             trigger=e(ui.Label,
-                       e(ui.Icon, js_name="heart outline") if fav else None,
-                       e(ui.Icon, js_name="user"),
-                       name,
-                       e(ui.Icon, js_name="delete",
-                         color=this.props.color,
-                         link=True,
-                         onClick=this.props.onRemove,
-                         **{'data-id': data.id, 'data-name': name}) if this.props.edit_mode or this.props.showRemove else None,
-                       basic=True,
-                       color="blue",
-                       as_="a",
-                       ),
-             hoverable=True,
-             hideOnScroll=True,
-             wide="very",
-             on="click",
-             position="top center"
-             )
+    trigger_el = e(ui.Label,
+                           e(ui.Icon, js_name="heart outline") if fav else None,
+                           e(ui.Icon, js_name="user"),
+                           name,
+                           e(ui.Icon, js_name="delete",
+                             color=this.props.color,
+                             link=True,
+                             onClick=this.props.onRemove,
+                             **{'data-id': data.id, 'data-name': name}) if this.props.edit_mode or this.props.showRemove else None,
+                           basic=True,
+                           color="blue",
+                           as_="a",
+                           )
+
+    a_props_el = e(artistpropsview.ArtistProps,
+                   data=data,
+                   update_data=this.update_data,
+                   tags=this.props.tags or this.state.tags,
+                   edit_mode=this.props.edit_mode,
+                   on_favorite=this.favorite,
+                   on_tags=this.on_tags)
+
+    if this.props.edit_mode:
+        el = e(ui.Modal,
+              e(ui.Modal.Content, a_props_el),
+                trigger=trigger_el,
+                dimmer="inverted",
+                size="small",
+                closeOnDocumentClick=True,
+                centered=False,
+                closeIcon=True,
+              )
+    else:
+        el = e(ui.Popup,
+                 a_props_el,
+                 trigger=trigger_el,
+                 hoverable=True,
+                 hideOnScroll=True,
+                 wide="very",
+                 size="small",
+                 on="click",
+                 position="top center"
+                 )
+
+    return el
 
 
 __pragma__("notconv")

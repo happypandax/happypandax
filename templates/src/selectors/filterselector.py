@@ -92,7 +92,6 @@ def get_more():
         next_page = int(this.state.page) + 1
         this.setState({'page': next_page,
                        'loading_more': True})
-        this.get_items()
 
 def selector_update(p_p, p_s):
     if any((
@@ -158,6 +157,7 @@ def selector_render():
                          context=this.state.context_el,
                         onTopVisible=this.get_more,
                         once=False,
+                        fireOnMount=True,
                         ),
                         key="inf",
                         basic=True,

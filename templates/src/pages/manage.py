@@ -433,18 +433,24 @@ def submit_gallery(data=None, error=None):
         state.app.notif("Failed to submit new gallery", level="error")
         this.setState({'submitting': False})
     else:
-        if this.state.data.gallery:
+        if this.state.new_data:
+            this.state.new_data['pages'] = this.state.pages
             this.setState({'submitting': True})
             client.call_func("new_item", this.submit_gallery,
                              item_type=ItemType.Gallery,
-                             item=this.state.data.gallery,
+                             item=this.state.new_data,
                              options=this.state.options,
                              )
 
 
 def load_gallery(data=None, error=None):
     if data is not None and not error:
-        this.setState({'data': data, 'load_gallery_loading': False, 'submitting': False})
+        this.setState({'data': data,
+                       'pages': data.gallery.pages or [],
+                       'new_data': data.gallery or {},
+                       'gallery_data': data.gallery or {},
+                       'load_gallery_loading': False,
+                       'submitting': False})
 
     elif error:
         state.app.notif("Failed to load gallery", level="error")
@@ -456,17 +462,22 @@ def load_gallery(data=None, error=None):
                              path=this.state.load_gallery_path)
 
 
-def on_gallery_update(g):
-    new_data = utils.JSONCopy(this.state.data)
-    new_data.gallery = g
-    this.setState({'data': new_data})
+__pragma__("kwargs")
 
+def creategallery_on_update_data(*args, **kwargs):
+    kwargs['data_state_key'] = 'gallery_data'
+    this.update_data(*args, **kwargs)
 
-__pragma__("tconv")
+__pragma__("nokwargs")
 
+def creategallery_update(p_p, p_s):
+    if p_s.gallery_data != this.state.gallery_data:
+        data = this.state.data or {}
+        data['gallery'] = this.state.gallery_data
+        this.setState({'data': utils.JSONCopy(data)})
 
 def creategallery_render():
-    gallery_data = this.state.data.gallery
+    gallery_data = this.state.gallery_data
 
     options_el = e(ui.Segment,
                    e(ui.Form,
@@ -494,33 +505,40 @@ def creategallery_render():
                       tr(this, "ui.t-already-exists", "Exists"),
                       color="orange", basic=True,
                       className="right"),) if this.state.data.exists else []),
-                 e(gallerypropsview.NewGalleryProps,
-                   data=this.state.data.gallery,
+                 e(gallerypropsview.GalleryProps,
+                   data=gallery_data,
                    sources=this.state.data.sources,
-                   on_data_update=this.on_gallery_update),
+                   update_data=this.on_update_data,
+                   edit_mode=True,
+                   new_mode=True,
+                   ),
                  loading=this.state.submitting,
                  )
     pages_el = []
-    if this.state.data.gallery and this.state.data.gallery.pages:
-        for p in this.state.data.gallery.pages:
+    if this.state.pages:
+        for p in this.state.pages:
             pages_el.append(e(ui.Item,
                               e(ui.Item.Content,
                                 e(ui.Item.Meta, e(ui.Label, p.number, color="blue"), e(ui.Label, p.js_name)),
                                 e(ui.Item.Extra, p.path),
-                                onDismiss=lambda: None,
+                                onDismiss=this.remove_page,
                                 as_=ui.Message,
+                                value=p.number,
                                 color="red",
                                 ),
+                              key=p.number,
                               ),
                             )
 
-    gpages_el = e(ui.Segment, e(ui.Label, tr(this, "ui.t-pages", "Pages"), e(ui.Label.Detail, this.state.data.page_count), attached="top"),
-                  e(ui.Item.Group, *pages_el, divided=True, relaxed=True, className="max-800-h"),
+    gpages_el = e(ui.Segment, e(ui.Label, tr(this, "ui.t-pages", "Pages"), e(ui.Label.Detail, len(this.state.pages)), attached="top"),
+                  e(ui.Item.Group, pages_el, divided=True, relaxed=True, className="max-800-h"),
                   loading=this.state.submitting,)
+
+    dirty = not utils.lodash_lang.isEmpty(gallery_data)
 
     return e("div",
              e(TitleChange, title=tr(this, "ui.t-create-gallery", "Create a gallery")),
-             e(Prompt, when=bool(this.state.data), message=tr(this, "ui.t-page-changes-prompt", "Are you sure?")),
+             e(Prompt, when=dirty, message=tr(this, "ui.t-page-changes-prompt", "Are you sure?")),
              e(ui.Container,
                  e(ui.Form,
                    e(ui.Form.Group,
@@ -539,24 +557,24 @@ def creategallery_render():
                  options_el,
                  e(ui.Form,
                    *((e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=this.state.submitting,
-                                      primary=True, js_type="submit"), horizontal=True),) if gallery_data else []),
+                                      primary=True, js_type="submit"), horizontal=True),) if dirty else []),
                    ginfo_el,
                    gpages_el,
                    *((e(ui.Divider, e(ui.Button, tr(this, "ui.t-submit", "Submit"), disabled=this.state.submitting,
-                                      primary=True, js_type="submit"), horizontal=True),) if gallery_data else []),
+                                      primary=True, js_type="submit"), horizontal=True),) if dirty else []),
                    onSubmit=this.on_gallery_submit,
                    )
                ),
              )
 
 
-__pragma__("notconv")
-
 CreateGallery = createReactClass({
     'displayName': 'CreateGallery',
 
     'getInitialState': lambda: {
         'data': {},
+        'pages': [],
+        'gallery_data': {},
         'load_gallery_path': '',
         'load_gallery_loading': False,
         'options': {'gallery.add_to_inbox': utils.storage.get('new_gallery.add_to_inbox', this.props.config['gallery.add_to_inbox'] if utils.defined(this.props.config['gallery.add_to_inbox']) else False),
@@ -567,16 +585,23 @@ CreateGallery = createReactClass({
     'load_gallery': load_gallery,
     'update_options': update_options,
 
-    'on_gallery_update': on_gallery_update,
+    'on_update_data': creategallery_on_update_data,
+    'update_data': utils.update_data,
 
     'on_add_to_inbox': lambda e, d: all((this.update_options('gallery.add_to_inbox', d.checked), utils.storage.set('new_gallery.add_to_inbox', d.checked))),
+    'remove_page': lambda e, d: this.setState({'pages': utils.remove_from_list(this.state.pages, d.value, key='number')}),
 
     'on_load_gallery_submit': lambda e, d: this.load_gallery(),
     'set_path': lambda e, d: this.setState({'load_gallery_path': d.value}),
 
     'submit_gallery': submit_gallery,
     'on_gallery_submit': lambda: all((this.submit_gallery(),)),
-    'on_submitted': lambda cmd: all((this.setState({'data': {}, 'submitting': False}), state.app.notif(this.submit_txt, level="success", icon="checkmark"))) if cmd.finished() else None,
+    'on_submitted': lambda cmd: all((this.setState({'data': {},
+                                                    'pages': [],
+                                                    'gallery_data': {},
+                                                    'new_data': {},
+                                                    'submitting': False}), state.app.notif(this.submit_txt, level="success", icon="checkmark"))) if cmd.finished() else None,
+    'componentDidUpdate': creategallery_update,
     'render': creategallery_render
 })
 

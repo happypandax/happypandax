@@ -53,7 +53,6 @@ def get_more():
         next_page = int(this.state.page) + 1
         this.setState({'page': next_page,
                        'loading_more': True})
-        this.get_items()
 
 def selector_update(p_p, p_s):
     if any((
@@ -71,20 +70,39 @@ def selector_update(p_p, p_s):
 def selector_on_item_remove(e, d):
     e.preventDefault()
     tid = e.target.dataset.id
+    tname = e.target.dataset.js_name
     data = this.state.selected
     if tid and data:
         tid = int(tid)
         ndata = utils.remove_from_list(data, tid, key="id")
         this.setState({'selected': ndata})
+    if tname and data:
+        ndata = utils.remove_from_list(data, tname, key="preferred_name.name")
+        this.setState({'selected': ndata})
 
 def selector_on_item(e, data):
     selected = this.state.selected
     selected_ids = [a.id for a in selected]
+    selected_def = this.props.defaultSelected
+    selected_def_ids = [a.id for a in selected_def] if selected_def else []
     if data.id in selected_ids:
         selected = utils.remove_from_list(selected, data)
+    if data.id in selected_def_ids:
+        pass
     else:
-        selected = utils.update_object(None, this.state.selected, data, op="append", unique=lambda a,b:a['id']==b['id'])
+        key = 'preferred_name.name'
+        selected = utils.update_object(None, this.state.selected, data, op="append",
+                                       unique=lambda a,b:a['id']==b['id'] if a['id'] or b['id'] else utils.get_object_value(key, a)==utils.get_object_value(key, b))
     this.setState({'selected': selected})
+
+def selector_on_new_item(e, d):
+    if this.state.search_query:
+        active_items = utils.lodash_array.concat(this.state.selected, this.props.defaultSelected if this.props.defaultSelected else [])
+        new_item = {'preferred_name': {'name': this.state.search_query }}
+        old_item = utils.find_in_list(active_items, new_item, key='preferred_name.name')
+        if not old_item:
+            selected = utils.update_object(None, this.state.selected, new_item, op="append")
+            this.setState({'selected': selected, 'search_query': ''})
 
 def selector_on_submit(e, d):
     if this.props.onSubmit:
@@ -105,8 +123,12 @@ def selector_render():
                       size="small",
                       primary=True) if len(selected) else None,
                    e(ui.Input,
+                    label={'as': 'a',
+                           'basic': True,
+                           'content': tr(this, "ui.b-new", "New"),
+                           'onClick':this.on_new_item} if this.state.search_query else js_undefined,
                     size="mini",
-                    defaultValue=this.state.search_query,
+                    value=this.state.search_query,
                     icon='search',
                     fluid=True,
                     onChange=this.update_search),
@@ -117,7 +139,7 @@ def selector_render():
                    e(ui.Label.Group,
                        [e(parodyitem.ParodyLabel,
                              data=a,
-                             key=a.id,
+                             key=a.id or utils.get_object_value('preferred_name.name', a) or utils.get_object_value('names[0].name', a),
                              showRemove=True,
                              onRemove=on_remove
                             ) for a in selected]
@@ -188,6 +210,7 @@ ParodySelector = createReactClass({
                                 'item_type': ItemType.Parody,
                                 'context_el': None,
                                 },
+    'on_new_item': selector_on_new_item,
     'on_item': selector_on_item,
     'on_item_remove': selector_on_item_remove,
     'on_submit': selector_on_submit,

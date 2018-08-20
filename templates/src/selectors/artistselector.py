@@ -53,7 +53,6 @@ def get_more():
         next_page = int(this.state.page) + 1
         this.setState({'page': next_page,
                        'loading_more': True})
-        this.get_items()
 
 def artistselector_update(p_p, p_s):
     if any((
@@ -101,7 +100,6 @@ def artistselector_on_new_item(e, d):
         active_items = utils.lodash_array.concat(this.state.selected, this.props.defaultSelected if this.props.defaultSelected else [])
         new_item = {'preferred_name': {'name': this.state.search_query }}
         old_item = utils.find_in_list(active_items, new_item, key='preferred_name.name')
-        print(old_item)
         if not old_item:
             selected = utils.update_object(None, this.state.selected, new_item, op="append")
             this.setState({'selected': selected, 'search_query': ''})
@@ -141,7 +139,7 @@ def artistselector_render():
                    e(ui.Label.Group,
                        [e(artistitem.ArtistLabel,
                              data=a,
-                             key=a.id,
+                             key=a.id or utils.get_object_value('preferred_name.name', a) or utils.get_object_value('names[0].name', a),
                              showRemove=True,
                              onRemove=on_remove
                             ) for a in selected]
@@ -171,6 +169,7 @@ def artistselector_render():
                          context=this.state.context_el,
                         onTopVisible=this.get_more,
                         once=False,
+                        fireOnMount=True,
                         ),
                         key="inf",
                         basic=True,
