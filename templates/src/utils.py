@@ -477,7 +477,7 @@ def update_data(value, key=None, op="add", new_data_key=None,
                                _caller=False,
                               **kwargs)
     else:
-        print(key, JSON.stringify(value))
+        #print(key, JSON.stringify(value))
         data = data or this.state[data_state_key] or {}
         if only_new_data:
             data = JSONCopy(data)
@@ -500,7 +500,7 @@ def update_data(value, key=None, op="add", new_data_key=None,
                 new_value = JSONCopy(new_value)
                 new_value.extend(new_item)
         new_data = data if not key else set_object_value(key, new_data, new_value)
-        print(JSON.stringify(new_data))
+        #print(JSON.stringify(new_data))
         if only_return:
             return new_data
         this.setState({new_data_state_key: JSONCopy(new_data)})

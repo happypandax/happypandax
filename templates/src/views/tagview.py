@@ -37,7 +37,7 @@ def tag_on_input(e):
 
         data = this.props.data or this.state.data or {}
         special_namespace = "__namespace__"
-        is_list = isinstance(data, list)
+        is_list = isinstance(data, list) or this.props.single
         nstag_names = []
         if is_list:
             for t in data:
@@ -84,7 +84,7 @@ def remove_tag(e, d):
     ns = e.target.dataset.namespace or '__namespace__'
     data = this.props.data or this.state.data
     if tag and ns and data:
-        if isinstance(data, list):
+        if isinstance(data, list) or this.props.single:
             f = None
             for t in data:
                 has_ns = utils.get_object_value('namespace.name', t) == ns
@@ -161,7 +161,7 @@ def tag_render():
                     placeholder=tr(this, "ui.t-tag-edit-placeholder", "new tags")),
                 colSpan="2")))
 
-    if isinstance(data, list):
+    if isinstance(data, list) or this.props.single:
         d = {}
         for nstag in data:
             if not d[nstag.namespace.js_name]:
@@ -217,7 +217,7 @@ def tag_render():
 TagView = createReactClass({
     'displayName': 'TagView',
 
-    'getInitialState': lambda: {'data': {},
+    'getInitialState': lambda: {'data': [] if this.props.single else {},
                                 'tags_input': ''},
 
     'get_tags': get_tags,

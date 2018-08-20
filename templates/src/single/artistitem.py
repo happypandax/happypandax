@@ -112,7 +112,11 @@ ArtistLabel = createReactClass({
 
     'update_metatags': update_metatags,
 
+    'get_tags': artistpropsview.get_tags,
+
     'favorite': item_favorite,
+
+    #'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
 
     'render': artistlbl_render
 }, pure=True)

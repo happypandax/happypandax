@@ -511,6 +511,7 @@ def creategallery_render():
                    update_data=this.on_update_data,
                    edit_mode=True,
                    new_mode=True,
+                   single_tags=True,
                    ),
                  loading=this.state.submitting,
                  )

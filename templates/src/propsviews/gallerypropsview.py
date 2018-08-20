@@ -285,6 +285,7 @@ def galleryprops_render():
                   e(ui.Table.Cell, e(tagview.TagView,
                                      data_key='taggable.tags',
                                      update_data=this.update_data,
+                                     single=this.props.single_tags,
                                      edit_mode=this.props.edit_mode,
                                      submitted_data=this.props.submitted_data,
                                      item_id=item_id,
