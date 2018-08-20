@@ -53,7 +53,7 @@ def tag_on_input(e):
         for t in itags:
             if ':' in t:
                 t = t.split(':', 1)
-                ns = t[0].capitalize()
+                ns = t[0].strip().capitalize() or None
                 tag = t[1]
             else:
                 ns = None
@@ -62,7 +62,7 @@ def tag_on_input(e):
             if not tag:
                 continue
 
-            tag = tag.lower()
+            tag = tag.strip().lower()
 
             tag = {'name': tag}
 

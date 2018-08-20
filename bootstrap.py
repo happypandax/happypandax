@@ -419,10 +419,21 @@ def deploy(args, unknown=None):
         dir_path = os.path.join(dir_path, constants.osx_bundle_name, "Contents", "MacOS")
     installer_filename = ".installed"
     installer_file = os.path.join("deploy", installer_filename)
+    hidden_imports = [
+        'engineio.async_gevent',
+        'logging.config',
+        'sqlalchemy.ext.baked',
+        'dogpile.cache.backends.memory',
+        ]
+    h_imports = []
+    for h in hidden_imports:
+        h_imports.append('--hidden-import')
+        h_imports.append(h)
     if not prun(["happypandax.spec", "--noconfirm"]) and not prun(['updater.py',
                                                                    '--onefile',
                                                                    '--name',
                                                                    constants.updater_name,
+                                                                   *h_imports,
                                                                    '--icon',
                                                                    constants.favicon_path,
                                                                    '--specpath',

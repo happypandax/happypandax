@@ -58,7 +58,7 @@ constants.cache_regions['db'] = make_region(
     name='db',
     function_key_generator=kwarg_function_key_generator,
 ).configure(
-    'dogpile.cache.memory',
+    'dogpile.cache.memory', # !! remember to add to pyinstaller hidden import
     expiration_time=60 * 60  # 1 hour
 )
 

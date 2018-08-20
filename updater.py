@@ -37,6 +37,7 @@ def launch_app(*args, **kwargs):
 def main():
     utils.setup_dirs()
     log.setup_logger(dev=constants.dev, debug=config.debug.value)
+    log.i("Starting HPX updater")
     try:
         update_info = clsutils.internaldb.update_info.get({})
         if not update_info:

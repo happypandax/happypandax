@@ -58,6 +58,7 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
                datas=added_files,
                hiddenimports=['engineio.async_gevent',
                               'logging.config',
+                              'dogpile.cache.backends.memory',
                               'sqlalchemy.ext.baked']+interface_files,
                hookspath=[],
                runtime_hooks=[],
