@@ -2279,7 +2279,7 @@ def check_db_version(sess):
                 log.w(msg, stdout=True)
                 return False
             else:
-                msg = 'Your database will be upgraded to version {} from {}.'.format(
+                msg = 'Your database has been upgraded to version {} from {}.'.format(
                     constants.version_db_str, life.version)
                 log.i(msg, stdout=True)
                 life.version = constants.version_db_str
