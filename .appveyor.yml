@@ -29,8 +29,8 @@ install:
     - ps: Install-Product node 8
     - "%PYTHON%/python.exe -m pip install --upgrade setuptools pip"
     - "%PYTHON%/Scripts/pip.exe install git+https://github.com/pyinstaller/pyinstaller"
-    - "%PYTHON%/Scripts/pip.exe install -r requirements-dev.txt"
     - "%PYTHON%/Scripts/pip.exe install -U certifi"
+    - "%PYTHON%/Scripts/pip.exe install -r requirements-dev.txt"
 
 build: off
 
