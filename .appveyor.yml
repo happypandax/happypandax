@@ -30,6 +30,7 @@ install:
     - "%PYTHON%/python.exe -m pip install --upgrade setuptools pip"
     - "%PYTHON%/Scripts/pip.exe install git+https://github.com/pyinstaller/pyinstaller"
     - "%PYTHON%/Scripts/pip.exe install -r requirements-dev.txt"
+    - "%PYTHON%/Scripts/pip.exe install -U certifi"
 
 build: off
 

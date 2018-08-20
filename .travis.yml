@@ -47,6 +47,7 @@ before_install:
 
 install:
     - pip install -r requirements-dev.txt
+    - pip install install -U certifi
 
 script:
     - python lint.py
