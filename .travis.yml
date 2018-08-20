@@ -46,7 +46,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then npm install -g gulp; fi
 
 install:
-    - pip install install -U certifi
+    - pip install -U certifi
     - pip install -r requirements-dev.txt
 
 script:

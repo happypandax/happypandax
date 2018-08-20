@@ -35,4 +35,4 @@ multidict==4.3.1
 cryptography==2.3
 pyopenssl==18.0.0
 dogpile.cache==0.6.7
-certifi~=2018.8.13
+certifi
