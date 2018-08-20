@@ -69,26 +69,6 @@ If you're interested in building a client to work with HPX, head over to :ref:`C
 
 Since a HPX client cannot function without the server running, it is a good idea to always leave the HPX server running in the background.
 
-File Support
--------------------------------------
-The following file extensions are accepted for import within HPX:
-
-*Archive Formats*
-- ZIP = ``.zip``
-- RAR = ``.rar``
-- CBR = ``.cbr``
-- CBZ = ``.cbz``
-- TAR GZ = ``.tar.gz`` or ``.tgz``
-- TARBZ2 = ``.tar.bz2`` or ``.tbz``
-- TARXZ = ``.tar.xz`` or ``.txz``
-
-*Image formats*
-- JPG = ``.jpg``
-- JPEG = ``.jpeg``
-- BMP = ``.bmp``
-- PNG = ``.png``
-- GIF = ``.gif``
-
 Installing plugins
 ========================================
 
