@@ -10,7 +10,10 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+Object = Date = None
 __pragma__('noskip')
+
 
 def connect_render():
     ic_kwargs = {'size': "large"}
@@ -28,8 +31,9 @@ def connect_render():
             ic_kwargs['color'] = "red"
 
     return e(ui.Menu.Item,
-                icon=e(ui.Icon, **ic_kwargs),
-                )
+             icon=e(ui.Icon, **ic_kwargs),
+             )
+
 
 Connect = createReactClass({
     'displayName': 'Connect',
@@ -53,7 +57,7 @@ def menu_nav_render():
     elements_left = []
     elements_right = []
 
-    #elements_right.append(e(Connect))
+    # elements_right.append(e(Connect))
 
     for n, x in enumerate(items, 1):
         menu_name = x.name

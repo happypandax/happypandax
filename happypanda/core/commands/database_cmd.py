@@ -790,20 +790,23 @@ class AddItem(AsyncCommand):
         if not isinstance(items, (list, tuple)):
             items = [items]
         self.set_progress(type_=enums.ProgressType.ItemAdd)
-        self.set_max_progress(len(items)+1)
+        self.set_max_progress(len(items) + 1)
         item_options = _get_add_item_options()
         item_options.update(options)
         self._add_to_db(items, item_options).get()
         self.next_progress()
         return True
 
+
 def _get_upd_item_options():
     return {
     }
 
+
 def _get_del_item_options():
     return {
     }
+
 
 class UpdateItem(AsyncCommand):
     """

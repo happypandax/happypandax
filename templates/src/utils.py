@@ -4,7 +4,7 @@ require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 js_undefined = location = localStorage = sessionStorage = None
-Date = None
+Object = Date = None
 __pragma__('noskip')
 
 query_string = require("query-string")
@@ -243,6 +243,7 @@ def scroll_to_element(el):
     if el:
         el.scrollIntoView({'behavior': 'smooth'})
 
+
 def scroll_to_top():
     scroll_to_element(document.getElementById("root"))
 
@@ -336,17 +337,21 @@ __pragma__("nokwargs")
 def JSONCopy(obj):
     return JSON.parse(JSON.stringify(obj))
 
+
 def get_object_value(path, fullobj):
-    if path == None:
+    if path == None: # noqa: E711
         path = ""
     return lodash_object.js_get(fullobj, path)
 
+
 def set_object_value(path, fullobj, value):
-    if path == None:
+    if path == None: # noqa: E711
         path = ""
     return lodash_object.setWith(fullobj, path, value, Object)
 
+
 __pragma__("kwargs")
+
 
 def update_object(path,
                   fullobj,
@@ -354,7 +359,7 @@ def update_object(path,
                   op="add",
                   create=True,
                   unique=False):
-    if path == None:
+    if path == None: # noqa: E711
         path = ""
     path = lodash_util.toPath(path)
     lastkey = lodash_array.last(path)
@@ -403,9 +408,12 @@ def update_object(path,
     fullobj = JSONCopy(fullobj)
     return fullobj
 
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
+
+
 def remove_from_list(l, obj_or_id, key='id', index=False):
     if index:
         lodash_array.pullAt(l, [int(obj_or_id)])
@@ -413,42 +421,62 @@ def remove_from_list(l, obj_or_id, key='id', index=False):
     else:
         it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
         return lodash_collection.filter(l, lambda i: not (get_object_value(key, i) == it if key else i == it))
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
+
+
 def find_in_list(l, obj_or_id, key='id', index=False):
     if index:
         return lodash_array.nth(l, obj_or_id)
     else:
         it = get_object_value(key, obj_or_id) if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
         return lodash_collection.find(l, lambda i: (get_object_value(key, i) == it if key else i == it))
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
+
+
 def unique_list(l, key='id'):
     if is_invalid(key):
         return lodash_array.uniq(l)
     else:
         return lodash_array.uniqWith(l, lambda a, b: get_object_value(key, a) == get_object_value(key, b))
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
-def update_in_iterable(i, obj_or_id, key=None):
+
+
+def update_in_iterable(l, obj_or_id, key=None):
     it = obj_or_id[key] if lodash_lang.isPlainObject(obj_or_id) and key else obj_or_id
     return lodash_array.remove(l, lambda i: i[key] == it if key else i == it)
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
-def simple_memoize(func, timeout=60*5):
+
+
+def simple_memoize(func, timeout=60 * 5):
     """
     timeout in seconds
     """
     return memoize(func, {'primitive': True,
-                          'maxAge': 1000*timeout if timeout > 0 else timeout,
+                          'maxAge': 1000 * timeout if timeout > 0 else timeout,
                           'preFetch': 0.15})
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
+
+
 def update_data(value, key=None, op="add", new_data_key=None,
                 only_new_data=False, with_new_item=True, new_item=None,
                 only_return=False, data=None, _caller=True,
@@ -470,12 +498,12 @@ def update_data(value, key=None, op="add", new_data_key=None,
 
     if this.props.update_data and propagate:
         return this.props.update_data(value, key, op=op, new_data_key=new_data_key,
-                               only_new_data=only_new_data, with_new_item=with_new_item,
-                               new_item=new_item, only_return=only_return, data=data,
-                               data_state_key=data_state_key, new_data_state_key=new_data_state_key,
-                               merge_key=merge_key,
-                               _caller=False,
-                              **kwargs)
+                                      only_new_data=only_new_data, with_new_item=with_new_item,
+                                      new_item=new_item, only_return=only_return, data=data,
+                                      data_state_key=data_state_key, new_data_state_key=new_data_state_key,
+                                      merge_key=merge_key,
+                                      _caller=False,
+                                      **kwargs)
     else:
         #print(key, JSON.stringify(value))
         data = data or this.state[data_state_key] or {}
@@ -500,12 +528,14 @@ def update_data(value, key=None, op="add", new_data_key=None,
                 new_value = JSONCopy(new_value)
                 new_value.extend(new_item)
         new_data = data if not key else set_object_value(key, new_data, new_value)
-        #print(JSON.stringify(new_data))
+        # print(JSON.stringify(new_data))
         if only_return:
             return new_data
         this.setState({new_data_state_key: JSONCopy(new_data)})
 
+
 __pragma__("nokwargs")
+
 
 def is_invalid(v):
     if not defined(v) or v is None:

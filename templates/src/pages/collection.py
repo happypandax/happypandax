@@ -1,6 +1,6 @@
 from src.react_utils import (e,
                              createReactClass)
-from src.ui import ui, TitleChange, DateLabel
+from src.ui import ui, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.single import thumbitem
@@ -110,8 +110,10 @@ def update_metatags(mtags):
         d.metatags.update(mtags)
         this.setState({'data': d})
 
+
 __pragma__("notconv")
 __pragma__('nokwargs')
+
 
 def get_item(data=None, error=None):
     if data is not None and not error:
@@ -195,7 +197,6 @@ def get_item(data=None, error=None):
             this.setState({'loading': True})
 
 
-
 def get_gallery_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"gallery_count": data['count']})
@@ -209,7 +210,10 @@ def get_category(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch category ({})".format(this.state.id), level="error")
 
+
 __pragma__('kwargs')
+
+
 def update_item(data=None, error=None, new_data=None):
     if data is not None and not error:
         if data:
@@ -226,7 +230,10 @@ def update_item(data=None, error=None, new_data=None):
             client.call_func("update_item", this.update_item,
                              item_type=this.state.item_type,
                              item=new_data)
+
+
 __pragma__('nokwargs')
+
 
 def collection_favorite(e, d):
     e.preventDefault()
@@ -252,13 +259,15 @@ def collection_on_update(p_props, p_state):
     )):
         this.update_menu()
         if this.props.location:
-            this.props.location.state.gallery = g
+            c = utils.JSONCopy(this.state.data)
+            this.props.location.state.collection = c
             this.props.history.js_replace(this.props.location)
 
     if any((
         p_state.edit_mode != this.state.edit_mode,
     )):
         this.update_menu()
+
 
 __pragma__("tconv")
 
@@ -468,9 +477,9 @@ Page = createReactClass({
     'restore_from_trash': lambda e, d: all((this.update_metatags({'trash': False}),
                                             e.preventDefault())),
 
-    'on_edit': lambda e, d: all((this.setState({'edit_mode':True, 'new_data': {}, 'submitted_data':False, 'old_data': utils.JSONCopy(this.state.data)}), )),
-    'on_cancel_edit': lambda e, d: all((this.setState({'data': this.state.old_data}) if this.state.old_data else None, this.setState({'edit_mode':False, 'old_data': None}))),
-    'on_save_edit': lambda e, d: all((this.setState({'edit_mode':False, 'submitted_data':True, 'old_data': None}),
+    'on_edit': lambda e, d: all((this.setState({'edit_mode': True, 'new_data': {}, 'submitted_data': False, 'old_data': utils.JSONCopy(this.state.data)}), )),
+    'on_cancel_edit': lambda e, d: all((this.setState({'data': this.state.old_data}) if this.state.old_data else None, this.setState({'edit_mode': False, 'old_data': None}))),
+    'on_save_edit': lambda e, d: all((this.setState({'edit_mode': False, 'submitted_data': True, 'old_data': None}),
                                       this.update_item(), this.get_item(only_gallery=True, force=True))),
 
     'toggle_galleries_config': lambda a: this.setState({'visible_gallery_cfg': not this.state.visible_gallery_cfg}),

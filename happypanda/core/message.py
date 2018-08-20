@@ -184,7 +184,8 @@ class Error(CoreMessage):
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
 
-    class NoUnpack(Exception): pass
+    class NoUnpack(Exception):
+        pass
 
     _msg_path = []
     _clsmembers = None  # not all classes have been defined yet
@@ -329,8 +330,8 @@ class DatabaseMessage(CoreMessage):
 
         if not isinstance(msg, dict):
             raise exceptions.InvalidMessage(
-                    utils.this_function(),
-                    f"Expected message object on '{_from_attr}' not '{type(msg).__name__}'") 
+                utils.this_function(),
+                f"Expected message object on '{_from_attr}' not '{type(msg).__name__}'")
 
         with db.no_autoflush(constants.db_session()) as sess:
             if not cls.db_type and _type is None:
@@ -350,7 +351,8 @@ class DatabaseMessage(CoreMessage):
                 if obj_id:
                     db_obj = sess.query(db_type).get(obj_id)
                     if not db_obj:
-                        raise exceptions.CoreError(utils.this_function(), f"Existing item from message object with id '{obj_id}' was not found")
+                        raise exceptions.CoreError(utils.this_function(),
+                                                   f"Existing item from message object with id '{obj_id}' was not found")
                     new_obj = False
                 else:
                     db_obj = db_type()
@@ -397,7 +399,7 @@ class DatabaseMessage(CoreMessage):
                         cls_attr = item_attrs[attr]
                         if skip_descriptors and db.is_descriptor(cls_attr):
                             continue
-                        obj_attr = getattr(db_obj, attr)
+                        obj_attr = getattr(db_obj, attr) # noqa: F841
                         try:
                             col_model = db.column_model(cls_attr)
                         except TypeError:  # most likely a hybrid_property descriptor
@@ -428,13 +430,13 @@ class DatabaseMessage(CoreMessage):
                             n_l = []
                             for v in value:
                                 o = msg_obj.from_json(
-                                        v,
-                                        _type=col_model,
-                                        ignore_empty=ignore_empty,
-                                        skip_updating_existing=skip_updating_existing,
-                                        skip_descriptors=skip_descriptors,
-                                        _from_attr=_from_attr + '.' + attr if _from_attr else attr,
-                                        )
+                                    v,
+                                    _type=col_model,
+                                    ignore_empty=ignore_empty,
+                                    skip_updating_existing=skip_updating_existing,
+                                    skip_descriptors=skip_descriptors,
+                                    _from_attr=_from_attr + '.' + attr if _from_attr else attr,
+                                )
                                 if o is not None:
                                     n_l.append(o)
                             setattr(db_obj, attr, n_l)
@@ -582,7 +584,7 @@ class Gallery(DatabaseMessage):
     def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True, skip_descriptors=False, **kwargs):
         pref_title = msg.pop('preferred_title', False)
         obj = super().from_json(msg, ignore_empty, skip_updating_existing, skip_descriptors, **kwargs)
-        with db.no_autoflush(db.object_session(obj) or constants.db_session()) as sess:
+        with db.no_autoflush(db.object_session(obj) or constants.db_session()):
             if not skip_descriptors and pref_title:
                 for mt in msg.get('titles', []):
                     if utils.compare_json_dicts(mt, pref_title):
@@ -637,7 +639,7 @@ class Grouping(DatabaseMessage):
     @classmethod
     def from_json(cls, msg, ignore_empty=True, skip_updating_existing=True, skip_descriptors=False, **kwargs):
         obj = super().from_json(msg, ignore_empty, skip_updating_existing, skip_descriptors, **kwargs)
-        with db.no_autoflush(db.object_session(obj) or constants.db_session()) as sess:
+        with db.no_autoflush(db.object_session(obj) or constants.db_session()):
             if msg.get('galleries'):
                 obj.galleries.reorder()
         return obj

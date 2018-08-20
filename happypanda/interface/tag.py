@@ -22,6 +22,7 @@ def _contruct_tags_msg(nstags):
             tags.append(n)
     return msg
 
+
 def _decontruct_tags_msg(msg, **msg_kwargs):
     nstags = []
     if msg:
@@ -188,6 +189,7 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     return message.Identity('tags', msg)
 
+
 def update_item_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
                      item_id: int=0,
                      tags: dict={}):
@@ -215,7 +217,7 @@ def update_item_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
     db_obj = database_cmd.GetModelItems().run(db_item, {item_id})
     if not db_obj:
         raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
-                                                "'{}' with id '{}' was not found".format(item_type.name,
+                                                   "'{}' with id '{}' was not found".format(item_type.name,
                                                                                             item_id))
     db_obj = db_obj[0]
 
@@ -226,6 +228,7 @@ def update_item_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
         db_obj.tags = tags
         s.commit()
     return message.Identity("status", True)
+
 
 def get_common_tags(item_type: enums.ItemType = enums.ItemType.Collection,
                     item_id: int = 0,

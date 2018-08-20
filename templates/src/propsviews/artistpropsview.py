@@ -8,7 +8,7 @@ from src.i18n import tr
 from src.state import state
 from src.client import ItemType, client
 from src.props import artistprops
-from src.single import tagitem, circleitem
+from src.single import tagitem
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
@@ -18,12 +18,14 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+
 def artist_favorite(e, d):
     if this.props.edit_mode:
         e.preventDefault()
         this.update_data(bool(d.rating), "metatags.favorite")
     elif this.props.on_favorite:
         this.props.on_favorite(e, d)
+
 
 def get_tags(data=None, error=None):
     if data is not None and not error:

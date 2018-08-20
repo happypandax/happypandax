@@ -26,7 +26,7 @@ require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 js_undefined = location = localStorage = sessionStorage = None
-Date = None
+screen = Object = Date = None
 __pragma__('noskip')
 
 
@@ -145,6 +145,7 @@ def server_notifications_reply(data=None, error=None, msg_id=0, values={}):
 
 __pragma__("nokwargs")
 
+
 def page_visibility_update(e, d):
     calc = d.calculations
     can_fix_menu = this.state.fixable_menu and window.matchMedia("(min-width: 768px)").matches
@@ -163,10 +164,10 @@ def page_visibility_update(e, d):
     else:
         this.setState({'scroll_up_sticky': False})
 
+
 def app_will_mount():
     state['app'] = this
     this.notif = notif
-
 
 
 def app_did_mount():
@@ -258,9 +259,9 @@ def app_render():
                    e(ui.Sidebar.Pusher,
                      h("div", className="ui secondary menu" if this.state.fixed_menu else ""),
                      e(ui.Responsive,
-                        e(menu.Menu, **menu_args), minWidth=767),
+                       e(menu.Menu, **menu_args), minWidth=767),
                      e(ui.Responsive,
-                        e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
+                       e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
                      e(ui.Visibility,
                          e(Switch,
                            *api_route,
@@ -275,17 +276,17 @@ def app_render():
                            e(Route, path="/item/collection/:item_id(\d+)", component=this.collection_page),
                            e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
                            ),
-                      onUpdate=this.page_visibility_update,
+                       onUpdate=this.page_visibility_update,
                        ),
-                      e(ui.Portal,
+                     e(ui.Portal,
                        e(ui.Button,
                          onClick=utils.scroll_to_top,
                          basic=True,
                          icon="chevron up",
                          size="small",
                          className="bottom-right-sticky"),
-                        open=this.state.scroll_up_sticky,
-                        ),
+                       open=this.state.scroll_up_sticky,
+                       ),
                      e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
                      *modal_els,
 

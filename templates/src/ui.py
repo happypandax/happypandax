@@ -350,7 +350,7 @@ TR = createReactClass({
 }, pure=True)
 
 
-#def onhover_render():
+# def onhover_render():
 #    return h(this.props.as_ or "div", this.props.children,
 #             onMouseEnter=this.on_mouse_over,
 #             onMouseLeave=this.on_mouse_over,
@@ -358,14 +358,14 @@ TR = createReactClass({
 #             )
 
 
-#OnHover = createReactClass({
+# OnHover = createReactClass({
 #    'displayName': 'OnHover',
 #    'getInitialState': lambda: {'hover': False},
 #    'on_mouse_over': lambda e,d: all((this.setState({'hover': not this.state.hover}),
 #                                  this.props.onHover() if this.props.onHover and (not this.state.hover) else None)),
 
 #    'render': onhover_render,
-#}, pure=True)
+# }, pure=True)
 
 def RemovableItem(props):
     return e(ui.Message,

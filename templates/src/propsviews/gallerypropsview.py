@@ -1,11 +1,10 @@
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass)
 from src import utils
 from src.state import state
 from src.ui import ui
 from src.client import ItemType, client
-from src.single import artistitem, parodyitem, circleitem
+from src.single import circleitem
 from src.views import tagview
 from src.props import galleryprops, simpleprops
 from src.i18n import tr
@@ -18,11 +17,13 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+
 def on_rate(e, d):
     e.preventDefault()
     rating = d.rating
     if this.props.edit_mode:
         this.update_data(rating, "rating")
+
 
 def get_lang(data=None, error=None):
     if data is not None and not error:
@@ -35,6 +36,7 @@ def get_lang(data=None, error=None):
                              item_type=ItemType.Language,
                              item_id=this.props.data.language_id)
 
+
 def get_category(data=None, error=None):
     if data is not None and not error:
         this.setState({"category_data": data})
@@ -45,6 +47,7 @@ def get_category(data=None, error=None):
             client.call_func("get_item", this.get_category,
                              item_type=ItemType.Category,
                              item_id=this.props.data.category_id)
+
 
 __pragma__("tconv")
 
@@ -105,7 +108,7 @@ def galleryprops_render():
         if this.props.data.parodies:
             parodies = this.props.data.parodies
         if this.props.data.titles:
-            titles = this.props.data.titles # noqa: F841
+            titles = this.props.data.titles  # noqa: F841
 
         if this.props.data.pub_date:
             date_pub = this.props.data.pub_date
@@ -120,7 +123,7 @@ def galleryprops_render():
         if this.props.data.info:
             info = this.props.data.info
         if this.props.data.preferred_title:
-            title = this.props.data.preferred_title.js_name
+            title = this.props.data.preferred_title.js_name # noqa: F841
             title_data = this.props.data.preferred_title
 
         if this.props.data.artists:
@@ -162,8 +165,8 @@ def galleryprops_render():
     rows = []
     if this.props.compact or this.props.new_mode:
         rows.append(e(ui.Table.Row,
-                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-title", "Title") +
-                                     ':', size="tiny", className="sub-text"), collapsing=True) if this.props.new_mode else None,
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-title", "Title") +
+                                         ':', size="tiny", className="sub-text"), collapsing=True) if this.props.new_mode else None,
                       e(ui.Table.Cell, e(galleryprops.Titles,
                                          data=titles,
                                          preferred=title_data,
@@ -175,7 +178,7 @@ def galleryprops_render():
     if info or this.props.edit_mode:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-description", "Description") +
-                                     ':', size="tiny", className="sub-text"), collapsing=True) if this.props.new_mode else None,
+                                         ':', size="tiny", className="sub-text"), collapsing=True) if this.props.new_mode else None,
                       e(ui.Table.Cell, e(galleryprops.Description,
                                          data=info,
                                          update_data=this.update_data,
@@ -189,7 +192,7 @@ def galleryprops_render():
                           update_data=this.update_data,
                           data_key="timestamp",
                           edit_mode=this.props.edit_mode,
-                          text=tr(this, "ui.t-date-added","Date added"),
+                          text=tr(this, "ui.t-date-added", "Date added"),
                           data=date_added, format="LLL"),
                         e(simpleprops.DateLabel,
                           update_data=this.update_data,

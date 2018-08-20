@@ -124,9 +124,10 @@ def new_item(item_type: enums.ItemType=enums.ItemType.Gallery,
     cmd_id = database_cmd.AddItem(services.AsyncService.generic).run(db_obj, options=options)
     return message.Identity('command_id', cmd_id)
 
+
 def update_item(item_type: enums.ItemType=enums.ItemType.Gallery,
-             item: dict={},
-             options: dict={}):
+                item: dict={},
+                options: dict={}):
     """
     Update an existing item
 
@@ -350,14 +351,14 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
 
 
 def search_items(item_type: enums.ItemType=enums.ItemType.Gallery,
-                search_query: str = "",
-                search_options: dict = {},
-                sort_by: enums.ItemSort = None,
-                sort_desc: bool=False,
-                full_search: bool=True,
-                limit: int=100,
-                offset: int=None,
-                ):
+                 search_query: str = "",
+                 search_options: dict = {},
+                 sort_by: enums.ItemSort = None,
+                 sort_desc: bool=False,
+                 full_search: bool=True,
+                 limit: int=100,
+                 offset: int=None,
+                 ):
     """
     Search for items
 

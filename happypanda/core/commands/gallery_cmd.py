@@ -40,12 +40,12 @@ class ScanGallery(AsyncCommand):
                             """)
 
     _resolve: tuple = CommandEntry("resolve",
-                                    CParam("path", str, "path to folder or archive"),
-                                    CParam("options", dict, "a of options to be applied to the scan"),
-                                    __doc="""
+                                   CParam("path", str, "path to folder or archive"),
+                                   CParam("options", dict, "a of options to be applied to the scan"),
+                                   __doc="""
                             Called to resolve the user given scan component path
                             """,
-                                    __doc_return="""
+                                   __doc_return="""
                             """)
 
     @_discover.default()
@@ -64,23 +64,21 @@ class ScanGallery(AsyncCommand):
 
         return tuple(found_galleries)
 
-    @classmethod
-    def _component_match(path, comps):
-        item = {}
+    #@classmethod
+    #def _component_match(path, comps):
+    #    item = {}
 
+    #@_resolve.default()
+    #def _resolve_scan(path, options):
+    #    path = io_cmd.CoreFS(path)
+    #    found_galleries = []
+    #    scan_cmp = options.get(config.scan_component_path.fullname)
+    #    components = scan_cmp.split('/')
 
-    @_resolve.default()
-    def _resolve_scan(path, options):
-        path = io_cmd.CoreFS(path)
-        found_galleries = []
-        scan_cmp = options.get(config.scan_component_path.fullname)
-        components = scan_cmp.split('/')
+    #    for con in path.contents(corfs=True):
+    #        i_comps = list(components)
 
-        for con in path.contents(corfs=True):
-            i_comps = list(components)
-
-
-        return tuple(found_galleries)
+    #    return tuple(found_galleries)
 
     @async_utils.defer
     def _generate_gallery_fs(self, found_paths, options):

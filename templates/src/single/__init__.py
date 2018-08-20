@@ -1,14 +1,6 @@
-import math
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass)
-from src import utils
-from src.state import state
-from src.ui import ui, RemovableItem
-from src.i18n import tr
-from src.single import parodyitem
-from src.client import ItemType, ItemSort, client
-from src.props import simpleprops
+from src.ui import ui
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 __pragma__('alias', 'js_input', 'input')
@@ -18,6 +10,7 @@ require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
+
 
 def genericitem_render():
     name = ""
@@ -33,13 +26,14 @@ def genericitem_render():
     el = e(this.props.as_ if this.props.as_ else ui.List.Item,
            this.props.icon if this.props.icon else None,
            e(ui.List.Content,
-            e(ui.Header, name, size="tiny"),
+             e(ui.Header, name, size="tiny"),
              ),
            className=this.props.className,
            onClick=this.on_click,
            **el_kwargs if not this.props.as_ else None
            )
     return el
+
 
 GenericItem = createReactClass({
     'displayName': 'GenericItem',

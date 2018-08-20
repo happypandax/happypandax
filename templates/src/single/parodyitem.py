@@ -60,6 +60,7 @@ ParodyLabel = createReactClass({
     'render': parodylbl_render
 }, pure=True)
 
+
 def parodyitem_render():
     name = ""
     data = this.props.data or this.state.data
@@ -71,7 +72,7 @@ def parodyitem_render():
     el = e(this.props.as_ if this.props.as_ else ui.List.Item,
            #e(ui.Icon, js_name="user circle", size="big", disabled=True),
            e(ui.List.Content,
-            e(ui.Header, name, size="tiny"),
+             e(ui.Header, name, size="tiny"),
              ),
            className=this.props.className,
            onClick=this.on_click,
@@ -80,16 +81,17 @@ def parodyitem_render():
 
     if not this.props.selection:
         el = e(ui.Popup,
-                 e(parodypropsview.ParodyProps, data=data),
-                 trigger=el,
-                 hoverable=True,
-                 hideOnScroll=True,
-                 wide="very",
-                 on="click",
-                 position="top center"
-             )
+               e(parodypropsview.ParodyProps, data=data),
+               trigger=el,
+               hoverable=True,
+               hideOnScroll=True,
+               wide="very",
+               on="click",
+               position="top center"
+               )
 
     return el
+
 
 ParodyItem = createReactClass({
     'displayName': 'ParodyItem',

@@ -270,7 +270,7 @@ def parodiespage_render():
                 e(parodypropsview.ParodyProps, data=parody),
               trigger=e(ui.Card,
                         e(ui.Card.Content, e(ui.Card.Description, aname)),
-                        centered=True,link=True, className="default-card"),
+                        centered=True, link=True, className="default-card"),
               hoverable=True,
               wide="very",
               on="click",

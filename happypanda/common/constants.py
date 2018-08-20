@@ -84,7 +84,7 @@ internaldb = None
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
 
-cache_regions = {} # will be clsutils.AttributeDict
+cache_regions = {}  # will be clsutils.AttributeDict
 
 general_counter = itertools.count(50)
 default_temp_view_id = 1
@@ -160,7 +160,7 @@ super_user_name = "default"
 
 maximum_native_workers = 15
 
-maximum_cpu_threads = 2 #os.cpu_count() or 1
+maximum_cpu_threads = 2  # os.cpu_count() or 1
 
 command_progress_removal_time = 60 * 5  # seconds
 

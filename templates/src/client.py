@@ -87,9 +87,10 @@ class ImageSize:
     #: A maximum width of 1280
     x1280 = 12
     #: A maximum width of 960
-    x960  = 13
+    x960 = 13
     #: A maximum width of 768
-    x768  = 14
+    x768 = 14
+
 
 class ViewType:
     #: Contains all items except items in Trash
@@ -197,11 +198,11 @@ class Base:
 
 class ServerMsg:
     msg_id = 0
-    default_age = 1000*60*60
+    default_age = 1000 * 60 * 60
     server_results = utils.LRU({
         'max': 500,
-        'maxAge': 1000*60*30, # 30min
-        })
+        'maxAge': 1000 * 60 * 30,  # 30min
+    })
     __pragma__('kwargs')
 
     def __init__(self, data, callback=None, func_name=None, contextobj=None,

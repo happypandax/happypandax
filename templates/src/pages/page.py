@@ -5,7 +5,7 @@ from src.ui import ui, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import (ItemType, ImageSize, client, Command)
-from src.single import thumbitem, pageitem, galleryitem
+from src.single import thumbitem, pageitem
 from src.views import tagview, itemview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -15,6 +15,8 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+screen = Object = Date = None
 __pragma__('noskip')
 
 
@@ -27,25 +29,25 @@ def pagenav_render():
 
     curr_page_txt = str(props.number) + "/" + str(props.count) if props.count else props.number
 
-    els.append( e(ui.Popup,
-              e(ui.Form,
-                  e(ui.Form.Field,
-                    e(ui.Input,
-                      onChange=this.on_page_input,
-                      size="mini",
-                      js_type="number",
-                      placeholder=props.number,
-                      action=e(ui.Button, js_type="submit", compact=True,
-                               icon="share",
-                               onClick=this.go_to_page),
-                      min=1, max=str(props.count) if props.count else props.number),
-                    ),
-                  onSubmit=this.go_to_page
-                ),
-              on="click",
-              hoverable=True,
-              position="top center",
-              trigger=e(ui.Button, curr_page_txt, basic=True))
+    els.append(e(ui.Popup,
+                 e(ui.Form,
+                   e(ui.Form.Field,
+                     e(ui.Input,
+                       onChange=this.on_page_input,
+                       size="mini",
+                       js_type="number",
+                       placeholder=props.number,
+                       action=e(ui.Button, js_type="submit", compact=True,
+                                icon="share",
+                                onClick=this.go_to_page),
+                       min=1, max=str(props.count) if props.count else props.number),
+                     ),
+                   onSubmit=this.go_to_page
+                   ),
+                 on="click",
+                 hoverable=True,
+                 position="top center",
+                 trigger=e(ui.Button, curr_page_txt, basic=True))
                )
 
     if props.number < props.count and props.n_url:
@@ -59,12 +61,13 @@ def pagenav_render():
              columns=1
              )
 
+
 PageNav = createReactClass({
     'displayName': 'PageNav',
 
     'getInitialState': lambda: {
-                                'go_to_page': None,
-                                },
+        'go_to_page': None,
+    },
 
     'on_page_input': lambda e, d: this.setState({'go_to_page': d.value}),
     'go_to_page': lambda: utils.go_to(this.props.history, this.props.get_page_url(this.state.go_to_page)) if this.state.go_to_page and this.props.get_page_url else None,
@@ -205,6 +208,7 @@ def get_page_url(number, gid=None):
 
 __pragma__("nokwargs")
 
+
 def get_default_size():
     w = window.innerWidth
     s = screen.width
@@ -257,6 +261,7 @@ def on_key(ev):
         ev.preventDefault()
         this.go_left()
 
+
 def update_metatags(mtags):
     if this.state.data:
         client.call_func("update_metatags", None, item_type=this.state.item_type,
@@ -266,6 +271,7 @@ def update_metatags(mtags):
         d.metatags.update(mtags)
         d = utils.JSONCopy(d)
         this.setState({'data': d})
+
 
 def on_canvas_click(ev):
     if this.state.context:
@@ -293,6 +299,7 @@ def on_update(p_props, p_state):
         if scroll_top:
             el = this.props.context or this.state.context or state.container_ref
             utils.scroll_to_element(el)
+
 
 class ReaderDirection:
     left_to_right = 1
@@ -404,7 +411,6 @@ def page_render():
         {'key': 5, 'text': "x960", 'value': ImageSize.x960},
         {'key': 5, 'text': "x768", 'value': ImageSize.x768},
     ]
-
 
     return e(ui.Sidebar.Pushable,
              e(TitleChange, title=page_title),
@@ -537,7 +543,7 @@ Page = createReactClass({
     'go_right': go_right,
     'set_pagelist_ref': lambda r: this.setState({'page_list_ref': r}),
     'favorite': lambda e, d: all((this.update_metatags({'favorite': bool(d.rating)}),
-                            e.preventDefault())),
+                                  e.preventDefault())),
     'update_metatags': update_metatags,
     'set_thumbs': set_thumbs,
     'get_thumbs': get_thumbs,
@@ -571,7 +577,7 @@ Page = createReactClass({
         e(ui.Menu.Item, e(ui.Icon, js_name="ellipsis vertical", size="large"),
           icon=True, onClick=this.toggle_pages, position="left"),
         e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="level up alternate", size="large"), icon=True, as_=Link, to={'pathname': "/item/gallery/{}".format(this.props.match.params.gallery_id),
-                                                                                                               'state': {'gallery': this.state.gallery}})),
+                                                                                                                         'state': {'gallery': this.state.gallery}})),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
           icon=True, onClick=this.toggle_config, position="right"),
     ]),

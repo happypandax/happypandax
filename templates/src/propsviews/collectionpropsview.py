@@ -15,6 +15,7 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+
 def get_gallery_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"gallery_count": data['count']})

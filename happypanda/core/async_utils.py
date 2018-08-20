@@ -49,9 +49,11 @@ class Greenlet(gevent.Greenlet):
         if hasattr(greenlet, 'locals'):
             greenlet.locals = {}
 
+
 def _daemon():
     while True:
         gevent.sleep(0.1)
+
 
 class CPUThread():
     """
@@ -206,7 +208,8 @@ def defer(f=None, predicate=None):
             if not CPUThread._threads:
                 for x in range(constants.maximum_cpu_threads):
                     CPUThread._threads.append(CPUThread(f"cpu thread {x}"))
-            cpu_threads_by_count = sorted(CPUThread._threads, key=lambda c: c.worker_count) if CPUThread._threads else []
+            cpu_threads_by_count = sorted(CPUThread._threads,
+                                          key=lambda c: c.worker_count) if CPUThread._threads else []
             cpu_threads_by_time = sorted(cpu_threads_by_count, reverse=True, key=lambda c: c.last_worker_start)
             if cpu_threads_by_count and cpu_threads_by_time:
                 cpu_thread = cpu_threads_by_count[0]

@@ -13,6 +13,7 @@ from happypanda.common import constants, hlogger
 
 log = hlogger.Logger(constants.log_ns_misc + __name__)
 
+
 class AttributeList(UserList):
     """
     l = AttributeList("one", "two")
@@ -56,10 +57,10 @@ constants.cache_regions = AttributeDict()
 constants.cache_regions['db'] = make_region(
     name='db',
     function_key_generator=kwarg_function_key_generator,
-    ).configure(
-        'dogpile.cache.memory',
-        expiration_time=60*60 # 1 hour
-        )
+).configure(
+    'dogpile.cache.memory',
+    expiration_time=60 * 60  # 1 hour
+)
 
 
 class Invalidator:
@@ -101,6 +102,7 @@ class BaseInvalidation:
     @classmethod
     def get(cls, name):
         return getattr(cls, name)
+
 
 class CacheInvalidation(BaseInvalidation):
     dirty_tags = Invalidator()

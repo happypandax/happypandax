@@ -165,10 +165,9 @@ class ImageSize(_APIEnum):
     #: A maximum width of 1280
     x1280 = 12
     #: A maximum width of 960
-    x960  = 13
+    x960 = 13
     #: A maximum width of 768
-    x768  = 14
-
+    x768 = 14
 
 
 class ServerCommand(_APIEnum):

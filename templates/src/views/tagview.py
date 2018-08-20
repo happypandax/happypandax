@@ -15,6 +15,8 @@ JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
 __pragma__('kwargs')
+
+
 def update_tags(data=None, error=None, new_data=None):
     if data is not None and not error:
         pass
@@ -24,10 +26,13 @@ def update_tags(data=None, error=None, new_data=None):
         new_data = new_data or this.state.new_data
         if new_data:
             client.call_func("update_item_tags", this.update_tags,
-                                item_type=this.props.item_type,
-                                item_id=this.props.item_id,
-                                tags=new_data)
+                             item_type=this.props.item_type,
+                             item_id=this.props.item_id,
+                             tags=new_data)
+
+
 __pragma__('nokwargs')
+
 
 def tag_on_input(e):
     if e.key == 'Enter':
@@ -43,7 +48,7 @@ def tag_on_input(e):
             for t in data:
                 t_ns = utils.get_object_value('namespace.name', t)
                 t_tag = utils.get_object_value('tag.name', t)
-                nstag_names.append(t_ns+t_tag)
+                nstag_names.append(t_ns + t_tag)
 
         for t in itags:
             if ':' in t:
@@ -64,20 +69,21 @@ def tag_on_input(e):
             if is_list:
                 nstag = {'tag': tag,
                          'namespace': {'name': ns or special_namespace}}
-                nstag_name = nstag['namespace']['name']+nstag['tag']['name']
+                nstag_name = nstag['namespace']['name'] + nstag['tag']['name']
                 if nstag_name not in nstag_names:
                     nstag_names.append(nstag_name)
                     data = utils.update_object(None, data, nstag, op="append")
             else:
                 data = utils.update_object(ns or special_namespace,
-                                    data,
-                                    tag,
-                                    op="append",
-                                    create_value=[],
-                                    unique=lambda a,b: a['name'] == b['name'])
+                                           data,
+                                           tag,
+                                           op="append",
+                                           create_value=[],
+                                           unique=lambda a, b: a['name'] == b['name'])
 
         this.setState({'tags_input': ''})
         this.update_data(data)
+
 
 def remove_tag(e, d):
     tag = e.target.dataset.tag
@@ -136,12 +142,12 @@ def tag_on_update(p_props, p_state):
             this.props.submitted_data,
             this.props.item_id,
             this.props.item_type,
-            ))
+        ))
         if can_submit:
             this.update_tags()
 
+
 def tag_render():
-    ns_tags
     tag_rows = []
     edit_row = []
     data = this.props.data or this.state.data
@@ -179,7 +185,7 @@ def tag_render():
                     [e(tagitem.TagLabel,
                         tag=x.js_name,
                         key=x.id or Math.random(),
-                        id=x.id+'-'+'__namespace__',
+                        id=x.id + '-' + '__namespace__',
                         show_ns=False,
                         onRemove=remove_tag,
 
@@ -201,7 +207,7 @@ def tag_render():
                             namespace=ns,
                             tag=x.js_name,
                             key=x.id or Math.random(),
-                            id=x.id+'-'+ns,
+                            id=x.id + '-' + ns,
                             onRemove=remove_tag,
                             show_ns=False,
                             edit_mode=edit_mode) for x in ns_tags],

@@ -155,6 +155,7 @@ ItemViewConfig = createReactClass({
     'render': Itemviewvonfig_render
 }, pure=True)
 
+
 def itemviewbase_render():
     props = this.props
     pagination = []

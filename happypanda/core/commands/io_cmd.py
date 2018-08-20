@@ -718,7 +718,7 @@ class Archive(CoreCommand):
 
     def _def_formats():
         return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR,
-                CoreFS.TARBZ2,CoreFS.TARGZ, CoreFS.TARXZ,
+                CoreFS.TARBZ2, CoreFS.TARGZ, CoreFS.TARXZ,
                 CoreFS.TBZ, CoreFS.TGZ, CoreFS.TXZ)
 
     def __init__(self, fpath: str):

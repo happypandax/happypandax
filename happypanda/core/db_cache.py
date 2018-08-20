@@ -21,8 +21,8 @@ dogpile.cache constructs.
 """
 from sqlalchemy.orm.interfaces import MapperOption
 from sqlalchemy.orm.query import Query
-from sqlalchemy.sql import visitors
 from dogpile.cache.api import NO_VALUE
+
 
 class CachingQuery(Query):
     """A Query subclass which optionally loads full results from a dogpile
@@ -108,7 +108,7 @@ class CachingQuery(Query):
             dogpile_region.delete(cache_key)
 
     def get_value(self, merge=True, createfunc=None,
-                    expiration_time=None, ignore_expiration=False):
+                  expiration_time=None, ignore_expiration=False):
         """Return the value from the cache for this query.
 
         Raise KeyError if no value present and no
@@ -122,18 +122,18 @@ class CachingQuery(Query):
         # with createfunc, which says, if the value is expired, generate
         # a new value.
         assert not ignore_expiration or not createfunc, \
-                "Can't ignore expiration and also provide createfunc"
+            "Can't ignore expiration and also provide createfunc"
 
         if ignore_expiration or not createfunc:
             cached_value = dogpile_region.get(cache_key,
-                                expiration_time=expiration_time,
-                                ignore_expiration=ignore_expiration)
+                                              expiration_time=expiration_time,
+                                              ignore_expiration=ignore_expiration)
         else:
             cached_value = dogpile_region.get_or_create(
-                                    cache_key,
-                                    createfunc,
-                                    expiration_time=expiration_time
-                                )
+                cache_key,
+                createfunc,
+                expiration_time=expiration_time
+            )
         if cached_value is NO_VALUE:
             raise KeyError(cache_key)
         if merge:
@@ -146,10 +146,12 @@ class CachingQuery(Query):
         dogpile_region, cache_key = self._get_cache_plus_key()
         dogpile_region.set(cache_key, value)
 
+
 def query_callable(regions, query_cls=CachingQuery):
     def query(*arg, **kw):
         return query_cls(regions, *arg, **kw)
     return query
+
 
 def _key_from_query(query, qualifier=None):
     """Given a Query, create a cache key.
@@ -171,8 +173,9 @@ def _key_from_query(query, qualifier=None):
     # here we return the key as a long string.  our "key mangler"
     # set up with the region will boil it down to an md5.
     return " ".join(
-                    [str(compiled)] +
-                    [str(params[k]) for k in sorted(params)])
+        [str(compiled)] +
+        [str(params[k]) for k in sorted(params)])
+
 
 class FromCache(MapperOption):
     """Specifies that a Query should load results from a cache."""
@@ -199,6 +202,7 @@ class FromCache(MapperOption):
     def process_query(self, query):
         """Process a Query during normal loading operation."""
         query._cache_region = self
+
 
 class RelationshipCache(MapperOption):
     """Specifies that a Query as called within a "lazy load"

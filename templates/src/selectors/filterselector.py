@@ -1,14 +1,11 @@
 import math
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass)
 from src import utils
+from src.ui import ui
 from src.state import state
-from src.ui import ui, RemovableItem
-from src.i18n import tr
 from src.single import GenericItem
-from src.client import ItemType, ItemSort, client
-from src.props import simpleprops
+from src.client import ItemType, client
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 __pragma__('alias', 'js_input', 'input')
@@ -17,9 +14,13 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+screen = Object = Date = None
 __pragma__('noskip')
 
 __pragma__('kwargs')
+
+
 def add_item(data=None, error=None, new_data=None):
     if data is not None and not error:
         pass
@@ -29,11 +30,15 @@ def add_item(data=None, error=None, new_data=None):
         new_data = new_data or this.state.new_data
         print("add")
         client.call_func("add_to_filter", this.add_item,
-                            gallery_id=this.props.item_id,
-                            item=new_data)
+                         gallery_id=this.props.item_id,
+                         item=new_data)
+
+
 __pragma__('nokwargs')
 
 __pragma__('kwargs')
+
+
 def remove_item(data=None, error=None, new_data=None):
     if data is not None and not error:
         pass
@@ -45,7 +50,10 @@ def remove_item(data=None, error=None, new_data=None):
             client.call_func("remove_from_filter", this.remove_item,
                              gallery_id=this.props.item_id,
                              item_id=new_data.id)
+
+
 __pragma__('nokwargs')
+
 
 def get_current_db_items(data=None, error=None):
     if data is not None and not error:
@@ -77,6 +85,7 @@ def get_db_items(data=None, error=None):
                          offset=this.state.limit * (this.state.page - 1),
                          limit=this.state.limit)
 
+
 def get_items_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"item_count": data['count']})
@@ -93,6 +102,7 @@ def get_more():
         this.setState({'page': next_page,
                        'loading_more': True})
 
+
 def selector_update(p_p, p_s):
     if any((
         p_s.search_query != this.state.search_query,
@@ -105,6 +115,7 @@ def selector_update(p_p, p_s):
     )):
         this.get_items_count()
         this.setState({'data': []})
+
 
 def selector_on_item(e, data):
     selected = this.state.selected
@@ -122,14 +133,15 @@ def selector_on_item(e, data):
         if this.props.item_id:
             this.add_item(new_data=data)
 
-
     this.setState({'selected': selected, 'default_selected': selected_def})
+
 
 def selector_on_submit(e, d):
     if this.props.onSubmit:
         this.props.onSubmit(e, this.state.selected)
     if this.props.onClose:
         this.props.onClose()
+
 
 def selector_render():
     data = this.props.data or this.state.data
@@ -143,26 +155,26 @@ def selector_render():
     if data:
         for a in sorted(data, key=lambda a: a.js_name):
             a_els.append(e(GenericItem,
-                         data=a,
-                         active=a.id in selected_ids,
-                         key=a.id,
-                         selection=True,
-                         onClick=this.on_item,
-                         icon=e(ui.Icon, js_name="filter"),
-                        )
-                        )
+                           data=a,
+                           active=a.id in selected_ids,
+                           key=a.id,
+                           selection=True,
+                           onClick=this.on_item,
+                           icon=e(ui.Icon, js_name="filter"),
+                           )
+                         )
     if len(a_els):
         a_els.append(e(ui.Segment,
                        e(ui.Visibility,
                          context=this.state.context_el,
-                        onTopVisible=this.get_more,
-                        once=False,
-                        fireOnMount=True,
-                        ),
-                        key="inf",
-                        basic=True,
-                        loading=this.state.loading_more,
-                        ))
+                         onTopVisible=this.get_more,
+                         once=False,
+                         fireOnMount=True,
+                         ),
+                       key="inf",
+                       basic=True,
+                       loading=this.state.loading_more,
+                       ))
 
     els = e(ui.List, a_els,
             divided=True,
@@ -175,28 +187,29 @@ def selector_render():
 
     return e(ui.Segment,
              e(ui.Ref,
-                els,
-                innerRef=this.get_context_el,
+               els,
+               innerRef=this.get_context_el,
                ),
              basic=True,
              loading=this.state.loading,
              )
 
+
 FilterSelector = createReactClass({
     'displayName': 'FilterSelector',
 
     'getInitialState': lambda: {
-                                'data': this.props.data or [],
-                                'selected': [],
-                                'loading': False,
-                                'loading_more': False,
-                                'limit': 99999,
-                                'item_count': 0,
-                                'page': 1,
-                                'default_selected': this.props.defaultSelected or [],
-                                'item_type': ItemType.GalleryFilter,
-                                'context_el': None,
-                                },
+        'data': this.props.data or [],
+        'selected': [],
+        'loading': False,
+        'loading_more': False,
+        'limit': 99999,
+        'item_count': 0,
+        'page': 1,
+        'default_selected': this.props.defaultSelected or [],
+        'item_type': ItemType.GalleryFilter,
+        'context_el': None,
+    },
     'on_item': selector_on_item,
     'on_submit': selector_on_submit,
     'get_current_items': get_current_db_items,

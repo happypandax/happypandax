@@ -28,7 +28,7 @@ import ipaddress
 import datetime
 import functools
 
-from inspect import ismodule, currentframe, getframeinfo
+from inspect import ismodule
 from contextlib import contextmanager
 from collections import namedtuple
 from gevent import ssl
@@ -315,7 +315,7 @@ def random_name():
 
 def this_function():
     "Return name of current function"
-    return "function" # getframeinfo(currentframe()).function
+    return "function"  # getframeinfo(currentframe()).function
 
 
 def this_command(command_cls):
@@ -669,10 +669,10 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
 
     # create a key
     key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048,
-                backend=default_backend()
-            )
+        public_exponent=65537,
+        key_size=2048,
+        backend=default_backend()
+    )
 
     # create a self-signed cert
     subject = issuer = x509.Name([
@@ -684,18 +684,18 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
     ])
 
     cert_builder = x509.CertificateBuilder().subject_name(
-            subject
-            ).issuer_name(
-                issuer
-            ).public_key(
-                key.public_key()
-            ).serial_number(
-                x509.random_serial_number()
-            ).not_valid_before(
-                datetime.datetime.utcnow()
-            ).not_valid_after(
-                datetime.datetime.utcnow() + datetime.timedelta(days=360*100)
-            )
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.datetime.utcnow()
+    ).not_valid_after(
+        datetime.datetime.utcnow() + datetime.timedelta(days=360 * 100)
+    )
 
     san_list = [
         x509.DNSName(u"localhost"),
@@ -703,7 +703,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
         x509.DNSName(u"happypandax.local"),
         x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
         x509.IPAddress(ipaddress.IPv6Address("::1")),
-        ]
+    ]
     l_ip = get_local_ip()
     if l_ip != "127.0.0.1":
         san_list.append(x509.IPAddress(ipaddress.IPv4Address(l_ip)))
@@ -711,22 +711,22 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None, pfx_file=None):
     cert_builder.add_extension(
         x509.SubjectAlternativeName(san_list),
         critical=False
-        )
+    )
 
     # Sign our certificate with our private key
     cert = cert_builder.sign(key, hashes.SHA256(), default_backend())
 
-
-    #cert.add_extensions([
+    # cert.add_extensions([
     #    OpenSSL.crypto.X509Extension(b"basicConstraints", False, "CA:TRUE, pathlen:0".encode()),
     #    OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode()),
-    #])
+    # ])
 
     with open(key_file, "wb") as f:
         key_pem = key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption() #encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
+            # encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
+            encryption_algorithm=serialization.NoEncryption()
         )
         f.write(key_pem)
 
@@ -853,10 +853,11 @@ def compare_json_dicts(a, b):
     b_j = json.dumps(a, sort_keys=True, indent=2)
     return a_j == b_j
 
+
 def get_dict_value(path, fullobj):
     """
     """
-    if path == None:
+    if path is None:
         path = ""
     path = str(path).split('.')
     lastkey = path[-1]
@@ -867,10 +868,11 @@ def get_dict_value(path, fullobj):
             curr_obj = curr_obj[p]
     return curr_obj[lastkey]
 
+
 def set_dict_value(path, fullobj, value):
     """
     """
-    if path == None:
+    if path is None:
         path = ""
     path = str(path).split('.')
     lastkey = path[-1]
@@ -878,7 +880,7 @@ def set_dict_value(path, fullobj, value):
     curr_obj = fullobj
     if len(path):
         for p in path:
-            if not p in curr_obj:
+            if p not in curr_obj:
                 curr_obj[p] = {}
             curr_obj = curr_obj[p]
     curr_obj[lastkey] = value

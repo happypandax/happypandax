@@ -7,7 +7,9 @@ Create Date: 2018-08-19 04:39:07.738051
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy import Text, Integer, bindparam
+from sqlalchemy.sql import table, column, select
+import pathlib
 
 # revision identifiers, used by Alembic.
 revision = '40c56bc1ba7d'
@@ -24,7 +26,10 @@ def downgrade(engine_name):
     globals()["downgrade_%s" % engine_name]()
 
 
-
+page = table("page",
+    column('id', Integer),
+    column('path', Text),
+    )
 
 
 def upgrade_main():
@@ -35,7 +40,7 @@ def upgrade_main():
     pages = conn.execute(select([page.c.id, page.c.path]))
     new_page_paths = []
     for page_id, page_path in pages:
-        new_page_paths.append({'page_id': page_id, 'new_path':str(pathlib.Path(path).resolve(strict=False))})
+        new_page_paths.append({'page_id': page_id, 'new_path':str(pathlib.Path(page_path).resolve(strict=False))})
     if new_page_paths:
         stmt = page.update().\
                     where(page.c.id==bindparam('page_id')).\

@@ -73,14 +73,16 @@ def get_item(data=None, error=None):
         if item and item_id:
             client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
 
+
 def gallery_rate(e, d):
     e.preventDefault()
     rating = d.rating
     if this.state.data.id:
         client.call_func("update_item", item_type=this.state.item_type,
-                                item={'id':this.state.data.id, 'rating':rating})
+                         item={'id': this.state.data.id, 'rating': rating})
     this.setState({'data': utils.update_object("rating", this.state.data, rating)})
     this.get_item()
+
 
 def gallery_render():
     fav = 0
@@ -173,19 +175,19 @@ def gallery_render():
                           icon="trash", onClick=this.send_to_trash))
 
     add_to_filter_el = e(ui.Modal,
-                            content=e(filterselector.FilterSelector,
-                                      item_type=this.state.item_type,
-                                      item_id=item_id,
-                                      ),
-                            dimmer="inverted",
-                            size="small",
-                            closeOnDocumentClick=True,
-                            centered=False,
-                            closeIcon=True,
-                            open=this.state.filter_open,
-                            onClose=this.toggle_filter,
-                            actions=[{ 'content': tr(this, "ui.b-close", "close") }]
-                            )
+                         content=e(filterselector.FilterSelector,
+                                   item_type=this.state.item_type,
+                                   item_id=item_id,
+                                   ),
+                         dimmer="inverted",
+                         size="small",
+                         closeOnDocumentClick=True,
+                         centered=False,
+                         closeIcon=True,
+                         open=this.state.filter_open,
+                         onClose=this.toggle_filter,
+                         actions=[{'content': tr(this, "ui.b-close", "close")}]
+                         )
 
     a_names = artist_names
 
@@ -197,20 +199,26 @@ def gallery_render():
                    e(ui.Rating, icon="heart", onRate=this.favorite, size="massive",
                      className="card-item top left above-dimmer", rating=fav),
                    e(ui.Popup,
-                         e(ui.Rating, onRate=this.rate, icon="star", defaultRating=rating, maxRating=10, clearable=True, className=""),
-                         trigger=e(
-                             ui.Label,
-                             rating,
-                             className="card-item bottom left above-dimmer",
-                             size="small",
-                             color="orange",
-                             basic=True,
-                             as_="a"),
-                           hoverable=True,
-                           on="click",
-                           hideOnScroll=True,
-                           position="left center",
-                         ),
+                     e(ui.Rating,
+                       onRate=this.rate,
+                       icon="star",
+                       defaultRating=rating,
+                       maxRating=10,
+                       clearable=True,
+                       className=""),
+                     trigger=e(
+                         ui.Label,
+                         rating,
+                         className="card-item bottom left above-dimmer",
+                         size="small",
+                         color="orange",
+                         basic=True,
+                         as_="a"),
+                     hoverable=True,
+                     on="click",
+                     hideOnScroll=True,
+                     position="left center",
+                     ),
                    h("div",
                        *([e(ui.Icon,
                             js_name="inbox",
@@ -237,8 +245,8 @@ def gallery_render():
                             link=True,
                             )] if not read_mtag else []),
                        className="card-item top right above-dimmer",
-                   ),
-                   h("div", 
+                     ),
+                   h("div",
                        e(ui.Popup,
                          e(ui.List, *menu_options, selection=True, relaxed=True),
                            trigger=e(ui.Icon,
@@ -256,7 +264,7 @@ def gallery_render():
                            onClose=this.toggle_options,
                          ),
                        className="card-item bottom right above-dimmer",
-                   ),
+                     ),
                    className="card-content",
                    ),
                  dimmed=this.state.dimmer,

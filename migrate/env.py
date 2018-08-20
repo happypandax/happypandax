@@ -8,8 +8,8 @@ import sys
 
 sys.path.insert(0, os.getcwd())
 
-from happypanda.common import constants, config as hpx_config # noqa: E402
-from happypanda.core import db # noqa: E402
+from happypanda.common import constants, config as hpx_config  # noqa: E402
+from happypanda.core import db  # noqa: E402
 
 USE_TWOPHASE = False
 

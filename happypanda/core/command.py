@@ -221,7 +221,7 @@ class CoreCommand:
         if text is not None:
             self._progress_text = text
         self._progress_current += add
-        #utils.switch(self._priority)
+        # utils.switch(self._priority)
 
     @contextmanager
     def progress(self, max_progress=None, text=None):

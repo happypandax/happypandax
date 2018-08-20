@@ -464,17 +464,21 @@ def load_gallery(data=None, error=None):
 
 __pragma__("kwargs")
 
+
 def creategallery_on_update_data(*args, **kwargs):
     kwargs['data_state_key'] = 'gallery_data'
     this.update_data(*args, **kwargs)
 
+
 __pragma__("nokwargs")
+
 
 def creategallery_update(p_p, p_s):
     if p_s.gallery_data != this.state.gallery_data:
         data = this.state.data or {}
         data['gallery'] = this.state.gallery_data
         this.setState({'data': utils.JSONCopy(data)})
+
 
 def creategallery_render():
     gallery_data = this.state.gallery_data

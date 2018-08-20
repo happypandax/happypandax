@@ -97,6 +97,7 @@ expunge_cascade = "save-update, merge, refresh-expire, expunge"
 default_cascade = "save-update, merge, refresh-expire"
 orphans_cascade = "all, delete-orphan"
 
+
 def ordering_query_cls(attr, count_from=0, reorder_on_append=True):
     if count_from == 0:
         cf = orderinglist.count_from_0
@@ -106,6 +107,7 @@ def ordering_query_cls(attr, count_from=0, reorder_on_append=True):
         cf = orderinglist.count_from_n_factory(count_from)
 
     return utils.partialclass(OrderingQuery, attr, cf, reorder_on_append)
+
 
 class OrderingQuery(dynamic.AppenderQuery):
     """
@@ -433,6 +435,7 @@ naming_convention = {
 
 metadata = MetaData(naming_convention=naming_convention)
 
+
 @as_declarative(metadata=metadata)
 class Base:
     __table_args__ = {'mysql_collate': 'utf8mb4_unicode_ci'}
@@ -705,7 +708,8 @@ class AliasMixin:
 
     @declared_attr
     def alias_for_id(cls):
-        return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__), ondelete="SET NULL"), nullable=True, index=True)  # has one-child policy
+        return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__), ondelete="SET NULL"),
+                      nullable=True, index=True)  # has one-child policy
 
     @declared_attr
     def alias_for(cls):
@@ -1053,7 +1057,7 @@ class Profile(Base):
     __tablename__ = 'profile'
     __table_args__ = (
         Index('idx_data_size', 'data', 'size'),
-        )
+    )
 
     path = Column(Text, nullable=False, default='')
     data = Column(String, nullable=False, index=True)
@@ -1107,7 +1111,7 @@ class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
     __table_args__ = (
         UniqueConstraint('tag_id', 'namespace_id'),
         Index('idx_tag_namespace', 'tag_id', 'namespace_id', unique=True),
-        )
+    )
 
     tag_id = Column(Integer, ForeignKey('tag.id', ondelete='CASCADE'), index=True)
     namespace_id = Column(Integer, ForeignKey('namespace.id', ondelete='CASCADE'), index=True)
@@ -1121,7 +1125,6 @@ class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
                           remote_side='NamespaceTags.id',
                           backref=backref("children", lazy="dynamic"),
                           post_update=True)
-
 
     def __init__(self, ns=None, tag=None, **kwargs):
         super().__init__(**kwargs)
@@ -1216,6 +1219,7 @@ class NamespaceTags(UniqueMixin, AliasMixin, UserMixin, Base):
             ns = constants.special_namespace
         return query.join(cls.namespace).join(cls.tag).filter(and_op(Namespace.name == Namespace.format(ns),
                                                                      Tag.name == Tag.format(tag)))
+
 
 metatag_association(NamespaceTags, "namespacetags")
 
@@ -1319,7 +1323,7 @@ class TaggableMixin(UpdatedMixin):
         if isinstance(self.taggable, Taggable):
             self.taggable.tags = value
         else:
-            Taggable.tags = value # ?
+            Taggable.tags = value  # ?
 
     compact_tags = Taggable.compact_tags
 
@@ -1550,7 +1554,7 @@ class Grouping(ProfileMixin, NameMixin, Base):
         lazy="dynamic",
         cascade=expunge_cascade,
         passive_deletes=True
-        )
+    )
 
     status = relationship(
         "Status",
@@ -1673,7 +1677,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         "Grouping",
         back_populates="galleries",
         cascade=expunge_cascade,
-        )
+    )
     collections = relationship(
         "Collection",
         secondary=gallery_collections,
@@ -1706,15 +1710,15 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         back_populates="gallery",
         lazy='dynamic',
         cascade="all, delete-orphan",
-        #passive_deletes=True
-        )
+        # passive_deletes=True
+    )
     titles = relationship(
         "Title",
         back_populates="gallery",
         lazy='joined',
         cascade="all, delete-orphan",
         passive_deletes=True
-        )
+    )
     parodies = relationship(
         "Parody",
         secondary=gallery_parodies,
@@ -1931,6 +1935,7 @@ for y in metalist_mappers:
 
 # Note: necessary to put in function because there is no Session object yet
 
+
 def init_invalidation_event(cls, invalidation_name):
 
     @event.listens_for(cls, 'after_delete', propagate=True, retval=True)
@@ -1947,6 +1952,7 @@ def init_invalidation_event(cls, invalidation_name):
     def cls_after_update(mapper, conn, target):
         constants.invalidator.set(invalidation_name, True)
         return interfaces.EXT_STOP
+
 
 def initEvents(sess):
     "Initializes events"
@@ -2072,7 +2078,7 @@ def initEvents(sess):
         ev_func = {
             'after_flush': after_flush_mtom,
             'before_commit': before_commit_mtom
-            }
+        }
 
         event.listen(sess, event_name, ev_func[event_name])
 
@@ -2107,11 +2113,11 @@ def initEvents(sess):
         ~Url.artists.any(),
         ~Url.galleries.any()),
         found_attrs=lambda: [Url.artists, Url.galleries])
-    #many_to_many_deletion(NamespaceTags, custom_filter=lambda: and_op(
+    # many_to_many_deletion(NamespaceTags, custom_filter=lambda: and_op(
     #    NamespaceTags.alias_for == None,  # noqa: E711
     #    NamespaceTags.parent == None,  # noqa: E711
-    #    ~NamespaceTags.children.any(), 
-    #    ~NamespaceTags.aliases.any(), 
+    #    ~NamespaceTags.children.any(),
+    #    ~NamespaceTags.aliases.any(),
     #    ~NamespaceTags.taggables.any()),
     #    )
     many_to_many_deletion(NamespaceTags, custom_filter=lambda: or_op(
@@ -2364,6 +2370,7 @@ def migrate(skip_upgrade=False):
         if current_rev != head_rev:
             log.i("Database has been updated!", stdout=True)
 
+
 def create_db(db_path=None, db_url=None):
     new_db = True
     db_encoding = 'utf8mb4' if config.dialect.value == constants.Dialect.MYSQL else 'utf8'
@@ -2371,8 +2378,8 @@ def create_db(db_path=None, db_url=None):
         if os.path.exists(db_path):
             new_db = False
         db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                            connect_args={'timeout': config.sqlite_database_timeout.value,
-                                                            'check_same_thread': False})
+                                  connect_args={'timeout': config.sqlite_database_timeout.value,
+                                                'check_same_thread': False})
     else:
         db_url = db_url or make_db_url()
         if database_exists(db_url):
@@ -2380,9 +2387,10 @@ def create_db(db_path=None, db_url=None):
         else:
             create_database(db_url, db_encoding)
         db_engine = create_engine(db_url, max_overflow=20,
-                                            pool_size=config.pool_size.value,
-                                            pool_timeout=config.pool_timeout.value)
+                                  pool_size=config.pool_size.value,
+                                  pool_timeout=config.pool_timeout.value)
     return db_engine, new_db
+
 
 def init(**kwargs):
     log.i("Using", config.dialect.value, "database", stdout=True)
@@ -2395,7 +2403,6 @@ def init(**kwargs):
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")
-    db_encoding = 'utf8mb4' if config.dialect.value == constants.Dialect.MYSQL else 'utf8'
     try:
         new_db = False
         if not constants.db_engine:

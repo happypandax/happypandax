@@ -38,6 +38,7 @@ SearchOptions = createReactClass({
                         )
 })
 
+
 def Identity(props):
     return props.children
 
@@ -73,7 +74,9 @@ def search_render():
                size=this.props.size,
                input=e(ui.Input,
                        fluid=this.props.fluid,
-                       className="secondary" if (this.props.transparent if utils.defined(this.props.transparent) else True) else "",
+                       className="secondary" if (
+                           this.props.transparent if utils.defined(
+                               this.props.transparent) else True) else "",
                        placeholder=tr(this, "ui.t-search-main-placeholder", "Search title, artist, namespace & tags"),
                        label=e(Identity,
                                e("div",
@@ -90,22 +93,23 @@ def search_render():
                                      suggest=this.state.suggest,
                                      on_key=this.state.on_key,
                                      ),
-                                   trigger=e(ui.Button, icon=e(ui.Icon.Group,
-                                                               e(ui.Icon, js_name="options"),
-                                                               e(ui.Icon, js_name="search", corner=True)),
-                                             js_type="button", basic=True, size=this.props.size),
-                                   hoverable=True,
-                                   on="click",
-                                   hideOnScroll=True,),
-                                 e(ui.Icon, js_name="remove", link=True, onClick=this.search_empty) if this.state.query else None
-                               )),
+                                     trigger=e(ui.Button, icon=e(ui.Icon.Group,
+                                                                 e(ui.Icon, js_name="options"),
+                                                                 e(ui.Icon, js_name="search", corner=True)),
+                                               js_type="button", basic=True, size=this.props.size),
+                                     hoverable=True,
+                                     on="click",
+                                     hideOnScroll=True,),
+                                   e(ui.Icon, js_name="remove", link=True,
+                                     onClick=this.search_empty) if this.state.query else None
+                                 )),
                        icon={'name': 'search', 'link': True, 'onClick': this.on_search},
                        ),
-               minCharacters=3,
-               fluid=this.props.fluid,
-               open=this.state.suggest if not this.state.suggest else js_undefined,
-               onSearchChange=this.on_search_change,
-               value=this.state.query
+                 minCharacters=3,
+                 fluid=this.props.fluid,
+                 open=this.state.suggest if not this.state.suggest else js_undefined,
+                 onSearchChange=this.on_search_change,
+                 value=this.state.query
                ),
              className=cls_name,
              onSubmit=this.on_search
@@ -250,7 +254,7 @@ def sortdropdown_get(data=None, error=None):
         this.setState({"loading": False})
     else:
         this.setState({"loading": True})
-        client.call_func("get_sort_indexes", this.get_items, _memoize=60*60) # 60 min
+        client.call_func("get_sort_indexes", this.get_items, _memoize=60 * 60)  # 60 min
 
 
 def sortdropdown_change(e, d):
@@ -318,7 +322,7 @@ def filterdropdown_get(data=None, error=None):
                          this.get_items,
                          item_type=ItemType.GalleryFilter,
                          limit=999,
-                         _memoize=60*60) # 60 min
+                         _memoize=60 * 60)  # 60 min
 
 
 def filterdropdown_change(e, d):
