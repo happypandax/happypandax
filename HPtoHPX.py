@@ -1382,7 +1382,7 @@ def main(args=sys.argv[1:]):
             s.add(one_taggable)
             s.flush()
             s.bulk_save_objects(taggable_items[1:], return_defaults=True)
-            print("Flushing again... (and this...)")
+            print("Flushing again... (last one, i-I swear, don't be mad..)")
             s.flush()
             del taggable_items
             taggable_items = list(s.query(db.Taggable.id).filter(db.Taggable.id > one_taggable.id).all())
