@@ -17,14 +17,24 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import importlib
+import inspect
 import os
 import sys
 import sphinx_bootstrap_theme
+import collections
+from sphinx.util import inspect as sinspect
+from sphinx_autodoc_napoleon_typehints import process_docstring
+from sphinx.ext.napoleon import Config, docstring
 from os.path import basename
 from io import StringIO
 from docutils.parsers.rst import Directive
 from docutils import nodes, statemachine
+
 sys.path.insert(0, os.path.realpath(os.path.join('..', '..')))
+
+import happypanda
+from happypanda.core import command
 from happypanda.common import constants
 
 # -- General configuration ------------------------------------------------
@@ -38,6 +48,7 @@ from happypanda.common import constants
 # ones.
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.todo',
+    'sphinx.ext.autosummary',
     'sphinx.ext.githubpages',
     'sphinx.ext.autosectionlabel',
     'sphinxcontrib.documentedlist',
@@ -69,6 +80,9 @@ rst_prolog = """
     See :ref:`Asynchronous Commands` for more information.
 
 .. |python version| replace:: Python 3.6
+
+.. |temp view| replace:: **Temporary View** -- This function puts objects in a temporary view.
+    Use the returned ``view id`` with :func:`.temporary_view` to retrieve the objects.
 """
 
 # The version info for the project you're documenting, acts as replacement for
@@ -109,6 +123,8 @@ add_module_names = False
 #
 html_theme = 'bootstrap'
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+
+html_logo = "_static/hpx_logo.svg"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -213,4 +229,124 @@ class ExecDirective(Directive):
 
 def setup(app):
     app.add_directive('exec', ExecDirective)
+
+def autosummary_doc(module):
+    """
+    Recursive autosummary that retrieves classes and functions from given module
+    """
+
+    print(f".. currentmodule:: {module}")
+
+    s = f"""
+    .. autosummary::
+        :nosignatures:
+
+    """
+    sum_str = inspect.cleandoc(s)
+
+    mod = importlib.import_module(module) 
+    for name, obj in inspect.getmembers(mod, inspect.isclass) + inspect.getmembers(mod, inspect.isfunction):
+        if not obj.__name__.startswith('_') and obj.__module__ == mod.__name__:
+            sum_str += f"   {name}\n"
+
+    print(sum_str)
+
+def command_doc(module):
+    """
+    Document command classes
+    """
+
+    mod = importlib.import_module(module)
+
+    print(".. automodule:: {}".format(module))
+
+    config =  Config()
+    cls_str = """.. py:function:: {}{}
+    {}
+
+        .. rubric:: Available entries:
+
+    {}  
+
+        .. rubric:: Available events:
+
+    {}
+
+    """
+
+    cmd_str = """.. py:function:: {}{}
+    {}
+    """
+
+    cls_str = inspect.cleandoc(cls_str)
+    cmd_str = inspect.cleandoc(cmd_str)
+
+    def indent_text(txt, num=4):
+        return "\n".join((num * " ") + i for i in txt)
+
+    def doc_process(docstr, obj, retval=True, indent=4,
+                        config=config, docstring=docstring,
+                        inspect=inspect, process_docstring=process_docstring,
+                        indent_text=indent_text):
+        docstr = docstring.GoogleDocstring(inspect.cleandoc(docstr), config, obj=obj)
+        docslines = str(docstr).splitlines()
+        process_docstring(None, '', '', obj, config, docslines)
+        if docslines:
+            r = docslines.pop(0)
+            # put rtype last
+            if retval:
+                docslines.append(r)
+
+        # indent
+        if indent:
+            docstr = indent_text(docslines, indent)
+        else:
+            docstr = "\n".join(docslines)
+        return docstr
+
+    for name, obj in inspect.getmembers(mod, inspect.isclass):
+        if not obj.__name__.startswith('_') and obj.__module__ == mod.__name__ and issubclass(obj, command.CoreCommand):
+            if getattr(obj, 'main', False):
+                objfunc = obj.main
+            else:
+                objfunc = obj.__init__
+
+            sig = sinspect.Signature(objfunc, bound_method=True)
+            obj._get_commands()
+            entries = []
+            events = []
+            e_objfunc = None
+            for x, e in sorted(obj._entries.items()):
+                esig = sinspect.Signature(objfunc)
+                esig.signature = e.signature
+
+                ex_local = {'happypanda': happypanda, 'collections': collections}
+                ex_local.update(mod.__dict__)
+                ex_local.update(globals())
+                exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
+                e_objfunc = ex_local['e_objfunc']
+
+                entries.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
+
+            for x, e in sorted(obj._events.items()):
+
+                esig = sinspect.Signature(objfunc)
+                esig.signature = e.signature
+
+                ex_local = {'happypanda': happypanda, 'collections': collections}
+                ex_local.update(mod.__dict__)
+                ex_local.update(globals())
+                exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
+                e_objfunc = ex_local['e_objfunc']
+
+                events.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
+
+            retval = sig.signature.return_annotation
+            sig.signature = sig.signature.replace(return_annotation=inspect.Signature.empty)
+
+
+            docstr = doc_process(obj.__doc__, objfunc)
+
+            print(cls_str.format(name, sig.format_args(), str(docstr), '\n'.join(entries), '\n'.join(events)))
+
 

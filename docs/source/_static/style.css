@@ -42,7 +42,7 @@ dd > table.field-list {
 .function > dt > em { margin: 0 3px; }
 
 .seealso .last code {
-    color: #ffd4d4;
+    color: #0f0f0f;
 }
 
 .seealso .last code span:before {
@@ -63,4 +63,50 @@ body {
 
 ul li .function code.descname {
     font-size: 1.05em;
+}
+
+.navbar-brand img {
+    height: 40px;
+}
+
+.navbar-brand {
+    padding: 15px 15px;
+    line-height: 0;
+
+}
+
+h1, .h1 {
+      padding-bottom: 0.3em;
+  font-size: 2em;
+border-bottom: 1px solid #eaecef;
+}
+
+h2, .h2 {
+  padding-bottom: 0.3em;
+  font-size: 1.5em;
+border-bottom: 1px solid #eaecef;
+}
+
+h3, .h3 {
+ font-size: 1.25em;
+}
+
+h4, .h4 {
+ font-size: 1em;
+}
+
+h5, .h5 {
+ font-size: 0.875em;
+}
+
+h6, .h6 {
+  font-size: 0.85em;
+color: #6a737d;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+line-height: 1.25;
 }

@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 8
+_version_: 9
 
 # Common
 t-loading: Loading
@@ -17,13 +17,23 @@ b-edit: Edit
 b-close: Close
 b-new: New
 b-delete: Delete
+b-cancel: Cancel
+b-save: Save
 t-unknown: Unknown
 t-bracket-unknown: <Unknown>
 t-or: Or
+t-submit: Submit
+t-add: Add
+t-select: Select
+t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
+t-updated: Updated!
+t-updated-fail: Failed to update!
 
 # Menu Item
 mi-dashboard: Dashboard
+mi-manage: Manage
 mi-favorites: Favorites
+mi-browse: Browse
 mi-library: Library
 mi-directory: Directory
 mi-inbox: Inbox
@@ -31,6 +41,12 @@ mi-activity: Activity
 mi-downloads: Downloads
 mi-preferences: Preferences
 mi-about: About
+mi-all: All
+
+# Manage Page
+mi-scan: Scan
+t-create-gallery: Create a gallery
+t-create-collection: Create a collection
 
 # Login Page
 t-login: Login
@@ -98,6 +114,7 @@ t-external-image-viewer: External Image Viewer
 t-external-image-viewer-args: External Image Viewer Arguments
 t-external-send-first-file: Send path to first file in folder/archive
 t-args-ex: "Example: -a -X --force"
+t-auto-rate-on-favorite: Automatically rate unrated gallery when favorited
 h-search: Search
 t-search-regex: Allow regex in search filters
 t-search-case-sensitive: Search filter is case sensitive
@@ -162,15 +179,21 @@ t-total-circles: Total Circles
 mi-batch-urls: Batch URs
 
 # Gallery Page
+t-title: Title
+t-description: Description
 t-artist: Artist
 t-circle: Circle
 t-parody: Parody
 t-status: Status
+t-category: Category
 t-published: Published
 t-times-read: Times read
 t-rating: Rating
 t-tags: Tags
 t-url: URL
+t-external-links: External Links
+t-path: Path
+t-unread-gallery: This gallery has not been read yet
 t-inboxed-gallery: This gallery is in your inbox
 t-trashed-gallery: This gallery is set to be deleted
 b-restore: Restore
@@ -188,21 +211,59 @@ h-appears-in-collection:
     one: Appears in %{count} collection
     many: Appears in %{count} collections
 h-more-like-this: More like this
+h-more-same-artist:
+    one: More from same artist
+    many: More from same artists
+t-tag-edit-placeholder: Write tags (comma separated)
 
 # Collection Page
 t-inboxed-collection: This collection is in your inbox
 t-trashed-collection: This collection is set to be deleted
 t-galleries: Galleries
 
+# Scan Page
+t-scan-for-new-galleries: Scan only for new galleries
+de-scan-info: |-
+    Scan for new galleries in a given path
+
+    Supported paths:
+    - A directory
+
+    **Note:** Path must exist on the server-located system if a directory or file.
+
+# New Item Page
+t-add-to-inbox: Add to Inbox
+t-new-gallery-added: A new gallery was added!
+t-metadata-file: Metadata File
+t-already-exists: Already exists
+t-metadata-from-file: Metadata was retrieved from an accompanying file
+t-load-gallery: Load a gallery from path (Path must exist on the server system)
+
+# Page Reader Page
+t-page: Page
+
+# Page Reader Options
+t-reading-direction: Reading Direction
+t-scaling: Scaling
+t-left-to-right: Left to Right
+t-rigt-to-left: Right to Left
+t-default: Default
+t-fit-width: Fit Width
+t-fit-height: Fit Height
+t-stretch-pages: Stretch small pages
+t-invert-bg-color: Invert background color
+t-keep-pagelist-open: Keep pagelist open
+t-size: Size
+t-original: Original
 
 # Item
 b-read: Read
 b-save-later: Save for later
 b-send-library: Send to Library
-b-add-to-filter: Add to filter
-b-add-to-collection: Add to collection
-b-add-to-series: Add to series
-b-send-trash: Send to Trash
+b-add-to-filter: Add to Filter
+b-add-to-collection: Add to Collection
+b-add-to-series: Add to Series
+b-send-trash: Send to trash
 
 # Artist View
 t-galleries: Galleries
@@ -217,7 +278,11 @@ t-infinite-scroll: Infinite Scroll
 t-group-galleries: Gallery Series
 t-items-per-page: Items per page
 t-blur: Blur
-t-default-sort: Default sorting
+t-ascending: Ascending
+t-descending: Descending
+t-default-sort: Default sort
+t-default-sort-order: Default sort order
+t-default-view: Default view
 
 # Misc
 t-showing-count: Showing %{from}-%{to} of %{all}

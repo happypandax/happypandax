@@ -19,6 +19,7 @@ If you're using the installer, this setup file will automatically be run for you
 .. Warning::
     HPX requires sufficient permissions to read and write from it's own folder to be able to run properly. This is required for the auto-update process to work.
     On Windows it means you shouldn't install HPX somewhere like ``C:\Program Files (x86)``. If you still choose to do so just remember to run HPX as admin.
+    (Not recommended)
 
 
 If you wish to develop directly on HPX please head to :ref:`Setting up an environment`.
