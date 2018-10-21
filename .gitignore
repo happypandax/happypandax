@@ -23,6 +23,7 @@ downloads
 *.sln.docstates
 .vs/
 *.vcxproj.filters
+.idea/
 
 # Build results
 [Dd]ebug/
