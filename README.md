@@ -1,6 +1,4 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypandax?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/happypandax/happypandax.svg?branch=dev)](https://travis-ci.org/happypandax/happypandax)
-[![Build status](https://ci.appveyor.com/api/projects/status/kx09iuo24ybrqcrl/branch/dev?svg=true)](https://ci.appveyor.com/project/Pewpews/happypandax/branch/dev)
 [![GitHub release](https://img.shields.io/github/release/happypandax/happypandax.svg)](https://github.com/happypandax/happypandax/releases/latest)
 [![Github All Releases](https://img.shields.io/github/downloads/happypandax/happypandax/total.svg)](https://github.com/happypandax/happypandax/releases)
 [![Twitter Follow](https://img.shields.io/twitter/follow/pewspew.svg?style=social&label=Follow)](https://twitter.com/pewspew)
