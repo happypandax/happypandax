@@ -22,4 +22,3 @@ If you're using the installer, this setup file will automatically be run for you
     (Not recommended)
 
 
-If you wish to develop directly on HPX please head to :ref:`Setting up an environment`.

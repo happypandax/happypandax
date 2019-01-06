@@ -5,6 +5,7 @@ locale: English (United States)
 _version_: 4
 
 # Database
+db-item-grouping: Grouping
 db-item-gallery: Gallery
 db-item-collection: Collection
 db-item-page: Page

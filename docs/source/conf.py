@@ -304,49 +304,57 @@ def command_doc(module):
             docstr = "\n".join(docslines)
         return docstr
 
-    for name, obj in inspect.getmembers(mod, inspect.isclass):
-        if not obj.__name__.startswith('_') and obj.__module__ == mod.__name__ and issubclass(obj, command.CoreCommand):
-            if getattr(obj, 'main', False):
-                objfunc = obj.main
-            else:
-                objfunc = obj.__init__
-
-            sig = sinspect.Signature(objfunc, bound_method=True)
-            obj._get_commands()
-            entries = []
-            events = []
-            e_objfunc = None
-            for x, e in sorted(obj._entries.items()):
-                esig = sinspect.Signature(objfunc)
-                esig.signature = e.signature
-
-                ex_local = {'happypanda': happypanda, 'collections': collections}
-                ex_local.update(mod.__dict__)
-                ex_local.update(globals())
-                exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
-                e_objfunc = ex_local['e_objfunc']
-
-                entries.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
-
-            for x, e in sorted(obj._events.items()):
-
-                esig = sinspect.Signature(objfunc)
-                esig.signature = e.signature
-
-                ex_local = {'happypanda': happypanda, 'collections': collections}
-                ex_local.update(mod.__dict__)
-                ex_local.update(globals())
-                exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
-                e_objfunc = ex_local['e_objfunc']
-
-                events.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
-
-            retval = sig.signature.return_annotation
-            sig.signature = sig.signature.replace(return_annotation=inspect.Signature.empty)
+    try:
+        for name, obj in inspect.getmembers(mod, inspect.isclass):
+            if not obj.__name__.startswith('_') and obj.__module__ == mod.__name__ and issubclass(obj, command.CoreCommand):
+                if getattr(obj, 'main', False):
+                    objfunc = obj.main
+                else:
+                    objfunc = obj.__init__
 
 
-            docstr = doc_process(obj.__doc__, objfunc)
+                sig = sinspect.Signature(objfunc, bound_method=True)
+                obj._get_commands()
+                entries = []
+                events = []
+                e_objfunc = None
+                for x, e in sorted(obj._entries.items()):
+                    esig = sinspect.Signature(objfunc)
+                    esig.signature = e.signature
 
-            print(cls_str.format(name, sig.format_args(), str(docstr), '\n'.join(entries), '\n'.join(events)))
+                    ex_local = {'happypanda': happypanda, 'collections': collections}
+                    ex_local.update(mod.__dict__)
+                    ex_local.update(globals())
+                    exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
+                    e_objfunc = ex_local['e_objfunc']
+
+                    entries.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
+
+                for x, e in sorted(obj._events.items()):
+
+                    esig = sinspect.Signature(objfunc)
+                    esig.signature = e.signature
+
+                    ex_local = {'happypanda': happypanda, 'collections': collections}
+                    ex_local.update(mod.__dict__)
+                    ex_local.update(globals())
+                    exec("def e_objfunc{}:None".format(esig.signature), ex_local, ex_local)
+                    e_objfunc = ex_local['e_objfunc']
+
+                    events.append("    - {}".format(cmd_str.format(x, esig.format_args(), str(doc_process(e.__doc__, e_objfunc, False, indent=8)))))
+
+                retval = sig.signature.return_annotation
+                sig.signature = sig.signature.replace(return_annotation=inspect.Signature.empty)
+
+
+                docstr = doc_process(obj.__doc__, objfunc)
+
+                print(cls_str.format(name, sig.format_args(), str(docstr), '\n'.join(entries), '\n'.join(events)))
+    except Exception:
+        w = """
+        .. error::
+            {}
+        """.format(module)
+        print(inspect.cleandoc(w))
 
 

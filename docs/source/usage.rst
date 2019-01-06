@@ -13,7 +13,7 @@ A default HPX installation has the following two components:
     The default frontend that comes with HPX. A web-based (JS) frontend for HPX, if you will.
 
     This component should also be running, even if you're not going to use the client.
-    It should be started automatically on server start.
+    It is started automatically on server start.
 
 Setting up
 -------------------------------------
@@ -31,6 +31,23 @@ You can generate an example configuration file with all settings listed with the
     - On Windows the executable is named ``happypandax.exe`` (with ``.exe`` suffix).
 
 Most of these settings can also be configured from a HPX client.
+
+Choosing a database backend
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HPX supports these database backends:
+
+- SQLite
+- PostgreSQL
+
+Before using HPX, it is important that you settle on a backend because transferring data between backends is not supported.
+If you're not sure on which one to pick, go with PostgreSQL, just to be on the safe side.
+SQLite doesn't handle large databases and concurrency that well. PostgreSQL will be the faster and more stable choice in this case, but it requires some
+setup before you can use it. Look up a guide on google.
+
+The default backend is SQLite.
+
+Choose the backend with the setting ``db.dialect``. 
 
 Starting
 -------------------------------------

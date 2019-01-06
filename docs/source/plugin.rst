@@ -3,8 +3,7 @@ Plugins
 
 HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease through plugins.
 
-Plugins can be written in ``Python 3`` up to ``Python 3.6``.
-Note that you don't need to be running HPX from source to develop a plugin.
+Plugins are written in ``Python 3.6``.
 
 Here you will learn how to create a HPX plugin and use it to extend HPX.
 Before that though, here are some new terminologies to learn before diving in to help us better understand how everything is screwed together.

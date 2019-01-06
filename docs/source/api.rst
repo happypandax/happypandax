@@ -22,6 +22,9 @@ Functions
 .. automodule:: happypanda.interface.gallery
    :members:
 
+.. automodule:: happypanda.interface.general
+   :members:
+
 .. automodule:: happypanda.interface.tag
    :members:
 
@@ -60,6 +63,12 @@ Summary
 .. exec::
     
     autosummary_doc("happypanda.interface.gallery")
+
+.. rubric:: General
+
+.. exec::
+    
+    autosummary_doc("happypanda.interface.general")
 
 .. rubric:: Tags
 
