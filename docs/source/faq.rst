@@ -21,12 +21,14 @@ In addition to folders with loose files, the following file extensions are accep
 - PNG = ``.png``
 - GIF = ``.gif``
 
-It is possible to add additional file extensions with plugins
+It is possible to add support for additional file extensions with plugins
 
 Scanning for galleries
 -------------------------------------
 
-In addition to regular paths to folders, the scanner also accepts paths with the following tokens inside it:
+In addition to regular paths to folders, the scanner also supports some special syntax for more fine-grained control of the import process.
+
+The following tokens can be used in a path, these shall be called component-tokens:
 
 - ``{collection}`` - to specify that this part in the path is a collection
 - ``{grouping}`` or ``{series}`` - to specify that this part in the path is a grouping
@@ -35,10 +37,10 @@ In addition to regular paths to folders, the scanner also accepts paths with the
 
 For regex, these tokens are available:
 
-- ``{re:"<regex here>"}`` - to match a part in the path that satisfies the given expression
-- ``{re:'<regex here>' <omponent>}`` - where ``<omponent>`` is one of the above ``collection``, ``grouping``/``series``, ``artist`` or ``gallery``. This is basically a combination of the tokens above.
+- ``{re:"<regex here>"}`` - to match a part in the path that satisfies the given expression *(replace ``<regex here>`` with the actual expression)*
+- ``{re:'<regex here>' <omponent>}`` - where ``<component>`` is one of the component-tokens above. This token is basically a combination of the regex token and a component-token.
 
-For glob patterns, or general name matching, this token is available:
+For glob patterns, or more general name matching, this token is available:
 
 - ``{"<pattern here>"}`` - to match a part in the path that satisfies the given glob pattern or name
 
@@ -47,6 +49,7 @@ A special wild-card token is also available:
 - ``*`` - to match anything
 
 These tokens make the scanner pretty flexible and able to work on most, if not all, possible directory structures.
+
 Learn best by example:
 
 Suppose our collection is structured like this:

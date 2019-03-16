@@ -58,4 +58,4 @@ This is the official issue-tracker for HPX. Please create a new issue [here](htt
 
 # Where is the code?
 
-HPX is only partially open source. The translations and documentation are open-source so that anyone is free to contribute if they want. Plugins are also open-source and can be found at the [plugin repo(https://github.com/happypandax/plugins).
+HPX is only partially open source. The translations and documentation are open-source so that anyone is free to contribute if they want. Plugins are also open-source and can be found at the [plugin repo](https://github.com/happypandax/plugins).

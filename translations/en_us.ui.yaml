@@ -27,7 +27,10 @@ t-bracket-unknown: <Unknown>
 t-or: Or
 t-submit: Submit
 t-add: Add
+t-end: End
+t-refresh: Refresh
 t-select: Select
+t-update: Update
 t-deselect: Deselect
 t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
 t-updated: Updated!
@@ -156,6 +159,7 @@ t-drag-item-priority: Drag item to change priority
 t-logged-in: Logged in
 t-not-logged-in: Not logged in
 b-login: Login
+t-pages-to-read: How many pages (in percent) has to be read before the gallery is considered read
 
 # API Page
 h-server-comm: Server Communication
@@ -179,15 +183,18 @@ t-response: Response
 # Management Page
 mi-dir-tags: Tags
 mi-dir-artists: Artists
+mi-dir-filters: Filters
 mi-dir-circles: Circles
 mi-dir-categories: Categories
 mi-dir-parodies: Parodies
 mi-dir-languages: Languages
 mi-dir-status: Status
+t-search-filters-placeholder: Search filters
 t-search-tags-placeholder: Search tags
 t-search-artists-placeholder: Search artists
 t-search-parodies-placeholder: Search parodies
 t-search-circles-placeholder: Search circles
+t-total-filters: Total Filters
 t-total-tags: Total Tags
 t-total-artists: Total Artists
 t-total-parodies: Total Parodies
@@ -201,6 +208,7 @@ t-title: Title
 t-description: Description
 t-artist: Artist
 t-circle: Circle
+t-number: Number
 t-parody: Parody
 t-status: Status
 t-category: Category
@@ -209,7 +217,7 @@ t-times-read: Times read
 t-rating: Rating
 t-tags: Tags
 t-url: URL
-t-external-links: External Links
+t-external-links: External links
 t-path: Path
 t-saved-for-later: Saved for later
 t-unread-gallery: This gallery has not been read yet
@@ -234,7 +242,7 @@ h-more-like-this: More like this
 h-more-same-artist:
     one: More from same artist
     many: More from same artists
-t-tag-edit-placeholder: Write tags (comma separated)
+t-tag-edit-placeholder: Enter tags (comma separated)
 
 # Collection Page
 t-name: Name
@@ -277,6 +285,10 @@ t-page: Page
 t-parent: Parent
 t-path: Path
 t-hash: Hash
+t-page-tags: Page tags
+t-parent-tags: Parent tags
+t-what-read-next: What to read next...
+
 
 # Page Reader Options
 t-reading-direction: Reading Direction
@@ -290,10 +302,12 @@ t-stretch-pages: Stretch small pages
 t-invert-bg-color: Invert background color
 t-keep-pagelist-open: Keep pagelist open
 t-size: Size
+t-auto: Auto
 t-original: Original
 
 # Item
 b-read: Read
+b-continue-reading: Continue reading
 b-save-later: Save for later
 b-send-library: Send to Library
 b-edit-filters: Edit filters
@@ -339,12 +353,25 @@ t-default-sort: Default sort
 t-default-sort-order: Default sort order
 t-default-view: Default view
 
+# Search Options
+t-search-case: Case sensitive
+t-search-regex: Regex
+t-search-exact: Match exact
+t-search-all: Match all terms
+t-search-desc: Match on children
+t-search-suggest: Show suggestions
+t-search-dynamic: Dynamic search
+
+# Filters
+t-filter-enforce: Enforce
+
 # Misc
+t-welcome: Welcome %{name}!
 t-showing-count: Showing %{from}-%{to} of %{all}
 t-search-main-placeholder: Search title, artist, namespace & tags
 t-filterdropdown-placeholder: Filter
 t-sortdropdown-placeholder: Sort by
-t-changelog-location: Read about the new changes at About -> Changelog
+t-new-update-changelog: Click here to view the changelog
 t-sites: Sites
 t-items-selected:
     one: "%{count} item selected"
