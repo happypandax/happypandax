@@ -12,7 +12,7 @@
 
 > Coming from HappyPanda? See [Migrating from HappyPanda](https://happypandax.github.io/usage.html#migrating-from-happypanda)
 
-#### [Download](https://github.com/happypandax/happypandax/releases) - [HappyPanda Desktop](https://github.com/happypandax/desktop) - [Documentation](https://happypandax.github.io/) - [Plugins](https://github.com/happypandax/plugins) - [Support on Patreon](https://www.patreon.com/twiddly)
+#### [Download](https://github.com/happypandax/happypandax/releases) - [HappyPanda X Desktop](https://github.com/happypandax/desktop) - [Documentation](https://happypandax.github.io/) - [Plugins](https://github.com/happypandax/plugins) - [Support on Patreon](https://www.patreon.com/twiddly)
 
 
 <p align="center">
