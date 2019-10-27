@@ -1,11 +1,11 @@
 ---
-name: Bug report
+name: Issue report
 about: Are you experiencing an issue with HPX?
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Describe the issue**
+A clear and concise description of what the issue is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
