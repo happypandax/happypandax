@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help HPX improve
+about: Are you experiencing an issue with HPX?
 
 ---
 
