@@ -1,0 +1,43 @@
+# This id is required
+locale: 简体中文 (中国)
+
+# very useful for updating
+_version_: 4
+
+# Database
+db-item-grouping: 分组
+db-item-gallery: 画廊
+db-item-collection: 收藏
+db-item-page: 页面
+
+db-status-ongoing: 连载中
+db-status-completed: 完结的
+db_status-unknown: 未知
+db_status-unreleased: 未发行
+
+db-category-convention: Convention
+
+# Sort
+sort-idx-1: 随机
+sort-idx-2: 标题
+sort-idx-3: 艺术家
+sort-idx-4: 添加时间
+sort-idx-5: 出版时间
+sort-idx-6: 最后阅读
+sort-idx-7: 最后更新
+sort-idx-8: 评分
+sort-idx-9: 阅读次数
+sort-idx-10: 页数
+sort-idx-11: Circles
+sort-idx-20: 名字
+sort-idx-30: 命名空间
+sort-idx-31: 标签
+sort-idx-35: 名字
+sort-idx-40: 名字
+sort-idx-45: 名字
+sort-idx-50: 随机
+sort-idx-51: 名字
+sort-idx-52: 添加时间
+sort-idx-53: 出版时间
+sort-idx-54: 画廊数
+
