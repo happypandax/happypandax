@@ -29,8 +29,8 @@ t-or: 或者
 t-submit: 提交
 t-add: 添加
 t-start: 开始
-t-first: 第一
-t-end: 结尾
+t-first: 第一页
+t-end: 尾页
 t-refresh: 刷新
 t-select: 选择
 t-update: 更新
@@ -84,7 +84,7 @@ mi-about-info: 信息
 mi-about-trash: 回收站
 mi-about-changelog: 更新日志
 mi-about-license: 许可
-de-about-same-machine: 你目前从同一台机器连接
+de-about-same-machine: 你目前从服务器主机连接
 t-developer: 开发者
 t-client-version: 客户端版本
 t-server-version: 服务器版本
@@ -129,7 +129,7 @@ t-setting-restart: 一项或者多项设置在重启后才会生效
 
 de-pref-disabled: 已禁用，因为客户端从其他设备连接
 t-language: 语言
-t-help-translate: 对翻译不满意？考虑一下帮帮忙！点击这里查看更多信息
+t-help-translate: 对翻译不满意？请考虑一下帮助我们！点击这里查看更多信息
 t-untranslated-text: 显示未翻译的文字
 t-translation-id-error: 错误，翻译ID无效
 h-external-viewer: 外部查看器
@@ -145,7 +145,7 @@ t-search-regex: 在搜索过滤器中允许使用正则表达式
 t-search-case-sensitive: 搜索过滤器区分大小写
 t-search-match-exact: 词语精确匹配
 t-search-match-all: 只匹配有所有词语的项目
-t-search-children: Also match on children
+t-search-children: 也在子页面中匹配
 h-deletion: 删除
 t-delete-trash-files: 当一个项目在定期垃圾清理时被删除时，删除其文件
 t-send-trash-to-systemtrash: 当一个项目在定期垃圾清理时被删除时，将其文件送至系统的回收站
@@ -217,7 +217,7 @@ t-response: Response
 mi-dir-tags: 标签
 mi-dir-artists: 艺术家
 mi-dir-filters: 过滤器
-mi-dir-circles: Circles
+mi-dir-circles: 社团
 mi-dir-categories: 类别
 mi-dir-parodies: 原作
 mi-dir-languages: 语言
@@ -226,12 +226,12 @@ t-search-filters-placeholder: 搜索过滤器
 t-search-tags-placeholder: 搜索标签
 t-search-artists-placeholder: 搜索艺术家
 t-search-parodies-placeholder: 搜索原作
-t-search-circles-placeholder: 搜索circles
+t-search-circles-placeholder: 搜索社团
 t-total-filters: 全部过滤器
 t-total-tags: 全部标签
 t-total-artists: 全部艺术家
 t-total-parodies: 全部原作
-t-total-circles: 全部Circles
+t-total-circles: 全部社团
 
 # Library Page
 b-page-actions: 页面操作
@@ -244,7 +244,7 @@ t-select-all: 全选
 t-title: 标题
 t-description: 描述
 t-artist: 艺术家
-t-circle: Circle
+t-circle: 社团
 t-number: 序号
 t-parody: 原作
 t-status: 状态
@@ -296,7 +296,7 @@ t-galleries: 画廊
 
 # Scan Page
 t-limit: 限制
-t-offset: 补偿
+t-offset: 偏移量
 t-transparent-nested-folders: 将嵌套的文件夹视为“透明的”（忽略嵌套的文件夹）
 t-scan-for-new-galleries: 只扫描新画廊
 de-scan-info: |-
@@ -334,11 +334,11 @@ t-load-gallery: 从一个路径加载画廊（路径必须存在于服务器主�
 
 # Page Reader Page
 t-page: 页面
-t-parent: Parent
-t-path: Path
+t-parent: 父页面
+t-path: 路径
 t-hash: Hash
 t-page-tags: 页面标签
-t-parent-tags: Parent tags
+t-parent-tags: 父页面标签
 t-what-read-next: 接下来要阅读的...
 
 
@@ -352,11 +352,11 @@ t-fit-width: 适应宽度
 t-fit-height: 适应高度
 t-stretch-pages: 拉伸小页面
 t-invert-bg-color: 背景色反转
-t-keep-pagelist-open: 让页码表保持打开
+t-keep-pagelist-open: 保持显示页码
 t-size: 尺寸
 t-auto: 自动
 t-original: 原图
-t-smooth-scroll: 平滑滚屏
+t-smooth-scroll: 平滑翻页
 
 # Metadata Page
 t-options: 选项
@@ -417,10 +417,10 @@ t-most-common-tags: 最常见的标签
 
 # Sidebar Options
 t-open-external-viewer: 在外部查看器中打开
-t-infinite-scroll: 无限滚动
+t-infinite-scroll: 无限翻页
 t-group-galleries: 画廊系列
 t-items-per-page: 每页的项目数
-t-blur: 模糊
+t-blur: 模糊模式
 t-ascending: 升序
 t-descending: 降序
 t-default-sort: 默认排序
@@ -432,7 +432,7 @@ t-search-case: 区分大小写
 t-search-regex: 正则表达式
 t-search-exact: 精确匹配
 t-search-all: 匹配所有词
-t-search-child: Match on children
+t-search-child: 匹配子页面
 t-search-suggest: 显示建议
 t-search-dynamic: 动态搜索
 
@@ -442,7 +442,7 @@ t-filter-enforce: 强制执行
 # Misc
 t-welcome: 雷猴啊（你好啊） %{name}!
 t-search-query: 搜索查询
-t-showing-count: 显示 %{all} 里的 %{from}-%{to}
+t-showing-count: 显示 %{all} 项里的 %{from}-%{to} 项
 t-search-main-placeholder: 搜索标题，艺术家，命名空间和标签
 t-filterdropdown-placeholder: 过滤器
 t-sortdropdown-placeholder: 排序
