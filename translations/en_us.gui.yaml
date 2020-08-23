@@ -19,6 +19,8 @@ b-open-config: Open configuration
 b-hp-to-hpx: HP to HPX
 mi-output: Output
 mi-config: Configuration
+mi-users: Users
+mi-logs: Logs
 t-setting-descr: Hover the question mark icon to see setting tooltip
 h-info: Info
 t-server: Server
@@ -28,7 +30,28 @@ t-webclient-version: Webclient version
 t-database-version: Database version
 b-stop-server: Stop server
 b-stop-webclient: Stop webclient
-t-still-running: Server or client is still running\nAre you sure you want to quit?
+t-still-running: Server or client is still running. Are you sure you want to quit?
+b-open-installation-folder: Open installation folder
+b-open-plugins-folder: Open plugins folder
+
+# User
+t-username: Username
+t-password: Password
+b-create-update-user: Create user / Update user
+b-delete-selected-users: Delete selected users
+t-new-user: New user
+t-role: Role
+t-role-admin: Admin
+t-role-user: User
+t-role-guest: Guest
+
+# Logs
+t-activity: Activity
+t-debug: Debug
+t-error: Error
+t-plugin: Plugin
+t-redis: Redis
+b-load: Load
 
 # Tray
 t-show: Show

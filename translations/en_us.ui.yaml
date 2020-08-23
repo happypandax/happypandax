@@ -15,6 +15,7 @@ _version_: 9
 db-item-grouping: Series
 
 # Common
+t-empty: Empty
 t-loading: Loading
 b-edit: Edit
 b-close: Close
@@ -27,6 +28,8 @@ t-bracket-unknown: <Unknown>
 t-or: Or
 t-submit: Submit
 t-add: Add
+t-start: Start
+t-first: First
 t-end: End
 t-refresh: Refresh
 t-select: Select
@@ -34,6 +37,8 @@ t-update: Update
 t-deselect: Deselect
 t-page-changes-prompt: Leaving this page will discard your changes. Are you sure you want to continue?
 t-updated: Updated!
+t-completed: Completed!
+t-failed: Failed!
 t-updated-fail: Failed to update!
 
 # Menu Item
@@ -44,16 +49,23 @@ mi-browse: Browse
 mi-library: Library
 mi-management: Management
 mi-inbox: Inbox
+mi-tasks: Tasks
 mi-activity: Activity
+mi-metadata: Metadata
 mi-downloads: Downloads
 mi-preferences: Preferences
 mi-about: About
 mi-all: All
+mi-watch: Watch
 
 # Add Page
 mi-scan: Scan
 t-create-gallery: Create a gallery
 t-create-collection: Create a collection
+t-adding: Adding...
+t-completed-with-errors:
+    one: Completed with %{count} error
+    many: Completed with %{count} errors
 
 # Login Page
 t-login: Login
@@ -80,10 +92,11 @@ t-database-version: Database version
 t-torrent-version: Torrent Client version
 b-checking-update: Checking for new update
 b-new-update: A new update is available!
-b-check-update: Check for updates
+b-check-update: Check for update
 b-github-repo: View on Github
 b-support-patreon: Support on Patreon
 b-restart: Restart
+b-logout: Logout
 b-shutdown: Shutdown
 b-reset: Reset
 b-install: Install
@@ -96,8 +109,15 @@ b-not-loaded: Not loaded
 b-failed: Failed
 b-remove: Remove
 t-website: Website
+t-plugin-site: Open plugin Site
+t-plugin-shortname: Shortname
+t-plugin-id: ID
 t-no-plugins: No plugins installed
 t-looking-for-plugins: Looking for plugins to install? Click here
+b-reindex-library: Reindex library
+t-reindex-last-items:
+    one: Reindex last %{count} item
+    many: Reindex last %{count} items
 
 # Preferences Page
 mi-pref-view: View
@@ -105,7 +125,6 @@ mi-pref-general: General
 mi-pref-logins: Logins
 mi-pref-metadata: Metadata
 mi-pref-network: Network
-mi-pref-monitoring: Monitoring
 mi-pref-ignore: Ignore
 mi-pref-client: Client
 mi-pref-server: Server
@@ -121,24 +140,30 @@ h-external-viewer: External Viewer
 t-external-viewer-ph: path/to/executable
 t-external-image-viewer: External Image Viewer
 t-external-image-viewer-args: External Image Viewer Arguments
-t-external-send-first-file: Send path to first file in folder/archive
+t-external-send-first-file: Send path to a file in the folder
+t-external-send-extracted-archive: Extract archive before sending path to external viewer
 t-args-ex: "Example: -a -X --force"
 t-auto-rate-on-favorite: Automatically rate unrated gallery when favorited
 h-search: Search
 t-search-regex: Allow regex in search filters
 t-search-case-sensitive: Search filter is case sensitive
-t-search-whole-words: Match terms exact
+t-search-match-exact: Match terms exact
 t-search-match-all: Match only items that has all terms
 t-search-children: Also match on children
 h-deletion: Deletion
-t-delete-trash-files: Delete files for an item when it gets removed by the periodic trash clean-up
-t-send-trash-to-systemtrash: Send deleted files to the OS recycle bin on trash clean-up
-t-trash-item-duration: How many hours an item is to stay in the trash before getting deleted and removed PERMANENTLY on trash clean-up
+t-delete-trash-files: Delete files for an item when it gets removed on periodic trash clean-up
+t-send-trash-to-systemtrash: Send deleted files to the OS recycle bin on periodic trash clean-up
+t-trash-item-duration: How many hours an item is to stay in the trash before getting deleted and removed PERMANENTLY on periodic trash clean-up
 h-updates: Updates
 t-check-for-update: Regularly check for new releases
 t-update-interval: Interval in minutes between checking for a new release, set 0 to only check once every startup
 t-update-beta: Allow downloading beta releases
 t-update-alpha: Allow downloading alpha releases
+h-backups: Backups
+t-backup-dir: Folder where to put backups
+t-backup-on-update: Create a backup before applying a new update
+t-auto-backup-interval: "Interval in hours between periodically performing a backup, set to 0 to disable auto backup"
+
 h-server: Server
 t-server-name: Server Name
 t-server-name-ph: Mom's basement
@@ -147,14 +172,26 @@ t-server-port: Server Port
 h-webclient: Web Client
 t-webclient-host: Web Client Host
 t-webclient-port: Web Client Port
+h-redis: Redis
+t-redis-host: Redis Host
+t-redis-port: Redis Port
+t-redis-password: Redis Password
+t-redis-db: Redis Database
+t-use-builtin-redis: Use the Redis server bundled with HPX
 t-run-in-debug: Run in debug mode
 t-send-critical-error: Send occurring critical errors to me (creator) so I can fix them faster (contains no sensitive information)
 t-path-to-unrar: Path to UNRAR tool
 t-ping-for-notifications: Ping for notifications
-t-replace-metadata: Replace old metadata with new metadata
+t-replace-metadata: Replace all item attributes with new metadata
+t-only-if-never-fetched: Only fetch metadata for an item if it has never had a successful fetch before, else skip it
+t-continue-fetching-metadata: If fetching from applied URLs fails, continue item lookup without URLs
 t-use-applied-urls: Use the applied item URLs to lookup metadata
-t-stop-after-one: Halt item metadata lookup after first successful lookup
-t-first-candidate: Always choose the first candidate to extract metadata from
+t-stop-after-first: Halt item metadata lookup after first successful lookup
+t-choose-first-candidate: Always choose the first candidate to extract metadata from
+t-disabled-metadata: Disabled metadata handlers
+t-metadata-attributes: Item attributes to apply metadata to
+t-metadata-overwrites: Specify how metadata should be written on item attributes
+t-disabled-metadata-placeholder: A comma-separated list of identifiers
 t-drag-item-priority: Drag item to change priority
 t-logged-in: Logged in
 t-not-logged-in: Not logged in
@@ -200,8 +237,12 @@ t-total-artists: Total Artists
 t-total-parodies: Total Parodies
 t-total-circles: Total Circles
 
-# Activity Page
-mi-batch-urls: Batch URs
+# Library Page
+b-page-actions: Page actions
+b-view-actions: View actions
+t-favorite-all: Favorite all
+t-unfavorite-all: Unfavorite all
+t-select-all: Select all
 
 # Gallery Page
 t-title: Title
@@ -221,6 +262,7 @@ t-external-links: External links
 t-path: Path
 t-saved-for-later: Saved for later
 t-unread-gallery: This gallery has not been read yet
+t-reading-gallery: This gallery is in the process of being read
 t-inboxed-gallery: This gallery is in your inbox
 t-trashed-gallery: This gallery is set to be deleted
 b-restore: Restore
@@ -243,6 +285,12 @@ h-more-same-artist:
     one: More from same artist
     many: More from same artists
 t-tag-edit-placeholder: Enter tags (comma separated)
+t-sync-with-source: synchronise with source
+t-configuration: Configuration
+t-log: Log
+h-item-config: Item Configuration
+h-item-log: Item Log
+t-common-settings: Common settings
 
 # Collection Page
 t-name: Name
@@ -251,6 +299,8 @@ t-trashed-collection: This collection is set to be deleted
 t-galleries: Galleries
 
 # Scan Page
+t-limit: Limit
+t-offset: Offset
 t-transparent-nested-folders: Treat nested folders as being transparent
 t-scan-for-new-galleries: Scan only for new galleries
 de-scan-info: |-
@@ -273,22 +323,27 @@ de-scan-info: |-
 
 # New Item Page
 t-add-to-inbox: Add to Inbox
+t-copy-gallery: Copy source instead of moving
+t-move-gallery: Move gallery source
+t-move-dir: Folder to move item to once imported
+t-add-only-if-successful-move: Add only on successful move
+t-new-gallery-failed: Failed to add new gallery!
 t-new-gallery-added: A new gallery was added!
+t-new-collection-failed: Failed to add new collection!
 t-new-collection-added: A new collection was added!
 t-metadata-file: Metadata File
 t-already-exists: Already exists
 t-metadata-from-file: Metadata was retrieved from an accompanying file
-t-load-gallery: Load a gallery from path (Path must exist on the server-host system)
+t-load-gallery: Load a gallery from path (path must exist on the server-host system)
 
 # Page Reader Page
 t-page: Page
 t-parent: Parent
-t-path: Path
 t-hash: Hash
 t-page-tags: Page tags
 t-parent-tags: Parent tags
 t-what-read-next: What to read next...
-
+t-like-this-page: Like this page?
 
 # Page Reader Options
 t-reading-direction: Reading Direction
@@ -300,31 +355,54 @@ t-fit-width: Fit Width
 t-fit-height: Fit Height
 t-stretch-pages: Stretch small pages
 t-invert-bg-color: Invert background color
-t-keep-pagelist-open: Keep pagelist open
 t-size: Size
 t-auto: Auto
 t-original: Original
+t-smooth-scroll: Smooth scroll
+
+# Metadata Page
+t-options: Options
+h-metadata-queue: Metadata Queue
+
+# Downloads Page
+h-download-queue: Download Queue
+t-skip-if-item-exists: Prevent adding a download item if it already exists in the database
+t-skip-if-downloaded-before: Skip URL if it has been successfully downloaded before
+t-delete-failed-downloads: Delete leftovers files when download fails
+t-import-item-after-download: Import item after download
+t-download-dir: Download folder
+t-disabled-download: Disabled download handlers
+t-download-options: Options
+t-add-multiple-urls: Add multiple URLs
+t-add-multiple-urls-placeholder: Enter URLs (newline-separated)
+t-send-metadata-after-import: Send to metadata queue after import
 
 # Item
 b-read: Read
 b-continue-reading: Continue reading
+b-continue: Continue
 b-save-later: Save for later
 b-send-library: Send to Library
+b-send-inbox: Send to Inbox
 b-edit-filters: Edit filters
 b-add-to-filter: Add to filter
 b-add-gallery: Add gallery
 b-add-to-collection: Add to collection
 b-add-to-series: Add to series
-b-send-trash: Send to trash
+b-send-trash: Send to Trash
 b-add-to-metadata: Query metadata
+b-preview: Preview
 
 # Bottom Item
 mi-saved-for-later: Saved For Later
+t-auto-remove-read-later: Auto-remove on read
 mi-selected: Selected
 b-enter-select-mode: Enter select mode
 b-exit-select-mode: Exit select mode
 h-queue: Queue
 b-start: Start
+b-running: Running
+b-paused: Paused
 b-clear: Clear
 b-pause: Pause
 b-gallery-with-missing-tags: Galleries with missing tags
@@ -358,7 +436,7 @@ t-search-case: Case sensitive
 t-search-regex: Regex
 t-search-exact: Match exact
 t-search-all: Match all terms
-t-search-desc: Match on children
+t-search-child: Match on children
 t-search-suggest: Show suggestions
 t-search-dynamic: Dynamic search
 
@@ -367,6 +445,7 @@ t-filter-enforce: Enforce
 
 # Misc
 t-welcome: Welcome %{name}!
+t-search-query: Search query
 t-showing-count: Showing %{from}-%{to} of %{all}
 t-search-main-placeholder: Search title, artist, namespace & tags
 t-filterdropdown-placeholder: Filter
@@ -379,3 +458,5 @@ t-items-selected:
 t-items-added:
     one: "%{count} item added"
     many: "%{count} items added"
+
+b-clean-trash: Clean Trash
