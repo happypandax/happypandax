@@ -1,0 +1,458 @@
+################################################################
+
+#  Prefixes:
+#   - mi == menu item text 
+#   - h == header text
+#   - de == description text
+#   - t == normal text
+#   - b == button text
+################################################################
+
+# very useful for updating
+_version_: 9
+
+# Database
+db-item-grouping: 系列
+
+# Common
+t-empty: 空的
+t-loading: 载入中
+b-edit: 编辑
+b-close: 关闭
+b-new: 新建
+b-delete: 删除
+b-cancel: 取消
+b-save: 保存
+t-unknown: 未知
+t-bracket-unknown: <未知>
+t-or: 或者
+t-submit: 提交
+t-add: 添加
+t-start: 开始
+t-first: 第一页
+t-end: 尾页
+t-refresh: 刷新
+t-select: 选择
+t-update: 更新
+t-deselect: 取消选择
+t-page-changes-prompt: 离开本页面将不会保存你所做的改变.确定要继续吗?
+t-updated: 更新完了!
+t-completed: 完成了!
+t-failed: 失败了!
+t-updated-fail: 更新失败!
+
+# Menu Item
+mi-dashboard: 控制面板
+mi-add: 添加
+mi-favorites: 收藏
+mi-browse: 浏览器
+mi-library: 图书库
+mi-management: 管理
+mi-inbox: 收件箱
+mi-tasks: 任务
+mi-activity: 活动
+mi-metadata: 元数据
+mi-downloads: 下载
+mi-preferences: 首选项
+mi-about: 关于
+mi-all: 全部
+mi-watch: 看
+
+# Add Page
+mi-scan: 扫描
+t-create-gallery: 创建一个画廊
+t-create-collection: 创建一个合集
+t-adding: 添加中...
+t-completed-with-errors:
+    one: 完成但有 %{count} 个错误
+    many: 完成但有 %{count} 个错误
+
+# Login Page
+t-login: 登录
+t-username: 用户名
+t-password: 密码
+b-connect: 连接
+b-continue-as-guest: 作为来宾连接
+t-wrong-credentials: 用户名或密码错误!
+
+# About Page
+mi-about-plugins: 插件
+mi-about-stats: 统计数据
+mi-about-help: 帮助
+mi-about-bug: 回报bug
+mi-about-info: 信息
+mi-about-trash: 回收站
+mi-about-changelog: 更新日志
+mi-about-license: 许可
+de-about-same-machine: 你目前从服务器主机连接
+t-developer: 开发者
+t-client-version: 客户端版本
+t-server-version: 服务器版本
+t-database-version: 数据库版本
+t-torrent-version: 种子客户端版本
+b-checking-update: 检查更新
+b-new-update: 有新的更新!
+b-check-update: 检查更新
+b-github-repo: 查看Github页面
+b-support-patreon: 在Patreon上赞助
+b-restart: 重启
+b-logout: 登出
+b-shutdown: 关闭
+b-reset: 重置
+b-install: 安装
+b-enable: 启用
+b-enabled: 已启用
+b-not-enabled: 未启用
+b-disable: 禁用
+b-disabled: 已禁用
+b-not-loaded: 未加载
+b-failed: 失败
+b-remove: 移除
+t-website: 网页
+t-plugin-site: 打开插件站
+t-plugin-shortname: 简称
+t-plugin-id: ID
+t-no-plugins: 未安装插件
+t-looking-for-plugins: 想要安装插件? 点击这里
+
+# Preferences Page
+mi-pref-view: 视图
+mi-pref-general: 通常
+mi-pref-logins: 登录
+mi-pref-metadata: 元数据
+mi-pref-network: 网络
+mi-pref-ignore: 忽略
+mi-pref-client: 客户端
+mi-pref-server: 服务器
+mi-pref-advanced: 进阶
+t-setting-restart: 一项或者多项设置在重启后才会生效
+
+de-pref-disabled: 已禁用，因为客户端从其他设备连接
+t-language: 语言
+t-help-translate: 对翻译不满意？请考虑一下帮助我们！点击这里查看更多信息
+t-untranslated-text: 显示未翻译的文字
+t-translation-id-error: 错误，翻译ID无效
+h-external-viewer: 外部查看器
+t-external-viewer-ph: path/to/executable
+t-external-image-viewer: 外部图片查看器
+t-external-image-viewer-args: 外部图片查看器参数
+t-external-send-first-file: 发送路径到文件夹中的文件
+t-external-send-extracted-archive: 在将路径发送到外部图片查看器时提取文件
+t-args-ex: "示例: -a -X --force"
+t-auto-rate-on-favorite: 收藏时自动为未评分的画廊评分
+h-search: 搜索
+t-search-regex: 在搜索过滤器中允许使用正则表达式
+t-search-case-sensitive: 搜索过滤器区分大小写
+t-search-match-exact: 词语精确匹配
+t-search-match-all: 只匹配有所有词语的项目
+t-search-children: 也在子页面中匹配
+h-deletion: 删除
+t-delete-trash-files: 当一个项目在定期垃圾清理时被删除时，删除其文件
+t-send-trash-to-systemtrash: 当一个项目在定期垃圾清理时被删除时，将其文件送至系统的回收站
+t-trash-item-duration: 在定期垃圾清理时，一个项目在被永久（注意）删除前，在垃圾箱中保留多少个小时
+h-updates: 更新
+t-check-for-update: 定期检查新版本
+t-update-interval: 检查新版本的间隔，以分钟为单位，设置为0时仅在每次启动时检查一次
+t-update-beta: 允许下载beta测试版
+t-update-alpha: 允许下载alpha测试版
+h-backups: 备份
+t-backup-dir: 放置备份的文件夹
+t-backup-on-update: 在应用更新前，创建一个备份
+t-auto-backup-interval: “定期执行备份的间隔，以小时为单位，设置为0以禁用自动备份”
+
+h-server: 服务器
+t-server-name: 服务器名
+t-server-name-ph: Mom's basement
+t-server-host: 服务器主机（Host）
+t-server-port: 服务器端口
+h-webclient: 网页端
+t-webclient-host: 网页端主机
+t-webclient-port: 网页端端口
+h-redis: Redis
+t-redis-host: Redis主机
+t-redis-port: Redis端口
+t-redis-password: Redis密码
+t-redis-db: Redis数据库
+t-use-builtin-redis: 使用和HPX捆绑的Redis服务器
+t-run-in-debug: 运行debug模式
+t-send-critical-error: 将发生的严重错误信息发送给我（作者），以便我更快地解决它们（不包含敏感信息）
+t-path-to-unrar: 解压工具的路径
+t-ping-for-notifications: 用Ping的声音通知
+t-replace-metadata: 用新的元数据来替代所有项目的属性
+t-only-if-never-fetched: 只在一个项目之前从未成功获取过元数据的情况下才去获取元数据，否则将会跳过它
+t-continue-fetching-metadata: 如果从使用的URL地址获取失败，请不使用URL地址继续查询
+t-use-applied-urls: 使用应用在项目上的URL地址来查询元数据
+t-stop-after-first: 首次成功查询后，暂停项目的元数据查询
+t-choose-first-candidate: 始终从第一个候选者中提取元数据
+t-disabled-metadata: 禁用元数据处理程序
+t-metadata-attributes: 要应用元数据到的项目的属性
+t-metadata-overwrites: 指定如何在项目属性上写入元数据
+t-disabled-metadata-placeholder: 以逗号分隔的标识符列表
+t-drag-item-priority: 拖动项目以更改优先级
+t-logged-in: 已登录
+t-not-logged-in: 未登录
+b-login: 登录
+t-pages-to-read: 在认为该画廊已被阅读前，必须阅读多少页（以百分比为单位）
+
+# API Page
+h-server-comm: Server Communication
+t-server-comm-tutorial: |-
+    Type translations:
+        "text" -> string
+        1234 -> number
+        true -> bool
+        [1, "text"] -> array
+        {3:"val1", "key1":1} -> object
+
+    Note: if all fails, defaults to string
+t-function: Function
+t-value: Value
+b-add-parameter: Add parameter
+b-call-function: Call function
+t-parameter: Parameter
+t-message: Message
+t-response: Response
+
+# Management Page
+mi-dir-tags: 标签
+mi-dir-artists: 艺术家
+mi-dir-filters: 过滤器
+mi-dir-circles: 社团
+mi-dir-categories: 类别
+mi-dir-parodies: 原作
+mi-dir-languages: 语言
+mi-dir-status: 状态
+t-search-filters-placeholder: 搜索过滤器
+t-search-tags-placeholder: 搜索标签
+t-search-artists-placeholder: 搜索艺术家
+t-search-parodies-placeholder: 搜索原作
+t-search-circles-placeholder: 搜索社团
+t-total-filters: 全部过滤器
+t-total-tags: 全部标签
+t-total-artists: 全部艺术家
+t-total-parodies: 全部原作
+t-total-circles: 全部社团
+
+# Library Page
+b-page-actions: 页面操作
+b-view-actions: 浏览操作
+t-favorite-all: 全部收藏
+t-unfavorite-all: 全部取消收藏
+t-select-all: 全选
+
+# Gallery Page
+t-title: 标题
+t-description: 描述
+t-artist: 艺术家
+t-circle: 社团
+t-number: 序号
+t-parody: 原作
+t-status: 状态
+t-category: 类别
+t-published: 已出版
+t-times-read: 阅读次数
+t-rating: 评分
+t-tags: 标签
+t-url: URL地址
+t-external-links: 外部链接
+t-path: 路径
+t-saved-for-later: 保存
+t-unread-gallery: 这个画廊还从未被阅读过
+t-reading-gallery: 正在阅读此画廊
+t-inboxed-gallery: 此画廊位于你的收件箱中
+t-trashed-gallery: 此画廊已设定为删除
+b-restore: 恢复
+t-delete-files: 删除文件
+t-deleted: 已被删除
+t-send-recycle-bin: 将文件送至回收站
+t-date-added: 添加的日期
+t-last-read: 最后阅读
+t-last-updated: 最后更新
+t-series: 系列
+t-pages: 页码
+h-included-gallery-filters:
+    one: 包含在 %{count} 个画廊过滤器中
+    many: 包含在 %{count} 个画廊过滤器中
+h-appears-in-collection:
+    one: 在 %{count} 个合集中出现
+    many: 在 %{count} 个合集中出现
+h-more-like-this: 更多相似的
+h-more-same-artist:
+    one: 更多来自同一艺术家的
+    many: 更多来自相同艺术家们的
+t-tag-edit-placeholder: 输入标签（以半角逗号间隔）
+t-sync-with-source: 与来源同步
+t-configuration: 配置
+t-log: 日志
+h-item-config: 项目配置
+h-item-log: 项目日志
+t-common-settings: 共通设定
+
+# Collection Page
+t-name: 名字
+t-inboxed-collection: 该合集已到你的收件箱
+t-trashed-collection: 该合集已被设定为删除
+t-galleries: 画廊
+
+# Scan Page
+t-limit: 限制
+t-offset: 偏移量
+t-transparent-nested-folders: 将嵌套的文件夹视为“透明的”（忽略嵌套的文件夹）
+t-scan-for-new-galleries: 只扫描新画廊
+de-scan-info: |-
+    新画廊扫描
+
+    **进阶:**
+
+    分别使用如下标记来在路径中指定合集、系列、艺术家和画廊 `{collection}`, `{series}`, `{artist}` and `{gallery}`.
+
+    对于正则表达式，使用标记 `{re:"<regex here>"}` or `{re:"<regex here>" gallery}`.
+
+    对glob pattern,使用标记 `{"<pattern here>"}`
+
+    可以在这里找到更多信息 [docs](https://happypandax.github.io/faq.html#scanning-for-galleries)
+
+    **支持的路径:**
+    - 一个目录
+
+    **注意:** 如果是一个目录或文件，该目录或文件必须在服务器主机上存在.
+
+# New Item Page
+t-add-to-inbox: 加进收件箱
+t-copy-gallery: 复制源文件而不是移动
+t-move-gallery: 移动画廊源文件
+t-move-dir: 导入后要将项目移动到的文件夹
+t-add-only-if-successful-move: 仅在成功移动后添加
+t-new-gallery-failed: 加入新画廊失败啦!
+t-new-gallery-added: 新画廊已经添加!
+t-new-collection-failed: 加入新合集失败啦!
+t-new-collection-added: 新合集已添加!
+t-metadata-file: 元数据文件
+t-already-exists: 已经存在
+t-metadata-from-file: 从附带文件中检索元数据
+t-load-gallery: 从一个路径加载画廊（路径必须存在于服务器主机上）
+
+# Page Reader Page
+t-page: 页面
+t-parent: 父页面
+t-path: 路径
+t-hash: Hash
+t-page-tags: 页面标签
+t-parent-tags: 父页面标签
+t-what-read-next: 接下来要阅读的...
+
+
+# Page Reader Options
+t-reading-direction: 阅读方向
+t-scaling: 缩放比例
+t-left-to-right: 从左到右
+t-rigt-to-left: 从右到左
+t-default: 默认
+t-fit-width: 适应宽度
+t-fit-height: 适应高度
+t-stretch-pages: 拉伸小页面
+t-invert-bg-color: 背景色反转
+t-keep-pagelist-open: 保持显示页码
+t-size: 尺寸
+t-auto: 自动
+t-original: 原图
+t-smooth-scroll: 平滑翻页
+
+# Metadata Page
+t-options: 选项
+h-metadata-queue: 元数据队列
+
+# Downloads Page
+h-download-queue: 下载队列
+t-skip-if-item-exists: 如果在数据库中已经存在，则禁止添加下载任务
+t-skip-if-downloaded-before: 如果之前已经成功下载，则跳过该URL
+t-delete-failed-downloads: 下载失败时，删除下载剩下的文件
+t-import-item-after-download: 下载后导入项目
+t-download-dir: 下载文件夹
+t-disabled-download: 禁用下载工具
+t-download-options: 选项
+t-add-multiple-urls: 添加多个URL
+t-add-multiple-urls-placeholder: 键入URL (换行分隔)
+
+# Item
+b-read: 阅读
+b-continue-reading: 继续阅读
+b-continue: 继续
+b-save-later: 保存
+b-send-library: 送至图书库
+b-send-inbox: 送至收件箱
+b-edit-filters: 编辑过滤器
+b-add-to-filter: 添加到过滤器
+b-add-gallery: 添加画廊
+b-add-to-collection: 添加到合集
+b-add-to-series: 添加到系列
+b-send-trash: 送至垃圾箱
+b-add-to-metadata: 查询元数据
+
+# Bottom Item
+mi-saved-for-later: 保存
+t-auto-remove-read-later: 阅读时自动删除
+mi-selected: 已选择的
+b-enter-select-mode: 进入选择模式
+b-exit-select-mode: 退出选择模式
+h-queue: 队列
+b-start: 开始
+b-running: 运行中
+b-paused: 暂停的
+b-clear: 清除
+b-pause: 暂停
+b-gallery-with-missing-tags: 缺少标签的画廊
+b-gallery-with-missing-tags-library: 图书库中缺少标签的画廊
+b-gallery-with-missing-tags-inbox: 收件箱中缺少标签的画廊
+b-gallery-from-inbox: 收件箱中的画廊
+b-gallery-from-library: 图书库中的画廊
+b-all-galleries: 所有画廊
+
+# Artist View
+t-galleries: 画廊
+t-show-galleries: 显示画廊
+t-show-fav-galleries: 显示收藏的画廊
+t-show-inbox-galleries: 显示收件箱中的画廊
+t-most-common-tags: 最常见的标签
+
+# Sidebar Options
+t-open-external-viewer: 在外部查看器中打开
+t-infinite-scroll: 无限翻页
+t-group-galleries: 画廊系列
+t-items-per-page: 每页的项目数
+t-blur: 模糊模式
+t-ascending: 升序
+t-descending: 降序
+t-default-sort: 默认排序
+t-default-sort-order: 默认排序方式
+t-default-view: 默认视图
+
+# Search Options
+t-search-case: 区分大小写
+t-search-regex: 正则表达式
+t-search-exact: 精确匹配
+t-search-all: 匹配所有词
+t-search-child: 匹配子页面
+t-search-suggest: 显示建议
+t-search-dynamic: 动态搜索
+
+# Filters
+t-filter-enforce: 强制执行
+
+# Misc
+t-welcome: 雷猴啊（你好啊） %{name}!
+t-search-query: 搜索查询
+t-showing-count: 显示 %{all} 项里的 %{from}-%{to} 项
+t-search-main-placeholder: 搜索标题，艺术家，命名空间和标签
+t-filterdropdown-placeholder: 过滤器
+t-sortdropdown-placeholder: 排序
+t-new-update-changelog: 点击这里查看更新日志
+t-sites: 站点
+t-items-selected:
+    one: "选择了 %{count} 个项目"
+    many: "选择了 %{count} 个项目"
+t-items-added:
+    one: "添加了 %{count} 个项目"
+    many: "添加了 %{count} 个项目"
+
+b-clean-trash: 清空垃圾
