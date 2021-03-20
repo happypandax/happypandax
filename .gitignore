@@ -204,16 +204,7 @@ FakesAssemblies/
 *.db-shm
 /config.yaml
 /logs
-**/semantic/**/*.js
-**/semantic/tasks
-**/semantic/src/definitions
-**/semantic/src/semantic.less
-**/semantic/src/theme.less
-**/semantic/src/themes
-!**/semantic/src/site
-!**/semantic/src/themes/happypanda/
-!**/semantic/src/themes/superhero/
-!**/semantic/src/themes/pulsar/
+**/semantic/dist
 
 
 

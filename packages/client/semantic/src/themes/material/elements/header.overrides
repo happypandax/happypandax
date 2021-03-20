@@ -1,0 +1,13 @@
+/*******************************
+           Overrides
+*******************************/
+
+h1.ui.header,
+.ui.huge.header {
+  font-weight: normal;
+}
+
+h2.ui.header,
+.ui.large.header {
+  font-weight: normal;
+}
