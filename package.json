@@ -4,7 +4,7 @@
   "main": "index.js",
   "repository": "https://github.com/happypandax/happypandax",
   "author": "Twiddly <pew@pewpew.moe>",
-  "license": "GPL-3.0",
+  "license": "LGPL-3.0",
   "private": true,
   "scripts": {
     "run:client": "yarn workspace @happypandax/client",

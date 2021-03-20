@@ -20,7 +20,7 @@
 
 # Get Involved
 
-- [Help develop the new client](packages/client/README.md) 
+- [Help develop the new client](packages/client) 
 - [Submit github issues for any feature enhancements, bugs or documentation problems](https://github.com/happypandax/happypandax/issues)
 - [Help with translations](https://happypandax.github.io/translation.html)
 - [Help improving the documentation for HPX](https://happypandax.github.io/env.html#editing-the-documentation)
