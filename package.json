@@ -5,5 +5,13 @@
   "repository": "https://github.com/happypandax/happypandax",
   "author": "Twiddly <pew@pewpew.moe>",
   "license": "GPL3",
-  "private": true
+  "private": true,
+  "scripts": {
+    "start:client": "yarn workspace @hpx/client dev"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  }
 }
