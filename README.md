@@ -5,7 +5,7 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypandax?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![GitHub release](https://img.shields.io/github/release/happypandax/happypandax.svg)](https://github.com/happypandax/happypandax/releases/latest)
 [![Github All Releases](https://img.shields.io/github/downloads/happypandax/happypandax/total.svg)](https://github.com/happypandax/happypandax/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/twiddly/happypandax)](https://hub.docker.com/r/twiddly/happypandax)
+[![Docker Pulls](https://img.shields.io/docker/pulls/twiddly/happypandax)](https://hub.docker.com/r/twiddly/happypandax)r
 [![Twitter Follow](https://img.shields.io/twitter/follow/twiddly_.svg?style=social&label=Follow)](https://twitter.com/twiddly_)
 
 > **This project is under heavy development and is currently in the alpha stage.**
