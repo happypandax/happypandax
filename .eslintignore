@@ -215,6 +215,7 @@ FakesAssemblies/
 !**/semantic/src/themes/superhero/
 !**/semantic/src/themes/pulsar/
 
+*.min.*
 
 
 /data/certs
@@ -224,13 +225,7 @@ docs/*
 !docs/source/
 
 # yarn 2
-.yarn/*
-!.yarn/patches
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
-.pnp.*
+.yarn
 
 # next
 .next

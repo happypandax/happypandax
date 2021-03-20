@@ -1,0 +1,26 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+.ui.left.sidebar ~ .fixed, .ui.left.sidebar ~ .pusher {
+  -webkit-transition: -webkit-transform @duration @easing, padding @duration @easing;
+  transition: -webkit-transform @duration @easing, padding @duration @easing;
+  transition: transform @duration @easing, padding @duration @easing;
+  transition: transform @duration @easing, -webkit-transform @duration @easing, padding @duration @easing;
+}
+.ui.visible.left.sidebar ~ .fixed, .ui.visible.left.sidebar ~ .pusher {
+  padding-right: @width;
+}
+.ui.visible.thin.left.sidebar ~ .fixed, .ui.visible.thin.left.sidebar ~ .pusher {
+  padding-right: @thinWidth;
+}
+.ui.visible.wide.left.sidebar ~ .fixed, .ui.visible.wide.left.sidebar ~ .pusher {
+  padding-right: @wideWidth;
+}
+.ui.visible.very.wide.left.sidebar ~ .fixed, .ui.visible.very.wide.left.sidebar ~ .pusher {
+  padding-right: @veryWideWidth;
+}
+.ui.visible.very.thin.left.sidebar ~ .fixed, .ui.visible.very.thin.left.sidebar ~ .pusher {
+  padding-right: @veryThinWidth;
+}
+

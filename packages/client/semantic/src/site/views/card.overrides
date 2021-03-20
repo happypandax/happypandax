@@ -1,0 +1,77 @@
+.ui.card.horizontal {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  min-width: 100px;
+  width: 500px;
+}
+
+.ui.card.fluid {
+  width: 100% !important;
+}
+
+.ui.cards > .ui.card.horizontal {
+  min-width: 350px;
+}
+
+
+.ui.card.horizontal.mini-size > .content, .ui.card.horizontal.small-size > .content {
+    padding: 5px;
+}
+
+.ui.card.horizontal.mini-size, .ui.card.horizontal.mini-size > .image {
+  height: 50px;
+}
+
+.ui.card.horizontal.small-size, .ui.card.horizontal.small-size > .image {
+  height: 75px;
+}
+
+.ui.card.horizontal.small-size {
+  max-width: 9999px !important;
+}
+
+.ui.card.horizontal.mini-size > .image, .ui.card.horizontal.small-size > .image {
+  width: auto !important;
+}
+
+.ui.card.horizontal > .image:not(.mini-size):not(.small-size) {
+  border-radius: 0;
+  width: 150px;
+}
+
+.ui.card.horizontal > .image > img {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  justify-content: center;
+  align-items: center;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.ui.cards > .card.horizontal.mini-size, .ui.cards > .card.horizontal.small-size {
+  margin: 0.15em 0.5em;
+}
+
+.ui.piled.segments::before, .ui.piled.segment::before {
+  transform: rotate(-2.2deg);
+}
+
+.ui.piled.segments::after, .ui.piled.segment::after {
+  transform: rotate(2.2deg);
+}
+
+.ui.cards > .card > .label, .ui.card > .label {
+  margin: 0;
+}
+.ui.cards > .card > .label:not(:last-child), .ui.card > .label:not(:last-child) {
+  border-radius: 0;
+}

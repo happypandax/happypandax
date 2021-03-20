@@ -1,0 +1,9 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+.ui.floating.label.left-floating {
+    right: 100%;
+    left: unset;
+    margin: 0em -1.5em 0em 0em !important;
+}

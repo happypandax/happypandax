@@ -1,16 +1,21 @@
 {
-  "name": "@hpx/client",
+  "name": "@happypandax/client",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev -p 7008",
     "build": "next build",
+    "build:css": "cd ./semantic && gulp build",
+    "install:fomantic": "yarn --cwd ../../node_modules/fomantic-ui run install",
     "start": "next start"
   },
   "dependencies": {
+    "fomantic-ui-less": "^2.8.7",
+    "gulp": "^4.0.2",
     "next": "^10.0.9",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "react-dom": "^17.0.1",
+    "semantic-ui-react": "^2.0.3"
   },
   "devDependencies": {
     "@types/node": "^14.14.35",

@@ -1,0 +1,79 @@
+/*******************************
+     User Global Variables
+*******************************/
+
+/*-------------------
+       Fonts
+--------------------*/
+
+@fontName          : 'Roboto';
+@fontSmoothing     : antialiased;
+
+@headerFont        : @fontName, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@pageFont          : @fontName, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+
+@importGoogleFonts : false;
+
+/*-------------------
+      Site Colors
+--------------------*/
+
+@primaryColor   : @blue;
+@secondaryColor : @grey;
+@red            : #f03434;
+@orange         : #F89406;
+@yellow         : #F7CA18;
+@olive          : #00e640;
+@green          : #2ECC71;
+@teal           : #36D7B7;
+@blue           : #22A7F0;
+@violet         : #D2527F;
+@purple         : #BF55EC;
+@pink           : #DB0A5B;
+@brown          : #96281B;
+@grey           : #BDC3C7;
+@black          : #212121;
+
+/*-------------------
+      Base Sizes
+--------------------*/
+
+@emSize            : 12px;
+@fontSize          : 12px;
+
+/*--------------
+  Page Heading
+---------------*/
+
+@headerLineHeight : 1.33em;
+@headerFontWeight : 400;
+
+@h1               : 2.0rem;
+@h2               : 1.75rem;
+@h3               : 1.5rem;
+@h4               : 1.25rem;
+@h5               : 1.05rem;
+
+/*-------------------
+        Sizes
+--------------------*/
+
+@miniSize        : (11 / @emSize);
+@tinySize        : (12 / @emSize);
+@smallSize       : (13 / @emSize);
+@mediumSize      : (14 / @emSize);
+@largeSize       : (16 / @emSize);
+@bigSize         : (18 / @emSize);
+@hugeSize        : (20 / @emSize);
+@massiveSize     : (24 / @emSize);
+
+
+/*-------------------
+     Breakpoints
+--------------------*/
+
+@mobileBreakpoint            : 320px;
+@tabletBreakpoint            : 768px;
+@computerBreakpoint          : 992px;
+@largeMonitorBreakpoint      : 1200px;
+@widescreenMonitorBreakpoint : 1920px;
