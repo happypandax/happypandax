@@ -20,6 +20,7 @@
 
 # Get Involved
 
+- [Help develop the new client](packages/client/README.md) 
 - [Submit github issues for any feature enhancements, bugs or documentation problems](https://github.com/happypandax/happypandax/issues)
 - [Help with translations](https://happypandax.github.io/translation.html)
 - [Help improving the documentation for HPX](https://happypandax.github.io/env.html#editing-the-documentation)
@@ -55,7 +56,3 @@ HappyPanda X comes bundled with a default webclient front-end
 # Want to report an issue or suggest a feature?
 
 This is the official issue-tracker for HPX. Please create a new issue [here](https://github.com/happypandax/happypandax/issues). If the issue is related to a plugin, please use the [issue tracker for plugins](https://github.com/happypandax/plugins/issues).
-
-# Where is the code?
-
-HPX is only partially open source. The translations and documentation are open-source so that anyone is free to contribute if they want. Plugins are also open-source and can be found at the [plugin repo](https://github.com/happypandax/plugins).
