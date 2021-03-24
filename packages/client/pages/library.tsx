@@ -5,7 +5,7 @@ import t from '../misc/lang';
 export default function Page() {
   return (
     <>
-      <PageTitle title={t('Library')} />
+      <PageTitle title={t`Library`} />
       <Card>
         <Card.Content>
           <Card.Header>Test</Card.Header>

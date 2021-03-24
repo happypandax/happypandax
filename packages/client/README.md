@@ -16,3 +16,5 @@ Look for issues with the tag [`client rewrite`](https://github.com/happypandax/h
 - Run `yarn install` at the root of the repo
 - Build the CSS with `yarn run:client build:css`
 - Start the client with `yarn start:client`
+
+Use `yarn run:client storybook` to start working on the UI.
