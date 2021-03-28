@@ -24,6 +24,9 @@ downloads
 .vs/
 *.vcxproj.filters
 .idea/
+.vscode/
+.vs/
+CMakeSettings.json
 
 # Build results
 [Dd]ebug/
@@ -33,6 +36,7 @@ downloads
 x64/
 x86/
 build/
+out/
 bld/
 [Oo]bj/
 
