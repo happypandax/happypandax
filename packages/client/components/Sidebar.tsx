@@ -5,11 +5,14 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Icon, IconProps, Menu, Sidebar } from 'semantic-ui-react';
+import { Icon, IconProps, Menu, Sidebar, Label } from 'semantic-ui-react';
 import classNames from 'classnames';
 import Link from 'next/link';
 import _ from 'lodash';
-import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
+import {
+  SemanticCOLORS,
+  SemanticICONS,
+} from 'semantic-ui-react/dist/commonjs/generic';
 import t from '../misc/lang';
 
 const SidebarContext = createContext({
@@ -20,11 +23,15 @@ function SidebarItem({
   href,
   className,
   children,
+  label,
+  labelColor,
   icon,
 }: {
   href?: string;
   icon?: SemanticICONS | IconProps;
   className?: string;
+  label?: string;
+  labelColor?: SemanticCOLORS;
   children?: React.ReactNode;
 }) {
   const context = useContext(SidebarContext);
@@ -43,19 +50,44 @@ function SidebarItem({
           />
         )}
         {!context.iconOnly && children}
+        {label && (
+          <Label color={labelColor} floating>
+            {label}
+          </Label>
+        )}
       </Menu.Item>
     </Link>
   );
 }
 
+function DownloadSidebarItem() {
+  return (
+    <SidebarItem
+      href="/downloads"
+      icon={'download'}
+      label="23"
+      labelColor="yellow">{t`Downloads`}</SidebarItem>
+  );
+}
+
+function MetadataSidebarItem() {
+  return (
+    <SidebarItem
+      href="/metadata"
+      icon={'cloud'}
+      label="23"
+      labelColor="yellow">{t`Metadata`}</SidebarItem>
+  );
+}
+
 export function MainSidebar({
-  visible,
+  hiiden: hidden,
   fixed = true,
   onlyIcons,
 }: {
-  visible?: boolean;
-  fixed: boolean;
-  onlyIcons: boolean;
+  hiiden?: boolean;
+  fixed?: boolean;
+  onlyIcons?: boolean;
 }) {
   const [iconOnly, setIconOnly] = useState(onlyIcons);
   const [inverted, setInverted] = useState(!fixed);
@@ -81,7 +113,7 @@ export function MainSidebar({
 
   return (
     <Sidebar
-      visible={visible}
+      visible={!hidden}
       as={Menu}
       animation={animation}
       vertical
@@ -124,15 +156,8 @@ export function MainSidebar({
             <SidebarItem
               href="/management"
               icon={'cubes'}>{t`Management`}</SidebarItem>
-            <SidebarItem
-              href="/downloads"
-              icon={'download'}>{t`Downloads`}</SidebarItem>
-            <SidebarItem
-              href="/downloads"
-              icon={'download'}>{t`Downloads`}</SidebarItem>
-            <SidebarItem
-              href="/metadata"
-              icon={'cloud'}>{t`Metadata`}</SidebarItem>
+            <DownloadSidebarItem />
+            <MetadataSidebarItem />
             <SidebarItem href="/tasks" icon={'tasks'}>{t`Tasks`}</SidebarItem>
           </div>
           <div className="bottom-aligned">
@@ -147,3 +172,5 @@ export function MainSidebar({
     </Sidebar>
   );
 }
+
+export default MainSidebar;

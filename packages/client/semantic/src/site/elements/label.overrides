@@ -7,3 +7,8 @@
     left: unset;
     margin: 0em -1.5em 0em 0em !important;
 }
+
+.ui.label.sidebar {
+    top: 1.5em;
+    transform: unset;
+}

@@ -4,4 +4,4 @@ export default {
   title: 'Nav/Sidebar',
 };
 
-export const Sidebar = () => <MainSidebar visible />;
+export const Sidebar = () => <MainSidebar />;

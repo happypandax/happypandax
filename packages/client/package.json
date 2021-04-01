@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 7008",
     "build": "next build",
-    "build:css": "cd ./semantic && gulp build",
+    "build:css": "cd ./semantic && gulp build-css",
+    "build:css:watch": "cd ./semantic && gulp watch",
     "install:fomantic": "yarn --cwd ../../node_modules/fomantic-ui run install",
     "start": "next start",
     "storybook": "start-storybook -p 7020",
@@ -15,7 +16,6 @@
     "@grabrinc/isomorphic-logger": "^0.1.59",
     "classnames": "^2.2.6",
     "fomantic-ui-less": "^2.8.7",
-    "gulp": "^4.0.2",
     "happypandax-client": "^2.0.0",
     "lodash": "^4.17.21",
     "next": "^10.0.9",
@@ -40,6 +40,8 @@
     "@types/node": "^14.14.35",
     "@types/react": "^17.0.3",
     "babel-loader": "^8.2.2",
+    "fomantic-ui": "2.8.7",
+    "gulp": "4.0.2",
     "typescript": "^4.2.3"
   }
 }

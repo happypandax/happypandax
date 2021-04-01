@@ -5,6 +5,8 @@
 
 class GalleryCmd {
 
+    void calculate_similarity();
+
 
     void scan();
 
