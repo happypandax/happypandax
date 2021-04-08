@@ -26,6 +26,7 @@
     font-weight: normal;
     font-style: normal;
 }
+
 * {
     min-height: 0;
     min-width: 0;
@@ -131,10 +132,11 @@ i.medium-size {
 .fullwidth {
     width: 100%;
 }
-.fullheight {
+.fullheight, body > div {
     height: 100% !important;
 }
-.min-fullheight {
+
+.min-fullheight, body > div {
     height: 100% !important;
 }
 
