@@ -132,12 +132,12 @@ i.medium-size {
 .fullwidth {
     width: 100%;
 }
-.fullheight, body > div {
+.fullheight {
     height: 100% !important;
 }
 
 .min-fullheight, body > div {
-    height: 100% !important;
+    min-height: 100% !important;
 }
 
 .slide-next {
@@ -185,6 +185,11 @@ i.medium-size {
 .overflow-auto {
     overflow: auto !important;
 }
+
+.overflow-hidden {
+    overflow: hidden !important;
+}
+
 .no-margins, .slide-segment {
     margin: 0 !important;
 }

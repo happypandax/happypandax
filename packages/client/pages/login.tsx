@@ -7,9 +7,13 @@ export default function Page() {
   return (
     <>
       <PageTitle title={t`Login`} />
-      <Grid className="fullheight" centered verticalAlign="middle">
+      <Grid
+        className="fullheight overflow-hidden"
+        centered
+        verticalAlign="middle">
         <Grid.Row>
           <Grid.Column
+            className="animate__animated animate__fadeInDown"
             width="7"
             widescreen="3"
             largescreen="4"

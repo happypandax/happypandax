@@ -1704,6 +1704,7 @@ __metadata:
     "@types/lodash": ^4.14.108
     "@types/node": ^14.14.35
     "@types/react": ^17.0.3
+    animate.css: ^4.1.1
     babel-loader: ^8.2.2
     classnames: ^2.2.6
     fomantic-ui: 2.8.7
@@ -3589,6 +3590,13 @@ __metadata:
     longest: ^1.0.1
     repeat-string: ^1.5.2
   checksum: 2f4893c0b09f20696934dc46fe6dd31ab0f978272057f429e4256884d1a8cc703d0228298ea6eb27cade8a49d30372024202204527c0538965ca68eb3320782d
+  languageName: node
+  linkType: hard
+
+"animate.css@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "animate.css@npm:4.1.1"
+  checksum: 69ba8c9d59ba21aa9c71bcd855e54e6056333e1b611d80e9dee50ada82279f3a1a6fa0dd6ca2cc87ac5b6611f8a3c079bb7ae4a2e4758e60bdc5716e9cb5d574
   languageName: node
   linkType: hard
 

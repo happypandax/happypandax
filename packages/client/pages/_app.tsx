@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app';
 import setupLogger from '../misc/logger';
 
 import '../semantic/dist/semantic.css';
+import 'animate.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />;

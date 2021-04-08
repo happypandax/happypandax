@@ -9,11 +9,12 @@
     "build:css:watch": "cd ./semantic && gulp watch",
     "install:fomantic": "yarn --cwd ../../node_modules/fomantic-ui run install",
     "start": "next start",
-    "storybook": "start-storybook -p 7020",
+    "storybook": "start-storybook -p 7020 -s ./public",
     "build-storybook": "build-storybook"
   },
   "dependencies": {
     "@grabrinc/isomorphic-logger": "^0.1.59",
+    "animate.css": "^4.1.1",
     "classnames": "^2.2.6",
     "fomantic-ui-less": "^2.8.7",
     "happypandax-client": "^2.0.0",
