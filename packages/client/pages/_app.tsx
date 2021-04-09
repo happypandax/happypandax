@@ -3,6 +3,7 @@ import setupLogger from '../misc/logger';
 
 import '../semantic/dist/semantic.css';
 import 'animate.css';
+import 'react-virtualized/styles.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />;

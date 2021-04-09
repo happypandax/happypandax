@@ -1,3 +1,20 @@
+import { Marked, Renderer } from '@ts-stack/markdown';
+
+Marked.setOptions({
+  renderer: new Renderer(),
+  gfm: true,
+  tables: true,
+  breaks: false,
+  pedantic: false,
+  sanitize: false,
+  smartLists: true,
+  smartypants: false,
+});
+
+export function parseMarkdown(txt: string) {
+  return Marked.parse(txt);
+}
+
 export function getEnumMembers<T>(myEnum: T): (keyof T)[] {
   return Object.keys(myEnum).filter(
     (k) => typeof (myEnum as any)[k] === 'number'

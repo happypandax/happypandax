@@ -1,7 +1,7 @@
-import PageLayout from './Page';
+import { TableLayout } from './ItemLayout';
 
 export default {
-  title: 'Layout/Page',
+  title: 'Layout/Item/Table',
 };
 
-export const Page = () => <PageLayout />;
+export const Table = () => <TableLayout />;

@@ -1397,7 +1397,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.10.4, @babel/runtime@npm:^7.10.5, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.0, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.6.2, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4":
+"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.10.4, @babel/runtime@npm:^7.10.5, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.0, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.6.2, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
   version: 7.13.10
   resolution: "@babel/runtime@npm:7.13.10"
   dependencies:
@@ -1700,6 +1700,7 @@ __metadata:
     "@storybook/addon-essentials": ^6.1.21
     "@storybook/addon-links": ^6.1.21
     "@storybook/react": ^6.1.21
+    "@ts-stack/markdown": ^1.4.0
     "@types/classnames": ^2.2.3
     "@types/lodash": ^4.14.108
     "@types/node": ^14.14.35
@@ -1717,6 +1718,7 @@ __metadata:
     react-dom: ^17.0.1
     react-query: ^3.13.0
     react-use: ^17.2.1
+    react-virtualized: ^9.22.3
     recoil: ^0.1.3
     semantic-ui-react: ^2.0.3
     ttag: ^1.7.24
@@ -2883,6 +2885,15 @@ __metadata:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
   checksum: 3f834ba946a7e9b690ab348ef2db75a2e4a155a67394553aa307711fba3c26e61234f05d76948339d4d6c1a2d6774e1a60f3a3e78dde76705afacaaf069e2360
+  languageName: node
+  linkType: hard
+
+"@ts-stack/markdown@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@ts-stack/markdown@npm:1.4.0"
+  dependencies:
+    tslib: ^2.0.0
+  checksum: 25192a80fa421bac1bdb1568a6865cee56a2c1753271fffb9337c347c771ed6caf1df29e963ecacaca59a03b0eaafdcfeba7281dc0d5be767e960bf17f00435e
   languageName: node
   linkType: hard
 
@@ -5629,7 +5640,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clsx@npm:^1.1.1":
+"clsx@npm:^1.0.4, clsx@npm:^1.1.1":
   version: 1.1.1
   resolution: "clsx@npm:1.1.1"
   checksum: d8ae10ac0546da19fe8c9516886f6582a64a382cf4d09ea7d36d5287cafbdab1192ab249adc2cdf0310e0b0aeac4f4142cf7c738c98d9cb68c19ba24b6f673d5
@@ -6594,6 +6605,16 @@ __metadata:
   dependencies:
     utila: ~0.4
   checksum: 437b4464bd3c5e654decf855f9263e939d633d7bb720512f9a400b3e1005d870eb4a5fbead7d9ccb7849f7df5ee30c62f9a56b68143c13575ae5fef16007742c
+  languageName: node
+  linkType: hard
+
+"dom-helpers@npm:^5.1.3":
+  version: 5.2.0
+  resolution: "dom-helpers@npm:5.2.0"
+  dependencies:
+    "@babel/runtime": ^7.8.7
+    csstype: ^3.0.2
+  checksum: 9ef27628f4ccfdfa0537b35ecf3b9600f1656f9c66f57a1530b552a65b51f4466d44514f2cb87399a15feee3c51047a77760327971e9aabc64fe637efd319156
   languageName: node
   linkType: hard
 
@@ -13919,6 +13940,23 @@ fsevents@^1.2.7:
     react: ^16.8.0  || ^17.0.0
     react-dom: ^16.8.0  || ^17.0.0
   checksum: b18eaeb5ddbdc1d9e49dd3bde9a9e7327eb45aab18ffe672bbc9b92ac9cdbaf4960d3193fc53468bab7886e88a64d1df5b1fb7b3b3dbc7e61e0774aa5a69dac0
+  languageName: node
+  linkType: hard
+
+"react-virtualized@npm:^9.22.3":
+  version: 9.22.3
+  resolution: "react-virtualized@npm:9.22.3"
+  dependencies:
+    "@babel/runtime": ^7.7.2
+    clsx: ^1.0.4
+    dom-helpers: ^5.1.3
+    loose-envify: ^1.4.0
+    prop-types: ^15.7.2
+    react-lifecycles-compat: ^3.0.4
+  peerDependencies:
+    react: ^15.3.0 || ^16.0.0-alpha
+    react-dom: ^15.3.0 || ^16.0.0-alpha
+  checksum: 1e54556ab99409bb172842ddeea3ade467ff9aed6331e80376f969d1c61ff0dc9dfb07986080066aaa327fd977060e7f50c19ae0cbeb8d53e5bd258c7d83e6a2
   languageName: node
   linkType: hard
 
