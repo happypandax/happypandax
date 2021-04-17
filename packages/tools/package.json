@@ -1,0 +1,16 @@
+{
+  "name": "@happypandax/tools",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "ts-node --log-error -T ./index.ts"
+  },
+  "dependencies": {
+    "happypandax-client": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.35",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  }
+}

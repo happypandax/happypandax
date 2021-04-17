@@ -1,9 +1,10 @@
 import classNames from 'classnames';
 import Link from 'next/link';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useState, useCallback } from 'react';
 import { useRef } from 'react';
 import { useHover, useMouseHovered } from 'react-use';
+import { Label, Popup } from 'semantic-ui-react';
 import {
   Card,
   Image,
@@ -16,7 +17,7 @@ import {
 
 const ItemContext = React.createContext({ hover: false, loading: false });
 
-export function InboxIconAction() {
+export function InboxIconLabel() {
   return (
     <Icon
       name="inbox"
@@ -29,7 +30,7 @@ export function InboxIconAction() {
   );
 }
 
-export function ReadLaterIconAction() {
+export function ReadLaterIconLabel() {
   return (
     <Icon
       name="bookmark"
@@ -42,7 +43,7 @@ export function ReadLaterIconAction() {
   );
 }
 
-export function ReadingIconAction() {
+export function ReadingIconLabel() {
   return (
     <Icon
       name="eye"
@@ -56,7 +57,7 @@ export function ReadingIconAction() {
   );
 }
 
-export function UnreadIconAction() {
+export function UnreadIconLabel() {
   return (
     <Icon
       name="eye slash outline"
@@ -69,7 +70,51 @@ export function UnreadIconAction() {
   );
 }
 
-export function ItemAction({
+export function TranslucentLabel({
+  children,
+  circular,
+}: {
+  children: React.ReactNode;
+  circular?: boolean;
+}) {
+  return (
+    <Label circular={circular} className="translucent-black">
+      {children}
+    </Label>
+  );
+}
+
+export function ItemMenuLabelItem({
+  ...props
+}: React.ComponentProps<typeof List.Item>) {
+  return <List.Item {...props} />;
+}
+
+export function ItemMenuLabel({
+  children,
+}: {
+  children: React.ReactNode | React.ReactNode[];
+}) {
+  return (
+    <Popup
+      hoverable
+      on="click"
+      hideOnScroll
+      position="right center"
+      trigger={useMemo(
+        () => (
+          <Icon name="ellipsis vertical" bordered link inverted />
+        ),
+        []
+      )}>
+      <List selection relaxed>
+        {children}
+      </List>
+    </Popup>
+  );
+}
+
+export function ItemLabel({
   x = 'left',
   y = 'top',
   children,
@@ -84,7 +129,7 @@ export function ItemAction({
 }
 
 // https://github.com/Semantic-Org/Semantic-UI-React/issues/3950
-export function HeartIconAction({
+export function HeartIconLabel({
   onRate,
   defaultRating,
 }: {
@@ -105,18 +150,24 @@ export function ItemCardProgress() {
   return <div>Progress</div>;
 }
 
-function ItemCardActions({ children }: { children: React.ReactNode }) {
+function ItemCardLabels({ children }: { children: React.ReactNode }) {
   return <div className="card-content">{children}</div>;
 }
 
-export function ItemCardContent() {
+export function ItemCardContent({
+  title,
+  subtitle,
+  description,
+}: {
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  description?: React.ReactNode;
+}) {
   return (
     <Card.Content>
-      <Card.Header>Daniel</Card.Header>
-      <Card.Meta>Joined in 2016</Card.Meta>
-      <Card.Description>
-        Daniel is a comedian living in Nashville.
-      </Card.Description>
+      <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
+      {subtitle && <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>}
+      {description && <Card.Description>{description}</Card.Description>}
     </Card.Content>
   );
 }
@@ -134,31 +185,34 @@ export function ItemCardImageContent({
 }: {
   children?: React.ReactNode;
 }) {
-  const itemContext = useContext(ItemContext);
-
-  return (
-    <Dimmer active={itemContext.hover} inverted>
-      <List>{children}</List>
-    </Dimmer>
-  );
+  return <List>{children}</List>;
 }
 
 export function ItemCardImage({ children }: { children?: React.ReactNode }) {
-  return <Image src="/img/default.png" fluid centered dimmer={children} />;
+  const itemContext = useContext(ItemContext);
+
+  return (
+    <Image
+      src="/img/default.png"
+      fluid
+      centered
+      dimmer={{ active: itemContext.hover, inverted: true, children }}
+    />
+  );
 }
 
 export function ItemCard({
   children,
   size = 'medium',
   href,
-  actions,
+  labels,
   loading,
   image,
   centered,
   link,
 }: {
   children?: React.ReactNode;
-  actions?: React.ReactNode[];
+  labels?: React.ReactNode[];
   image?: React.ElementType;
   href?: string;
   loading?: boolean;
@@ -178,23 +232,21 @@ export function ItemCard({
         centered={centered}
         link={link}
         className={classNames(`${size}-size`)}>
-        <Dimmer.Dimmable dimmed={loading}>
-          <Dimmer active={loading} inverted>
-            <Loader inverted active={loading} />
-          </Dimmer>
-          <ItemCardActions>
-            {href && (
-              <Link href={href}>
-                <a>
-                  <Im />
-                </a>
-              </Link>
-            )}
-            {!!!href && <Im />}
-            {actions}
-          </ItemCardActions>
-          {children}
-        </Dimmer.Dimmable>
+        <Dimmer active={loading} inverted>
+          <Loader inverted active={loading} />
+        </Dimmer>
+        <ItemCardLabels>
+          {href && (
+            <Link href={href}>
+              <a>
+                <Im />
+              </a>
+            </Link>
+          )}
+          {!!!href && <Im />}
+          {labels}
+        </ItemCardLabels>
+        {children}
       </Card>
     </ItemContext.Provider>
   );

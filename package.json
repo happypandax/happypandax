@@ -7,6 +7,8 @@
   "license": "LGPL-3.0",
   "private": true,
   "scripts": {
+    "run:tools": "yarn workspace @happypandax/tools",
+    "start:tools": "yarn workspace @happypandax/tools start",
     "run:client": "yarn workspace @happypandax/client",
     "add:client": "yarn workspace @happypandax/client add",
     "start:client": "yarn workspace @happypandax/client dev"
