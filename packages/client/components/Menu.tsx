@@ -14,6 +14,7 @@ import {
   SemanticICONS,
 } from 'semantic-ui-react/dist/commonjs/generic';
 import t from '../misc/lang';
+import styles from './Menu.module.css';
 
 const MenuContext = createContext({});
 
@@ -62,7 +63,9 @@ function ConnectionItem({
           : 'red'
       }
       size="large"
-      className={classNames({ pulse: connectState === 'connecting' })}
+      className={classNames(styles.connectionitem, {
+        pulse: connectState === 'connecting',
+      })}
     />
   );
 
