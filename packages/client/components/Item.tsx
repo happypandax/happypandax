@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 import { useRef } from 'react';
 import { useHover, useMouseHovered } from 'react-use';
 import { Label, Popup } from 'semantic-ui-react';
+import { ItemSize } from '../misc/types';
 import {
   Card,
   Image,
@@ -146,8 +147,12 @@ export function HeartIconLabel({
   );
 }
 
-export function ItemCardProgress() {
-  return <div>Progress</div>;
+export function ProgressLabel() {
+  return (
+    <TranslucentLabel circular>
+      <Loader inline active size="mini" />
+    </TranslucentLabel>
+  );
 }
 
 function ItemCardLabels({ children }: { children: React.ReactNode }) {
@@ -203,8 +208,9 @@ export function ItemCardImage({ children }: { children?: React.ReactNode }) {
 
 export function ItemCard({
   children,
-  size = 'medium',
+  size,
   href,
+  className,
   labels,
   loading,
   image,
@@ -212,17 +218,22 @@ export function ItemCard({
   link,
 }: {
   children?: React.ReactNode;
+  className?: string;
   labels?: React.ReactNode[];
   image?: React.ElementType;
   href?: string;
   loading?: boolean;
-  size?: 'medium';
+  size?: ItemSize;
   centered?: boolean;
   link?: boolean;
 }) {
   const Im = image;
   const [hover, setHover] = useState(false);
   const itemContext = useContext(ItemContext);
+
+  let itemSize = size ?? 'medium';
+  if (!size) {
+  }
 
   return (
     <ItemContext.Provider value={{ ...itemContext, hover, loading }}>
@@ -231,7 +242,7 @@ export function ItemCard({
         onMouseLeave={useCallback(() => setHover(false), [])}
         centered={centered}
         link={link}
-        className={classNames(`${size}-size`)}>
+        className={classNames(`${itemSize}-size`)}>
         <Dimmer active={loading} inverted>
           <Loader inverted active={loading} />
         </Dimmer>

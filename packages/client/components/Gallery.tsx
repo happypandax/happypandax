@@ -11,13 +11,14 @@ import {
   ItemCard,
   ItemCardContent,
   ItemCardImage,
-  ItemCardProgress,
   HeartIconLabel,
   TranslucentLabel,
   ItemMenuLabelItem,
   ItemMenuLabel,
+  ProgressLabel,
 } from './Item';
 import t from '../misc/lang';
+import { ItemSize } from '../misc/types';
 
 function ReadButton() {
   return (
@@ -55,14 +56,16 @@ function GalleryCardMenu() {
   );
 }
 
-export function GalleryCard() {
+export function GalleryCard({ size, data }: { size?: ItemSize; data: any }) {
   return (
     <ItemCard
       centered
       link
+      size={size}
       labels={[
         <ItemLabel x="left" y="top">
           <HeartIconLabel />
+          <ProgressLabel />
         </ItemLabel>,
         <ItemLabel x="right" y="top">
           <InboxIconLabel />
@@ -91,12 +94,11 @@ export function GalleryCard() {
         []
       )}>
       <ItemCardContent
-        title="Sweet Life in Another World: Are You Into An Older Elf Lady?"
-        subtitle={['artis1', 'artist2'].map((a) => (
+        title={data?.title ?? ''}
+        subtitle={[data?.artist].map((a) => (
           <span>{a}</span>
         ))}
       />
-      <ItemCardProgress />
     </ItemCard>
   );
 }

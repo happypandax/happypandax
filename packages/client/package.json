@@ -45,6 +45,7 @@
     "babel-loader": "^8.2.2",
     "fomantic-ui": "2.8.7",
     "gulp": "4.0.2",
+    "storybook-css-modules-preset": "^1.0.8",
     "typescript": "^4.2.3"
   }
 }
