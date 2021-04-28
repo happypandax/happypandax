@@ -21,7 +21,7 @@ function GalleryViewGrid({
   const itemWidth = 200;
   const rowHeight = 380;
 
-  const itemsPerRow = Math.floor(width / itemWidth);
+  const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil(items.length / itemsPerRow);
 
   return (

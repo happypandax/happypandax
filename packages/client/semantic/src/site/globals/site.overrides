@@ -349,7 +349,7 @@ h6 {
 }
 
 .above-dimmer{
-    z-index: 10 !important;
+    z-index: 11 !important;
 }
 
 .reader-fitwidth-stretch {

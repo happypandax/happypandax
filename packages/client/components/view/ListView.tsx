@@ -3,25 +3,34 @@ import { Segment, Grid } from 'semantic-ui-react';
 
 import styles from './ListView.module.css';
 import { useCallback } from 'react';
+import { ItemSize } from '../../misc/types';
 
-type ItemRender = React.ComponentType<{ data: any }>;
+type ItemRender = React.ComponentType<{
+  data: any;
+  horizontal: boolean;
+  size: ItemSize;
+  fluid: boolean;
+}>;
 
 function ListViewList({
   width,
   height,
   items,
+  size,
   itemRender: ItemRender,
   ...props
 }: {
   width: number;
   height: number;
   items: any[];
+  size: ItemSize;
   itemRender: ItemRender;
 } & Record<string, any>) {
-  const itemWidth = 800;
-  const rowHeight = 100;
+  const itemWidth = 600;
+  const rowHeight = 140;
 
-  const itemsPerRow = Math.floor(width / itemWidth);
+  const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
+  console.log(itemsPerRow);
   const rowCount = Math.ceil(items.length / itemsPerRow);
 
   return (
@@ -41,8 +50,8 @@ function ListViewList({
 
           for (let i = fromIndex; i < toIndex; i++) {
             cols.push(
-              <div className={styles.item}>
-                <ItemRender data={items[i]} />
+              <div className={styles.item} style={{ flexGrow: 1 }}>
+                <ItemRender data={items[i]} horizontal size={size} fluid />
               </div>
             );
           }
@@ -62,9 +71,11 @@ function ListViewList({
 export default function ListView({
   itemRender,
   items,
+  size = 'tiny',
   windowScroll,
 }: {
-  itemRender: React.ComponentType<{ data: any }>;
+  size: ItemSize;
+  itemRender: ItemRender;
   items: any[];
   windowScroll?: boolean;
 }) {
@@ -79,6 +90,7 @@ export default function ListView({
                   items={items}
                   height={height}
                   width={width}
+                  size={size}
                   isScrolling={isScrolling}
                   onScroll={onChildScroll}
                   scrollTop={scrollTop}
@@ -98,6 +110,7 @@ export default function ListView({
               items={items}
               height={height}
               width={width}
+              size={size}
             />
           );
         },

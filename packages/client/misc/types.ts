@@ -1,1 +1,1 @@
-export type ItemSize = 'tiny' | 'small' | 'medium' | 'large';
+export type ItemSize = 'tiny' | 'mini' | 'small' | 'medium' | 'large';

@@ -16,7 +16,15 @@ import {
   Loader,
 } from 'semantic-ui-react';
 
-const ItemContext = React.createContext({ hover: false, loading: false });
+const ItemContext = React.createContext({
+  size: 'medium' as ItemSize,
+  ActionContent: undefined as React.ElementType,
+  labels: [] as React.ReactNode[],
+  href: '',
+  hover: false,
+  loading: false,
+  horizontal: false,
+});
 
 export function InboxIconLabel() {
   return (
@@ -156,7 +164,16 @@ export function ProgressLabel() {
 }
 
 function ItemCardLabels({ children }: { children: React.ReactNode }) {
-  return <div className="card-content">{children}</div>;
+  const itemContext = useContext(ItemContext);
+
+  return (
+    <>
+      {!itemContext.horizontal && (
+        <div className="card-content">{children}</div>
+      )}
+      {itemContext.horizontal && children}
+    </>
+  );
 }
 
 export function ItemCardContent({
@@ -168,16 +185,26 @@ export function ItemCardContent({
   subtitle?: React.ReactNode;
   description?: React.ReactNode;
 }) {
+  const itemContext = useContext(ItemContext);
+
   return (
-    <Card.Content>
+    <Dimmer.Dimmable
+      as={itemContext.href ? 'a' : Card.Content}
+      className="content">
+      <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
+        <itemContext.ActionContent />
+      </Dimmer>
+      {itemContext.horizontal && (
+        <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
+      )}
       <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
       {subtitle && <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>}
       {description && <Card.Description>{description}</Card.Description>}
-    </Card.Content>
+    </Dimmer.Dimmable>
   );
 }
 
-export function ItemCardImageContentItem({
+export function ItemCardActionContentItem({
   children,
 }: {
   children?: React.ReactNode;
@@ -185,12 +212,14 @@ export function ItemCardImageContentItem({
   return <List.Item>{children}</List.Item>;
 }
 
-export function ItemCardImageContent({
+export function ItemCardActionContent({
   children,
 }: {
   children?: React.ReactNode;
 }) {
-  return <List>{children}</List>;
+  const itemContext = useContext(ItemContext);
+
+  return <List horizontal={itemContext.horizontal}>{children}</List>;
 }
 
 export function ItemCardImage({ children }: { children?: React.ReactNode }) {
@@ -199,9 +228,16 @@ export function ItemCardImage({ children }: { children?: React.ReactNode }) {
   return (
     <Image
       src="/img/default.png"
-      fluid
-      centered
-      dimmer={{ active: itemContext.hover, inverted: true, children }}
+      fluid={!itemContext.horizontal}
+      centered={!itemContext.horizontal}
+      className={classNames({
+        [`${itemContext.size}-size`]: itemContext.horizontal,
+      })}
+      dimmer={{
+        active: itemContext.hover && !itemContext.horizontal,
+        inverted: true,
+        children,
+      }}
     />
   );
 }
@@ -212,51 +248,78 @@ export function ItemCard({
   href,
   className,
   labels,
+  actionContent: ActionContent,
   loading,
-  image,
+  fluid,
+  horizontal,
+  image: Image,
   centered,
   link,
 }: {
   children?: React.ReactNode;
   className?: string;
   labels?: React.ReactNode[];
+  actionContent?: React.ElementType;
   image?: React.ElementType;
   href?: string;
   loading?: boolean;
+  fluid?: boolean;
+  horizontal?: boolean;
   size?: ItemSize;
   centered?: boolean;
   link?: boolean;
 }) {
-  const Im = image;
   const [hover, setHover] = useState(false);
   const itemContext = useContext(ItemContext);
 
   let itemSize = size ?? 'medium';
-  if (!size) {
-  }
+
+  const imageElement = horizontal ? (
+    <Image />
+  ) : (
+    <Image>
+      <ActionContent />
+    </Image>
+  );
 
   return (
-    <ItemContext.Provider value={{ ...itemContext, hover, loading }}>
+    <ItemContext.Provider
+      value={{
+        ...itemContext,
+        hover,
+        href,
+        ActionContent,
+        labels,
+        loading,
+        horizontal,
+        size: itemSize,
+      }}>
       <Card
+        fluid={fluid}
         onMouseEnter={useCallback(() => setHover(true), [])}
         onMouseLeave={useCallback(() => setHover(false), [])}
         centered={centered}
         link={link}
-        className={classNames(`${itemSize}-size`)}>
+        className={classNames({
+          horizontal: horizontal,
+          [`${itemSize}-size`]: !horizontal,
+        })}>
+        {}
         <Dimmer active={loading} inverted>
           <Loader inverted active={loading} />
         </Dimmer>
-        <ItemCardLabels>
-          {href && (
-            <Link href={href}>
-              <a>
-                <Im />
-              </a>
-            </Link>
-          )}
-          {!!!href && <Im />}
-          {labels}
-        </ItemCardLabels>
+        {!horizontal && (
+          <ItemCardLabels>
+            {href && (
+              <Link href={href}>
+                <a>{imageElement}</a>
+              </Link>
+            )}
+            {!!!href && imageElement}
+            {labels}
+          </ItemCardLabels>
+        )}
+        {horizontal && imageElement}
         {children}
       </Card>
     </ItemContext.Provider>

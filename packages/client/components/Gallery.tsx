@@ -1,11 +1,11 @@
 import { Button, Icon } from 'semantic-ui-react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   ReadingIconLabel,
   UnreadIconLabel,
   ReadLaterIconLabel,
-  ItemCardImageContent,
-  ItemCardImageContentItem,
+  ItemCardActionContent,
+  ItemCardActionContentItem,
   InboxIconLabel,
   ItemLabel,
   ItemCard,
@@ -56,40 +56,59 @@ function GalleryCardMenu() {
   );
 }
 
-export function GalleryCard({ size, data }: { size?: ItemSize; data: any }) {
+export function GalleryCard({
+  size,
+  data,
+  fluid,
+  horizontal,
+}: {
+  size?: ItemSize;
+  data: any;
+  fluid?: boolean;
+  horizontal?: boolean;
+}) {
   return (
     <ItemCard
       centered
       link
+      fluid={fluid}
+      horizontal={horizontal}
       size={size}
-      labels={[
-        <ItemLabel x="left" y="top">
-          <HeartIconLabel />
-          <ProgressLabel />
-        </ItemLabel>,
-        <ItemLabel x="right" y="top">
-          <InboxIconLabel />
-          <ReadingIconLabel />
-          <UnreadIconLabel />
-          <ReadLaterIconLabel />
-        </ItemLabel>,
-        <ItemLabel x="right" y="bottom">
-          <TranslucentLabel circular>{23}</TranslucentLabel>
-          <GalleryCardMenu />
-        </ItemLabel>,
-      ]}
-      image={useCallback(
+      labels={useMemo(
+        () => [
+          <ItemLabel x="left" y="top">
+            <HeartIconLabel />
+            <ProgressLabel />
+          </ItemLabel>,
+          <ItemLabel x="right" y="top">
+            <InboxIconLabel />
+            <ReadingIconLabel />
+            <UnreadIconLabel />
+            <ReadLaterIconLabel />
+          </ItemLabel>,
+          <ItemLabel x="right" y="bottom">
+            <TranslucentLabel circular>{23}</TranslucentLabel>
+            <GalleryCardMenu />
+          </ItemLabel>,
+        ],
+        []
+      )}
+      actionContent={useCallback(
         () => (
-          <ItemCardImage>
-            <ItemCardImageContent>
-              <ItemCardImageContentItem>
-                <ReadButton />
-              </ItemCardImageContentItem>
-              <ItemCardImageContentItem>
-                <SaveForLaterButton />
-              </ItemCardImageContentItem>
-            </ItemCardImageContent>
-          </ItemCardImage>
+          <ItemCardActionContent>
+            <ItemCardActionContentItem>
+              <ReadButton />
+            </ItemCardActionContentItem>
+            <ItemCardActionContentItem>
+              <SaveForLaterButton />
+            </ItemCardActionContentItem>
+          </ItemCardActionContent>
+        ),
+        []
+      )}
+      image={useCallback(
+        ({ children }: { children?: React.ReactNode }) => (
+          <ItemCardImage>{children}</ItemCardImage>
         ),
         []
       )}>
