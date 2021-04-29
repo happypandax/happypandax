@@ -31,7 +31,7 @@ import { ItemType } from '../misc/enums';
 
 function ReadButton() {
   return (
-    <Button primary size="tiny">
+    <Button primary size="mini">
       <Icon name="envelope open outline" />
       {t`Read`}
     </Button>
@@ -40,7 +40,7 @@ function ReadButton() {
 
 function SaveForLaterButton() {
   return (
-    <Button size="tiny">
+    <Button size="mini">
       <Icon name="bookmark outline" />
       {t`Save for later`}
     </Button>
@@ -69,6 +69,7 @@ export function GalleryCard({
   size,
   data,
   fluid,
+  draggable = true,
   disableModal,
   details = GalleryDataTable,
   onDetailsOpen,
@@ -77,6 +78,7 @@ export function GalleryCard({
   size?: ItemSize;
   data: any;
   fluid?: boolean;
+  draggable?: boolean;
   disableModal?: boolean;
   details?: React.ElementType;
   onDetailsOpen?: () => void;
@@ -86,7 +88,7 @@ export function GalleryCard({
     <ItemCard
       type={ItemType.Gallery}
       dragData={data}
-      draggable
+      draggable={draggable}
       centered
       link
       fluid={fluid}
@@ -99,7 +101,7 @@ export function GalleryCard({
         () => [
           <ItemLabel x="left" y="top">
             <HeartIconLabel />
-            {horizontal && <GroupingNumberLabel as={TranslucentLabel} />}
+            <GroupingNumberLabel as={TranslucentLabel} />
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             <InboxIconLabel />

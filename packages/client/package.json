@@ -17,6 +17,7 @@
     "@ts-stack/markdown": "^1.4.0",
     "animate.css": "^4.1.1",
     "classnames": "^2.2.6",
+    "darkreader": "^4.9.32",
     "fomantic-ui-less": "^2.8.7",
     "happypandax-client": "^2.0.0",
     "lodash": "^4.17.21",
@@ -47,6 +48,7 @@
     "babel-loader": "^8.2.2",
     "fomantic-ui": "2.8.7",
     "gulp": "4.0.2",
+    "storybook-addon-themes": "^6.1.0",
     "storybook-css-modules-preset": "^1.0.8",
     "typescript": "^4.2.3"
   }

@@ -41,7 +41,13 @@ export function DragBoard({}) {
           <Icon size="large" name="plus" inverted />
         </Dimmer>
         {items.map((v) => (
-          <GalleryCard key={v.id} data={v} horizontal size="mini" />
+          <GalleryCard
+            draggable={false}
+            key={v.id}
+            data={v}
+            horizontal
+            size="mini"
+          />
         ))}
       </Segment>
     </Ref>
