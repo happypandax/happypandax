@@ -4,14 +4,17 @@ import MainMenu from '../Menu';
 
 export default function PageLayout({
   dimmed,
+  menu,
   children,
 }: {
   dimmed?: boolean;
+  menu?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
     <>
       <MainSidebar />
+      {menu}
       <Sidebar.Pusher
         as={Dimmer.Dimmable}
         dimmed={dimmed}

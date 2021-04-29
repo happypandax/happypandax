@@ -23,6 +23,8 @@ export const List = () => (
       { title: 'Test Tit2le', artist: 'Test6y' },
     ]}
     itemRender={GalleryCard}
-    windowScroll
+    totalItemCount={13}
+    pagination
+    bottomPagination
   />
 );

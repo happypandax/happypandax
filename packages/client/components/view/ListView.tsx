@@ -4,6 +4,7 @@ import { Segment, Grid } from 'semantic-ui-react';
 import styles from './ListView.module.css';
 import { useCallback } from 'react';
 import { ItemSize } from '../../misc/types';
+import { PaginatedView, ViewAutoSizer } from '.';
 
 type ItemRender = React.ComponentType<{
   data: any;
@@ -12,20 +13,30 @@ type ItemRender = React.ComponentType<{
   fluid: boolean;
 }>;
 
+interface ListViewProps {
+  items: any[];
+  itemRender: ItemRender;
+  size?: ItemSize;
+}
+
 function ListViewList({
   width,
   height,
   items,
   size,
   itemRender: ItemRender,
-  ...props
+  isScrolling,
+  onScroll,
+  scrollTop,
+  autoHeight,
 }: {
   width: number;
   height: number;
-  items: any[];
-  size: ItemSize;
-  itemRender: ItemRender;
-} & Record<string, any>) {
+  isScrolling?: any;
+  onScroll?: any;
+  scrollTop?: any;
+  autoHeight?: any;
+} & ListViewProps) {
   const itemWidth = 600;
   const rowHeight = 140;
 
@@ -35,8 +46,11 @@ function ListViewList({
 
   return (
     <List
-      {...props}
       className="listview"
+      autoHeight={autoHeight}
+      isScrolling={isScrolling}
+      scrollTop={scrollTop}
+      onScroll={onScroll}
       width={width}
       height={height}
       rowCount={rowCount}
@@ -72,50 +86,28 @@ export default function ListView({
   itemRender,
   items,
   size = 'tiny',
-  windowScroll,
+  disableWindowScroll,
+  ...props
 }: {
-  size: ItemSize;
-  itemRender: ItemRender;
-  items: any[];
-  windowScroll?: boolean;
-}) {
-  const elFunc = windowScroll
-    ? useCallback(
-        ({ width }) => {
-          return (
-            <WindowScroller>
-              {({ height, isScrolling, onChildScroll, scrollTop }) => (
-                <ListViewList
-                  itemRender={itemRender}
-                  items={items}
-                  height={height}
-                  width={width}
-                  size={size}
-                  isScrolling={isScrolling}
-                  onScroll={onChildScroll}
-                  scrollTop={scrollTop}
-                  autoHeight
-                />
-              )}
-            </WindowScroller>
-          );
-        },
-        [itemRender, items]
-      )
-    : useCallback(
-        ({ height, width }) => {
-          return (
-            <ListViewList
-              itemRender={itemRender}
-              items={items}
-              height={height}
-              width={width}
-              size={size}
-            />
-          );
-        },
-        [itemRender, items]
-      );
-
-  return <AutoSizer>{elFunc}</AutoSizer>;
+  disableWindowScroll?: boolean;
+} & ListViewProps &
+  Omit<
+    React.ComponentProps<typeof PaginatedView>,
+    'children' | 'itemCount' | 'paddedChildren'
+  >) {
+  return (
+    <PaginatedView {...props} itemCount={items.length} paddedChildren>
+      <ViewAutoSizer
+        items={items}
+        itemRender={itemRender}
+        disableWindowScroll={disableWindowScroll}
+        view={useCallback(
+          (p: any) => (
+            <ListViewList {...p} size={size} />
+          ),
+          [size]
+        )}
+      />
+    </PaginatedView>
+  );
 }

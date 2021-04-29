@@ -11,5 +11,3 @@ export function PageTitle({ title }: { title?: string }) {
 export function Markdown({ children }: { children?: string }) {
   return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(children) }} />;
 }
-
-export default {};

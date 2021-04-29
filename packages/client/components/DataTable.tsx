@@ -32,9 +32,9 @@ export function GalleryDataTable({}: {}) {
       <DataTableItem name={t`Tags`}>test</DataTableItem>
       <DataTableItem name={t`External links`}>test</DataTableItem>
       <DataTableItem textAlign="center">
-        <DateAddedLabel />
-        <DatePublishedLabel />
         <LastReadLabel />
+        <DatePublishedLabel />
+        <DateAddedLabel />
         <LastUpdatedLabel />
       </DataTableItem>
     </DataTable>

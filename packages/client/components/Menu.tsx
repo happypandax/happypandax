@@ -80,9 +80,11 @@ function ConnectionItem({
 
 export function MainMenu({
   hidden,
+  borderless,
   fixed,
 }: {
   hidden?: boolean;
+  borderless?: boolean;
   fixed?: boolean;
 }) {
   if (hidden) return <></>;
@@ -91,10 +93,12 @@ export function MainMenu({
     <Menu
       size="tiny"
       fluid
-      borderless
+      borderless={borderless}
       fixed={fixed ? 'top' : undefined}
       secondary={!fixed}
-      className={classNames()}>
+      className={classNames(
+        'pusher no-margins standard-z-index post-relative'
+      )}>
       <ConnectionItem />
     </Menu>
   );

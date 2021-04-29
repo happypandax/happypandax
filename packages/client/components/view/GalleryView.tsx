@@ -1,23 +1,34 @@
-import { List, AutoSizer, WindowScroller } from 'react-virtualized';
-import { Segment, Grid } from 'semantic-ui-react';
+import { List } from 'react-virtualized';
 
 import styles from './GalleryView.module.css';
 import { useCallback } from 'react';
+import classNames from 'classnames';
+import { ViewAutoSizer, PaginatedView } from './index';
 
 type ItemRender = React.ComponentType<{ data: any }>;
+
+interface GalleryViewProps {
+  items: any[];
+  itemRender: ItemRender;
+}
 
 function GalleryViewGrid({
   width,
   height,
   items,
   itemRender: ItemRender,
-  ...props
+  isScrolling,
+  onScroll,
+  scrollTop,
+  autoHeight,
 }: {
   width: number;
   height: number;
-  items: any[];
-  itemRender: ItemRender;
-} & Record<string, any>) {
+  isScrolling?: any;
+  onScroll?: any;
+  scrollTop?: any;
+  autoHeight?: any;
+} & GalleryViewProps) {
   const itemWidth = 200;
   const rowHeight = 380;
 
@@ -26,8 +37,11 @@ function GalleryViewGrid({
 
   return (
     <List
-      {...props}
-      className="galleryview"
+      className={classNames('galleryview')}
+      autoHeight={autoHeight}
+      isScrolling={isScrolling}
+      scrollTop={scrollTop}
+      onScroll={onScroll}
       width={width}
       height={height}
       rowCount={rowCount}
@@ -60,49 +74,22 @@ function GalleryViewGrid({
 }
 
 export default function GalleryView({
-  itemRender,
+  disableWindowScroll,
   items,
-  windowScroll,
+  itemRender,
+  ...props
 }: {
-  itemRender: React.ComponentType<{ data: any }>;
-  items: any[];
-  windowScroll?: boolean;
-}) {
-  const elFunc = windowScroll
-    ? useCallback(
-        ({ width }) => {
-          return (
-            <WindowScroller>
-              {({ height, isScrolling, onChildScroll, scrollTop }) => (
-                <GalleryViewGrid
-                  itemRender={itemRender}
-                  items={items}
-                  height={height}
-                  width={width}
-                  isScrolling={isScrolling}
-                  onScroll={onChildScroll}
-                  scrollTop={scrollTop}
-                  autoHeight
-                />
-              )}
-            </WindowScroller>
-          );
-        },
-        [itemRender, items]
-      )
-    : useCallback(
-        ({ height, width }) => {
-          return (
-            <GalleryViewGrid
-              itemRender={itemRender}
-              items={items}
-              height={height}
-              width={width}
-            />
-          );
-        },
-        [itemRender, items]
-      );
-
-  return <AutoSizer>{elFunc}</AutoSizer>;
+  disableWindowScroll?: boolean;
+} & GalleryViewProps &
+  Omit<React.ComponentProps<typeof PaginatedView>, 'children' | 'itemCount'>) {
+  return (
+    <PaginatedView {...props} itemCount={items.length}>
+      <ViewAutoSizer
+        items={items}
+        itemRender={itemRender}
+        disableWindowScroll={disableWindowScroll}
+        view={GalleryViewGrid}
+      />
+    </PaginatedView>
+  );
 }
