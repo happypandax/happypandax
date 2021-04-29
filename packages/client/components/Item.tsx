@@ -4,7 +4,7 @@ import React, { useContext, useMemo } from 'react';
 import { useState, useCallback } from 'react';
 import { useRef } from 'react';
 import { useHover, useMouseHovered } from 'react-use';
-import { Label, Popup } from 'semantic-ui-react';
+import { Label, Modal, Popup } from 'semantic-ui-react';
 import { ItemSize } from '../misc/types';
 import {
   Card,
@@ -19,8 +19,11 @@ import {
 const ItemContext = React.createContext({
   size: 'medium' as ItemSize,
   ActionContent: undefined as React.ElementType,
+  Details: undefined as React.ElementType,
   labels: [] as React.ReactNode[],
   href: '',
+  disableModal: false,
+  onDetailsOpen: undefined as () => void,
   hover: false,
   loading: false,
   horizontal: false,
@@ -81,13 +84,21 @@ export function UnreadIconLabel() {
 
 export function TranslucentLabel({
   children,
+  size = 'tiny',
+  basic = true,
   circular,
 }: {
   children: React.ReactNode;
+  size?: React.ComponentProps<typeof Label>['size'];
+  basic?: React.ComponentProps<typeof Label>['basic'];
   circular?: boolean;
 }) {
   return (
-    <Label circular={circular} className="translucent-black">
+    <Label
+      basic={basic}
+      size={size}
+      circular={circular}
+      className="translucent-black">
       {children}
     </Label>
   );
@@ -157,7 +168,7 @@ export function HeartIconLabel({
 
 export function ProgressLabel() {
   return (
-    <TranslucentLabel circular>
+    <TranslucentLabel size="mini" circular basic={false}>
       <Loader inline active size="mini" />
     </TranslucentLabel>
   );
@@ -176,6 +187,14 @@ function ItemCardLabels({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ItemDetailsModal(props: React.ComponentProps<typeof Modal>) {
+  return (
+    <Modal {...props}>
+      <Modal.Content>{props.children}</Modal.Content>
+    </Modal>
+  );
+}
+
 export function ItemCardContent({
   title,
   subtitle,
@@ -186,11 +205,33 @@ export function ItemCardContent({
   description?: React.ReactNode;
 }) {
   const itemContext = useContext(ItemContext);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const Details = itemContext.Details;
+
+  const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
 
   return (
     <Dimmer.Dimmable
-      as={itemContext.href ? 'a' : Card.Content}
+      as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
+      onClick={useCallback(() => {
+        if (!itemContext.horizontal) {
+          setDetailsOpen(true);
+          itemContext.onDetailsOpen?.();
+        }
+      }, [itemContext.horizontal])}
       className="content">
+      {!!itemContext.Details &&
+        !itemContext.horizontal &&
+        !itemContext.disableModal && (
+          <ItemDetailsModal
+            open={detailsOpen}
+            closeIcon
+            dimmer="inverted"
+            onClose={onDetailsClose}>
+            <Details />
+          </ItemDetailsModal>
+        )}
       <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
         <itemContext.ActionContent />
       </Dimmer>
@@ -224,6 +265,11 @@ export function ItemCardActionContent({
 
 export function ItemCardImage({ children }: { children?: React.ReactNode }) {
   const itemContext = useContext(ItemContext);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const Details = itemContext.Details;
+
+  const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
 
   return (
     <Image
@@ -233,12 +279,32 @@ export function ItemCardImage({ children }: { children?: React.ReactNode }) {
       className={classNames({
         [`${itemContext.size}-size`]: itemContext.horizontal,
       })}
+      onClick={useCallback(() => {
+        if (itemContext.horizontal) {
+          setDetailsOpen(true);
+          itemContext.onDetailsOpen?.();
+        }
+      }, [itemContext.horizontal])}
       dimmer={{
         active: itemContext.hover && !itemContext.horizontal,
         inverted: true,
-        children,
-      }}
-    />
+        children: (
+          <>
+            {!!itemContext.Details &&
+              itemContext.horizontal &&
+              !itemContext.disableModal && (
+                <ItemDetailsModal
+                  open={detailsOpen}
+                  closeIcon
+                  dimmer="inverted"
+                  onClose={onDetailsClose}>
+                  <Details />
+                </ItemDetailsModal>
+              )}
+            {children}
+          </>
+        ),
+      }}></Image>
   );
 }
 
@@ -247,6 +313,9 @@ export function ItemCard({
   size,
   href,
   className,
+  disableModal,
+  details: Details,
+  onDetailsOpen,
   labels,
   actionContent: ActionContent,
   loading,
@@ -260,8 +329,11 @@ export function ItemCard({
   className?: string;
   labels?: React.ReactNode[];
   actionContent?: React.ElementType;
+  details?: React.ElementType;
   image?: React.ElementType;
   href?: string;
+  disableModal?: boolean;
+  onDetailsOpen?: () => void;
   loading?: boolean;
   fluid?: boolean;
   horizontal?: boolean;
@@ -288,6 +360,9 @@ export function ItemCard({
         ...itemContext,
         hover,
         href,
+        disableModal,
+        onDetailsOpen,
+        Details,
         ActionContent,
         labels,
         loading,

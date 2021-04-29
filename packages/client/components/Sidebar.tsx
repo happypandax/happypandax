@@ -143,7 +143,7 @@ export function MainSidebar({
             <SidebarItem
               href="/add"
               icon={{ name: 'plus square outline', color: 'teal' }} // <-- use React.memo
-            >{t`Add`}</SidebarItem>
+            >{t`Import`}</SidebarItem>
           </div>
           <div className="middle-aligned">
             <SidebarItem

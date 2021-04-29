@@ -19,6 +19,7 @@ import {
 } from './Item';
 import t from '../misc/lang';
 import { ItemSize } from '../misc/types';
+import { GalleryDataTable } from './DataTable';
 
 function ReadButton() {
   return (
@@ -60,11 +61,17 @@ export function GalleryCard({
   size,
   data,
   fluid,
+  disableModal,
+  details = GalleryDataTable,
+  onDetailsOpen,
   horizontal,
 }: {
   size?: ItemSize;
   data: any;
   fluid?: boolean;
+  disableModal?: boolean;
+  details?: React.ElementType;
+  onDetailsOpen?: () => void;
   horizontal?: boolean;
 }) {
   return (
@@ -74,19 +81,23 @@ export function GalleryCard({
       fluid={fluid}
       horizontal={horizontal}
       size={size}
+      details={details}
+      disableModal={disableModal}
+      onDetailsOpen={onDetailsOpen}
       labels={useMemo(
         () => [
           <ItemLabel x="left" y="top">
             <HeartIconLabel />
-            <ProgressLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             <InboxIconLabel />
             <ReadingIconLabel />
             <UnreadIconLabel />
             <ReadLaterIconLabel />
+            <ProgressLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="bottom">
+            <TranslucentLabel>{'EN'}</TranslucentLabel>
             <TranslucentLabel circular>{23}</TranslucentLabel>
             <GalleryCardMenu />
           </ItemLabel>,
