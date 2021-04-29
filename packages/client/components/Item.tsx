@@ -4,8 +4,8 @@ import React, { useContext, useMemo } from 'react';
 import { useState, useCallback } from 'react';
 import { useRef } from 'react';
 import { useHover, useMouseHovered } from 'react-use';
-import { Label, Modal, Popup } from 'semantic-ui-react';
-import { ItemSize } from '../misc/types';
+import { Label, Modal, Popup, Ref } from 'semantic-ui-react';
+import { DragItemData, ItemSize } from '../misc/types';
 import {
   Card,
   Image,
@@ -15,8 +15,11 @@ import {
   List,
   Loader,
 } from 'semantic-ui-react';
+import { ItemType } from '../misc/enums';
+import { useDrag } from 'react-dnd';
 
 const ItemContext = React.createContext({
+  isDragging: false,
   size: 'medium' as ItemSize,
   ActionContent: undefined as React.ElementType,
   Details: undefined as React.ElementType,
@@ -320,6 +323,7 @@ export function ItemCard({
   href,
   className,
   disableModal,
+  draggable,
   details: Details,
   onDetailsOpen,
   labels,
@@ -329,10 +333,13 @@ export function ItemCard({
   horizontal,
   image: Image,
   centered,
+  dragData,
   link,
+  type,
 }: {
   children?: React.ReactNode;
   className?: string;
+  type: ItemType;
   labels?: React.ReactNode[];
   actionContent?: React.ElementType;
   details?: React.ElementType;
@@ -342,13 +349,29 @@ export function ItemCard({
   onDetailsOpen?: () => void;
   loading?: boolean;
   fluid?: boolean;
+  draggable?: boolean;
   horizontal?: boolean;
+  dragData?: DragItemData['data'];
   size?: ItemSize;
   centered?: boolean;
   link?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const itemContext = useContext(ItemContext);
+
+  const [{ isDragging }, dragRef] = useDrag(
+    () => ({
+      type: type.toString(),
+      item: {
+        data: dragData,
+      } as DragItemData,
+      canDrag: (monitor) => !!draggable,
+      collect: (monitor) => ({
+        isDragging: !!monitor.isDragging(),
+      }),
+    }),
+    [dragData, draggable]
+  );
 
   let itemSize = size ?? 'medium';
 
@@ -364,6 +387,7 @@ export function ItemCard({
     <ItemContext.Provider
       value={{
         ...itemContext,
+        isDragging,
         hover,
         href,
         disableModal,
@@ -375,34 +399,44 @@ export function ItemCard({
         horizontal,
         size: itemSize,
       }}>
-      <Card
-        fluid={fluid}
-        onMouseEnter={useCallback(() => setHover(true), [])}
-        onMouseLeave={useCallback(() => setHover(false), [])}
-        centered={centered}
-        link={link}
-        className={classNames({
-          horizontal: horizontal,
-          [`${itemSize}-size`]: !horizontal,
-        })}>
-        {}
-        <Dimmer active={loading} inverted>
-          <Loader inverted active={loading} />
-        </Dimmer>
-        {!horizontal && (
-          <ItemCardLabels>
-            {href && (
-              <Link href={href}>
-                <a>{imageElement}</a>
-              </Link>
-            )}
-            {!!!href && imageElement}
-            {labels}
-          </ItemCardLabels>
-        )}
-        {horizontal && imageElement}
-        {children}
-      </Card>
+      <Ref innerRef={dragRef}>
+        <Card
+          fluid={fluid}
+          onMouseEnter={useCallback(() => setHover(true), [])}
+          onMouseLeave={useCallback(() => setHover(false), [])}
+          centered={centered}
+          link={link}
+          style={
+            isDragging
+              ? {
+                  opacity: 0.5,
+                }
+              : {}
+          }
+          className={classNames({
+            dragging: isDragging,
+            horizontal: horizontal,
+            [`${itemSize}-size`]: !horizontal,
+          })}>
+          {}
+          <Dimmer active={loading} inverted>
+            <Loader inverted active={loading} />
+          </Dimmer>
+          {!horizontal && (
+            <ItemCardLabels>
+              {href && (
+                <Link href={href}>
+                  <a>{imageElement}</a>
+                </Link>
+              )}
+              {!!!href && imageElement}
+              {labels}
+            </ItemCardLabels>
+          )}
+          {horizontal && imageElement}
+          {children}
+        </Card>
+      </Ref>
     </ItemContext.Provider>
   );
 }

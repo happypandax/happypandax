@@ -27,6 +27,7 @@ import {
   GroupingNumberLabel,
   StatusLabel,
 } from './data/Common';
+import { ItemType } from '../misc/enums';
 
 function ReadButton() {
   return (
@@ -83,6 +84,9 @@ export function GalleryCard({
 }) {
   return (
     <ItemCard
+      type={ItemType.Gallery}
+      dragData={data}
+      draggable
       centered
       link
       fluid={fluid}

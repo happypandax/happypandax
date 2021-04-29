@@ -1,7 +1,7 @@
-import { GalleryDataTable } from './DataTable';
+import { Drawer as DrawerComponent } from './Drawer';
 
 export default {
-  title: 'Data/Table',
+  title: 'Components/Drawer',
 };
 
-export const Gallery = () => <GalleryDataTable />;
+export const Drawer = () => <DrawerComponent />;
