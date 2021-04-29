@@ -20,6 +20,13 @@ import {
 import t from '../misc/lang';
 import { ItemSize } from '../misc/types';
 import { GalleryDataTable } from './DataTable';
+import {
+  ReadCountLabel,
+  LanguageLabel,
+  PageCountLabel,
+  GroupingNumberLabel,
+  StatusLabel,
+} from './data/Common';
 
 function ReadButton() {
   return (
@@ -88,6 +95,7 @@ export function GalleryCard({
         () => [
           <ItemLabel x="left" y="top">
             <HeartIconLabel />
+            {horizontal && <GroupingNumberLabel as={TranslucentLabel} />}
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             <InboxIconLabel />
@@ -97,12 +105,16 @@ export function GalleryCard({
             <ProgressLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="bottom">
-            <TranslucentLabel>{'EN'}</TranslucentLabel>
-            <TranslucentLabel circular>{23}</TranslucentLabel>
+            {horizontal && <StatusLabel as={TranslucentLabel} />}
+            {horizontal && <ReadCountLabel as={TranslucentLabel} />}
+            {horizontal && <LanguageLabel as={TranslucentLabel} />}
+            {horizontal && <PageCountLabel as={TranslucentLabel} />}
+            {!horizontal && <TranslucentLabel>{'EN'}</TranslucentLabel>}
+            {!horizontal && <TranslucentLabel circular>{23}</TranslucentLabel>}
             <GalleryCardMenu />
           </ItemLabel>,
         ],
-        []
+        [horizontal]
       )}
       actionContent={useCallback(
         () => (
@@ -127,8 +139,9 @@ export function GalleryCard({
         title={data?.title ?? ''}
         subtitle={[data?.artist].map((a) => (
           <span>{a}</span>
-        ))}
-      />
+        ))}>
+        <ReadCountLabel />
+      </ItemCardContent>
     </ItemCard>
   );
 }

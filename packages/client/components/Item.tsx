@@ -199,10 +199,12 @@ export function ItemCardContent({
   title,
   subtitle,
   description,
+  children,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   description?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -212,36 +214,40 @@ export function ItemCardContent({
   const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
 
   return (
-    <Dimmer.Dimmable
-      as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
-      onClick={useCallback(() => {
-        if (!itemContext.horizontal) {
-          setDetailsOpen(true);
-          itemContext.onDetailsOpen?.();
-        }
-      }, [itemContext.horizontal])}
-      className="content">
-      {!!itemContext.Details &&
-        !itemContext.horizontal &&
-        !itemContext.disableModal && (
-          <ItemDetailsModal
-            open={detailsOpen}
-            closeIcon
-            dimmer="inverted"
-            onClose={onDetailsClose}>
-            <Details />
-          </ItemDetailsModal>
+    <>
+      <Dimmer.Dimmable
+        as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
+        onClick={useCallback(() => {
+          if (!itemContext.horizontal) {
+            setDetailsOpen(true);
+            itemContext.onDetailsOpen?.();
+          }
+        }, [itemContext.horizontal])}
+        className="content">
+        {!!itemContext.Details &&
+          !itemContext.horizontal &&
+          !itemContext.disableModal && (
+            <ItemDetailsModal
+              open={detailsOpen}
+              closeIcon
+              dimmer="inverted"
+              onClose={onDetailsClose}>
+              <Details />
+            </ItemDetailsModal>
+          )}
+        <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
+          <itemContext.ActionContent />
+        </Dimmer>
+        {itemContext.horizontal && (
+          <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
         )}
-      <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
-        <itemContext.ActionContent />
-      </Dimmer>
-      {itemContext.horizontal && (
-        <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
-      )}
-      <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
-      {subtitle && <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>}
-      {description && <Card.Description>{description}</Card.Description>}
-    </Dimmer.Dimmable>
+        <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
+        {subtitle && (
+          <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>
+        )}
+        {description && <Card.Description>{description}</Card.Description>}
+      </Dimmer.Dimmable>
+    </>
   );
 }
 
