@@ -214,6 +214,14 @@ i.medium-size {
     margin-right: 10px;
 }
 
+.medium-margin-top {
+    margin-top: 10px;
+}
+
+.medium-margin-bottom {
+    margin-bottom: 10px;
+}
+
 .pos-absolute {
     position: absolute;
 }

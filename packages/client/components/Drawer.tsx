@@ -15,6 +15,7 @@ import { DragItemData } from '../misc/types';
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
 import GalleryCard from './Gallery';
+import { EmptyMessage } from './Misc';
 
 export function DragBoard({}) {
   const [items, setItems] = useState([]);
@@ -36,7 +37,7 @@ export function DragBoard({}) {
 
   return (
     <Ref innerRef={dropRef}>
-      <Segment className="min-200-h">
+      <div className="min-200-h">
         <Dimmer active={isOver}>
           <Icon size="large" name="plus" inverted />
         </Dimmer>
@@ -49,9 +50,16 @@ export function DragBoard({}) {
             size="mini"
           />
         ))}
-      </Segment>
+        {!items.length && <EmptyMessage />}
+      </div>
     </Ref>
   );
+}
+
+export function RecentViewed() {
+  const items = [];
+
+  return <>{!items.length && <EmptyMessage />}</>;
 }
 
 export function Drawer() {
@@ -69,6 +77,14 @@ export function Drawer() {
               render: () => (
                 <Tab.Pane basic className="no-padding-segment">
                   <DragBoard />
+                </Tab.Pane>
+              ),
+            },
+            {
+              menuItem: t`Recently viewed`,
+              render: () => (
+                <Tab.Pane basic className="no-padding-segment">
+                  <RecentViewed />
                 </Tab.Pane>
               ),
             },

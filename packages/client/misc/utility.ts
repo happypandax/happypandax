@@ -30,3 +30,21 @@ export function getEnumMembersMKeyMap<T>(myEnum: T): { [s: string]: keyof T } {
 
   return obj;
 }
+
+export function refreshPage() {
+  if (location && location.reload) {
+    location.reload();
+  }
+}
+
+export function scrollToTop() {
+  if (document) {
+    scrollToElement(document.getElementById('root'));
+  }
+}
+
+export function scrollToElement(element: HTMLElement, smooth = true) {
+  element.scrollIntoView({
+    behavior: smooth ? 'smooth' : 'auto',
+  });
+}

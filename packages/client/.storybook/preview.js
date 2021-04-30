@@ -3,6 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Theme } from '../components/Misc';
 import '../semantic/dist/semantic.css';
+import '../style/global.css';
 import 'animate.css';
 import 'react-virtualized/styles.css';
 

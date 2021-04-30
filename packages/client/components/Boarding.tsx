@@ -63,20 +63,22 @@ function BackendStep(props: any) {
   return (
     <StepBody {...props}>
       <Markdown>
-        {`The following database backends are supported:
+        {t`The following database backends are supported:
 
 - SQLite
 - PostgreSQL
 
-Before using HPX, it is important that you settle on a backend because transferring data between backends might be problematic.
-If you’re not sure on which one to pick, just go with PostgreSQL. SQLite doesn’t handle large databases and concurrency that well.
-PostgreSQL will be the faster and more stable choice in this case but it requires some setup before you can use it.
-Setting up a server based database differs for each platform.
+Before using HPX, it is important that you settle on a backend because transferring data between backends might prove problematic.
+If you’re not sure which one you should pick, go with PostgreSQL. SQLite doesn’t handle large databases and concurrency that well.
+PostgreSQL will therefor be the faster and more stable choice but it requires a bit of setup before you can use it.
+Setting up a server based database like PostgreSQL differs for each platform.
 There should be plenty of [guides on google](https://lmgtfy.app/?q=how+to+install+postgresql+on+platform) to help you.
 
-If you're going to have more than 500 galleries, go with PostgresSQl.
+Some things that can help you choose:
 
-If you're going to have multiple people use your HPX instance simultaneously, absolutely go with PostgresSQL.
+- Going with SQLite is a bad idea if you're going to have more than 500-1000 galleries.
+- If you're going to have multiple people use your HPX instance simultaneously, absolutely go with PostgresSQL.
+- Just go with PostgresSQL already, you baka!
 `}
       </Markdown>
       <div className="center-text medium-margin">
@@ -108,7 +110,7 @@ function UsersStep(props: any) {
   return (
     <StepBody {...props}>
       <Markdown>
-        {`A single admin super-user is created called \`default\` with no password. This user is enabled by default.
+        {`A single admin super-usercalled \`default\` is created with no password. This user is enabled by default.
 If you’re planning on having multiple people accessing your HPX instance, or you want to access the server from a remote origin over the internet,
 it is advised that you disable this user.
 `}

@@ -1,7 +1,19 @@
-import { GalleryDataTable } from './DataTable';
+import {
+  Favorites as FavoritesComponent,
+  FavoriteGalleries,
+  FavoritePages,
+  FavoriteCollections,
+} from './Favorites';
 
 export default {
-  title: 'Data/Table',
+  title: 'Favorites/Favorites',
 };
 
-export const Gallery = () => <GalleryDataTable />;
+export const Favorites = () => (
+  <>
+    <FavoritesComponent />
+    <FavoriteGalleries />
+    <FavoriteCollections />
+    <FavoritePages />
+  </>
+);

@@ -1,0 +1,61 @@
+.mb-auto {
+    margin-bottom: auto;
+}
+
+.mt-auto {
+    margin-top: auto;
+}
+
+.mr-auto {
+    margin-right: auto;
+}
+
+.ml-auto {
+    margin-left: auto;
+}
+
+
+#bottom_zone {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    padding-left: 70px;
+    padding-right: 5px;
+    padding-bottom: 10px;
+}
+
+#bottom_zone > div {
+    height: 200px;
+    position: absolute;
+    bottom: 0;
+    left: 70px;
+    right: 5px;
+    bottom: 10px;
+}
+
+#bottom_zone > div > .item {
+    position: absolute;
+    float: unset;
+}
+
+#bottom_zone > div > .item.right {
+    right: 0;
+}
+
+#bottom_zone > div > .item.top {
+    top: 0;
+}
+
+#bottom_zone > div > .item.bottom {
+    bottom: 0;
+}
+
+#bottom_zone > div > .item.left {
+    left: 0;
+}
+
+#bottom_zone > div > .item.flex {
+    display: flex;
+    flex-direction: column;
+}
