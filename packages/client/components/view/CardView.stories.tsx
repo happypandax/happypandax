@@ -1,12 +1,12 @@
-import GalleryView from './GalleryView';
+import CardView from './CardView';
 import GalleryCard from '../Gallery';
 
 export default {
-  title: 'View/Gallery',
+  title: 'View/Card',
 };
 
-export const Gallery = () => (
-  <GalleryView
+export const Card = () => (
+  <CardView
     items={[
       { title: 'Test Title', artist: 'Testy' },
       { title: 'Test Titl2e', artist: 'Testy' },

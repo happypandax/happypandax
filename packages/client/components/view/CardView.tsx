@@ -1,18 +1,18 @@
 import { List } from 'react-virtualized';
 
-import styles from './GalleryView.module.css';
+import styles from './CardView.module.css';
 import { useCallback } from 'react';
 import classNames from 'classnames';
 import { ViewAutoSizer, PaginatedView } from './index';
 
 type ItemRender = React.ComponentType<{ data: any }>;
 
-interface GalleryViewProps {
+interface CardViewProps {
   items: any[];
   itemRender: ItemRender;
 }
 
-function GalleryViewGrid({
+function CardViewGrid({
   width,
   height,
   items,
@@ -28,7 +28,7 @@ function GalleryViewGrid({
   onScroll?: any;
   scrollTop?: any;
   autoHeight?: any;
-} & GalleryViewProps) {
+} & CardViewProps) {
   const itemWidth = 200;
   const rowHeight = 380;
 
@@ -73,14 +73,14 @@ function GalleryViewGrid({
   );
 }
 
-export default function GalleryView({
+export default function CardView({
   disableWindowScroll,
   items,
   itemRender,
   ...props
 }: {
   disableWindowScroll?: boolean;
-} & GalleryViewProps &
+} & CardViewProps &
   Omit<React.ComponentProps<typeof PaginatedView>, 'children' | 'itemCount'>) {
   return (
     <PaginatedView {...props} itemCount={items.length}>
@@ -88,7 +88,7 @@ export default function GalleryView({
         items={items}
         itemRender={itemRender}
         disableWindowScroll={disableWindowScroll}
-        view={GalleryViewGrid}
+        view={CardViewGrid}
       />
     </PaginatedView>
   );
