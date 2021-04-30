@@ -1,7 +1,16 @@
 import classNames from 'classnames';
-import { Button, Menu, Popup } from 'semantic-ui-react';
+import {
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Icon,
+  Menu,
+  Popup,
+} from 'semantic-ui-react';
 import { useState, useCallback } from 'react';
 import t from '../../misc/lang';
+import { ItemType, ViewType } from '../../misc/enums';
+import { useMemo } from 'react';
 
 export function SortButtonInput({ className }: { className?: string }) {
   const [active, setActive] = useState('sort 1');
@@ -51,6 +60,20 @@ export function SortButtonInput({ className }: { className?: string }) {
         </Menu>
       </Popup.Content>
     </Popup>
+  );
+}
+
+export function ClearFilterButton(props: React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      icon="close"
+      primary
+      circular
+      basic
+      color="red"
+      title={t`Clear filter`}
+      {...props}
+    />
   );
 }
 
@@ -120,6 +143,71 @@ export function OnlyFavoritesButton({ className }: { className?: string }) {
       circular
       className={classNames(className)}
     />
+  );
+}
+
+export function ViewButtons({
+  size = 'tiny',
+}: {
+  size?: React.ComponentProps<typeof ButtonGroup>['size'];
+}) {
+  const [active, setActive] = useState(ItemType.Gallery);
+  const [view, setView] = useState(ViewType.Library);
+
+  const options = useMemo(
+    () => [
+      {
+        text: (
+          <>
+            <Icon name="th" /> {t`All`}
+          </>
+        ),
+        value: ViewType.All,
+      },
+      {
+        text: (
+          <>
+            <Icon name="archive" /> {t`Library`}
+          </>
+        ),
+        value: ViewType.Library,
+      },
+      {
+        text: (
+          <>
+            <Icon name="inbox" /> {t`Inbox`}
+          </>
+        ),
+        value: ViewType.Inbox,
+      },
+    ],
+    []
+  );
+
+  return (
+    <ButtonGroup toggle basic size={size}>
+      <Dropdown
+        selectOnBlur={false}
+        disabled={view === ViewType.Favorite}
+        basic
+        className="active"
+        value={view}
+        options={options}
+        button
+      />
+      <Button
+        primary
+        basic={active === ItemType.Collection}
+        onClick={useCallback(() => {
+          setActive(ItemType.Collection);
+        }, [])}>{t`Collection`}</Button>
+      <Button
+        primary
+        basic={active === ItemType.Gallery}
+        onClick={useCallback(() => {
+          setActive(ItemType.Gallery);
+        }, [])}>{t`Gallery`}</Button>
+    </ButtonGroup>
   );
 }
 

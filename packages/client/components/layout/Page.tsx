@@ -2,12 +2,13 @@ import { Dimmer, Portal, Segment, Sidebar } from 'semantic-ui-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import MainSidebar from '../Sidebar';
-import { ScrollUpButton } from '../Misc';
+import { ScrollUpButton, Visible } from '../Misc';
 import classNames from 'classnames';
 import {
   FilterButtonInput,
   SortButtonInput,
   OnlyFavoritesButton,
+  ClearFilterButton,
 } from './ItemLayout';
 
 export function BottomZoneItem({
@@ -58,7 +59,12 @@ export default function PageLayout({
             <BottomZoneItem x="right" y="top" className="flex fullheight">
               <OnlyFavoritesButton />
               <div className="medium-margin-top">
-                <FilterButtonInput />
+                <div className="pos-relative">
+                  <FilterButtonInput />
+                  <Visible visible>
+                    <ClearFilterButton className="clear_filter" size="mini" />
+                  </Visible>
+                </div>
               </div>
               <div className="medium-margin-top mb-auto">
                 <SortButtonInput />

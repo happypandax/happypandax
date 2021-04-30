@@ -102,13 +102,10 @@ export function TitleTable() {
             size="tiny"
             color="black"
           />
-          <LanguageLabel
-            className="float-right"
-            color={undefined}
-            basic={false}
-            size="small">
-            {primary.language}
-          </LanguageLabel>
+          <Label size="tiny" className="float-right">
+            {t`ID`}
+            <Label.Detail>1234</Label.Detail>
+          </Label>
           <div>
             <Header size="medium">{primary.title}</Header>
           </div>
