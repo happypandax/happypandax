@@ -80,6 +80,16 @@ function MetadataSidebarItem() {
   );
 }
 
+function TrashSidebarItem() {
+  return (
+    <SidebarItem
+      href="/trash"
+      icon={'trash'}
+      label="23"
+      labelColor="red">{t`Downloads`}</SidebarItem>
+  );
+}
+
 export function MainSidebar({
   hiiden: hidden,
   fixed = true,
@@ -154,14 +164,14 @@ export function MainSidebar({
               href="/library"
               icon={'grid layout'}>{t`Library`}</SidebarItem>
             <SidebarItem
-              href="/management"
-              icon={'cubes'}>{t`Management`}</SidebarItem>
+              href="/database"
+              icon={'cubes'}>{t`Database`}</SidebarItem>
             <DownloadSidebarItem />
             <MetadataSidebarItem />
             <SidebarItem href="/tasks" icon={'tasks'}>{t`Tasks`}</SidebarItem>
           </div>
           <div className="bottom-aligned">
-            <SidebarItem href="/trash" icon={'trash'}>{t`About`}</SidebarItem>
+            <TrashSidebarItem />
             <SidebarItem
               href="/preferences"
               icon={'settings'}>{t`Preferences`}</SidebarItem>

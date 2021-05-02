@@ -1,13 +1,13 @@
 import { Segment, Header, Grid } from 'semantic-ui-react';
 import t from '../misc/lang';
-import { EmptyMessage, TitleSegment } from './Misc';
+import { EmptySegment, TitleSegment } from './Misc';
 
 export function FavoriteGalleries() {
   const galleries = [];
   return (
     <TitleSegment title={t`Galleries`}>
       {!galleries.length && (
-        <EmptyMessage description={`You don't have any favorited galleries`} />
+        <EmptySegment description={`You don't have any favorited galleries`} />
       )}
     </TitleSegment>
   );
@@ -18,7 +18,7 @@ export function FavoriteCollections() {
   return (
     <TitleSegment title={t`Collections`}>
       {!collections.length && (
-        <EmptyMessage
+        <EmptySegment
           description={`You don't have any favorited collections`}
         />
       )}
@@ -32,7 +32,7 @@ export function FavoritePages() {
   return (
     <TitleSegment title={t` Pages`}>
       {!pages.length && (
-        <EmptyMessage description={`You don't have any favorited pages`} />
+        <EmptySegment description={`You don't have any favorited pages`} />
       )}
     </TitleSegment>
   );
@@ -47,14 +47,14 @@ export function Favorites() {
       <Grid.Row>
         <Grid.Column>
           {!artists.length && (
-            <EmptyMessage
+            <EmptySegment
               description={`You don't have any favorited artists`}
             />
           )}
         </Grid.Column>
         <Grid.Column>
           {!tags.length && (
-            <EmptyMessage description={`You don't have any favorited tags`} />
+            <EmptySegment description={`You don't have any favorited tags`} />
           )}
         </Grid.Column>
       </Grid.Row>

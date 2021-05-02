@@ -1472,6 +1472,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@brainhubeu/react-carousel@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "@brainhubeu/react-carousel@npm:2.0.3"
+  peerDependencies:
+    react: ^16.8.0
+    react-dom: ^16.8.0
+  checksum: 8f9be783750bfa26134f56baa32cbbe7d8e2c9c753548e32dd4faf19751bca178dc79bb74cdddd129fea7264fa79cd9d8759f7afc30602d32772b7eb7f4f9a0d
+  languageName: node
+  linkType: hard
+
 "@choojs/findup@npm:^0.2.1":
   version: 0.2.1
   resolution: "@choojs/findup@npm:0.2.1"
@@ -1702,6 +1712,7 @@ __metadata:
   resolution: "@happypandax/client@workspace:packages/client"
   dependencies:
     "@babel/core": ^7.13.10
+    "@brainhubeu/react-carousel": ^2.0.3
     "@grabrinc/isomorphic-logger": ^0.1.59
     "@mdx-js/react": ^1.6.22
     "@storybook/addon-actions": ^6.1.21
@@ -1726,9 +1737,10 @@ __metadata:
     next: ^10.0.9
     react: ^17.0.1
     react-dnd: ^14.0.2
-    react-dnd-html5-backend: 14.0.0
+    react-dnd-html5-backend: ^14.0.0
     react-dom: ^17.0.1
     react-query: ^3.13.0
+    react-responsive-carousel: ^3.2.18
     react-use: ^17.2.1
     react-virtualized: ^9.22.3
     recoil: ^0.1.3
@@ -13662,7 +13674,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.7.2, prop-types@npm:^15.0.0, prop-types@npm:^15.5.10, prop-types@npm:^15.6.0, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2":
+"prop-types@npm:15.7.2, prop-types@npm:^15.0.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2":
   version: 15.7.2
   resolution: "prop-types@npm:15.7.2"
   dependencies:
@@ -13965,7 +13977,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"react-dnd-html5-backend@npm:14.0.0":
+"react-dnd-html5-backend@npm:^14.0.0":
   version: 14.0.0
   resolution: "react-dnd-html5-backend@npm:14.0.0"
   dependencies:
@@ -14061,6 +14073,15 @@ fsevents@^1.2.7:
     classnames: ^2.2.5
     prop-types: ^15.6.0
   checksum: 72f9e36019a76ea2e9ccf36e8d8c6d74e53d2ca52efcb102e8edb4bedf7c636a3fed4ffa17ea397df01603c6dd5c534190ab697f6e8378d04c4e546d04a6e612
+  languageName: node
+  linkType: hard
+
+"react-easy-swipe@npm:^0.0.21":
+  version: 0.0.21
+  resolution: "react-easy-swipe@npm:0.0.21"
+  dependencies:
+    prop-types: ^15.5.8
+  checksum: fa493f3f5cc76cdbd1e88c5932bfbb2adf7bb5bcc40f9e56d2b0945a5a5fc471530642814f1e72a77d4b972c6c6d2cebfea2d80e5fcec5b8c341f1599f002009
   languageName: node
   linkType: hard
 
@@ -14208,6 +14229,17 @@ fsevents@^1.2.7:
   version: 0.8.3
   resolution: "react-refresh@npm:0.8.3"
   checksum: 38f06df8e0a20701b96e5d680838a3528d66cfb53db79843d30cb9517df3262ec596607147439975267bf0634bee77101db37298ea79b5742cc28664632f3c76
+  languageName: node
+  linkType: hard
+
+"react-responsive-carousel@npm:^3.2.18":
+  version: 3.2.18
+  resolution: "react-responsive-carousel@npm:3.2.18"
+  dependencies:
+    classnames: ^2.2.5
+    prop-types: ^15.5.8
+    react-easy-swipe: ^0.0.21
+  checksum: 45fe74987b4c087816f9dd3746122712d9e8fc0b28561a70d9e4f01fcfecad445eb8f3721b934cd856279a9a72111c0cea863680f226f45b7c033d40f9ed76a2
   languageName: node
   linkType: hard
 

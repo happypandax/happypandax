@@ -15,7 +15,7 @@ import { DragItemData } from '../misc/types';
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
 import GalleryCard from './Gallery';
-import { EmptyMessage } from './Misc';
+import { EmptySegment } from './Misc';
 
 export function DragBoard({}) {
   const [items, setItems] = useState([]);
@@ -50,7 +50,7 @@ export function DragBoard({}) {
             size="mini"
           />
         ))}
-        {!items.length && <EmptyMessage />}
+        {!items.length && <EmptySegment />}
       </div>
     </Ref>
   );
@@ -59,7 +59,7 @@ export function DragBoard({}) {
 export function RecentViewed() {
   const items = [];
 
-  return <>{!items.length && <EmptyMessage />}</>;
+  return <>{!items.length && <EmptySegment />}</>;
 }
 
 export function Drawer() {

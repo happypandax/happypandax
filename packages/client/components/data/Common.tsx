@@ -94,37 +94,39 @@ export function TitleTable() {
 
   return (
     <Table basic="very" compact="very" verticalAlign="middle">
-      <Table.Row>
-        <Table.Cell colspan="2" textAlign="center">
-          <GroupingNumberLabel
-            className="float-left"
-            circular
-            size="tiny"
-            color="black"
-          />
-          <Label size="tiny" className="float-right">
-            {t`ID`}
-            <Label.Detail>1234</Label.Detail>
-          </Label>
-          <div>
-            <Header size="medium">{primary.title}</Header>
-          </div>
-        </Table.Cell>
-      </Table.Row>
-      {altTitles.map((v) => (
-        <Table.Row key={v.id ?? v.title} verticalAlign="middle">
-          <Table.Cell collapsing>
-            <LanguageLabel color={undefined} basic={false} size="tiny">
-              {v.language}
-            </LanguageLabel>
-          </Table.Cell>
-          <Table.Cell>
-            <Header size="tiny" className="sub-text">
-              {v.title}
-            </Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell colspan="2" textAlign="center">
+            <GroupingNumberLabel
+              className="float-left"
+              circular
+              size="tiny"
+              color="black"
+            />
+            <Label size="tiny" className="float-right">
+              {t`ID`}
+              <Label.Detail>1234</Label.Detail>
+            </Label>
+            <div>
+              <Header size="medium">{primary.title}</Header>
+            </div>
           </Table.Cell>
         </Table.Row>
-      ))}
+        {altTitles.map((v) => (
+          <Table.Row key={v.id ?? v.title} verticalAlign="middle">
+            <Table.Cell collapsing>
+              <LanguageLabel color={undefined} basic={false} size="tiny">
+                {v.language}
+              </LanguageLabel>
+            </Table.Cell>
+            <Table.Cell>
+              <Header size="tiny" className="sub-text">
+                {v.title}
+              </Header>
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
     </Table>
   );
 }
