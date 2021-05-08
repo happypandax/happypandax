@@ -1,3 +1,5 @@
+@import url('./reader.css');
+
 .mb-auto {
     margin-bottom: auto;
 }
@@ -14,6 +16,22 @@
     margin-left: auto;
 }
 
+.w-full {
+    width: 100%;
+}
+
+.h-full {
+    height: 100%;
+}
+
+
+.user-select-none {
+    -webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
 
 #bottom_zone {
     position: fixed;
@@ -65,4 +83,13 @@
     top: 50%;
     transform: translateY(-50%);
     left: -3.5em;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+    overflow: auto;
+}
+.no-scrollbar::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
 }

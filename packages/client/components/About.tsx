@@ -21,6 +21,7 @@ import {
   Button,
 } from 'semantic-ui-react';
 import t from '../misc/lang';
+import { EmptySegment } from './Misc';
 
 function InfoPane() {
   return (
@@ -128,7 +129,11 @@ function InfoPane() {
 }
 
 function StatsPane() {
-  return <Segment basic></Segment>;
+  return (
+    <Segment basic>
+      <EmptySegment />
+    </Segment>
+  );
 }
 
 export function AboutTab() {
@@ -184,7 +189,7 @@ export default function AboutModal({
       className={classNames('min-300-h', className)}>
       <Modal.Content as={Segment} basic>
         <Header icon textAlign="center">
-          <Icon name="info" circular />
+          <Icon className="hpx-standard" circular />
           {t`About`}
         </Header>
         <AboutTab />

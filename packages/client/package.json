@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@brainhubeu/react-carousel": "^2.0.3",
+    "@cycjimmy/scroller": "^1.1.0",
     "@grabrinc/isomorphic-logger": "^0.1.59",
     "@ts-stack/markdown": "^1.4.0",
     "animate.css": "^4.1.1",

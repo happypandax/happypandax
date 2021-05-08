@@ -137,7 +137,7 @@ export function EmptySegment({
   return (
     <Segment placeholder disabled className="!min-0-h">
       <Header className="center text-center sub-text" icon>
-        <Icon className="grin beam sweat outline sub-text" size="huge" />
+        <Icon className="hpx-standard sub-text" size="huge" />
         {title}
         <Header.Subheader>{description}</Header.Subheader>
       </Header>
@@ -160,7 +160,7 @@ export function EmptyMessage({
       <Message.Content className="text-center sub-text">
         {description}
         <Segment basic textAlign="center">
-          <Icon className="grin beam sweat outline sub-text" size="huge" />
+          <Icon className="hpx-standard sub-text" size="huge" />
         </Segment>
       </Message.Content>
     </Message>
@@ -388,7 +388,7 @@ export function LabeLAccordion({
         {!!detail && <Label.Detail>{detail}</Label.Detail>}
       </Label>
       {show && children}
-      {!show && <Divider hidden />}
+      {!show && <Divider hidden fitted />}
     </Segment>
   );
 }

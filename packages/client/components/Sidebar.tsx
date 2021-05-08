@@ -152,7 +152,7 @@ export function MainSidebar({
               className="center-text small-padding-segment no-left-padding no-right-padding"></SidebarItem>
             <SidebarItem
               href="/add"
-              icon={{ name: 'plus square outline', color: 'teal' }} // <-- use React.memo
+              icon={{ name: 'plus square', color: 'teal' }} // <-- use React.memo
             >{t`Import`}</SidebarItem>
           </div>
           <div className="middle-aligned">
