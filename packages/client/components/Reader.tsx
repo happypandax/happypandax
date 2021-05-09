@@ -24,6 +24,7 @@ import {
 
 import Scroller from '@twiddly/scroller';
 import { useEvent, useInterval, useMount } from 'react-use';
+import useMeasureDirty from 'react-use/lib/useMeasureDirty';
 import classNames from 'classnames';
 import t from '../misc/lang';
 import { useRefEvent, useDocumentEvent } from '../hooks/utils';
@@ -112,12 +113,13 @@ function scrollRender(element: HTMLElement, left, top, zoom) {
 function CanvasImage({
   href,
   fit = ItemFit.Width,
-
+  direction = ReadingDirection.TopToBottom,
   focused,
 }: {
   href: string;
   number: number;
   fit?: ItemFit;
+  direction?: ReadingDirection;
   focused?: boolean;
 }) {
   const preload = useRef(new Image());
@@ -130,11 +132,63 @@ function CanvasImage({
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [scroller, setScroller] = useState<Scroller>();
 
+  const itemContained = useCallback(
+    ({ left, top, zoom }, checkLeft = true, checkTop = true) => {
+      // check if vancas contains item visually
+      const leftContained =
+        ref.current.clientWidth >=
+        refContent.current.offsetWidth * zoom + Math.abs(left);
+      const topContained =
+        ref.current.clientHeight >=
+        refContent.current.offsetHeight * zoom + Math.abs(top);
+
+      return checkLeft && checkTop
+        ? leftContained && topContained
+        : checkLeft
+        ? leftContained
+        : topContained;
+    },
+    []
+  );
+
+  // initialize Scroller
   useEffect(() => {
     const func = scrollRender.bind(undefined, refContent.current);
     const s = new Scroller(
       (left, top, zoom) => {
-        func(left, top, zoom);
+        let offsetLeft = 0;
+        let offsetTop = 0;
+        //  make sure item is centered if containted by canvas
+        if (!s.__isAnimating) {
+          if (itemContained({ left, top, zoom }, true, false)) {
+            offsetLeft =
+              ref.current.clientWidth / 2 -
+              (refContent.current.offsetWidth * zoom) / 2;
+            // make sure item is still in view
+            offsetLeft = itemContained(
+              { left: left - offsetLeft, top, zoom },
+              true,
+              false
+            )
+              ? offsetLeft
+              : 0;
+          }
+          if (itemContained({ left, top, zoom }, false, true)) {
+            offsetTop =
+              ref.current.clientHeight / 2 -
+              (refContent.current.offsetHeight * zoom) / 2;
+
+            // make sure item is still in view
+            offsetTop = itemContained(
+              { left, top: top - offsetTop, zoom },
+              false,
+              true
+            )
+              ? offsetTop
+              : 0;
+          }
+        }
+        func(left - offsetLeft, top - offsetTop, zoom);
         setZoomLevel(zoom);
       },
       {
@@ -151,42 +205,67 @@ function CanvasImage({
     setScroller(s);
   }, []);
 
+  // lock scrolling in direction where item is fully contained
+  useEffect(() => {
+    if (!scroller) return;
+
+    if (itemContained(scroller.getValues(), true, false)) {
+      scroller.options.scrollingX = false;
+    } else {
+      scroller.options.scrollingX = true;
+    }
+    if (itemContained(scroller.getValues(), false, true)) {
+      scroller.options.scrollingY = false;
+    } else {
+      scroller.options.scrollingY = true;
+    }
+  }, [zoomLevel, scroller]);
+
   const resetZoom = useCallback(() => {
     if (!scroller) return false;
     scroller.scrollTo(0, 0, true, 1);
   }, [scroller]);
 
+  // reset zoom when not current child
   useEffect(() => {
     if (!focused) {
       resetZoom();
     }
   }, [focused]);
 
+  const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
+
+  // initialize dimensions
   useEffect(() => {
     if (!scroller) return;
 
     const rect = ref.current.getBoundingClientRect();
     const container = ref.current;
     const content = refContent.current;
-    scroller.setPosition(500, 500);
+    scroller.setPosition(0, 0);
     scroller.setDimensions(
       container.clientWidth,
       container.clientHeight,
       content.offsetWidth * 1.02,
       content.offsetHeight * 1.02
     );
-  }, [scroller]);
+  }, [scroller, refWidth, refHeight]);
 
+  // check whether item panning should be possible
   const canPan = useCallback(
     (e) => {
-      if (zoomLevel != 1) {
+      let panPossible = !itemContained(scroller.getValues());
+      if (panPossible) {
+        // TODO: check whether item is at boundary in the direction we're reading
+      }
+
+      if (panPossible) {
         e.preventDefault();
-        e.stopPropagation();
         return true;
       }
       return false;
     },
-    [zoomLevel]
+    [zoomLevel, scroller, itemContained, direction]
   );
 
   useDocumentEvent(
@@ -240,9 +319,9 @@ function CanvasImage({
       let zoomTop = e.pageY;
 
       if (zoomingOut) {
-        zoomTop =
-          ref.current.clientHeight - refContent.current.offsetHeight / 2;
-        zoomLeft = ref.current.clientWidth - refContent.current.offsetWidth / 2;
+        // if zooming out, make origin at center of canvas
+        zoomLeft = ref.current.clientWidth / 2;
+        zoomTop = ref.current.clientHeight / 2;
       }
 
       scroller.zoomTo(newZoom, true, zoomLeft, zoomTop);
@@ -256,7 +335,7 @@ function CanvasImage({
       ref={ref}
       draggable="false"
       onDragStart={() => false}
-      className="reader-item user-select-none ">
+      className="reader-item user-select-none">
       {focused && (
         <div className="actions text-center">
           {zoomLevel !== 1 && (
@@ -323,7 +402,8 @@ function Canvas({
   onFocusChild?: (number) => void;
 }) {
   const ref = useRef<HTMLDivElement>();
-  const refMouseDown = useRef(false);
+  const refMouseDownEvent = useRef<React.MouseEvent<HTMLDivElement>>(null);
+  const refIsPanning = useRef<boolean>(false);
   const refContent = useRef<HTMLDivElement>();
   const refScrollComplete = useRef<() => void>();
 
@@ -350,7 +430,7 @@ function Canvas({
   useDocumentEvent(
     'mousemove',
     (e) => {
-      if (!refMouseDown.current) {
+      if (!refIsPanning.current) {
         return;
       }
       scroller.doTouchMove(
@@ -370,11 +450,12 @@ function Canvas({
   useDocumentEvent(
     'mouseup',
     (e) => {
-      if (!refMouseDown.current) {
+      if (!refIsPanning.current) {
         return;
       }
 
       scroller.doTouchEnd(e.timeStamp);
+      refIsPanning.current = false;
     },
     {},
     [scroller]
@@ -412,6 +493,8 @@ function Canvas({
     () => !!window.ontouchstart
   );
 
+  const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
+
   useEffect(() => {
     if (!scroller) return;
 
@@ -428,7 +511,7 @@ function Canvas({
       content.offsetWidth,
       content.offsetHeight
     );
-  }, [children, scroller]);
+  }, [children, scroller, refWidth, refHeight]);
 
   const getCurrentChild = useCallback(() => {
     let child = 0;
@@ -470,8 +553,44 @@ function Canvas({
     <div
       ref={ref}
       className="reader-container user-select-none"
+      onClick={useCallback(
+        (e) => {
+          // distinguish drag from click
+          const delta = 5; // allow a small drag
+          const diffX = Math.abs(e.pageX - refMouseDownEvent.current.pageX);
+          const diffY = Math.abs(e.pageY - refMouseDownEvent.current.pageY);
+          if (diffX < delta && diffY < delta) {
+            const childrenArray = React.Children.toArray(children);
+            const childNumber = Math.max(
+              0,
+              Math.min(focusChild, childrenArray.length - 1)
+            );
+
+            switch (direction) {
+              case ReadingDirection.TopToBottom: {
+                if (e.pageY > ref.current.clientHeight / 2) {
+                  onFocusChild?.(childNumber + 1);
+                } else {
+                  onFocusChild?.(childNumber - 1);
+                }
+                break;
+              }
+              case ReadingDirection.LeftToRight: {
+                if (e.pageX > ref.current.clientWidth / 2) {
+                  onFocusChild?.(childNumber + 1);
+                } else {
+                  onFocusChild?.(childNumber - 1);
+                }
+                break;
+              }
+            }
+          }
+        },
+        [direction, focusChild, onFocusChild, children]
+      )}
       onMouseDown={useCallback(
         (e) => {
+          refMouseDownEvent.current = e;
           if (e.defaultPrevented) {
             return;
           }
@@ -484,8 +603,7 @@ function Canvas({
             ],
             e.timeStamp
           );
-
-          refMouseDown.current = true;
+          refIsPanning.current = true;
         },
         [scroller]
       )}>
@@ -528,6 +646,7 @@ export default function Reader() {
   }, [pageNumber]);
 
   const onFocusChild = useCallback((child) => {
+    console.log('Focusing child %d', child);
     setPageFocus(child);
   }, []);
 
