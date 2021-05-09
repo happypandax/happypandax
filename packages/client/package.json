@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@brainhubeu/react-carousel": "^2.0.3",
-    "@cycjimmy/scroller": "^1.1.0",
     "@grabrinc/isomorphic-logger": "^0.1.59",
     "@ts-stack/markdown": "^1.4.0",
+    "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66",
     "animate.css": "^4.1.1",
     "classnames": "^2.2.6",
     "darkreader": "^4.9.32",

@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  createContext,
+} from 'react';
 import React from 'react';
 import {
   Segment,
@@ -15,9 +22,23 @@ import {
   Button,
 } from 'semantic-ui-react';
 
-import Scroller from '@cycjimmy/scroller';
-import { useEvent, useMount } from 'react-use';
+import Scroller from '@twiddly/scroller';
+import { useEvent, useInterval, useMount } from 'react-use';
 import classNames from 'classnames';
+import t from '../misc/lang';
+import { useRefEvent, useDocumentEvent } from '../hooks/utils';
+
+export enum ReadingDirection {
+  TopToBottom,
+  LeftToRight,
+}
+
+export enum ItemFit {
+  Height,
+  Width,
+  Contain,
+  Auto,
+}
 
 export function windowedPages(page: number, size: number, total: number) {
   const start = 0;
@@ -88,103 +109,58 @@ function scrollRender(element: HTMLElement, left, top, zoom) {
   }
 }
 
-// patches Scroller.zoomTo
-function scrollerZoomTo(level, animate, originLeft, originTop, callback) {
-  if (!this.options.zooming) {
-    return;
-  }
+function CanvasImage({
+  href,
+  fit = ItemFit.Width,
 
-  // Add callback if exists
-  if (callback) {
-    this.__zoomComplete = callback;
-  }
-
-  // Stop deceleration
-  if (this.__isDecelerating) {
-    this.animate.stop(this.__isDecelerating);
-    this.__isDecelerating = false;
-  }
-
-  const oldLevel = this.__zoomLevel;
-
-  // Limit level according to configuration
-  level = Math.max(Math.min(level, this.options.maxZoom), this.options.minZoom);
-
-  // Normalize input origin to center of viewport if not defined
-  if (originLeft == null) {
-    originLeft = this.__clientWidth / 2;
-  }
-
-  if (originTop == null) {
-    originTop = this.__clientHeight / 2;
-  }
-
-  // Recompute maximum values while temporary tweaking maximum scroll ranges
-  this.__maxScrollLeft = this.__contentWidth * level - this.__clientWidth / 2;
-  this.__maxScrollTop = this.__contentHeight * level - this.__clientHeight / 2;
-
-  // Recompute left and top coordinates based on new zoom level
-  let left = ((originLeft + this.__scrollLeft) * level) / oldLevel - originLeft;
-  let top = ((originTop + this.__scrollTop) * level) / oldLevel - originTop;
-
-  // Limit x-axis
-  if (left > this.__maxScrollLeft) {
-    left = this.__maxScrollLeft;
-  } else if (left < 0 && level < 1) {
-    // if zomming out, center content
-    left = Math.min(left * level, 0);
-  }
-
-  // Limit y-axis
-  if (top > this.__maxScrollTop) {
-    top = this.__maxScrollTop;
-  }
-
-  // Push values out
-  this.__publish(left, top, level, animate);
-}
-
-function CanvasImage({ href }: { href: string; number: number }) {
+  focused,
+}: {
+  href: string;
+  number: number;
+  fit?: ItemFit;
+  focused?: boolean;
+}) {
   const preload = useRef(new Image());
   preload.current.src = href;
 
   const ref = useRef<HTMLDivElement>();
   const refContent = useRef<HTMLImageElement>();
+  const refMouseDown = useRef<boolean>(false);
 
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [scroller, setScroller] = useState<Scroller>();
 
   useEffect(() => {
-    const s = new Scroller(scrollRender.bind(undefined, refContent.current), {
-      scrollingX: false,
-      scrollingy: false,
-      zooming: true,
-      animating: true,
-      animationDuration: 250,
-    });
-
-    s.zoomTo = scrollerZoomTo.bind(s);
-
-    ref.current.addEventListener('wheel', function (e) {
-      const { zoom } = s.getValues();
-      e.detail;
-      const change = e.deltaY > 0 ? 0.8 : 1.33;
-
-      const zoomingOut = e.deltaY > 0 ? true : false;
-
-      let zoomLeft = e.clientX - ref.current.clientWidth / 2;
-      let zoomTop = e.clientY - ref.current.clientHeight / 2;
-
-      if (zoomingOut) {
-        zoomTop = -ref.current.clientHeight;
+    const func = scrollRender.bind(undefined, refContent.current);
+    const s = new Scroller(
+      (left, top, zoom) => {
+        func(left, top, zoom);
+        setZoomLevel(zoom);
+      },
+      {
+        scrollingX: true,
+        scrollingy: true,
+        bouncing: true,
+        locking: false,
+        zooming: true,
+        animating: true,
+        animationDuration: 250,
       }
-
-      s.zoomTo(zoom * change, true, zoomLeft, zoomTop);
-      e.preventDefault();
-      e.stopPropagation();
-    });
+    );
 
     setScroller(s);
   }, []);
+
+  const resetZoom = useCallback(() => {
+    if (!scroller) return false;
+    scroller.scrollTo(0, 0, true, 1);
+  }, [scroller]);
+
+  useEffect(() => {
+    if (!focused) {
+      resetZoom();
+    }
+  }, [focused]);
 
   useEffect(() => {
     if (!scroller) return;
@@ -192,17 +168,88 @@ function CanvasImage({ href }: { href: string; number: number }) {
     const rect = ref.current.getBoundingClientRect();
     const container = ref.current;
     const content = refContent.current;
-
-    console.log(rect);
-    console.log([container.clientLeft, container.clientTop]);
-
+    scroller.setPosition(500, 500);
     scroller.setDimensions(
       container.clientWidth,
       container.clientHeight,
-      content.offsetWidth,
-      content.offsetHeight
+      content.offsetWidth * 1.02,
+      content.offsetHeight * 1.02
     );
   }, [scroller]);
+
+  const canPan = useCallback(
+    (e) => {
+      if (zoomLevel != 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        return true;
+      }
+      return false;
+    },
+    [zoomLevel]
+  );
+
+  useDocumentEvent(
+    'mousemove',
+    (e) => {
+      if (!refMouseDown.current) {
+        return;
+      }
+      scroller.doTouchMove(
+        [
+          {
+            pageX: e.pageX,
+            pageY: e.pageY,
+          },
+        ],
+        e.timeStamp
+      );
+    },
+    {},
+    [scroller]
+  );
+
+  useDocumentEvent(
+    'mouseup',
+    (e) => {
+      if (!refMouseDown.current) {
+        return;
+      }
+
+      scroller.doTouchEnd(e.timeStamp);
+    },
+    {},
+    [scroller]
+  );
+
+  useRefEvent(
+    ref,
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const { zoom } = scroller.getValues();
+      e.detail;
+      const change = e.deltaY > 0 ? 0.8 : 1.33;
+
+      const newZoom = zoom * change;
+
+      const zoomingOut = e.deltaY > 0 ? true : false;
+
+      let zoomLeft = e.pageX;
+      let zoomTop = e.pageY;
+
+      if (zoomingOut) {
+        zoomTop =
+          ref.current.clientHeight - refContent.current.offsetHeight / 2;
+        zoomLeft = ref.current.clientWidth - refContent.current.offsetWidth / 2;
+      }
+
+      scroller.zoomTo(newZoom, true, zoomLeft, zoomTop);
+    },
+    { passive: false },
+    [scroller]
+  );
 
   return (
     <div
@@ -210,12 +257,55 @@ function CanvasImage({ href }: { href: string; number: number }) {
       draggable="false"
       onDragStart={() => false}
       className="reader-item user-select-none ">
+      {focused && (
+        <div className="actions text-center">
+          {zoomLevel !== 1 && (
+            <Button
+              onClick={resetZoom}
+              size="huge"
+              icon="zoom"
+              className="translucent-black">
+              <Icon name="close" />
+              {t`Reset zoom`}
+            </Button>
+          )}
+        </div>
+      )}
       <img
         draggable="false"
         ref={refContent}
-        onDragStart={() => false}
+        onDragStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }}
+        onMouseDownCapture={useCallback(
+          (e) => {
+            if (e.defaultPrevented) {
+              return;
+            }
+            if (canPan(e)) {
+              scroller.doTouchStart(
+                [
+                  {
+                    pageX: e.pageX,
+                    pageY: e.pageY,
+                  },
+                ],
+                e.timeStamp
+              );
+
+              refMouseDown.current = true;
+            }
+          },
+          [canPan, scroller]
+        )}
         src={href}
-        className="user-select-none"
+        className={classNames('', {
+          'fit-width': fit === ItemFit.Width,
+          'fit-height': fit === ItemFit.Height,
+          'fit-contain': fit === ItemFit.Contain,
+        })}
       />
     </div>
   );
@@ -223,14 +313,19 @@ function CanvasImage({ href }: { href: string; number: number }) {
 
 function Canvas({
   children,
-  focusPage,
+  direction = ReadingDirection.TopToBottom,
+  focusChild = 0,
+  onFocusChild,
 }: {
   children?: any;
-  focusPage: number;
+  direction?: ReadingDirection;
+  focusChild?: number;
+  onFocusChild?: (number) => void;
 }) {
   const ref = useRef<HTMLDivElement>();
   const refMouseDown = useRef(false);
   const refContent = useRef<HTMLDivElement>();
+  const refScrollComplete = useRef<() => void>();
 
   const [scroller, setScroller] = useState<Scroller>();
 
@@ -240,13 +335,25 @@ function Canvas({
       scrollingy: true,
       paging: true,
       animating: true,
-      animationDuration: 10,
+      animationDuration: 250,
+      scrollingComplete: () => {
+        refScrollComplete.current?.();
+      },
+      speedMultiplier: 1.15,
+      penetrationDeceleration: 0.1,
+      penetrationAcceleration: 0.12,
     });
 
-    s.zoomTo = scrollerZoomTo.bind(s);
+    setScroller(s);
+  }, []);
 
-    ref.current.addEventListener('mousedown', function (e) {
-      s.doTouchStart(
+  useDocumentEvent(
+    'mousemove',
+    (e) => {
+      if (!refMouseDown.current) {
+        return;
+      }
+      scroller.doTouchMove(
         [
           {
             pageX: e.pageX,
@@ -255,60 +362,55 @@ function Canvas({
         ],
         e.timeStamp
       );
+    },
+    {},
+    [scroller]
+  );
 
-      refMouseDown.current = true;
-    });
+  useDocumentEvent(
+    'mouseup',
+    (e) => {
+      if (!refMouseDown.current) {
+        return;
+      }
 
-    refContent.current.addEventListener('wheel', function (e) {
-      s.doMouseZoom(e.deltaY, e.timeStamp, e.pageX, e.pageY);
+      scroller.doTouchEnd(e.timeStamp);
+    },
+    {},
+    [scroller]
+  );
+
+  useRefEvent(
+    ref,
+    'touchstart',
+    (e) => {
+      scroller.doTouchStart(e.touches, e.timeStamp);
       e.preventDefault();
-      e.stopPropagation();
-    });
+    },
+    { passive: false },
+    [scroller],
+    () => !!window.ontouchstart
+  );
 
-    setScroller(s);
-  }, []);
+  useDocumentEvent(
+    'touchmove',
+    (e) => {
+      scroller.doTouchMove(e.touches, e.timeStamp);
+    },
+    {},
+    [scroller],
+    () => !!window.ontouchstart
+  );
 
-  useEvent('mousemove', (e) => {
-    if (!refMouseDown.current) {
-      return;
-    }
-    scroller.doTouchMove(
-      [
-        {
-          pageX: e.pageX,
-          pageY: e.pageY,
-        },
-      ],
-      e.timeStamp
-    );
-  });
-
-  useEvent('mouseup', (e) => {
-    if (!refMouseDown.current) {
-      return;
-    }
-
-    scroller.doTouchEnd(e.timeStamp);
-  });
-
-  useEffect(() => {
-    if (!scroller) return;
-
-    if (window.ontouchstart) {
-      ref.current.addEventListener('touchstart', function (e) {
-        scroller.doTouchStart(e.touches, e.timeStamp);
-        e.preventDefault();
-      });
-
-      document.addEventListener('touchmove', function (e) {
-        scroller.doTouchMove(e.touches, e.timeStamp);
-      });
-
-      document.addEventListener('touchend', function (e) {
-        scroller.doTouchEnd(e.timeStamp);
-      });
-    }
-  }, [scroller]);
+  useDocumentEvent(
+    'touchend',
+    (e) => {
+      scroller.doTouchEnd(e.timeStamp);
+    },
+    {},
+    [scroller],
+    () => !!window.ontouchstart
+  );
 
   useEffect(() => {
     if (!scroller) return;
@@ -328,10 +430,65 @@ function Canvas({
     );
   }, [children, scroller]);
 
-  useEffect(() => {}, []);
+  const getCurrentChild = useCallback(() => {
+    let child = 0;
+    if (!scroller) return child;
+    switch (direction) {
+      case ReadingDirection.TopToBottom: {
+        child =
+          (scroller.getValues().top + ref.current.clientHeight / 4) /
+          ref.current.clientHeight;
+        break;
+      }
+    }
+    return Math.floor(child);
+  }, [direction, scroller]);
+
+  useEffect(() => {
+    if (!scroller) return;
+    if (getCurrentChild() === focusChild) return;
+
+    const childrenArray = React.Children.toArray(children);
+    const childNumber = Math.max(
+      0,
+      Math.min(focusChild, childrenArray.length - 1)
+    );
+    const { left, top } = scroller.getValues();
+    if (direction === ReadingDirection.TopToBottom) {
+      scroller.scrollTo(left, childNumber * ref.current.clientHeight, true);
+    }
+  }, [children, focusChild, scroller, getCurrentChild]);
+
+  useEffect(() => {
+    if (!scroller) return;
+    refScrollComplete.current = () => {
+      onFocusChild?.(getCurrentChild());
+    };
+  }, [onFocusChild, getCurrentChild, scroller]);
 
   return (
-    <div ref={ref} className="reader-container user-select-none">
+    <div
+      ref={ref}
+      className="reader-container user-select-none"
+      onMouseDown={useCallback(
+        (e) => {
+          if (e.defaultPrevented) {
+            return;
+          }
+          scroller.doTouchStart(
+            [
+              {
+                pageX: e.pageX,
+                pageY: e.pageY,
+              },
+            ],
+            e.timeStamp
+          );
+
+          refMouseDown.current = true;
+        },
+        [scroller]
+      )}>
       <div
         ref={refContent}
         className={classNames(
@@ -346,27 +503,48 @@ function Canvas({
 
 export default function Reader() {
   const [pageNumber, setPage] = useState(0);
+  const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState([]);
 
   useEffect(() => {
     const windowed = windowedPages(pageNumber, 4, 15);
-    setPages(
-      windowed.map((p) => {
-        const d = {
-          number: p,
-          url:
-            'https://jhxnekt.ofkqjcvmzmnk.hath.network/h/b08842ef5480f5c4fe4f603bfba172ed8bb7f3d3-257916-1280-1808-jpg/keystamp=1620249900-61bce7e5e8;fileindex=75795344;xres=1280/001.jpg',
-        };
-        return d;
-      })
-    );
+    setPages([
+      {
+        number: 1,
+        url:
+          'https://jhxnekt.ofkqjcvmzmnk.hath.network/h/b08842ef5480f5c4fe4f603bfba172ed8bb7f3d3-257916-1280-1808-jpg/keystamp=1620249900-61bce7e5e8;fileindex=75795344;xres=1280/001.jpg',
+      },
+      {
+        number: 2,
+        url:
+          'https://vzhwsoo.erfaubxxqhnl.hath.network:2243/h/e70d7f13d7a1a89274d5116300045b4dd365c7d1-354604-1280-1808-jpg/keystamp=1620495900-710fe45b8a;fileindex=92521227;xres=1280/298.jpg',
+      },
+      {
+        number: 3,
+        url:
+          'https://rlpqxlg.wbybqtnmgqkg.hath.network/h/f018966783720a48e2512272f15a4f53a7289e6f-394452-1280-1808-jpg/keystamp=1620495900-0969018ada;fileindex=92521228;xres=1280/299.jpg',
+      },
+    ]);
   }, [pageNumber]);
+
+  const onFocusChild = useCallback((child) => {
+    setPageFocus(child);
+  }, []);
+
+  // useInterval(() => {
+  //     setPageFocus(Math.floor(Math.random() * (pages.length - 1 - 0 + 1)) + 0);
+  // }, 4000);
 
   return (
     <Segment inverted>
-      <Canvas focusPage={pageNumber}>
-        {pages.map((p) => (
-          <CanvasImage key={p.number} href={p.url} number={p.number} />
+      <Canvas focusChild={pageFocus} onFocusChild={onFocusChild}>
+        {pages.map((p, idx) => (
+          <CanvasImage
+            key={p.number}
+            href={p.url}
+            number={p.number}
+            focused={idx === pageFocus}
+          />
         ))}
       </Canvas>
     </Segment>

@@ -1505,13 +1505,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cycjimmy/scroller@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@cycjimmy/scroller@npm:1.1.0"
-  checksum: 32a39b7b00952348fa30d9244f0556c7da144568c6de1725b54f7899cc0f16ba8136127bfb99530e49758fafb05c3af8331b4a4c3ccf798c4a3bc5aff8903b76
-  languageName: node
-  linkType: hard
-
 "@emotion/cache@npm:^10.0.27":
   version: 10.0.29
   resolution: "@emotion/cache@npm:10.0.29"
@@ -1720,7 +1713,6 @@ __metadata:
   dependencies:
     "@babel/core": ^7.13.10
     "@brainhubeu/react-carousel": ^2.0.3
-    "@cycjimmy/scroller": ^1.1.0
     "@grabrinc/isomorphic-logger": ^0.1.59
     "@mdx-js/react": ^1.6.22
     "@storybook/addon-actions": ^6.1.21
@@ -1729,6 +1721,7 @@ __metadata:
     "@storybook/addon-links": ^6.1.21
     "@storybook/react": ^6.1.21
     "@ts-stack/markdown": ^1.4.0
+    "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66"
     "@types/classnames": ^2.2.3
     "@types/lodash": ^4.14.108
     "@types/node": ^14.14.35
@@ -3119,6 +3112,13 @@ __metadata:
   dependencies:
     tslib: ^2.0.0
   checksum: 25192a80fa421bac1bdb1568a6865cee56a2c1753271fffb9337c347c771ed6caf1df29e963ecacaca59a03b0eaafdcfeba7281dc0d5be767e960bf17f00435e
+  languageName: node
+  linkType: hard
+
+"@twiddly/scroller@https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66":
+  version: 1.1.0
+  resolution: "@twiddly/scroller@https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66"
+  checksum: d820a59160e398ec65f53b8044ef1cdef17e9333e48eb3d315a361c156f9e22e4157668fba37685a9bc824e3d6bb31ca0c6df7a3b3b4af47df2911ad57e0a263
   languageName: node
   linkType: hard
 
