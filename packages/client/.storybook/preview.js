@@ -1,7 +1,7 @@
 import { withThemes } from 'storybook-addon-themes/react'; // <- or your storybook framework
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Theme } from '../components/Misc';
+import Theme from '../components/Theme';
 import '../semantic/dist/semantic.css';
 import '../style/global.css';
 import 'animate.css';

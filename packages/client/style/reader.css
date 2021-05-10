@@ -45,22 +45,26 @@
 }
 
 .reader-container .reader-content .reader-item img.fit-width {
+    max-width: 100%;
+    height: auto;
+}
+
+.reader-container .reader-content .reader-item img.fit-width.stretch {
+    max-width: unset;
     width: 100%;
     height: auto;
 }
 
 .reader-container .reader-content .reader-item img.fit-height {
     width: auto;
+    max-height: 100%;
+}
+
+.reader-container .reader-content .reader-item img.fit-height.stretch {
+    width: auto;
+    max-height: unset;
     height: 100%;
 }
-
-.reader-container .reader-content .reader-item img.fit-contain {
-   object-fit: scale-down;
-}
-
-.reader-container .reader-content .reader-item img.fit-contain-stretch {
-    object-fit: contain;
- }
 
 .reader-container .reader-content .reader-item .actions {
     position: absolute;

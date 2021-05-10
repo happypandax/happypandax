@@ -1,11 +1,13 @@
 import type { AppProps } from 'next/app';
+import dynamic from 'next/dynamic';
 import setupLogger from '../misc/logger';
 
 import '../semantic/dist/semantic.css';
 import '../style/global.css';
 import 'animate.css';
 import 'react-virtualized/styles.css';
-import { Theme } from '../components/Misc';
+
+const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

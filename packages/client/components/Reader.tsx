@@ -23,11 +23,19 @@ import {
 } from 'semantic-ui-react';
 
 import Scroller from '@twiddly/scroller';
-import { useEvent, useInterval, useMount } from 'react-use';
+import {
+  useEvent,
+  useInterval,
+  useKey,
+  useKeyPress,
+  useKeyPressEvent,
+  useMount,
+} from 'react-use';
 import useMeasureDirty from 'react-use/lib/useMeasureDirty';
 import classNames from 'classnames';
 import t from '../misc/lang';
 import { useRefEvent, useDocumentEvent } from '../hooks/utils';
+import _ from 'lodash';
 
 export enum ReadingDirection {
   TopToBottom,
@@ -112,13 +120,17 @@ function scrollRender(element: HTMLElement, left, top, zoom) {
 
 function CanvasImage({
   href,
-  fit = ItemFit.Width,
+  fit = ItemFit.Auto,
+  stretchFit = false,
   direction = ReadingDirection.TopToBottom,
+  wheelPan,
   focused,
 }: {
   href: string;
   number: number;
   fit?: ItemFit;
+  stretchFit?: boolean;
+  wheelPan?: boolean;
   direction?: ReadingDirection;
   focused?: boolean;
 }) {
@@ -128,9 +140,13 @@ function CanvasImage({
   const ref = useRef<HTMLDivElement>();
   const refContent = useRef<HTMLImageElement>();
   const refMouseDown = useRef<boolean>(false);
+  const refIsScrollPanning = useRef<boolean>(false);
+  const refScrollPan = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const refControlKeyPressed = useRef(false);
 
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [scroller, setScroller] = useState<Scroller>();
+  const [itemFit, setItemFit] = useState<ItemFit>();
 
   const itemContained = useCallback(
     ({ left, top, zoom }, checkLeft = true, checkTop = true) => {
@@ -151,6 +167,37 @@ function CanvasImage({
     []
   );
 
+  useKeyPressEvent(
+    'Control',
+    () => {
+      refControlKeyPressed.current = true;
+    },
+    () => {
+      refControlKeyPressed.current = false;
+    }
+  );
+
+  useEffect(() => {
+    const { offsetHeight, offsetWidth } = refContent.current;
+    if (fit === ItemFit.Contain) {
+      if (offsetWidth >= offsetHeight) {
+        setItemFit(ItemFit.Width);
+      } else {
+        setItemFit(ItemFit.Height);
+      }
+    } else if (fit === ItemFit.Auto) {
+      if (offsetHeight > offsetWidth) {
+        setItemFit(ItemFit.Width);
+      } else if (offsetWidth > offsetHeight) {
+        setItemFit(ItemFit.Height);
+      } else {
+        setItemFit(undefined);
+      }
+    } else {
+      setItemFit(fit);
+    }
+  }, [fit]);
+
   // initialize Scroller
   useEffect(() => {
     const func = scrollRender.bind(undefined, refContent.current);
@@ -159,35 +206,39 @@ function CanvasImage({
         let offsetLeft = 0;
         let offsetTop = 0;
         //  make sure item is centered if containted by canvas
-        if (!s.__isAnimating) {
-          if (itemContained({ left, top, zoom }, true, false)) {
-            offsetLeft =
-              ref.current.clientWidth / 2 -
-              (refContent.current.offsetWidth * zoom) / 2;
-            // make sure item is still in view
-            offsetLeft = itemContained(
-              { left: left - offsetLeft, top, zoom },
-              true,
-              false
-            )
-              ? offsetLeft
-              : 0;
-          }
-          if (itemContained({ left, top, zoom }, false, true)) {
-            offsetTop =
-              ref.current.clientHeight / 2 -
-              (refContent.current.offsetHeight * zoom) / 2;
-
-            // make sure item is still in view
-            offsetTop = itemContained(
-              { left, top: top - offsetTop, zoom },
-              false,
-              true
-            )
-              ? offsetTop
-              : 0;
-          }
+        if (itemContained({ left, top, zoom }, true, false)) {
+          offsetLeft =
+            (ref.current.clientWidth - left) / 2 -
+            (refContent.current.offsetWidth * zoom) / 2;
+          // console.log([
+          //   ref.current.clientWidth,
+          //   refContent.current.offsetWidth,
+          // ]);
+          // make sure item is still in view
+          // offsetLeft = itemContained(
+          //   { left: left - offsetLeft, top, zoom },
+          //   true,
+          //   false
+          // )
+          //   ? offsetLeft
+          //   : 0;
         }
+        if (itemContained({ left, top, zoom }, false, true)) {
+          offsetTop =
+            (ref.current.clientHeight - top) / 2 -
+            (refContent.current.offsetHeight * zoom) / 2;
+
+          // make sure item is still in view
+          // offsetTop = itemContained(
+          //   { left, top: top - offsetTop, zoom },
+          //   false,
+          //   true
+          // )
+          //   ? offsetTop
+          //   : 0;
+        }
+
+        // console.log([left, top, offsetLeft, offsetTop, zoom]);
         func(left - offsetLeft, top - offsetTop, zoom);
         setZoomLevel(zoom);
       },
@@ -221,10 +272,17 @@ function CanvasImage({
     }
   }, [zoomLevel, scroller]);
 
-  const resetZoom = useCallback(() => {
-    if (!scroller) return false;
-    scroller.scrollTo(0, 0, true, 1);
-  }, [scroller]);
+  const resetZoom = useCallback(
+    (e: React.MouseEvent<HTMLElement> = undefined) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (!scroller) return false;
+      scroller.scrollTo(0, 0, true, 1);
+    },
+    [scroller]
+  );
 
   // reset zoom when not current child
   useEffect(() => {
@@ -239,7 +297,6 @@ function CanvasImage({
   useEffect(() => {
     if (!scroller) return;
 
-    const rect = ref.current.getBoundingClientRect();
     const container = ref.current;
     const content = refContent.current;
     scroller.setPosition(0, 0);
@@ -249,18 +306,15 @@ function CanvasImage({
       content.offsetWidth * 1.02,
       content.offsetHeight * 1.02
     );
-  }, [scroller, refWidth, refHeight]);
+  }, [scroller, refWidth, refHeight, itemFit]);
 
   // check whether item panning should be possible
   const canPan = useCallback(
-    (e) => {
+    (e = undefined) => {
       let panPossible = !itemContained(scroller.getValues());
-      if (panPossible) {
-        // TODO: check whether item is at boundary in the direction we're reading
-      }
 
       if (panPossible) {
-        e.preventDefault();
+        if (e) e.preventDefault();
         return true;
       }
       return false;
@@ -301,33 +355,121 @@ function CanvasImage({
     [scroller]
   );
 
+  const onScrollPanEnd = useCallback(
+    _.debounce((e: WheelEvent) => {
+      refIsScrollPanning.current = false;
+    }, 250),
+    [scroller]
+  );
+
   useRefEvent(
     ref,
     'wheel',
     (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const { zoom } = scroller.getValues();
-      e.detail;
-      const change = e.deltaY > 0 ? 0.8 : 1.33;
+      if (!wheelPan || refControlKeyPressed.current) {
+        // zoom with scroll
 
-      const newZoom = zoom * change;
+        e.preventDefault();
+        e.stopPropagation();
+        const { zoom, left, top } = scroller.getValues();
+        const change = e.deltaY > 0 ? 0.88 : 1.28;
 
-      const zoomingOut = e.deltaY > 0 ? true : false;
+        const newZoom = zoom * change;
 
-      let zoomLeft = e.pageX;
-      let zoomTop = e.pageY;
+        const zoomingOut = e.deltaY > 0 ? true : false;
 
-      if (zoomingOut) {
-        // if zooming out, make origin at center of canvas
-        zoomLeft = ref.current.clientWidth / 2;
-        zoomTop = ref.current.clientHeight / 2;
+        let zoomLeft = e.pageX - ref.current.clientWidth / 2;
+        let zoomTop = e.pageY - ref.current.clientHeight / 2;
+
+        if (zoomingOut) {
+          // if zooming out, always zoom out from same origin
+          zoomLeft = 0;
+          zoomTop = 0;
+        }
+
+        scroller.zoomTo(newZoom, true, zoomLeft, zoomTop);
+      } else {
+        // pan with scroll
+        if (canPan()) {
+          const { left, top, zoom } = scroller.getValues();
+          const {
+            left: scrollMaxLeft,
+            top: scrollMaxTop,
+          } = scroller.getScrollMax();
+
+          if (!refIsScrollPanning.current) {
+            refIsScrollPanning.current = true;
+            refScrollPan.current.x = left;
+            refScrollPan.current.y = top;
+          }
+
+          const force = 0.15;
+
+          const deltaX =
+            e.deltaY > 0
+              ? ref.current.clientWidth * force
+              : -ref.current.clientWidth * force;
+
+          const deltaY =
+            e.deltaY > 0
+              ? ref.current.clientHeight * force
+              : -ref.current.clientHeight * force;
+
+          const scrollingDown = e.deltaY > 0 ? true : false;
+
+          // check if item has reached boundary (this will always only check the boundary in y-axis since we're assuming height > width for manga)
+          // can be improved to take into account reading direction, item fit and aspect ratio
+          switch (direction) {
+            case ReadingDirection.LeftToRight:
+            case ReadingDirection.TopToBottom: {
+              if (refScrollPan.current.y === top) {
+                if (scrollingDown && refScrollPan.current.y >= scrollMaxTop) {
+                  return;
+                }
+                if (!scrollingDown && refScrollPan.current.y <= 0) {
+                  return;
+                }
+              }
+              break;
+            }
+          }
+
+          e.preventDefault();
+          e.stopPropagation();
+
+          // sroll in the reading direction (this will always scroll in y-axis since we're assuming height > width for manga)
+          // can be improved to take into account reading direction, item fit and aspect ratio
+          switch (direction) {
+            case ReadingDirection.LeftToRight:
+            case ReadingDirection.TopToBottom:
+              refScrollPan.current.y = Math.max(
+                0,
+                Math.min(refScrollPan.current.y + deltaY, scrollMaxTop)
+              );
+              break;
+            // case ReadingDirection.LeftToRight:
+            //   refScrollPan.current.x = Math.max(
+            //     0,
+            //     Math.min(
+            //       refScrollPan.current.x + deltaX,
+            //       refContent.current.offsetWidth * (1 - force)
+            //     )
+            //   );
+            //   break;
+          }
+
+          scroller.scrollTo(
+            refScrollPan.current.x,
+            refScrollPan.current.y,
+            true
+          );
+
+          onScrollPanEnd(e);
+        }
       }
-
-      scroller.zoomTo(newZoom, true, zoomLeft, zoomTop);
     },
     { passive: false },
-    [scroller]
+    [scroller, wheelPan]
   );
 
   return (
@@ -381,9 +523,9 @@ function CanvasImage({
         )}
         src={href}
         className={classNames('', {
-          'fit-width': fit === ItemFit.Width,
-          'fit-height': fit === ItemFit.Height,
-          'fit-contain': fit === ItemFit.Contain,
+          'fit-width': itemFit === ItemFit.Width,
+          'fit-height': itemFit === ItemFit.Height,
+          stretch: stretchFit,
         })}
       />
     </div>
@@ -394,22 +536,27 @@ function Canvas({
   children,
   direction = ReadingDirection.TopToBottom,
   focusChild = 0,
+  wheelPan,
   onFocusChild,
 }: {
   children?: any;
   direction?: ReadingDirection;
   focusChild?: number;
+  wheelPan?: boolean;
   onFocusChild?: (number) => void;
 }) {
   const ref = useRef<HTMLDivElement>();
   const refMouseDownEvent = useRef<React.MouseEvent<HTMLDivElement>>(null);
   const refIsPanning = useRef<boolean>(false);
+  const refIsScrollPanning = useRef<boolean>(false);
+  const refScrollPan = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const refContent = useRef<HTMLDivElement>();
   const refScrollComplete = useRef<() => void>();
 
   const [scroller, setScroller] = useState<Scroller>();
 
   useEffect(() => {
+    ref.current.focus();
     const s = new Scroller(scrollRender.bind(undefined, refContent.current), {
       scrollingX: false,
       scrollingy: true,
@@ -493,6 +640,72 @@ function Canvas({
     () => !!window.ontouchstart
   );
 
+  const onScrollPanEnd = useCallback(
+    _.debounce((e: WheelEvent) => {
+      refIsScrollPanning.current = false;
+    }, 250),
+    [scroller]
+  );
+
+  useRefEvent(
+    ref,
+    'wheel',
+    (e) => {
+      if (e.defaultPrevented || !wheelPan) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!refIsScrollPanning.current) {
+        refIsScrollPanning.current = true;
+        const { left, top } = scroller.getValues();
+        refScrollPan.current.x = left;
+        refScrollPan.current.y = top;
+      }
+
+      const force = 0.33;
+
+      const deltaX =
+        e.deltaY > 0
+          ? ref.current.clientWidth * force
+          : -ref.current.clientWidth * force;
+
+      const deltaY =
+        e.deltaY > 0
+          ? ref.current.clientHeight * force
+          : -ref.current.clientHeight * force;
+
+      switch (direction) {
+        case ReadingDirection.TopToBottom:
+          refScrollPan.current.y = Math.max(
+            ref.current.clientHeight * force,
+            Math.min(
+              refScrollPan.current.y + deltaY,
+              refContent.current.offsetHeight * (1 - force)
+            )
+          );
+          break;
+        case ReadingDirection.LeftToRight:
+          refScrollPan.current.x = Math.max(
+            ref.current.clientWidth * force,
+            Math.min(
+              refScrollPan.current.x + deltaX,
+              refContent.current.offsetWidth * (1 - force)
+            )
+          );
+          break;
+      }
+
+      scroller.scrollTo(refScrollPan.current.x, refScrollPan.current.y, true);
+
+      onScrollPanEnd(e);
+    },
+    { passive: false },
+    [scroller, onScrollPanEnd, direction, wheelPan]
+  );
+
   const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
 
   useEffect(() => {
@@ -552,9 +765,11 @@ function Canvas({
   return (
     <div
       ref={ref}
-      className="reader-container user-select-none"
+      className="reader-container"
+      tabIndex="-1"
       onClick={useCallback(
         (e) => {
+          ref.current.focus();
           // distinguish drag from click
           const delta = 5; // allow a small drag
           const diffX = Math.abs(e.pageX - refMouseDownEvent.current.pageX);
@@ -566,19 +781,25 @@ function Canvas({
               Math.min(focusChild, childrenArray.length - 1)
             );
 
+            const deadSpaceX = ref.current.clientWidth * 0.1;
+            const deadSpaceY = ref.current.clientHeight * 0.1;
+
             switch (direction) {
               case ReadingDirection.TopToBottom: {
-                if (e.pageY > ref.current.clientHeight / 2) {
+                if (e.pageY > ref.current.clientHeight / 2 + deadSpaceY) {
                   onFocusChild?.(childNumber + 1);
-                } else {
+                } else if (
+                  e.pageY <
+                  ref.current.clientHeight / 2 - deadSpaceY
+                ) {
                   onFocusChild?.(childNumber - 1);
                 }
                 break;
               }
               case ReadingDirection.LeftToRight: {
-                if (e.pageX > ref.current.clientWidth / 2) {
+                if (e.pageX > ref.current.clientWidth / 2 + deadSpaceX) {
                   onFocusChild?.(childNumber + 1);
-                } else {
+                } else if (e.pageX > ref.current.clientWidth / 2 - deadSpaceX) {
                   onFocusChild?.(childNumber - 1);
                 }
                 break;
@@ -630,25 +851,29 @@ export default function Reader() {
       {
         number: 1,
         url:
-          'https://jhxnekt.ofkqjcvmzmnk.hath.network/h/b08842ef5480f5c4fe4f603bfba172ed8bb7f3d3-257916-1280-1808-jpg/keystamp=1620249900-61bce7e5e8;fileindex=75795344;xres=1280/001.jpg',
+          'https://chraqjj.uqpgakytxkuh.hath.network:2242/h/b08842ef5480f5c4fe4f603bfba172ed8bb7f3d3-257916-1280-1808-jpg/keystamp=1620667800-826b1fe3b7;fileindex=75795344;xres=1280/001.jpg',
       },
       {
         number: 2,
         url:
-          'https://vzhwsoo.erfaubxxqhnl.hath.network:2243/h/e70d7f13d7a1a89274d5116300045b4dd365c7d1-354604-1280-1808-jpg/keystamp=1620495900-710fe45b8a;fileindex=92521227;xres=1280/298.jpg',
+          'https://zgpiqap.kqpipytyzhaf.hath.network/h/746c8edb7cbefe8725c7ab6215cf79b0257ece9b-365555-1280-1833-jpg/keystamp=1620667800-0c72865141;fileindex=92420511;xres=2400/004.jpg',
       },
       {
         number: 3,
         url:
-          'https://rlpqxlg.wbybqtnmgqkg.hath.network/h/f018966783720a48e2512272f15a4f53a7289e6f-394452-1280-1808-jpg/keystamp=1620495900-0969018ada;fileindex=92521228;xres=1280/299.jpg',
+          'https://bghyplb.kdbxcwmghdty.hath.network/h/c7d9d6ab702826fb4cd17b58bf0f39babed35bfc-337652-1280-1818-jpg/keystamp=1620667800-00111ba459;fileindex=92420512;xres=2400/005.jpg',
       },
     ]);
   }, [pageNumber]);
 
-  const onFocusChild = useCallback((child) => {
-    console.log('Focusing child %d', child);
-    setPageFocus(child);
-  }, []);
+  const onFocusChild = useCallback(
+    (child) => {
+      const childNumber = Math.max(0, Math.min(child, pages.length - 1));
+      console.log('Focusing child %d', childNumber);
+      setPageFocus(childNumber);
+    },
+    [pages]
+  );
 
   // useInterval(() => {
   //     setPageFocus(Math.floor(Math.random() * (pages.length - 1 - 0 + 1)) + 0);
@@ -656,12 +881,16 @@ export default function Reader() {
 
   return (
     <Segment inverted>
-      <Canvas focusChild={pageFocus} onFocusChild={onFocusChild}>
+      <Canvas
+        wheelPan={true}
+        focusChild={pageFocus}
+        onFocusChild={onFocusChild}>
         {pages.map((p, idx) => (
           <CanvasImage
             key={p.number}
             href={p.url}
             number={p.number}
+            wheelPan={true}
             focused={idx === pageFocus}
           />
         ))}
