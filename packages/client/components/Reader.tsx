@@ -123,14 +123,13 @@ function CanvasImage({
   fit = ItemFit.Auto,
   stretchFit = false,
   direction = ReadingDirection.TopToBottom,
-  wheelPan,
+  wheelZoom,
   focused,
 }: {
   href: string;
-  number: number;
   fit?: ItemFit;
   stretchFit?: boolean;
-  wheelPan?: boolean;
+  wheelZoom?: boolean;
   direction?: ReadingDirection;
   focused?: boolean;
 }) {
@@ -366,7 +365,7 @@ function CanvasImage({
     ref,
     'wheel',
     (e) => {
-      if (!wheelPan || refControlKeyPressed.current) {
+      if (wheelZoom || refControlKeyPressed.current) {
         // zoom with scroll
 
         e.preventDefault();
@@ -469,7 +468,7 @@ function CanvasImage({
       }
     },
     { passive: false },
-    [scroller, wheelPan]
+    [scroller, wheelZoom]
   );
 
   return (
@@ -536,13 +535,15 @@ function Canvas({
   children,
   direction = ReadingDirection.TopToBottom,
   focusChild = 0,
-  wheelPan,
+  wheelZoom,
+  label,
   onFocusChild,
 }: {
   children?: any;
   direction?: ReadingDirection;
+  label?: React.ReactNode;
   focusChild?: number;
-  wheelPan?: boolean;
+  wheelZoom?: boolean;
   onFocusChild?: (number) => void;
 }) {
   const ref = useRef<HTMLDivElement>();
@@ -651,7 +652,7 @@ function Canvas({
     ref,
     'wheel',
     (e) => {
-      if (e.defaultPrevented || !wheelPan) {
+      if (e.defaultPrevented || wheelZoom) {
         return;
       }
 
@@ -703,7 +704,7 @@ function Canvas({
       onScrollPanEnd(e);
     },
     { passive: false },
-    [scroller, onScrollPanEnd, direction, wheelPan]
+    [scroller, onScrollPanEnd, direction, wheelZoom]
   );
 
   const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
@@ -766,7 +767,7 @@ function Canvas({
     <div
       ref={ref}
       className="reader-container"
-      tabIndex="-1"
+      tabIndex={-1}
       onClick={useCallback(
         (e) => {
           ref.current.focus();
@@ -828,6 +829,7 @@ function Canvas({
         },
         [scroller]
       )}>
+      <div className="top-content text-center">{!!label && label}</div>
       <div
         ref={refContent}
         className={classNames(
@@ -841,7 +843,8 @@ function Canvas({
 }
 
 export default function Reader() {
-  const [pageNumber, setPage] = useState(0);
+  const [pageCount, setPageCount] = useState(3);
+  const [pageNumber, setPageNumber] = useState(1);
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState([]);
 
@@ -871,6 +874,7 @@ export default function Reader() {
       const childNumber = Math.max(0, Math.min(child, pages.length - 1));
       console.log('Focusing child %d', childNumber);
       setPageFocus(childNumber);
+      setPageNumber(childNumber + 1);
     },
     [pages]
   );
@@ -882,15 +886,22 @@ export default function Reader() {
   return (
     <Segment inverted>
       <Canvas
-        wheelPan={true}
+        wheelZoom={false}
+        label={useMemo(
+          () => (
+            <Label size="big" className="translucent-black">
+              {pageNumber}/{pageCount}
+            </Label>
+          ),
+          [pageNumber, pageCount]
+        )}
         focusChild={pageFocus}
         onFocusChild={onFocusChild}>
         {pages.map((p, idx) => (
           <CanvasImage
             key={p.number}
             href={p.url}
-            number={p.number}
-            wheelPan={true}
+            wheelZoom={false}
             focused={idx === pageFocus}
           />
         ))}
