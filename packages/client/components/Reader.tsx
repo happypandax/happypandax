@@ -25,7 +25,7 @@ import {
 import Scroller from '@twiddly/scroller';
 import {
   useEvent,
-  useInterval,
+  useFullscreen,
   useKey,
   useKeyPress,
   useKeyPressEvent,
@@ -34,8 +34,9 @@ import {
 import useMeasureDirty from 'react-use/lib/useMeasureDirty';
 import classNames from 'classnames';
 import t from '../misc/lang';
-import { useRefEvent, useDocumentEvent } from '../hooks/utils';
+import { useRefEvent, useDocumentEvent, useInterval } from '../hooks/utils';
 import _ from 'lodash';
+import { useLayoutEffect } from 'react';
 
 export enum ReadingDirection {
   TopToBottom,
@@ -535,6 +536,8 @@ function Canvas({
   children,
   direction = ReadingDirection.TopToBottom,
   focusChild = 0,
+  autoNavigateInterval = 5000,
+  autoNavigate,
   wheelZoom,
   label,
   onFocusChild,
@@ -542,8 +545,10 @@ function Canvas({
   children?: any;
   direction?: ReadingDirection;
   label?: React.ReactNode;
+  autoNavigateInterval?: number;
   focusChild?: number;
   wheelZoom?: boolean;
+  autoNavigate?: boolean;
   onFocusChild?: (number) => void;
 }) {
   const ref = useRef<HTMLDivElement>();
@@ -553,6 +558,10 @@ function Canvas({
   const refScrollPan = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const refContent = useRef<HTMLDivElement>();
   const refScrollComplete = useRef<() => void>();
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const isFullscreen = useFullscreen(ref, showFullscreen, {
+    onClose: () => setShowFullscreen(false),
+  });
 
   const [scroller, setScroller] = useState<Scroller>();
 
@@ -709,6 +718,7 @@ function Canvas({
 
   const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
 
+  // set scroll area dimensions
   useEffect(() => {
     if (!scroller) return;
 
@@ -741,7 +751,40 @@ function Canvas({
     return Math.floor(child);
   }, [direction, scroller]);
 
-  useEffect(() => {
+  const getNextChild = useCallback(() => {
+    switch (direction) {
+      case ReadingDirection.LeftToRight:
+      case ReadingDirection.TopToBottom:
+        return focusChild + 1;
+    }
+  }, [direction, focusChild]);
+
+  const scrollToChild = useCallback(
+    (childNumber: number, animate = true) => {
+      const { left, top } = scroller.getValues();
+
+      switch (direction) {
+        case ReadingDirection.TopToBottom:
+          scroller.scrollTo(
+            left,
+            childNumber * ref.current.clientHeight,
+            animate
+          );
+          break;
+        case ReadingDirection.LeftToRight:
+          scroller.scrollTo(
+            childNumber * ref.current.clientWidth,
+            top,
+            animate
+          );
+          break;
+      }
+    },
+    [scroller]
+  );
+
+  // make sure focused child is in viewport
+  useLayoutEffect(() => {
     if (!scroller) return;
     if (getCurrentChild() === focusChild) return;
 
@@ -750,24 +793,36 @@ function Canvas({
       0,
       Math.min(focusChild, childrenArray.length - 1)
     );
-    const { left, top } = scroller.getValues();
-    if (direction === ReadingDirection.TopToBottom) {
-      scroller.scrollTo(left, childNumber * ref.current.clientHeight, true);
-    }
-  }, [children, focusChild, scroller, getCurrentChild]);
 
+    scrollToChild(childNumber, false);
+  }, [scrollToChild, getCurrentChild, focusChild, children]);
+
+  // reset scroll to current child
   useEffect(() => {
     if (!scroller) return;
     refScrollComplete.current = () => {
-      onFocusChild?.(getCurrentChild());
+      const child = getCurrentChild();
+      onFocusChild?.(child);
     };
   }, [onFocusChild, getCurrentChild, scroller]);
+
+  // auto navigate
+  useInterval(
+    () => {
+      scrollToChild(getNextChild(), true);
+    },
+    autoNavigate ? autoNavigateInterval : null,
+    [getNextChild]
+  );
 
   return (
     <div
       ref={ref}
       className="reader-container"
       tabIndex={-1}
+      onDoubleClick={useCallback(() => {
+        setShowFullscreen(!showFullscreen);
+      }, [showFullscreen])}
       onClick={useCallback(
         (e) => {
           ref.current.focus();
@@ -784,27 +839,32 @@ function Canvas({
 
             const deadSpaceX = ref.current.clientWidth * 0.1;
             const deadSpaceY = ref.current.clientHeight * 0.1;
+            let nextChildNumber = null as number;
 
             switch (direction) {
               case ReadingDirection.TopToBottom: {
                 if (e.pageY > ref.current.clientHeight / 2 + deadSpaceY) {
-                  onFocusChild?.(childNumber + 1);
+                  nextChildNumber = childNumber + 1;
                 } else if (
                   e.pageY <
                   ref.current.clientHeight / 2 - deadSpaceY
                 ) {
-                  onFocusChild?.(childNumber - 1);
+                  nextChildNumber = childNumber - 1;
                 }
                 break;
               }
               case ReadingDirection.LeftToRight: {
                 if (e.pageX > ref.current.clientWidth / 2 + deadSpaceX) {
-                  onFocusChild?.(childNumber + 1);
+                  nextChildNumber = childNumber + 1;
                 } else if (e.pageX > ref.current.clientWidth / 2 - deadSpaceX) {
-                  onFocusChild?.(childNumber - 1);
+                  nextChildNumber = childNumber - 1;
                 }
                 break;
               }
+            }
+
+            if (nextChildNumber !== null) {
+              scrollToChild(nextChildNumber, true);
             }
           }
         },
@@ -842,50 +902,52 @@ function Canvas({
   );
 }
 
+const PLACEHOLDERS = _.range(59).map((p) => ({
+  number: p + 1,
+  url: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
+    16
+  )}cc/ffffff?text=Page+${p + 1}`,
+}));
+
 export default function Reader() {
-  const [pageCount, setPageCount] = useState(3);
+  const windowSize = 6;
+  const [pageCount, setPageCount] = useState(PLACEHOLDERS.length);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState([]);
 
   useEffect(() => {
-    const windowed = windowedPages(pageNumber, 4, 15);
-    setPages([
-      {
-        number: 1,
-        url:
-          'https://chraqjj.uqpgakytxkuh.hath.network:2242/h/b08842ef5480f5c4fe4f603bfba172ed8bb7f3d3-257916-1280-1808-jpg/keystamp=1620667800-826b1fe3b7;fileindex=75795344;xres=1280/001.jpg',
-      },
-      {
-        number: 2,
-        url:
-          'https://zgpiqap.kqpipytyzhaf.hath.network/h/746c8edb7cbefe8725c7ab6215cf79b0257ece9b-365555-1280-1833-jpg/keystamp=1620667800-0c72865141;fileindex=92420511;xres=2400/004.jpg',
-      },
-      {
-        number: 3,
-        url:
-          'https://bghyplb.kdbxcwmghdty.hath.network/h/c7d9d6ab702826fb4cd17b58bf0f39babed35bfc-337652-1280-1818-jpg/keystamp=1620667800-00111ba459;fileindex=92420512;xres=2400/005.jpg',
-      },
-    ]);
-  }, [pageNumber]);
+    const windowed = windowedPages(pageNumber, windowSize, pageCount);
+    setPages(
+      windowed.map((n, i) => {
+        if (n === pageNumber) {
+          setPageFocus(i % windowSize);
+        }
+        return PLACEHOLDERS[n - 1];
+      })
+    );
+  }, [pageCount, pageNumber]);
+
+  useEffect(() => {
+    if (pages.length) {
+      if (pages[pageFocus].number !== pageNumber) {
+        setPageNumber(pages[pageFocus].number);
+      }
+    }
+  }, [pageFocus, pages, pageNumber]);
 
   const onFocusChild = useCallback(
     (child) => {
       const childNumber = Math.max(0, Math.min(child, pages.length - 1));
-      console.log('Focusing child %d', childNumber);
       setPageFocus(childNumber);
-      setPageNumber(childNumber + 1);
     },
     [pages]
   );
 
-  // useInterval(() => {
-  //     setPageFocus(Math.floor(Math.random() * (pages.length - 1 - 0 + 1)) + 0);
-  // }, 4000);
-
   return (
     <Segment inverted>
       <Canvas
+        autoNavigate={false}
         wheelZoom={false}
         label={useMemo(
           () => (
@@ -901,6 +963,7 @@ export default function Reader() {
           <CanvasImage
             key={p.number}
             href={p.url}
+            fit={ItemFit.Width}
             wheelZoom={false}
             focused={idx === pageFocus}
           />

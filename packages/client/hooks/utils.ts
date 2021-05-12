@@ -1,4 +1,4 @@
-import { DependencyList, Ref, RefObject, useEffect } from 'react';
+import { DependencyList, useRef, RefObject, useEffect } from 'react';
 
 export function useDocumentEvent<E extends keyof HTMLElementEventMap, F>(
   name: E,
@@ -42,4 +42,25 @@ export function useRefEvent<
       };
     }, deps);
   }
+}
+
+export function useInterval(
+  callback: Function,
+  delay?: number | null,
+  deps?: DependencyList
+) {
+  const savedCallback = useRef<Function>(() => {});
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [deps]);
+
+  useEffect(() => {
+    if (delay !== null) {
+      const interval = setInterval(() => savedCallback.current(), delay || 0);
+      return () => clearInterval(interval);
+    }
+
+    return undefined;
+  }, [delay]);
 }
