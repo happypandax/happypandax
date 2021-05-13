@@ -305,25 +305,26 @@ i.huge.icons {
     width: 100%;
 }
 
-.medium-size > img {
+.medium-size {
+    max-width: 200px !important;
     max-height: 450px;
 }
 
-.small-size > img {
+.small-size {
     max-height: 350px;
 }
 
-.tiny-size > img {
+.tiny-size {
     max-height: 250px !important;
 }
 
 @media screen and (min-width: 1000px) {
 
     .medium-size {
-        max-width: 200px !important;
+        max-width: 220px !important;
     }
 
-     .slick-slider .card.small-size {
+    .slider .card.small-size {
     max-width: 120px !important;
     }
     .tiny-size {

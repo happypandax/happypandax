@@ -37,7 +37,7 @@ export function DragBoard({}) {
 
   return (
     <Ref innerRef={dropRef}>
-      <div className="min-200-h">
+      <Dimmer.Dimmable className="min-200-h" dimmed={isOver}>
         <Dimmer active={isOver}>
           <Icon size="large" name="plus" inverted />
         </Dimmer>
@@ -51,7 +51,7 @@ export function DragBoard({}) {
           />
         ))}
         {!items.length && <EmptySegment />}
-      </div>
+      </Dimmer.Dimmable>
     </Ref>
   );
 }

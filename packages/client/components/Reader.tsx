@@ -16,8 +16,8 @@ import {
   Dimmer,
   Table,
   Header,
-  Tab,
   Ref,
+  Rating,
   Modal,
   Button,
 } from 'semantic-ui-react';
@@ -26,6 +26,7 @@ import Scroller from '@twiddly/scroller';
 import {
   useEvent,
   useFullscreen,
+  useHarmonicIntervalFn,
   useKey,
   useKeyPress,
   useKeyPressEvent,
@@ -37,6 +38,8 @@ import t from '../misc/lang';
 import { useRefEvent, useDocumentEvent, useInterval } from '../hooks/utils';
 import _ from 'lodash';
 import { useLayoutEffect } from 'react';
+import { Slider } from './Misc';
+import GalleryCard from './Gallery';
 
 export enum ReadingDirection {
   TopToBottom,
@@ -541,6 +544,7 @@ function Canvas({
   wheelZoom,
   label,
   onFocusChild,
+  onEnd,
 }: {
   children?: any;
   direction?: ReadingDirection;
@@ -550,6 +554,7 @@ function Canvas({
   wheelZoom?: boolean;
   autoNavigate?: boolean;
   onFocusChild?: (number) => void;
+  onEnd?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>();
   const refMouseDownEvent = useRef<React.MouseEvent<HTMLDivElement>>(null);
@@ -657,6 +662,129 @@ function Canvas({
     [scroller]
   );
 
+  const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
+
+  // set scroll area dimensions
+  useEffect(() => {
+    if (!scroller) return;
+
+    const rect = ref.current.getBoundingClientRect();
+    const container = ref.current;
+    const content = refContent.current;
+    scroller.setPosition(
+      rect.left + container.clientLeft,
+      rect.top + container.clientTop
+    );
+    scroller.setDimensions(
+      container.clientWidth,
+      container.clientHeight,
+      content.offsetWidth,
+      content.offsetHeight
+    );
+  }, [children, scroller, refWidth, refHeight]);
+
+  const getCurrentChild = useCallback(() => {
+    let child = 0;
+    if (!scroller) return child;
+    switch (direction) {
+      case ReadingDirection.TopToBottom: {
+        child = Math.abs(scroller.getValues().top) / ref.current.clientHeight;
+        break;
+      }
+    }
+    return Math.floor(child);
+  }, [direction, scroller]);
+
+  const checkIfEnd = useCallback(() => {
+    const { top } = scroller.getValues();
+    // check if item has reached the end (this will always only check the boundary in y-axis since we're assuming height > width for manga)
+    // can be improved to take into account reading direction, item fit and aspect ratio
+
+    if (getCurrentChild() === React.Children.count(children) - 1) {
+      // if last page
+      const { top: scrollMaxTop } = scroller.getScrollMax();
+      switch (direction) {
+        case ReadingDirection.LeftToRight:
+        case ReadingDirection.TopToBottom: {
+          if (refScrollPan.current.y >= scrollMaxTop) {
+            onEnd?.();
+          }
+          break;
+        }
+      }
+    }
+  }, [children, onEnd, scroller, direction, getCurrentChild, focusChild]);
+
+  const getNextChild = useCallback(() => {
+    switch (direction) {
+      case ReadingDirection.LeftToRight:
+      case ReadingDirection.TopToBottom:
+        return focusChild + 1;
+    }
+  }, [direction, focusChild]);
+
+  const scrollToChild = useCallback(
+    (childNumber: number, animate = true) => {
+      const { left, top } = scroller.getValues();
+
+      switch (direction) {
+        case ReadingDirection.TopToBottom:
+          scroller.scrollTo(
+            left,
+            childNumber * ref.current.clientHeight,
+            animate
+          );
+          break;
+        case ReadingDirection.LeftToRight:
+          scroller.scrollTo(
+            childNumber * ref.current.clientWidth,
+            top,
+            animate
+          );
+          break;
+      }
+
+      if (React.Children.count(children) === childNumber) {
+        onEnd?.();
+      }
+    },
+    [scroller, children, onEnd]
+  );
+
+  // make sure focused child is in viewport
+  useLayoutEffect(() => {
+    if (!scroller) return;
+    if (getCurrentChild() === focusChild) return;
+
+    const childrenArray = React.Children.toArray(children);
+    const childNumber = Math.max(
+      0,
+      Math.min(focusChild, childrenArray.length - 1)
+    );
+
+    scrollToChild(childNumber, false);
+  }, [scrollToChild, getCurrentChild, focusChild, children]);
+
+  // reset scroll to current child
+  useEffect(() => {
+    if (!scroller) return;
+    refScrollComplete.current = () => {
+      const child = getCurrentChild();
+      onFocusChild?.(child);
+    };
+  }, [onFocusChild, getCurrentChild, scroller]);
+
+  // auto navigate
+  useInterval(
+    () => {
+      scrollToChild(getNextChild(), true);
+    },
+    autoNavigate && focusChild < React.Children.count(children) - 1
+      ? autoNavigateInterval
+      : null,
+    [getNextChild]
+  );
+
   useRefEvent(
     ref,
     'wheel',
@@ -669,8 +797,8 @@ function Canvas({
       e.stopPropagation();
 
       if (!refIsScrollPanning.current) {
-        refIsScrollPanning.current = true;
         const { left, top } = scroller.getValues();
+        refIsScrollPanning.current = true;
         refScrollPan.current.x = left;
         refScrollPan.current.y = top;
       }
@@ -710,109 +838,16 @@ function Canvas({
 
       scroller.scrollTo(refScrollPan.current.x, refScrollPan.current.y, true);
 
+      const scrollingDown = e.deltaY > 0 ? true : false;
+      if (scrollingDown) {
+        // TODO: doesn't work
+        checkIfEnd();
+      }
+
       onScrollPanEnd(e);
     },
     { passive: false },
-    [scroller, onScrollPanEnd, direction, wheelZoom]
-  );
-
-  const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
-
-  // set scroll area dimensions
-  useEffect(() => {
-    if (!scroller) return;
-
-    const rect = ref.current.getBoundingClientRect();
-    const container = ref.current;
-    const content = refContent.current;
-    scroller.setPosition(
-      rect.left + container.clientLeft,
-      rect.top + container.clientTop
-    );
-    scroller.setDimensions(
-      container.clientWidth,
-      container.clientHeight,
-      content.offsetWidth,
-      content.offsetHeight
-    );
-  }, [children, scroller, refWidth, refHeight]);
-
-  const getCurrentChild = useCallback(() => {
-    let child = 0;
-    if (!scroller) return child;
-    switch (direction) {
-      case ReadingDirection.TopToBottom: {
-        child =
-          (scroller.getValues().top + ref.current.clientHeight / 4) /
-          ref.current.clientHeight;
-        break;
-      }
-    }
-    return Math.floor(child);
-  }, [direction, scroller]);
-
-  const getNextChild = useCallback(() => {
-    switch (direction) {
-      case ReadingDirection.LeftToRight:
-      case ReadingDirection.TopToBottom:
-        return focusChild + 1;
-    }
-  }, [direction, focusChild]);
-
-  const scrollToChild = useCallback(
-    (childNumber: number, animate = true) => {
-      const { left, top } = scroller.getValues();
-
-      switch (direction) {
-        case ReadingDirection.TopToBottom:
-          scroller.scrollTo(
-            left,
-            childNumber * ref.current.clientHeight,
-            animate
-          );
-          break;
-        case ReadingDirection.LeftToRight:
-          scroller.scrollTo(
-            childNumber * ref.current.clientWidth,
-            top,
-            animate
-          );
-          break;
-      }
-    },
-    [scroller]
-  );
-
-  // make sure focused child is in viewport
-  useLayoutEffect(() => {
-    if (!scroller) return;
-    if (getCurrentChild() === focusChild) return;
-
-    const childrenArray = React.Children.toArray(children);
-    const childNumber = Math.max(
-      0,
-      Math.min(focusChild, childrenArray.length - 1)
-    );
-
-    scrollToChild(childNumber, false);
-  }, [scrollToChild, getCurrentChild, focusChild, children]);
-
-  // reset scroll to current child
-  useEffect(() => {
-    if (!scroller) return;
-    refScrollComplete.current = () => {
-      const child = getCurrentChild();
-      onFocusChild?.(child);
-    };
-  }, [onFocusChild, getCurrentChild, scroller]);
-
-  // auto navigate
-  useInterval(
-    () => {
-      scrollToChild(getNextChild(), true);
-    },
-    autoNavigate ? autoNavigateInterval : null,
-    [getNextChild]
+    [scroller, onScrollPanEnd, direction, wheelZoom, checkIfEnd]
   );
 
   return (
@@ -902,7 +937,7 @@ function Canvas({
   );
 }
 
-const PLACEHOLDERS = _.range(59).map((p) => ({
+const PLACEHOLDERS = _.range(3).map((p) => ({
   number: p + 1,
   url: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
     16
@@ -915,6 +950,7 @@ export default function Reader() {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState([]);
+  const [isEnd, setIsEnd] = useState(false);
 
   useEffect(() => {
     const windowed = windowedPages(pageNumber, windowSize, pageCount);
@@ -945,9 +981,17 @@ export default function Reader() {
   );
 
   return (
-    <Segment inverted>
+    <Dimmer.Dimmable as={Segment} inverted blurring dimmed={isEnd}>
+      <Dimmer
+        active={isEnd}
+        className="fluid-dimmer"
+        onClickOutside={useCallback(() => {
+          setIsEnd(false);
+        }, [])}>
+        <EndContent />
+      </Dimmer>
       <Canvas
-        autoNavigate={false}
+        autoNavigate
         wheelZoom={false}
         label={useMemo(
           () => (
@@ -958,7 +1002,10 @@ export default function Reader() {
           [pageNumber, pageCount]
         )}
         focusChild={pageFocus}
-        onFocusChild={onFocusChild}>
+        onFocusChild={onFocusChild}
+        onEnd={useCallback(() => {
+          setIsEnd(true);
+        }, [])}>
         {pages.map((p, idx) => (
           <CanvasImage
             key={p.number}
@@ -969,6 +1016,145 @@ export default function Reader() {
           />
         ))}
       </Canvas>
-    </Segment>
+    </Dimmer.Dimmable>
+  );
+}
+
+function ReadNext() {
+  const [countDownEnabled, setCountDownEnabled] = useState(true);
+  const [countdown, setCountdown] = useState(15);
+
+  useHarmonicIntervalFn(
+    () => {
+      if (countdown === 1) {
+        // fire
+      }
+      setCountdown(Math.max(countdown - 1, 0));
+    },
+    countDownEnabled && countdown ? 1000 : null
+  );
+
+  return (
+    <Grid
+      centered
+      columns="equal"
+      onClick={() => {
+        setCountDownEnabled(false);
+      }}>
+      <Grid.Row>
+        <Grid.Column textAlign="center">
+          <Header
+            textAlign="center"
+            size="medium">{t`Read the next one`}</Header>
+          <Button>{t`Pick a random`}</Button>
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Grid.Column textAlign="center">
+          <Segment tertiary basic>
+            <Header textAlign="center" size="small">
+              {t`Next...`}{' '}
+              {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
+            </Header>
+            <GalleryCard
+              size="medium"
+              data={{ id: 1, title: 'test', artist: 'artest' }}
+            />
+          </Segment>
+        </Grid.Column>
+        <Grid.Column textAlign="center">
+          <Segment tertiary basic>
+            <Header textAlign="center" size="small">
+              {t`Next Chapter...`}{' '}
+              {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
+            </Header>
+            <GalleryCard
+              size="medium"
+              data={{ id: 1, title: 'test', artist: 'artest' }}
+            />
+          </Segment>
+        </Grid.Column>
+        <Grid.Column textAlign="center">
+          <Segment tertiary basic>
+            <Header textAlign="center" size="small">
+              {t`Next in reading list...`}{' '}
+              {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
+            </Header>
+            <GalleryCard
+              size="medium"
+              data={{ id: 1, title: 'test', artist: 'artest' }}
+            />
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
+    </Grid>
+  );
+}
+
+export function EndContent({}: {}) {
+  return (
+    <Grid as={Segment} centered fluid className="max-h-full overflow-auto">
+      <Grid.Row>
+        <Grid.Column>
+          <Header
+            textAlign="center"
+            size="large">{t`What did you think?`}</Header>
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Grid.Column>
+          <Rating size="massive" icon="star" maxRating={10} />
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Grid.Column>
+          <ReadNext />
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Grid.Column>
+          <Slider label={t`From same artist`} color="blue">
+            <GalleryCard
+              size="small"
+              data={{ id: 1, title: 'test', artist: 'artest' }}
+            />
+            <GalleryCard
+              size="small"
+              data={{ id: 2, title: 'test', artist: 'artest' }}
+            />
+            <GalleryCard
+              size="small"
+              data={{ id: 3, title: 'test', artist: 'artest' }}
+            />
+            <GalleryCard
+              size="small"
+              data={{ id: 4, title: 'test', artist: 'artest' }}
+            />
+          </Slider>
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Grid.Column>
+          <Slider label={t`Just like this one`} color="violet">
+            <GalleryCard
+              size="small"
+              data={{ id: 1, title: 'test', artist: 'artest' }}
+            />
+            <GalleryCard
+              size="small"
+              data={{ id: 2, title: 'test', artist: 'artest' }}
+            />
+            <GalleryCard
+              size="small"
+              data={{ id: 3, title: 'test', artist: 'artest' }}
+            />
+            <GalleryCard
+              size="small"
+              data={{ id: 4, title: 'test', artist: 'artest' }}
+            />
+          </Slider>
+        </Grid.Column>
+      </Grid.Row>
+    </Grid>
   );
 }

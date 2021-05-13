@@ -100,7 +100,7 @@ export function EmptySegment({
   description?: string;
 }) {
   return (
-    <Segment placeholder disabled className="!min-0-h">
+    <Segment placeholder disabled className="!min-0-h w-full h-full">
       <Header className="center text-center sub-text" icon>
         <Icon className="hpx-standard sub-text" size="huge" />
         {title}

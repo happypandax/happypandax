@@ -24,6 +24,13 @@
     height: 100%;
 }
 
+.max-w-full {
+    max-width: 100%;
+}
+
+.max-h-full {
+    max-height: 100%;
+}
 
 .user-select-none {
     -webkit-user-select: none;
@@ -41,6 +48,7 @@
     padding-left: 70px;
     padding-right: 5px;
     padding-bottom: 10px;
+    pointer-events: none;
 }
 
 #bottom_zone > div {
@@ -55,6 +63,10 @@
 #bottom_zone > div > .item {
     position: absolute;
     float: unset;
+}
+
+#bottom_zone > div > .item > * {
+    pointer-events: auto;
 }
 
 #bottom_zone > div > .item.right {
@@ -92,4 +104,8 @@
 }
 .no-scrollbar::-webkit-scrollbar { 
     display: none;  /* Safari and Chrome */
+}
+
+.fluid-dimmer > .content {
+    width: 100%;
 }
