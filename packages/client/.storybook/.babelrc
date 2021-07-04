@@ -1,0 +1,8 @@
+{
+  "extends": "../.babelrc",
+  "plugins": [
+    ["lodash", {}],
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    "@vjpr/babel-plugin-parameter-decorator"
+  ]
+}

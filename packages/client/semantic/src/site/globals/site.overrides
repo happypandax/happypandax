@@ -132,7 +132,7 @@ i.medium-size {
 .fullwidth {
     width: 100%;
 }
-.fullheight {
+.fullheight, body > div {
     height: 100% !important;
 }
 

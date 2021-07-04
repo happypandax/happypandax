@@ -4,10 +4,6 @@ import setupServices from '../services';
 
 class MyDocument extends Document {
   static async getInitialProps(ctx) {
-    // TODO: put server initialization here, then it works well
-    if (global.app.IS_SERVER && !global.app.service) {
-      global.app.service = setupServices();
-    }
     const initialProps = await Document.getInitialProps(ctx);
     return { ...initialProps };
   }
@@ -22,6 +18,21 @@ class MyDocument extends Document {
         </body>
       </Html>
     );
+  }
+}
+
+const IS_SERVER = typeof window === 'undefined';
+
+if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
+  if (IS_SERVER) {
+    const { serverInitialize } = await import('../misc/initialize/server');
+    await serverInitialize();
+  }
+}
+
+if (IS_SERVER) {
+  if (process.env.NODE_ENV === 'development') {
+    global.app.service = await setupServices();
   }
 }
 
