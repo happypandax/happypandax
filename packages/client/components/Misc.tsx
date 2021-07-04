@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-
+import Editor from 'react-simple-code-editor';
 import Carousel, {
   slidesToShowPlugin,
   arrowsPlugin,
   autoplayPlugin,
   slidesToScrollPlugin,
 } from '@brainhubeu/react-carousel';
+
 import '@brainhubeu/react-carousel/lib/style.css';
 
 import {
@@ -26,6 +27,29 @@ import t from '../misc/lang';
 import classNames from 'classnames';
 import { useCallback } from 'react';
 import { Divider } from 'semantic-ui-react';
+
+export function TextEditor({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange?: (value: string) => void;
+}) {
+  return (
+    <Editor
+      value={value}
+      onValueChange={onChange}
+      highlight={(s) => s}
+      padding={10}
+      style={{
+        border: '1px solid rgba(34, 36, 38, 0.15)',
+        background: 'rgba(0, 0, 0, 0.05) none repeat scroll 0% 0%',
+        minHeight: '8em',
+      }}
+      placeholder="</ Text here ...>"
+    />
+  );
+}
 
 export function PageTitle({ title }: { title?: string }) {
   if (!global.app.IS_SERVER) {

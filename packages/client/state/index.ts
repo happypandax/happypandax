@@ -1,5 +1,9 @@
-import AppState from './app';
+import AppState from './_app';
+import LibraryState from './_library';
+import StateBlock from './base';
 
-AppState.setup(AppState);
+((...cls: StateBlock[]) => {
+  cls.forEach((c) => StateBlock.setup(c));
+})(AppState, LibraryState);
 
-export { AppState };
+export { AppState, LibraryState };

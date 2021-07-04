@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 7008",
+    "dev": "next dev -p 7088",
     "build": "next build",
     "build:css": "cd ./semantic && gulp build-css",
-    "build:css:watch": "cd ./semantic && gulp watch",
+    "watch:css": "cd ./semantic && gulp watch",
     "install:fomantic": "yarn --cwd ../../node_modules/fomantic-ui run install",
     "start": "next start",
     "storybook": "start-storybook -p 7020 -s ./public",
@@ -23,15 +23,17 @@
     "fomantic-ui-less": "^2.8.7",
     "happypandax-client": "^2.0.0",
     "lodash": "^4.17.21",
-    "next": "^10.0.9",
+    "next": "^11.0.1",
+    "normalized-cache": "^0.0.3",
     "react": "^17.0.1",
     "react-dnd": "^14.0.2",
     "react-dnd-html5-backend": "^14.0.0",
     "react-dom": "^17.0.1",
     "react-query": "^3.13.0",
+    "react-simple-code-editor": "^0.11.0",
     "react-use": "^17.2.1",
     "react-virtualized": "^9.22.3",
-    "recoil": "^0.1.3",
+    "recoil": "^0.3.1",
     "semantic-ui-react": "^2.0.3",
     "ttag": "^1.7.24"
   },
@@ -52,6 +54,6 @@
     "gulp": "4.0.2",
     "storybook-addon-themes": "^6.1.0",
     "storybook-css-modules-preset": "^1.0.8",
-    "typescript": "^4.2.3"
+    "typescript": "^4.3.4"
   }
 }

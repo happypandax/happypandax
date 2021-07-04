@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Icon, IconProps, Menu, Popup } from 'semantic-ui-react';
+import { Icon, IconProps, Menu, Popup, Ref } from 'semantic-ui-react';
 import classNames from 'classnames';
 import Link from 'next/link';
 import _ from 'lodash';
@@ -15,14 +15,30 @@ import {
 } from 'semantic-ui-react/dist/commonjs/generic';
 import t from '../misc/lang';
 import styles from './Menu.module.css';
+import { useRef } from 'react';
 
 const MenuContext = createContext({});
 
-function MenuItem({
+export function NotificationPopup({
+  context,
+}: {
+  context: React.ComponentProps<typeof Popup>['context'];
+}) {
+  const [show, setShow] = useState(true);
+  return (
+    <Popup open={show} context={context} position="bottom right">
+      notifcation
+    </Popup>
+  );
+}
+
+export function MenuItem({
   className,
   icon,
+  children,
 }: {
   icon?: SemanticICONS | IconProps;
+  children?: React.ReactNode;
   className?: string;
 }) {
   //   const context = useContext(MenuContext);
@@ -39,6 +55,7 @@ function MenuItem({
           )}
         />
       )}
+      {children}
     </Menu.Item>
   );
 }
@@ -51,6 +68,7 @@ function ConnectionItem({
   const [connectState, setConnectState] = useState<
     'connected' | 'connecting' | 'disconnected'
   >('connecting');
+  const ref = useRef();
 
   const icon = (
     <Icon
@@ -70,11 +88,19 @@ function ConnectionItem({
   );
 
   return (
-    <Popup
-      content="Options"
-      on="click"
-      trigger={<Menu.Item icon={icon} fitted position={position} />}
-    />
+    <>
+      <NotificationPopup context={ref} />
+      <Popup
+        content="Options"
+        on="click"
+        position="bottom right"
+        trigger={
+          <Ref innerRef={ref}>
+            <Menu.Item icon={icon} fitted position={position} />
+          </Ref>
+        }
+      />
+    </>
   );
 }
 
@@ -82,10 +108,12 @@ export function MainMenu({
   hidden,
   borderless,
   fixed,
+  children,
 }: {
   hidden?: boolean;
   borderless?: boolean;
   fixed?: boolean;
+  children?: React.ReactNode;
 }) {
   if (hidden) return <></>;
 
@@ -99,6 +127,7 @@ export function MainMenu({
       className={classNames(
         'pusher no-margins standard-z-index post-relative'
       )}>
+      {children}
       <ConnectionItem />
     </Menu>
   );

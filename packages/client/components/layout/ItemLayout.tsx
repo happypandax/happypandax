@@ -12,9 +12,15 @@ import t from '../../misc/lang';
 import { ItemType, ViewType } from '../../misc/enums';
 import { useMemo } from 'react';
 
-export function SortButtonInput({ className }: { className?: string }) {
-  const [active, setActive] = useState('sort 1');
-
+export function SortButtonInput({
+  className,
+  active,
+  setActive,
+}: {
+  className?: string;
+  active: null | string;
+  setActive: (f: null | string) => void;
+}) {
   return (
     <Popup
       on="click"
@@ -77,9 +83,15 @@ export function ClearFilterButton(props: React.ComponentProps<typeof Button>) {
   );
 }
 
-export function FilterButtonInput({ className }: { className?: string }) {
-  const [active, setActive] = useState('filter 1');
-
+export function FilterButtonInput({
+  className,
+  active,
+  setActive,
+}: {
+  className?: string;
+  active: null | string;
+  setActive: (f: null | string) => void;
+}) {
   return (
     <Popup
       on="click"
@@ -89,6 +101,7 @@ export function FilterButtonInput({ className }: { className?: string }) {
         <Button
           icon="filter"
           primary
+          inverted={!!!active}
           circular
           className={classNames(className)}
         />
@@ -128,9 +141,15 @@ export function FilterButtonInput({ className }: { className?: string }) {
   );
 }
 
-export function OnlyFavoritesButton({ className }: { className?: string }) {
-  const [active, setActive] = useState(false);
-
+export function OnlyFavoritesButton({
+  className,
+  active,
+  setActive,
+}: {
+  className?: string;
+  active: boolean;
+  setActive: (boolean) => void;
+}) {
   return (
     <Button
       icon="heart"
@@ -148,12 +167,17 @@ export function OnlyFavoritesButton({ className }: { className?: string }) {
 
 export function ViewButtons({
   size = 'tiny',
+  item,
+  setItem,
+  setView,
+  view,
 }: {
   size?: React.ComponentProps<typeof ButtonGroup>['size'];
+  view: ViewType;
+  setView: (view: ViewType) => void;
+  item: ItemType;
+  setItem: (item: ItemType) => void;
 }) {
-  const [active, setActive] = useState(ItemType.Gallery);
-  const [view, setView] = useState(ViewType.Library);
-
   const options = useMemo(
     () => [
       {
@@ -197,15 +221,15 @@ export function ViewButtons({
       />
       <Button
         primary
-        basic={active === ItemType.Collection}
+        basic={item === ItemType.Collection}
         onClick={useCallback(() => {
-          setActive(ItemType.Collection);
+          setItem(ItemType.Collection);
         }, [])}>{t`Collection`}</Button>
       <Button
         primary
-        basic={active === ItemType.Gallery}
+        basic={item === ItemType.Gallery}
         onClick={useCallback(() => {
-          setActive(ItemType.Gallery);
+          setItem(ItemType.Gallery);
         }, [])}>{t`Gallery`}</Button>
     </ButtonGroup>
   );

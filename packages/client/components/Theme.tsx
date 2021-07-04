@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
-
 import {
-  enable as enableDarkMode,
-  disable as disableDarkMode,
   auto as followSystemColorScheme,
+  disable as disableDarkMode,
+  enable as enableDarkMode,
 } from 'darkreader';
+import React, { useEffect } from 'react';
+import { useRecoilValue } from 'recoil';
+
+import { AppState } from '../state';
 
 export default function Theme({
   name,
@@ -13,7 +15,9 @@ export default function Theme({
   name?: 'light' | 'dark';
   children: React.ReactNode | React.ReactNode[];
 }) {
-  return children;
+  const theme = useRecoilValue(AppState.theme);
+  const themeName = name ?? theme;
+
   useEffect(() => {
     const darkProps = {
       brightness: 100,
@@ -21,9 +25,9 @@ export default function Theme({
       sepia: 5,
     };
 
-    if (name) {
+    if (themeName) {
       followSystemColorScheme(false);
-      if (name === 'dark') {
+      if (themeName === 'dark') {
         enableDarkMode(darkProps);
       } else {
         disableDarkMode();
@@ -31,7 +35,7 @@ export default function Theme({
     } else {
       // followSystemColorScheme(darkProps);
     }
-  }, [name]);
+  }, [themeName]);
 
   return <>{children}</>;
 }

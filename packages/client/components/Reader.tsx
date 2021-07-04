@@ -695,6 +695,11 @@ function Canvas({
     return Math.floor(child);
   }, [direction, scroller]);
 
+  const endReached = useCallback(() => {
+    onEnd?.();
+    setShowFullscreen(false);
+  }, [onEnd]);
+
   const checkIfEnd = useCallback(() => {
     const { top } = scroller.getValues();
     // check if item has reached the end (this will always only check the boundary in y-axis since we're assuming height > width for manga)
@@ -707,13 +712,13 @@ function Canvas({
         case ReadingDirection.LeftToRight:
         case ReadingDirection.TopToBottom: {
           if (refScrollPan.current.y >= scrollMaxTop) {
-            onEnd?.();
+            endReached();
           }
           break;
         }
       }
     }
-  }, [children, onEnd, scroller, direction, getCurrentChild, focusChild]);
+  }, [children, endReached, scroller, direction, getCurrentChild, focusChild]);
 
   const getNextChild = useCallback(() => {
     switch (direction) {
@@ -745,10 +750,10 @@ function Canvas({
       }
 
       if (React.Children.count(children) === childNumber) {
-        onEnd?.();
+        endReached();
       }
     },
-    [scroller, children, onEnd]
+    [scroller, children, endReached]
   );
 
   // make sure focused child is in viewport

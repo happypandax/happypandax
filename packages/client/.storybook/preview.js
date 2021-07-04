@@ -6,6 +6,7 @@ import '../semantic/dist/semantic.css';
 import '../style/global.css';
 import 'animate.css';
 import 'react-virtualized/styles.css';
+import { RecoilRoot } from 'recoil';
 
 export const parameters = {
   actions: { argTypesRegex: '^on[A-Z].*' },
@@ -26,7 +27,9 @@ export const decorators = [
   (Story) => {
     return (
       <DndProvider backend={HTML5Backend}>
-        <Story />
+        <RecoilRoot>
+          <Story />
+        </RecoilRoot>
       </DndProvider>
     );
   },

@@ -82,7 +82,7 @@ export function DatePublishedLabel(props: React.ComponentProps<typeof Label>) {
   );
 }
 
-export function TitleTable() {
+export function TitleTable({ children }: { children?: React.ReactNode }) {
   const titles = [
     { language: 'English', title: 'Item Title' },
     { language: 'Japanese', title: 'Item Alternative Title' },
@@ -97,6 +97,7 @@ export function TitleTable() {
       <Table.Body>
         <Table.Row>
           <Table.Cell colspan="2" textAlign="center">
+            {children}
             <GroupingNumberLabel
               className="float-left"
               circular

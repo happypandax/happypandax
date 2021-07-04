@@ -38,10 +38,12 @@ export function BottomZone({ children }: { children?: React.ReactNode }) {
 export default function PageLayout({
   dimmed,
   menu,
+  bottomZone,
   children,
 }: {
   dimmed?: boolean;
   menu?: React.ReactNode;
+  bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
@@ -57,18 +59,7 @@ export default function PageLayout({
           {children}
           <BottomZone>
             <BottomZoneItem x="right" y="top" className="flex fullheight">
-              <OnlyFavoritesButton />
-              <div className="medium-margin-top">
-                <div className="pos-relative">
-                  <FilterButtonInput />
-                  <Visible visible>
-                    <ClearFilterButton className="clear_filter" size="mini" />
-                  </Visible>
-                </div>
-              </div>
-              <div className="medium-margin-top mb-auto">
-                <SortButtonInput />
-              </div>
+              {bottomZone}
               <ScrollUpButton />
             </BottomZoneItem>
           </BottomZone>

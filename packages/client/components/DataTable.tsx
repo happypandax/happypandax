@@ -1,4 +1,5 @@
-import { Table, Header } from 'semantic-ui-react';
+import { useCallback, useState } from 'react';
+import { Table, Header, Button, Icon, Label } from 'semantic-ui-react';
 import t from '../misc/lang';
 import {
   DateAddedLabel,
@@ -11,12 +12,25 @@ import {
   StatusLabel,
   TitleTable,
 } from './data/Common';
+import { TextEditor } from './Misc';
 
 export function GalleryDataTable({}: {}) {
+  const [showDataText, setShowDataText] = useState(false);
+
   return (
-    <DataTable>
+    <DataTable showDataText={showDataText}>
       <DataTableItem>
-        <TitleTable />
+        <TitleTable>
+          <Label
+            as="a"
+            onClick={useCallback(() => {
+              setShowDataText(true);
+            }, [])}
+            className="float-right"
+            size="tiny">
+            <Icon name="pencil" /> {t`Edit`}
+          </Label>
+        </TitleTable>
       </DataTableItem>
       <DataTableItem textAlign="center">
         <LanguageLabel />
@@ -77,13 +91,16 @@ export function DataTable({
   children,
   size,
   compact,
+  showDataText,
 }: {
   size?: React.ComponentProps<typeof Table>['size'];
   children?: React.ReactNode;
+  showDataText?: boolean;
   compact?: boolean;
 }) {
   return (
     <Table basic="very" size={size} coamp={compact ? 'very' : false}>
+      {showDataText && <TextEditor />}
       <Table.Body>{children}</Table.Body>
     </Table>
   );
