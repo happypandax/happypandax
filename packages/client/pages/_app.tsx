@@ -20,7 +20,6 @@ interface AppPageProps extends AppInitialProps {
 }
 
 export function AppRoot({ children }: { children: React.ReactNode }) {
-  console.log('yes');
   const queryClient = useMemo(() => {
     return new QueryClient({
       defaultOptions: {

@@ -25,6 +25,7 @@
     "happypandax-client": "^2.0.0",
     "lodash": "^4.17.21",
     "next": "^11.0.1",
+    "next-connect": "^0.10.1",
     "normalized-cache": "^0.0.3",
     "react": "^17.0.1",
     "react-dnd": "^14.0.2",
@@ -37,7 +38,8 @@
     "recoil": "^0.3.1",
     "semantic-ui-react": "^2.0.3",
     "superjson": "^1.7.4",
-    "ttag": "^1.7.24"
+    "ttag": "^1.7.24",
+    "urlcat": "^2.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",

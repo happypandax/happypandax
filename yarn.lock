@@ -2286,6 +2286,7 @@ __metadata:
     happypandax-client: ^2.0.0
     lodash: ^4.17.21
     next: ^11.0.1
+    next-connect: ^0.10.1
     next-transpile-modules: ^8.0.0
     normalized-cache: ^0.0.3
     react: ^17.0.1
@@ -2303,6 +2304,7 @@ __metadata:
     superjson: ^1.7.4
     ttag: ^1.7.24
     typescript: ^4.3.4
+    urlcat: ^2.0.4
     webpack: ^5.42.0
     webpack-merge: ^5.8.0
   languageName: unknown
@@ -13578,6 +13580,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"next-connect@npm:^0.10.1":
+  version: 0.10.1
+  resolution: "next-connect@npm:0.10.1"
+  dependencies:
+    trouter: ^3.1.0
+  checksum: 16e55cf3fdcfff78a776f54b3accbebfc4b17d7a40a01b5fcfa8f40209f8386c91ae74e703f0653e54b87b624131055c1976211ece44e81ac15db18ef2b4435f
+  languageName: node
+  linkType: hard
+
 "next-tick@npm:~1.0.0":
   version: 1.0.0
   resolution: "next-tick@npm:1.0.0"
@@ -15987,6 +15998,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"regexparam@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "regexparam@npm:1.3.0"
+  checksum: 3be8055bc697d720647e2b2a781e8a784013e80d51724dce833524c8f1a9fbfa7efd3dac90572ce64191b82e908c8e70c6ff40b8da3ff0b3fb4199af73d4a8b5
+  languageName: node
+  linkType: hard
+
 "regexpu-core@npm:^4.7.1":
   version: 4.7.1
   resolution: "regexpu-core@npm:4.7.1"
@@ -18221,6 +18239,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"trouter@npm:^3.1.0":
+  version: 3.2.0
+  resolution: "trouter@npm:3.2.0"
+  dependencies:
+    regexparam: ^1.3.0
+  checksum: c65eb0b64a4e283a2524adb75cc09169b2be515e6df6254bbdf00934299270c1788ce09b05c9a3e36bd73315105478ef92bea95304df9c750f5098a82455ecad
+  languageName: node
+  linkType: hard
+
 "ts-dedent@npm:^2.0.0":
   version: 2.1.0
   resolution: "ts-dedent@npm:2.1.0"
@@ -18818,6 +18845,13 @@ typescript@^4.3.4:
     punycode: 1.3.2
     querystring: 0.2.0
   checksum: 537f785b16f873fdd2b63ccb7a61463b8e41370fdba95385b0102f3ed7b953c300d95b8755ec3b65f3e406372d47d16c3c989e196b25b70f42190da1fc36c56f
+  languageName: node
+  linkType: hard
+
+"urlcat@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "urlcat@npm:2.0.4"
+  checksum: 4e0e4f7e4be96d465e50be4e608763f575e53583cd9dc8fdb4e8c67161588dbb6322329f5f716f78cdcd6978b4f77748310d61b0f92f7b8d894b7851a367ef48
   languageName: node
   linkType: hard
 
