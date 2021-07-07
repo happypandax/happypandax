@@ -1,7 +1,5 @@
-
-
 import { ItemType, ViewType } from '../misc/enums';
-import StateBlock, { defineAtom } from './base';
+import StateBlock, { defineAtom } from './_base';
 
 export default class LibraryState extends StateBlock {
   static data = defineAtom({

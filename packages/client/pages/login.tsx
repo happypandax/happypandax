@@ -1,9 +1,19 @@
-import { Segment, Grid, Divider } from 'semantic-ui-react';
+import { useRouter } from 'next/dist/client/router';
+import { useCallback } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { Divider, Grid, Segment } from 'semantic-ui-react';
+
+import { LoginForm } from '../components/Login';
 import { PageTitle } from '../components/Misc';
 import t from '../misc/lang';
-import { LoginForm } from '../components/Login';
+import { AppState } from '../state';
 
 export default function Page() {
+  const home = useRecoilValue(AppState.home);
+  const setLoggedIn = useSetRecoilState(AppState.loggedIn);
+
+  const router = useRouter();
+
   return (
     <>
       <PageTitle title={t`Login`} />
@@ -25,7 +35,19 @@ export default function Page() {
             </div>
             <Divider hidden horizontal />
             <Segment clearing>
-              <LoginForm />
+              <LoginForm
+                onSuccess={useCallback(() => {
+                  setLoggedIn(true);
+
+                  const next_path = router?.query?.next
+                    ? decodeURI(router?.query?.next as string)
+                    : home;
+
+                  if (next_path) {
+                    router.replace(next_path, undefined, { shallow: true });
+                  }
+                }, [home])}
+              />
             </Segment>
           </Grid.Column>
         </Grid.Row>

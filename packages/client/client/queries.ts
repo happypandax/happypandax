@@ -19,8 +19,6 @@ export enum MutatationType {
   UPDATE_GALLERY,
 }
 
-axios.post<{ test2: '' }>('/api/login', { test: '' });
-
 export function useMutationType<
   T extends MutationActions,
   K extends T['type'],
@@ -45,7 +43,7 @@ export function useMutationType<
     }
 
     case MutatationType.UPDATE_GALLERY: {
-      useMutation(
+      return useMutation(
         [type.toString()],
         (data) => {
           return axios.put('/api/gallery', data);
@@ -130,7 +128,11 @@ interface MutationAction extends Action {
 
 interface LoginAction extends MutationAction {
   type: MutatationType.LOGIN;
-  variables: { username: string; password?: string };
+  variables: {
+    username: string;
+    password?: string;
+    endpoint?: { host: string; port: number };
+  };
 }
 
 interface UpdateGalleryAction extends MutationAction {

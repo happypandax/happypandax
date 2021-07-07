@@ -1,32 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import '@brainhubeu/react-carousel/lib/style.css';
+
+import classNames from 'classnames';
+import React, { useCallback, useEffect, useState } from 'react';
 import Editor from 'react-simple-code-editor';
+import { useLocalStorage, useWindowScroll } from 'react-use';
+import {
+  Button,
+  Divider,
+  Header,
+  Icon,
+  Label,
+  Message,
+  Segment,
+} from 'semantic-ui-react';
+
 import Carousel, {
-  slidesToShowPlugin,
   arrowsPlugin,
   autoplayPlugin,
   slidesToScrollPlugin,
+  slidesToShowPlugin,
 } from '@brainhubeu/react-carousel';
 
-import '@brainhubeu/react-carousel/lib/style.css';
-
-import {
-  Portal,
-  Button,
-  Segment,
-  Label,
-  Header,
-  Accordion,
-  Message,
-  Container,
-  Icon,
-} from 'semantic-ui-react';
-
-import { parseMarkdown, scrollToTop } from '../misc/utility';
-import { useLocalStorage, useWindowScroll } from 'react-use';
 import t from '../misc/lang';
-import classNames from 'classnames';
-import { useCallback } from 'react';
-import { Divider } from 'semantic-ui-react';
+import { parseMarkdown, scrollToTop } from '../misc/utility';
 
 export function TextEditor({
   value,
@@ -93,8 +89,8 @@ export function Visible({
 }: {
   children: React.ReactNode;
   visible?: boolean;
-}) {
-  return visible ? children : null;
+}): JSX.Element {
+  return visible ? (children as any) : null;
 }
 
 export function TitleSegment({

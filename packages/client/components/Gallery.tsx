@@ -1,33 +1,34 @@
-import { Button, Icon } from 'semantic-ui-react';
 import { useCallback, useMemo } from 'react';
-import {
-  ReadingIconLabel,
-  UnreadIconLabel,
-  ReadLaterIconLabel,
-  ItemCardActionContent,
-  ItemCardActionContentItem,
-  InboxIconLabel,
-  ItemLabel,
-  ItemCard,
-  ItemCardContent,
-  ItemCardImage,
-  HeartIconLabel,
-  TranslucentLabel,
-  ItemMenuLabelItem,
-  ItemMenuLabel,
-  ProgressLabel,
-} from './Item';
+import { Button, Icon } from 'semantic-ui-react';
+
+import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
-import { ItemSize } from '../misc/types';
-import { GalleryDataTable } from './DataTable';
+import { ItemSize, ServerGallery } from '../misc/types';
 import {
-  ReadCountLabel,
+  GroupingNumberLabel,
   LanguageLabel,
   PageCountLabel,
-  GroupingNumberLabel,
+  ReadCountLabel,
   StatusLabel,
 } from './data/Common';
-import { ItemType } from '../misc/enums';
+import { GalleryDataTable } from './DataTable';
+import {
+  HeartIconLabel,
+  InboxIconLabel,
+  ItemCard,
+  ItemCardActionContent,
+  ItemCardActionContentItem,
+  ItemCardContent,
+  ItemCardImage,
+  ItemLabel,
+  ItemMenuLabel,
+  ItemMenuLabelItem,
+  ProgressLabel,
+  ReadingIconLabel,
+  ReadLaterIconLabel,
+  TranslucentLabel,
+  UnreadIconLabel,
+} from './Item';
 
 function ReadButton() {
   return (
@@ -65,6 +66,11 @@ function GalleryCardMenu() {
   );
 }
 
+export type GalleryCardData = Pick<
+  ServerGallery,
+  'id' | 'preferred_title' | 'artists'
+>;
+
 export function GalleryCard({
   size,
   data,
@@ -76,7 +82,7 @@ export function GalleryCard({
   horizontal,
 }: {
   size?: ItemSize;
-  data: any;
+  data: GalleryCardData;
   fluid?: boolean;
   draggable?: boolean;
   disableModal?: boolean;
@@ -142,9 +148,9 @@ export function GalleryCard({
         []
       )}>
       <ItemCardContent
-        title={data?.title ?? ''}
-        subtitle={[data?.artist].map((a) => (
-          <span>{a}</span>
+        title={data?.preferred_title?.name ?? ''}
+        subtitle={data?.artists.map((a) => (
+          <span>{a.preferred_name}</span>
         ))}>
         <ReadCountLabel />
       </ItemCardContent>

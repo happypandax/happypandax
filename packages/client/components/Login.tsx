@@ -1,45 +1,119 @@
-import { useRouter } from 'next/router';
-import { useState } from 'react';
-import { Button, Divider, Form, Message, Segment } from 'semantic-ui-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useRecoilState } from 'recoil';
+import {
+  Button,
+  Divider,
+  Form,
+  Message,
+  Modal,
+  Segment,
+} from 'semantic-ui-react';
 
 import { MutatationType, useMutationType } from '../client/queries';
 import t from '../misc/lang';
+import { AppState } from '../state';
+import { LabeLAccordion } from './Misc';
 
-export function LoginForm() {
-  const router = useRouter();
-  const next_path = router?.query?.next
-    ? decodeURI(router?.query?.next as string)
-    : '';
-
-  const [error, setError] = useState(false);
+export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const [endpoint, setEndpoint] = useState({
+    host: undefined as string,
+    port: undefined as number,
+  });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const mutate = useMutationType(MutatationType.LOGIN, {
-    onError: () => {
-      setError(true);
+  const mutation = useMutationType(MutatationType.LOGIN, {
+    onSuccess: (data, variables) => {
+      setEndpoint(variables.endpoint);
+      localStorage.setItem(
+        'server_endpoint',
+        JSON.stringify(variables.endpoint)
+      );
+      onSuccess?.();
+    },
+    onError: (err) => {
+      console.log(err);
+      setError(err.message + ': ' + err.response.data);
     },
     onSettled: () => {
       setLoading(false);
     },
   });
 
+  useEffect(() => {
+    if (!endpoint.host || !endpoint.port) {
+      const ep = localStorage.getItem('server_endpoint');
+      if (ep) {
+        setEndpoint(JSON.parse(ep));
+      }
+    }
+  }, []);
+
+  const getEndpoint = useCallback(() => {
+    return {
+      host: endpoint.host || 'localhost',
+      port: endpoint.port || 7007,
+    };
+  }, [endpoint]);
+
   return (
     <>
-      <Button primary fluid color="violet">{t`Continue as Guest`}</Button>
+      <Button
+        primary
+        fluid
+        color="violet"
+        onClick={(e) => {
+          e.preventDefault();
+          mutation.mutate({
+            username: '',
+            password: '',
+            endpoint: getEndpoint(),
+          });
+        }}>{t`Continue as Guest`}</Button>
       <Divider hidden horizontal />
       <Form
         loading={loading}
-        error={error}
+        error={!!error}
         onSubmit={(e) => {
           e.preventDefault();
-          setError(false);
+          setError('');
           setLoading(true);
           const f = new FormData(e.target as any);
-          mutate.mutate({
-            username: f.get('username') as string,
+
+          mutation.mutate({
+            username: (f.get('username') as string) || 'default',
             password: f.get('password') as string,
+            endpoint: getEndpoint(),
           });
         }}>
+        <LabeLAccordion label="Server">
+          <Segment basic>
+            <Form.Group>
+              <Form.Input
+                name="host"
+                label={t`Host`}
+                width={11}
+                value={endpoint?.host ?? ''}
+                onChange={(e, d) => {
+                  setEndpoint({ ...endpoint, host: d.value });
+                }}
+                placeholder={endpoint.host ?? 'localhost'}></Form.Input>
+              <Form.Input
+                name="port"
+                label={t`Port`}
+                width={5}
+                value={endpoint?.port ?? ''}
+                onChange={(e, d) => {
+                  setEndpoint({
+                    ...endpoint,
+                    port: d.value ? parseInt(d.value, 10) : undefined,
+                  });
+                }}
+                placeholder={endpoint.port ?? '7007'}
+                type="number"></Form.Input>
+            </Form.Group>
+          </Segment>
+        </LabeLAccordion>
         <Form.Input
           name="username"
           label={t`Username`}
@@ -48,21 +122,29 @@ export function LoginForm() {
           name="password"
           label={t`Password`}
           type="password"></Form.Input>
-        <Message error>{t`Wrong username/password combination!`}</Message>
+        <Message error>{error}</Message>
         <Button primary floated="right">{t`Connect`}</Button>
       </Form>
     </>
   );
 }
 
-export function LoginSegment() {
+export function LoginModal({ open }: { open?: boolean }) {
+  const [loggedIn, setLoggedIn] = useRecoilState(AppState.loggedIn);
+
   return (
-    <Segment clearing>
-      <div className="center-text">
-        <img src="/img/hpx_logo.svg" className="hpxlogo" alt="hpxlogo" />
-      </div>
-      <Divider hidden horizontal />
-      <LoginForm />
-    </Segment>
+    <Modal open={open ?? !loggedIn}>
+      <Segment clearing>
+        <div className="center-text">
+          <img src="/img/hpx_logo.svg" className="hpxlogo" alt="hpxlogo" />
+        </div>
+        <Divider hidden horizontal />
+        <LoginForm
+          onSuccess={useCallback(() => {
+            setLoggedIn(true);
+          }, [])}
+        />
+      </Segment>
+    </Modal>
   );
 }

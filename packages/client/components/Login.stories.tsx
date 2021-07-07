@@ -1,7 +1,7 @@
-import { LoginSegment } from './Login';
+import { LoginModal } from './Login';
 
 export default {
   title: 'Boarding/Login',
 };
 
-export const Login = () => <LoginSegment />;
+export const Login = () => <LoginModal />;
