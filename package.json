@@ -13,6 +13,9 @@
     "add:client": "yarn workspace @happypandax/client add",
     "start:client": "yarn workspace @happypandax/client dev"
   },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  },
   "dependenciesMeta": {
     "fomantic-ui": {
       "built": false

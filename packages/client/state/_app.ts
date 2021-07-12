@@ -1,6 +1,6 @@
 import StateBlock, { defineAtom } from './_base';
 
-export default class AppState extends StateBlock {
+export class AppState extends StateBlock {
   static theme = defineAtom({
     default: 'light' as 'light' | 'dark',
   });

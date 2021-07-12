@@ -1,3 +1,5 @@
+import { ItemType } from './enums';
+
 export type ItemSize = 'tiny' | 'mini' | 'small' | 'medium' | 'large';
 
 export interface DragItemData {
@@ -35,8 +37,6 @@ export interface ServerMetaTags extends ServerItem {
   trash: boolean;
   follow: boolean;
   read: boolean;
-  name: boolean;
-  session: boolean;
 }
 export interface ServerArtist extends ServerItem {
   names: (ServerItemName & { artist_id: number })[];
@@ -83,4 +83,18 @@ export interface ServerGallery {
   times_read: number;
   rating: number;
   trash: ServerItemTrash;
+}
+
+export interface ServerSortIndex {
+  index: number;
+  name: string;
+  item_type: ItemType;
+}
+
+export interface ServerFilter extends ServerItem {
+  name: string;
+  filter: string;
+  enforce: boolean;
+  search_options: string[];
+  user_id: number;
 }

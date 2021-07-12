@@ -1,6 +1,6 @@
-import AppState from './_app';
+import { AppState } from './_app';
 import StateBlock from './_base';
-import LibraryState from './_library';
+import { LibraryState } from './_library';
 
 ((...cls: StateBlock[]) => {
   cls.forEach((c) => StateBlock.setup(c));

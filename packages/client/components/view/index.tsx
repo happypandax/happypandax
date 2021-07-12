@@ -1,23 +1,138 @@
 import classNames from 'classnames';
-import { useCallback } from 'react';
-import { WindowScroller, AutoSizer } from 'react-virtualized';
-import { Segment, Grid, Sidebar, Pagination, Header } from 'semantic-ui-react';
+import _ from 'lodash';
+import { useRouter } from 'next/router';
+import { useCallback, useMemo } from 'react';
+import { AutoSizer, WindowScroller } from 'react-virtualized';
+import { Grid, Header, Pagination, Segment, Sidebar } from 'semantic-ui-react';
+
 import t from '../../misc/lang';
 
 export function ViewPagination({
   onPageChange,
   activePage,
   totalPages,
+  hrefTemplate,
 }: {
   onPageChange?: React.ComponentProps<typeof Pagination>['onPageChange'];
   activePage?: React.ComponentProps<typeof Pagination>['activePage'];
   totalPages?: React.ComponentProps<typeof Pagination>['totalPages'];
+  hrefTemplate?: string;
 }) {
+  const router = useRouter();
+  const tmpl = useMemo(() => {
+    return _.template(hrefTemplate ?? '');
+  }, [hrefTemplate]);
+
   return (
     <Pagination
       totalPages={totalPages ?? 1}
       activePage={activePage}
       onPageChange={onPageChange}
+      pageItem={useCallback(
+        (Item, props, test) => {
+          const pageUrl = hrefTemplate
+            ? tmpl({ page: props.value })
+            : undefined;
+          if (pageUrl) {
+            router.prefetch(pageUrl);
+          }
+
+          return (
+            <Item
+              {...props}
+              href={pageUrl}
+              onClick={(ev) => {
+                if (pageUrl) {
+                  ev.preventDefault();
+                  router.push(pageUrl);
+                }
+              }}
+            />
+          );
+        },
+        [hrefTemplate]
+      )}
+      prevItem={useMemo(() => {
+        if (!hrefTemplate) return undefined;
+
+        const href = tmpl({
+          page: Math.max(1, parseInt(activePage as string, 10) - 1),
+        });
+
+        return {
+          'aria-label': t`Previous item`,
+          content: '⟨',
+          href,
+          onClick: (ev) => {
+            if (href) {
+              ev.preventDefault();
+              router.push(href);
+            }
+          },
+        };
+      }, [hrefTemplate, activePage])}
+      firstItem={useMemo(() => {
+        if (!hrefTemplate) return undefined;
+
+        const href = tmpl({
+          page: 1,
+        });
+
+        return {
+          'aria-label': t`First  item`,
+          content: '«',
+          href,
+          onClick: (ev) => {
+            if (href) {
+              ev.preventDefault();
+              router.push(href);
+            }
+          },
+        };
+      }, [hrefTemplate, activePage])}
+      nextItem={useMemo(() => {
+        if (!hrefTemplate) return undefined;
+
+        const href = tmpl({
+          page: Math.min(
+            parseInt(totalPages as string, 10),
+            parseInt(activePage as string, 10) + 1
+          ),
+        });
+
+        return {
+          'aria-label': t`Next item`,
+          content: '⟩',
+          href,
+          onClick: (ev) => {
+            if (href) {
+              ev.preventDefault();
+              router.push(href);
+            }
+          },
+        };
+      }, [hrefTemplate, activePage, totalPages])}
+      lastItem={useMemo(() => {
+        if (!hrefTemplate) return undefined;
+
+        const href = tmpl({
+          page: parseInt(totalPages as string, 10),
+        });
+
+        return {
+          'aria-label': t`Last item`,
+          content: '»',
+          href,
+          onClick: (ev) => {
+            if (href) {
+              ev.preventDefault();
+              router.push(href);
+            }
+          },
+        };
+      }, [hrefTemplate, activePage, totalPages])}
+      pointing
+      secondary
       size="small"
     />
   );
@@ -100,6 +215,7 @@ export function PaginatedView({
   itemCount = 0,
   activePage,
   onPageChange,
+  hrefTemplate,
   ...props
 }: {
   children: React.ReactNode | React.ReactNode[];
@@ -107,14 +223,13 @@ export function PaginatedView({
   sidebarAnimation?: React.ComponentProps<typeof Sidebar>['animation'];
   sidebarVisible?: boolean;
   sidebarContent?: React.ReactNode | React.ReactNode[];
-  onPageChange?: React.ComponentProps<typeof ViewPagination>['onPageChange'];
-  activePage?: React.ComponentProps<typeof ViewPagination>['activePage'];
   pagination?: boolean;
   totalItemCount?: number;
   itemCount?: number;
   itemsPerPage?: number;
   bottomPagination?: boolean;
-} & React.ComponentProps<typeof Segment>) {
+} & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
+  React.ComponentProps<typeof Segment>) {
   const totalPages = Math.max(
     Math.floor(totalItemCount / Math.max(itemsPerPage, 1)),
     1
@@ -125,6 +240,7 @@ export function PaginatedView({
       totalPages={totalPages}
       onPageChange={onPageChange}
       activePage={activePage}
+      hrefTemplate={hrefTemplate}
     />
   );
 

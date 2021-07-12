@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import {
+  InitialDataFunction,
   useMutation,
   UseMutationOptions,
   UseMutationResult,
@@ -7,11 +8,18 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from 'react-query';
-import urlcat from 'urlcat';
+
+import { ItemType } from '../misc/enums';
+import { ServerSortIndex } from '../misc/types';
+import { urlstring } from '../misc/utility';
 
 export enum QueryType {
+  ITEMS,
+  ITEM,
   GALLERIES,
   GALLERY,
+  SORT_INDEXES,
+  SERVER_STATUS,
 }
 
 export enum MutatationType {
@@ -67,16 +75,35 @@ export function useQueryType<
 >(
   type: K,
   variables?: V,
-  options?: UseQueryOptions<D, E>
+  options?: Omit<UseQueryOptions<D, E>, 'initialData'> & {
+    initialData?: R | InitialDataFunction<R>;
+  }
 ): UseQueryResult<D, E> {
+  const opts = {
+    ...options,
+    initialData: options?.initialData
+      ? {
+          data:
+            typeof options.initialData === 'function'
+              ? (options.initialData as InitialDataFunction<R>)()
+              : options.initialData,
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config: {},
+          request: {},
+        }
+      : undefined,
+  };
+
   switch (type) {
     case QueryType.GALLERY: {
       return useQuery(
         [type.toString(), variables],
         () => {
-          return axios.get(urlcat('/api/gallery', variables));
+          return axios.get(urlstring('/api/gallery', variables));
         },
-        options
+        opts
       );
     }
 
@@ -84,9 +111,39 @@ export function useQueryType<
       return useQuery(
         [type.toString(), variables],
         () => {
-          return axios.get(urlcat('/api/galleries', variables));
+          return axios.get(urlstring('/api/galleries', variables));
         },
-        options
+        opts
+      );
+    }
+
+    case QueryType.SERVER_STATUS: {
+      return useQuery(
+        [type.toString()],
+        () => {
+          return axios.get(urlstring('/api/status'));
+        },
+        opts
+      );
+    }
+
+    case QueryType.SORT_INDEXES: {
+      return useQuery(
+        [type.toString()],
+        () => {
+          return axios.get(urlstring('/api/sort_indexes', variables));
+        },
+        opts
+      );
+    }
+
+    case QueryType.ITEMS: {
+      return useQuery(
+        [type.toString()],
+        () => {
+          return axios.get(urlstring('/api/items', variables));
+        },
+        opts
       );
     }
 
@@ -108,17 +165,42 @@ interface QueryAction extends Action {
   type: QueryType;
 }
 
-interface FetchGalleryAction extends QueryAction {
+interface FetchGallery extends QueryAction {
   type: QueryType.GALLERY;
   variables: { id: number };
 }
 
-interface FetchGalleriesAction extends QueryAction {
+interface FetchGalleries extends QueryAction {
   type: QueryType.GALLERIES;
   variables?: { limit?: number };
 }
 
-type QueryActions = FetchGalleryAction | FetchGalleriesAction;
+interface FetchServerStatus extends QueryAction {
+  type: QueryType.SERVER_STATUS;
+  dataType: {
+    loggedIn: boolean;
+    connected: boolean;
+  };
+}
+
+interface FetchSortIndexes extends QueryAction {
+  type: QueryType.SORT_INDEXES;
+  dataType: ServerSortIndex[];
+  variables: { item_type: ItemType; translate?: boolean; locale?: string };
+}
+
+interface FetchItems extends QueryAction {
+  type: QueryType.ITEMS;
+  dataType: Record<string, any>[];
+  variables: { item_type: ItemType; limit?: number; offset?: number };
+}
+
+type QueryActions =
+  | FetchItems
+  | FetchSortIndexes
+  | FetchServerStatus
+  | FetchGallery
+  | FetchGalleries;
 
 // ======================== MUTATION ACTIONS ====================================
 
@@ -135,9 +217,9 @@ interface LoginAction extends MutationAction {
   };
 }
 
-interface UpdateGalleryAction extends MutationAction {
+interface UpdateGallery extends MutationAction {
   type: MutatationType.UPDATE_GALLERY;
   variables: { test: string };
 }
 
-type MutationActions = LoginAction | UpdateGalleryAction;
+type MutationActions = LoginAction | UpdateGallery;

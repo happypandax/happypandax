@@ -6,26 +6,22 @@ export default {
   title: 'Item/Gallery',
 };
 
-export const Card = () => (
-  <GalleryCard data={{ title: 'test', artist: 'testy' }} />
-);
+const data = (id: number, title = 'title_test', artist = 'testy') => ({
+  id,
+  preferred_title: { name: title },
+  artists: [{ preferred_name: { name: artist } }],
+});
+
+export const Card = () => <GalleryCard data={data(1)} />;
 
 export const Horizontal = () => (
-  <GalleryCard
-    data={{ title: 'test', artist: 'testy' }}
-    horizontal
-    size="tiny"
-  />
+  <GalleryCard data={data(1)} horizontal size="tiny" />
 );
 
 export const Draggable = () => (
   <PageLayout>
-    <GalleryCard
-      data={{ title: 'test 1', id: 1, artist: 'testy' }}
-      horizontal
-      size="tiny"
-    />
-    <GalleryCard data={{ title: 'test 2', id: 2, artist: 'testy' }} />
+    <GalleryCard data={data(1)} horizontal size="tiny" />
+    <GalleryCard data={data(2)} />
     <DragBoard />
   </PageLayout>
 );

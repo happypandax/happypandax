@@ -48,11 +48,11 @@ export function AppRoot({
     <QueryClientProvider client={queryClient}>
       <RecoilRoot
         initializeState={(snapshot) => {
-          snapshot.set(AppState.loggedIn, pageProps.loggedIn);
+          if (pageProps.loggedIn) {
+            snapshot.set(AppState.loggedIn, pageProps.loggedIn);
+          }
         }}>
-        <DndProvider backend={HTML5Backend}>
-          <Theme>{children}</Theme>
-        </DndProvider>
+        <DndProvider backend={HTML5Backend}>{children}</DndProvider>
       </RecoilRoot>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
@@ -65,7 +65,9 @@ function MyApp({ Component, pageProps }: AppProps<AppPageProps['pageProps']>) {
   return (
     <AppRoot pageProps={pageProps}>
       {!['/login', '/_error'].includes(router.pathname) && <LoginModal />}
-      <Component {...pageProps} />
+      <Theme>
+        <Component {...pageProps} />
+      </Theme>
     </AppRoot>
   );
 }

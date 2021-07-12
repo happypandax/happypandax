@@ -1,7 +1,13 @@
-import Client, { JsonMap, ServerErrorMsg, ServerMsg } from 'happypandax-client';
+import Client, {
+  JsonMap,
+  log,
+  ServerErrorMsg,
+  ServerMsg,
+} from 'happypandax-client';
 
 import { createCache } from '../misc/cache';
-import { ItemSort, ItemType, ViewType } from '../misc/enums';
+import { ItemSort, ItemType } from '../misc/enums';
+import { ServerItem, ServerMetaTags, ServerSortIndex } from '../misc/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
 
@@ -14,8 +20,20 @@ export default class ServerService extends Service {
   constructor(endpoint?: { host: string; port: number }) {
     super(ServiceType.Server);
 
-    this.#client = new Client({ name: 'next-client' });
-    this.cache = createCache();
+    log.logger = {
+      debug: global.app.log.d,
+      info: global.app.log.i,
+      warning: global.app.log.w,
+      error: global.app.log.e,
+    };
+
+    // this avoiding recreating the hpx client during HMR
+    this.#client =
+      global.app?.hpx_client ?? new Client({ name: 'next-client' });
+    global.app.hpx_client = this.#client;
+    this.cache = global.app?.hpx_cache ?? createCache();
+    global.app.hpx_cache = this.cache;
+
     this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
   }
 
@@ -48,6 +66,13 @@ export default class ServerService extends Service {
     return this.#client._accepted;
   }
 
+  status() {
+    return {
+      loggedIn: this.logged_in,
+      connected: this.#client.is_connected(),
+    };
+  }
+
   async login(
     user?: string,
     password?: string,
@@ -77,10 +102,16 @@ export default class ServerService extends Service {
     return r;
   }
 
+  async items(args: { item_type: ItemType; offset?: number; limit?: number }) {
+    const data = await this._call('get_items', args);
+    this._throw_msg_error(data);
+    return data.data as { count: number; items: JsonMap[] };
+  }
+
   async library(args: {
     item_type: ItemType;
     filter_id?: number;
-    view_filter?: ViewType;
+    metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
     page?: number;
     limit?: number;
     sort_by?: ItemSort;
@@ -90,6 +121,16 @@ export default class ServerService extends Service {
   }) {
     const data = await this._call('library_view', args);
     this._throw_msg_error(data);
-    return data.data;
+    return data.data as { count: number; items: JsonMap[] };
+  }
+
+  async sort_indexes(args: {
+    item_type: ItemType;
+    translate?: boolean;
+    locale?: string;
+  }) {
+    const data = await this._call('get_sort_indexes', args);
+    this._throw_msg_error(data);
+    return data.data as ServerSortIndex[];
   }
 }

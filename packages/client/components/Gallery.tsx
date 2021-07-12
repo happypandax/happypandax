@@ -66,9 +66,9 @@ function GalleryCardMenu() {
   );
 }
 
-export type GalleryCardData = Pick<
+export type GalleryCardData = DeepPick<
   ServerGallery,
-  'id' | 'preferred_title' | 'artists'
+  'id' | 'preferred_title.name' | 'artists.[].preferred_name.name'
 >;
 
 export function GalleryCard({
@@ -150,7 +150,7 @@ export function GalleryCard({
       <ItemCardContent
         title={data?.preferred_title?.name ?? ''}
         subtitle={data?.artists.map((a) => (
-          <span>{a.preferred_name}</span>
+          <span>{a.preferred_name.name}</span>
         ))}>
         <ReadCountLabel />
       </ItemCardContent>

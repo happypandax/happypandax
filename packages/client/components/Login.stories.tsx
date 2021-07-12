@@ -4,4 +4,4 @@ export default {
   title: 'Boarding/Login',
 };
 
-export const Login = () => <LoginModal />;
+export const Login = () => <LoginModal open />;

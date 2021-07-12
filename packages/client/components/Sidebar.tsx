@@ -1,3 +1,6 @@
+import classNames from 'classnames';
+import _ from 'lodash';
+import Link from 'next/link';
 import {
   createContext,
   useCallback,
@@ -5,14 +8,12 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Icon, IconProps, Menu, Sidebar, Label } from 'semantic-ui-react';
-import classNames from 'classnames';
-import Link from 'next/link';
-import _ from 'lodash';
+import { Icon, IconProps, Label, Menu, Sidebar } from 'semantic-ui-react';
 import {
   SemanticCOLORS,
   SemanticICONS,
 } from 'semantic-ui-react/dist/commonjs/generic';
+
 import t from '../misc/lang';
 
 const SidebarContext = createContext({
@@ -99,7 +100,7 @@ export function MainSidebar({
   fixed?: boolean;
   onlyIcons?: boolean;
 }) {
-  const [iconOnly, setIconOnly] = useState(onlyIcons);
+  const [iconOnly, setIconOnly] = useState(true);
   const [inverted, setInverted] = useState(!fixed);
   const [width, setWidth] = useState<'very thin' | 'thin'>(
     iconOnly ? 'very thin' : 'thin'
@@ -113,7 +114,9 @@ export function MainSidebar({
   }, [iconOnly]);
 
   useEffect(() => {
-    setIconOnly(onlyIcons);
+    if (onlyIcons !== undefined) {
+      setIconOnly(onlyIcons);
+    }
   }, [onlyIcons]);
 
   useEffect(() => {

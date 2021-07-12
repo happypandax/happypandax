@@ -1,29 +1,38 @@
-import ListView from './ListView';
 import GalleryCard from '../Gallery';
+import ListView from './ListView';
 
 export default {
   title: 'View/List',
 };
 
+const data = (id: number, title = 'title_test', artist = 'testy') => ({
+  id,
+  preferred_title: { name: title },
+  artists: [{ preferred_name: { name: artist } }],
+});
+
 export const List = () => (
   <ListView
     items={[
-      { title: 'Test Title', artist: 'Testy' },
-      { title: 'Test Titl2e', artist: 'Testy' },
-      { title: 'Test4 Title', artist: 'Testy' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Title', artist: 'Tes7ty' },
-      { title: 'Test Titl2e', artist: 'Test2y' },
-      { title: 'Test Tit2le', artist: 'Test6y' },
+      data(1),
+      data(2),
+      data(3),
+      data(4),
+      data(5),
+      data(6),
+      data(7),
+      data(8),
+      data(9),
+      data(10),
+      data(11),
+      data(12),
+      data(13),
+      data(14),
+      data(15),
+      data(16),
     ]}
     itemRender={GalleryCard}
-    totalItemCount={13}
+    totalItemCount={16}
     pagination
     bottomPagination
   />

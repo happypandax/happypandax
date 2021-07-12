@@ -1,18 +1,18 @@
+import classNames from 'classnames';
+import { useCallback } from 'react';
 import { List } from 'react-virtualized';
 
 import styles from './CardView.module.css';
-import { useCallback } from 'react';
-import classNames from 'classnames';
-import { ViewAutoSizer, PaginatedView } from './index';
+import { PaginatedView, ViewAutoSizer } from './index';
 
-type ItemRender = React.ComponentType<{ data: any }>;
+type ItemRender<T> = React.ComponentType<{ data: T }>;
 
-interface CardViewProps {
-  items: any[];
-  itemRender: ItemRender;
+interface CardViewProps<T> {
+  items: T[];
+  itemRender: ItemRender<T>;
 }
 
-function CardViewGrid({
+function CardViewGrid<T>({
   width,
   height,
   items,
@@ -28,12 +28,12 @@ function CardViewGrid({
   onScroll?: any;
   scrollTop?: any;
   autoHeight?: any;
-} & CardViewProps) {
+} & CardViewProps<T>) {
   const itemWidth = 200;
   const rowHeight = 380;
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
-  const rowCount = Math.ceil(items.length / itemsPerRow);
+  const rowCount = Math.ceil(items?.length ?? 0 / itemsPerRow);
 
   return (
     <List
@@ -73,17 +73,17 @@ function CardViewGrid({
   );
 }
 
-export default function CardView({
+export default function CardView<T>({
   disableWindowScroll,
   items,
   itemRender,
   ...props
 }: {
   disableWindowScroll?: boolean;
-} & CardViewProps &
+} & CardViewProps<T> &
   Omit<React.ComponentProps<typeof PaginatedView>, 'children' | 'itemCount'>) {
   return (
-    <PaginatedView {...props} itemCount={items.length}>
+    <PaginatedView {...props} itemCount={items?.length}>
       <ViewAutoSizer
         items={items}
         itemRender={itemRender}

@@ -1,3 +1,10 @@
+import Router from 'next/router';
+import querystring, {
+  ParsedUrl,
+  StringifiableRecord,
+  StringifyOptions,
+} from 'query-string';
+
 import { Marked, Renderer } from '@ts-stack/markdown';
 
 Marked.setOptions({
@@ -39,7 +46,7 @@ export function refreshPage() {
 
 export function scrollToTop() {
   if (document) {
-    scrollToElement(document.getElementById('root'));
+    scrollToElement(document.body);
   }
 }
 
@@ -47,4 +54,40 @@ export function scrollToElement(element: HTMLElement, smooth = true) {
   element.scrollIntoView({
     behavior: smooth ? 'smooth' : 'auto',
   });
+}
+
+export function urlstring(
+  querypath: StringifiableRecord | string,
+  query?: StringifiableRecord,
+  options?: StringifyOptions
+) {
+  const path = typeof querypath === 'string' ? querypath : undefined;
+  const q = typeof querypath !== 'string' ? querypath : query;
+  return querystring.stringifyUrl(
+    {
+      url: path ?? Router.pathname,
+      query: {
+        ...(path ? {} : Router.query),
+        ...q,
+      },
+    },
+    options
+  );
+}
+
+export function urlparse(
+  url?: string
+): Omit<ParsedUrl, 'query'> & {
+  query: Record<
+    string,
+    string | string[] | number[] | number | boolean | boolean[]
+  >;
+} {
+  let u = url ?? Router.asPath;
+
+  return querystring.parseUrl(u, {
+    parseBooleans: true,
+    parseNumbers: true,
+    parseFragmentIdentifier: true,
+  }) as any;
 }

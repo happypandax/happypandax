@@ -1,25 +1,24 @@
-import { List, AutoSizer, WindowScroller } from 'react-virtualized';
-import { Segment, Grid } from 'semantic-ui-react';
-
-import styles from './ListView.module.css';
 import { useCallback } from 'react';
-import { ItemSize } from '../../misc/types';
-import { PaginatedView, ViewAutoSizer } from '.';
+import { List } from 'react-virtualized';
 
-type ItemRender = React.ComponentType<{
-  data: any;
+import { ItemSize } from '../../misc/types';
+import { PaginatedView, ViewAutoSizer } from './';
+import styles from './ListView.module.css';
+
+type ItemRender<T> = React.ComponentType<{
+  data: T;
   horizontal: boolean;
   size: ItemSize;
   fluid: boolean;
 }>;
 
-interface ListViewProps {
-  items: any[];
-  itemRender: ItemRender;
+interface ListViewProps<T> {
+  items: T[];
+  itemRender: ItemRender<T>;
   size?: ItemSize;
 }
 
-function ListViewList({
+function ListViewList<T>({
   width,
   height,
   items,
@@ -36,12 +35,11 @@ function ListViewList({
   onScroll?: any;
   scrollTop?: any;
   autoHeight?: any;
-} & ListViewProps) {
+} & ListViewProps<T>) {
   const itemWidth = 600;
   const rowHeight = 140;
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
-  console.log(itemsPerRow);
   const rowCount = Math.ceil(items.length / itemsPerRow);
 
   return (
@@ -82,7 +80,7 @@ function ListViewList({
   );
 }
 
-export default function ListView({
+export default function ListView<T>({
   itemRender,
   items,
   size = 'tiny',
@@ -90,13 +88,13 @@ export default function ListView({
   ...props
 }: {
   disableWindowScroll?: boolean;
-} & ListViewProps &
+} & ListViewProps<T> &
   Omit<
     React.ComponentProps<typeof PaginatedView>,
     'children' | 'itemCount' | 'paddedChildren'
   >) {
   return (
-    <PaginatedView {...props} itemCount={items.length} paddedChildren>
+    <PaginatedView {...props} itemCount={items?.length} paddedChildren>
       <ViewAutoSizer
         items={items}
         itemRender={itemRender}

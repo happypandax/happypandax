@@ -1,21 +1,11 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import { Icon, IconProps, Menu, Popup, Ref } from 'semantic-ui-react';
 import classNames from 'classnames';
-import Link from 'next/link';
-import _ from 'lodash';
-import {
-  SemanticCOLORS,
-  SemanticICONS,
-} from 'semantic-ui-react/dist/commonjs/generic';
-import t from '../misc/lang';
+import { createContext, useEffect, useRef, useState } from 'react';
+import { Icon, IconProps, Menu, Popup, Ref } from 'semantic-ui-react';
+import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
+
+import { QueryType, useQueryType } from '../client/queries';
+import { useInterval } from '../hooks/utils';
 import styles from './Menu.module.css';
-import { useRef } from 'react';
 
 const MenuContext = createContext({});
 
@@ -24,7 +14,7 @@ export function NotificationPopup({
 }: {
   context: React.ComponentProps<typeof Popup>['context'];
 }) {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
   return (
     <Popup open={show} context={context} position="bottom right">
       notifcation
@@ -65,10 +55,36 @@ function ConnectionItem({
 }: {
   position?: 'left' | 'right';
 }) {
+  const ref = useRef();
+  const { error, data, refetch } = useQueryType(QueryType.SERVER_STATUS);
+
   const [connectState, setConnectState] = useState<
     'connected' | 'connecting' | 'disconnected'
-  >('connecting');
-  const ref = useRef();
+  >(data?.data?.connected ? 'connected' : 'connecting');
+
+  useEffect(() => {
+    if (error || !data?.data?.connected) {
+      setConnectState('disconnected');
+    } else if (data?.data?.connected) {
+      setConnectState('connected');
+    }
+  }, [error, data]);
+
+  useInterval(
+    () => {
+      if (connectState === 'connecting') {
+        return;
+      }
+
+      if (connectState !== 'connected') {
+        setConnectState('connecting');
+      }
+
+      refetch();
+    },
+    connectState === 'disconnected' ? 2000 : 10000,
+    [connectState]
+  );
 
   const icon = (
     <Icon

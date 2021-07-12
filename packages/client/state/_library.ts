@@ -1,21 +1,21 @@
 import { ItemType, ViewType } from '../misc/enums';
 import StateBlock, { defineAtom } from './_base';
 
-export default class LibraryState extends StateBlock {
-  static data = defineAtom({
-    default: [],
-  });
-
+export class LibraryState extends StateBlock {
   static favorites = defineAtom({
     default: false,
   });
 
   static filter = defineAtom({
-    default: null as null | string,
+    default: undefined as number,
   });
 
   static sort = defineAtom({
-    default: null as null | string,
+    default: undefined as number,
+  });
+
+  static sortDesc = defineAtom({
+    default: false,
   });
 
   static display = defineAtom({

@@ -90,7 +90,7 @@
     flex-direction: column;
 }
 
-.clear_filter {
+.accented_button {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);

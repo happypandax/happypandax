@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import { useCallback, useMemo } from 'react';
 import {
   Button,
   ButtonGroup,
@@ -7,20 +8,33 @@ import {
   Menu,
   Popup,
 } from 'semantic-ui-react';
-import { useState, useCallback } from 'react';
-import t from '../../misc/lang';
+
+import { QueryType, useQueryType } from '../../client/queries';
 import { ItemType, ViewType } from '../../misc/enums';
-import { useMemo } from 'react';
+import t from '../../misc/lang';
+import { ServerFilter, ServerSortIndex } from '../../misc/types';
 
 export function SortButtonInput({
+  itemType,
   className,
+  data: initialData,
   active,
   setActive,
 }: {
+  itemType: ItemType;
   className?: string;
-  active: null | string;
-  setActive: (f: null | string) => void;
+  active?: number;
+  data?: ServerSortIndex[];
+  setActive: (f: number) => void;
 }) {
+  const { data } = useQueryType(
+    QueryType.SORT_INDEXES,
+    {
+      item_type: itemType,
+    },
+    { initialData }
+  );
+
   return (
     <Popup
       on="click"
@@ -28,7 +42,7 @@ export function SortButtonInput({
       hoverable
       trigger={
         <Button
-          icon="sort content ascending"
+          icon="sort alphabet down"
           primary
           circular
           className={classNames(className)}
@@ -36,36 +50,45 @@ export function SortButtonInput({
       }>
       <Popup.Content>
         <Menu secondary vertical>
-          <Menu.Item
-            active={active === 'sort 1'}
-            icon="sort"
-            color="blue"
-            name="sort 1"
-            onClick={() => {
-              setActive('sort 1');
-            }}
-          />
-          <Menu.Item
-            active={active === 'sort 2'}
-            icon="sort"
-            color="blue"
-            name="sort 2"
-            onClick={() => {
-              setActive('sort 2');
-            }}
-          />
-          <Menu.Item
-            active={active === 'sort 3'}
-            icon="sort"
-            color="blue"
-            name="sort 3"
-            onClick={() => {
-              setActive('sort 3');
-            }}
-          />
+          {!!data?.data &&
+            data.data
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((v) => (
+                <Menu.Item
+                  key={v.index}
+                  index={v.index}
+                  active={v.index === active}
+                  icon="sort"
+                  color="blue"
+                  name={v.name}
+                  onClick={() => {
+                    setActive(v.index);
+                  }}
+                />
+              ))}
         </Menu>
       </Popup.Content>
     </Popup>
+  );
+}
+
+export function SortOrderButton(
+  props: React.ComponentProps<typeof Button> & { descending?: boolean }
+) {
+  return (
+    <Button
+      icon={{
+        className: props.descending
+          ? 'sort amount down'
+          : 'sort amount down alternate',
+      }}
+      primary
+      circular
+      basic
+      color="blue"
+      title={t`Sort order`}
+      {...props}
+    />
   );
 }
 
@@ -86,12 +109,23 @@ export function ClearFilterButton(props: React.ComponentProps<typeof Button>) {
 export function FilterButtonInput({
   className,
   active,
+  data: initialData,
   setActive,
 }: {
   className?: string;
-  active: null | string;
-  setActive: (f: null | string) => void;
+  active: number;
+  setActive: (f: number) => void;
+  data?: ServerFilter[];
 }) {
+  const { data } = useQueryType(
+    QueryType.ITEMS,
+    {
+      item_type: ItemType.Filter,
+      limit: 9999, // no limit
+    },
+    { initialData }
+  );
+
   return (
     <Popup
       on="click"
@@ -108,33 +142,20 @@ export function FilterButtonInput({
       }>
       <Popup.Content>
         <Menu secondary vertical>
-          <Menu.Item
-            active={active === 'filter 1'}
-            icon="filter"
-            color="blue"
-            name="filter 1"
-            onClick={() => {
-              setActive('filter 1');
-            }}
-          />
-          <Menu.Item
-            active={active === 'filter 2'}
-            icon="filter"
-            color="blue"
-            name="filter 2"
-            onClick={() => {
-              setActive('filter 2');
-            }}
-          />
-          <Menu.Item
-            active={active === 'filter 3'}
-            icon="filter"
-            color="blue"
-            name="filter 3"
-            onClick={() => {
-              setActive('filter 3');
-            }}
-          />
+          {!!data?.data &&
+            data.data?.map?.((v) => (
+              <Menu.Item
+                key={v.id}
+                index={v.id}
+                active={active === v.id}
+                icon="filter"
+                color="blue"
+                name={v.name}
+                onClick={() => {
+                  setActive(v.id);
+                }}
+              />
+            ))}
         </Menu>
       </Popup.Content>
     </Popup>
