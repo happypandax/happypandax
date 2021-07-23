@@ -29,4 +29,8 @@ export class LibraryState extends StateBlock {
   static item = defineAtom({
     default: ItemType.Gallery,
   });
+
+  static itemCount = defineAtom({
+    default: 30,
+  });
 }

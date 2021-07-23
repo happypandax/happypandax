@@ -1,3 +1,4 @@
+import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
 import Router from 'next/router';
 import querystring, {
   ParsedUrl,
@@ -6,6 +7,8 @@ import querystring, {
 } from 'query-string';
 
 import { Marked, Renderer } from '@ts-stack/markdown';
+
+import t from './lang';
 
 Marked.setOptions({
   renderer: new Renderer(),
@@ -71,7 +74,7 @@ export function urlstring(
         ...q,
       },
     },
-    options
+    { ...options, arrayFormat: 'index' }
   );
 }
 
@@ -89,5 +92,20 @@ export function urlparse(
     parseBooleans: true,
     parseNumbers: true,
     parseFragmentIdentifier: true,
+    arrayFormat: 'index',
   }) as any;
+}
+
+export function dateFromTimestamp(
+  timestamp: number,
+  {
+    relative = false,
+    addSuffix = true,
+  }: { relative?: boolean; addSuffix?: boolean }
+) {
+  if (!timestamp) return t`Unknown`;
+  const d = fromUnixTime(timestamp);
+  return relative
+    ? formatDistanceToNowStrict(d, { addSuffix })
+    : format(d, 'PPpp');
 }

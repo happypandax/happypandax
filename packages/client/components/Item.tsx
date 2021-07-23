@@ -1,28 +1,32 @@
 import classNames from 'classnames';
 import Link from 'next/link';
-import React, { useContext, useMemo } from 'react';
-import { useState, useCallback } from 'react';
-import { useRef } from 'react';
-import { useHover, useMouseHovered } from 'react-use';
-import { Label, Modal, Popup, Ref } from 'semantic-ui-react';
-import { DragItemData, ItemSize } from '../misc/types';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { useDrag } from 'react-dnd';
 import {
   Card,
-  Image,
   Dimmer,
-  Rating,
+  Header,
   Icon,
+  Image,
+  Label,
   List,
   Loader,
+  Modal,
+  Popup,
+  Rating,
+  Ref,
 } from 'semantic-ui-react';
+
 import { ItemType } from '../misc/enums';
-import { useDrag } from 'react-dnd';
+import { DragItemData, ItemSize, ServerItem } from '../misc/types';
+import styles from './Item.module.css';
 
 const ItemContext = React.createContext({
   isDragging: false,
   size: 'medium' as ItemSize,
   ActionContent: undefined as React.ElementType,
   Details: undefined as React.ElementType,
+  detailsData: undefined as PartialExcept<ServerItem, 'id'>,
   labels: [] as React.ReactNode[],
   href: '',
   disableModal: false,
@@ -58,17 +62,31 @@ export function ReadLaterIconLabel() {
   );
 }
 
-export function ReadingIconLabel() {
+export function ReadingIconLabel({ percent }: { percent?: number }) {
   return (
-    <Icon
-      name="eye"
-      bordered
-      inverted
-      size="small"
-      color="orange"
-      link
-      title={`This item is being read`}
-    />
+    <>
+      {!!percent && (
+        <TranslucentLabel
+          className={classNames(styles.reading_icon_label)}
+          size="mini"
+          basic
+          title={`This item is being read`}>
+          <Icon name="eye" size="large" title={`This item is being read`} />
+          <span>{Math.round(percent)}%</span>
+        </TranslucentLabel>
+      )}
+      {!percent && (
+        <Icon
+          name="eye"
+          bordered
+          inverted
+          size="small"
+          color="orange"
+          link
+          title={`This item is being read`}
+        />
+      )}
+    </>
   );
 }
 
@@ -90,18 +108,19 @@ export function TranslucentLabel({
   size = 'tiny',
   basic = true,
   circular,
+  className,
+  ...props
 }: {
   children: React.ReactNode;
-  size?: React.ComponentProps<typeof Label>['size'];
-  basic?: React.ComponentProps<typeof Label>['basic'];
   circular?: boolean;
-}) {
+} & React.ComponentProps<typeof Label>) {
   return (
     <Label
+      {...props}
       basic={basic}
       size={size}
       circular={circular}
-      className="translucent-black">
+      className={classNames('translucent-black', className)}>
       {children}
     </Label>
   );
@@ -235,7 +254,7 @@ export function ItemCardContent({
               closeIcon
               dimmer="inverted"
               onClose={onDetailsClose}>
-              <Details />
+              <Details data={itemContext.detailsData} />
             </ItemDetailsModal>
           )}
         <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
@@ -325,6 +344,7 @@ export function ItemCard({
   disableModal,
   draggable,
   details: Details,
+  detailsData,
   onDetailsOpen,
   labels,
   actionContent: ActionContent,
@@ -342,7 +362,8 @@ export function ItemCard({
   type: ItemType;
   labels?: React.ReactNode[];
   actionContent?: React.ElementType;
-  details?: React.ElementType;
+  details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
+  detailsData?: PartialExcept<ServerItem, 'id'>;
   image?: React.ElementType;
   href?: string;
   disableModal?: boolean;
@@ -393,6 +414,7 @@ export function ItemCard({
         disableModal,
         onDetailsOpen,
         Details,
+        detailsData,
         ActionContent,
         labels,
         loading,

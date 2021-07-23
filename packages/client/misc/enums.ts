@@ -245,3 +245,9 @@ export enum NotificationType {
   // Custom
   Custom = 99,
 }
+
+export enum DataMode {
+  EDIT,
+  READ_ONLY,
+  DEFAULT,
+}

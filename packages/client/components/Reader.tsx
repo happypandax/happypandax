@@ -1,45 +1,36 @@
-import {
+import classNames from 'classnames';
+import _ from 'lodash';
+import React, {
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  useCallback,
-  createContext,
 } from 'react';
-import React from 'react';
 import {
-  Segment,
-  Menu,
-  Label,
-  Icon,
-  Grid,
-  Dimmer,
-  Table,
-  Header,
-  Ref,
-  Rating,
-  Modal,
+  useFullscreen,
+  useHarmonicIntervalFn,
+  useKeyPressEvent,
+} from 'react-use';
+import useMeasureDirty from 'react-use/lib/useMeasureDirty';
+import {
   Button,
+  Dimmer,
+  Grid,
+  Header,
+  Icon,
+  Label,
+  Rating,
+  Segment,
 } from 'semantic-ui-react';
 
 import Scroller from '@twiddly/scroller';
-import {
-  useEvent,
-  useFullscreen,
-  useHarmonicIntervalFn,
-  useKey,
-  useKeyPress,
-  useKeyPressEvent,
-  useMount,
-} from 'react-use';
-import useMeasureDirty from 'react-use/lib/useMeasureDirty';
-import classNames from 'classnames';
+
+import { useDocumentEvent, useInterval, useRefEvent } from '../hooks/utils';
 import t from '../misc/lang';
-import { useRefEvent, useDocumentEvent, useInterval } from '../hooks/utils';
-import _ from 'lodash';
-import { useLayoutEffect } from 'react';
-import { Slider } from './Misc';
 import GalleryCard from './Gallery';
+import { Slider } from './Misc';
 
 export enum ReadingDirection {
   TopToBottom,
@@ -942,7 +933,7 @@ function Canvas({
   );
 }
 
-const PLACEHOLDERS = _.range(3).map((p) => ({
+const PLACEHOLDERS = _.range(10).map((p) => ({
   number: p + 1,
   url: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
     16
@@ -996,7 +987,6 @@ export default function Reader() {
         <EndContent />
       </Dimmer>
       <Canvas
-        autoNavigate
         wheelZoom={false}
         label={useMemo(
           () => (
@@ -1024,6 +1014,12 @@ export default function Reader() {
     </Dimmer.Dimmable>
   );
 }
+
+const data = (id: number, title = 'title_test', artist = 'testy') => ({
+  id,
+  preferred_title: { name: title },
+  artists: [{ preferred_name: { name: artist } }],
+});
 
 function ReadNext() {
   const [countDownEnabled, setCountDownEnabled] = useState(true);
@@ -1061,10 +1057,7 @@ function ReadNext() {
               {t`Next...`}{' '}
               {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
             </Header>
-            <GalleryCard
-              size="medium"
-              data={{ id: 1, title: 'test', artist: 'artest' }}
-            />
+            <GalleryCard size="medium" data={data(1)} />
           </Segment>
         </Grid.Column>
         <Grid.Column textAlign="center">
@@ -1073,10 +1066,7 @@ function ReadNext() {
               {t`Next Chapter...`}{' '}
               {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
             </Header>
-            <GalleryCard
-              size="medium"
-              data={{ id: 1, title: 'test', artist: 'artest' }}
-            />
+            <GalleryCard size="medium" data={data(2)} />
           </Segment>
         </Grid.Column>
         <Grid.Column textAlign="center">
@@ -1085,10 +1075,7 @@ function ReadNext() {
               {t`Next in reading list...`}{' '}
               {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
             </Header>
-            <GalleryCard
-              size="medium"
-              data={{ id: 1, title: 'test', artist: 'artest' }}
-            />
+            <GalleryCard size="medium" data={data(3)} />
           </Segment>
         </Grid.Column>
       </Grid.Row>
@@ -1119,44 +1106,20 @@ export function EndContent({}: {}) {
       <Grid.Row>
         <Grid.Column>
           <Slider label={t`From same artist`} color="blue">
-            <GalleryCard
-              size="small"
-              data={{ id: 1, title: 'test', artist: 'artest' }}
-            />
-            <GalleryCard
-              size="small"
-              data={{ id: 2, title: 'test', artist: 'artest' }}
-            />
-            <GalleryCard
-              size="small"
-              data={{ id: 3, title: 'test', artist: 'artest' }}
-            />
-            <GalleryCard
-              size="small"
-              data={{ id: 4, title: 'test', artist: 'artest' }}
-            />
+            <GalleryCard size="small" data={data(4)} />
+            <GalleryCard size="small" data={data(5)} />
+            <GalleryCard size="small" data={data(6)} />
+            <GalleryCard size="small" data={data(7)} />
           </Slider>
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
           <Slider label={t`Just like this one`} color="violet">
-            <GalleryCard
-              size="small"
-              data={{ id: 1, title: 'test', artist: 'artest' }}
-            />
-            <GalleryCard
-              size="small"
-              data={{ id: 2, title: 'test', artist: 'artest' }}
-            />
-            <GalleryCard
-              size="small"
-              data={{ id: 3, title: 'test', artist: 'artest' }}
-            />
-            <GalleryCard
-              size="small"
-              data={{ id: 4, title: 'test', artist: 'artest' }}
-            />
+            <GalleryCard size="small" data={data(8)} />
+            <GalleryCard size="small" data={data(9)} />
+            <GalleryCard size="small" data={data(10)} />
+            <GalleryCard size="small" data={data(11)} />
           </Slider>
         </Grid.Column>
       </Grid.Row>

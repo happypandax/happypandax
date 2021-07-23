@@ -3,7 +3,7 @@ import { Button, Icon } from 'semantic-ui-react';
 
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
-import { ItemSize, ServerGallery } from '../misc/types';
+import { ItemSize, ServerGallery, ServerItem } from '../misc/types';
 import {
   GroupingNumberLabel,
   LanguageLabel,
@@ -48,15 +48,6 @@ function SaveForLaterButton() {
   );
 }
 
-function GalleryMenuItems() {
-  return (
-    <>
-      <ItemMenuLabelItem icon="envelope open outline">{t`Read`}</ItemMenuLabelItem>
-      <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
-    </>
-  );
-}
-
 function GalleryCardMenu() {
   return (
     <ItemMenuLabel>
@@ -68,7 +59,11 @@ function GalleryCardMenu() {
 
 export type GalleryCardData = DeepPick<
   ServerGallery,
-  'id' | 'preferred_title.name' | 'artists.[].preferred_name.name'
+  | 'id'
+  | 'preferred_title.name'
+  | 'artists.[].preferred_name.name'
+  | 'page_count'
+  | 'language.code'
 >;
 
 export function GalleryCard({
@@ -86,7 +81,7 @@ export function GalleryCard({
   fluid?: boolean;
   draggable?: boolean;
   disableModal?: boolean;
-  details?: React.ElementType;
+  details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
   onDetailsOpen?: () => void;
   horizontal?: boolean;
 }) {
@@ -101,19 +96,26 @@ export function GalleryCard({
       horizontal={horizontal}
       size={size}
       details={details}
+      detailsData={data}
       disableModal={disableModal}
       onDetailsOpen={onDetailsOpen}
       labels={useMemo(
         () => [
           <ItemLabel x="left" y="top">
             <HeartIconLabel />
-            <GroupingNumberLabel as={TranslucentLabel} />
+            {!!data?.number && data?.number > 0 && (
+              <GroupingNumberLabel as={TranslucentLabel}>
+                {data?.number}
+              </GroupingNumberLabel>
+            )}
           </ItemLabel>,
           <ItemLabel x="right" y="top">
-            <InboxIconLabel />
-            <ReadingIconLabel />
-            <UnreadIconLabel />
-            <ReadLaterIconLabel />
+            {!!data?.metatags?.inbox && <InboxIconLabel />}
+            {!data?.metatags?.read && <UnreadIconLabel />}
+            {!!data?.metatags?.readlater && <ReadLaterIconLabel />}
+            {!!data?.progress && !data?.progress?.end && (
+              <ReadingIconLabel percent={data?.progress?.percent} />
+            )}
             <ProgressLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="bottom">
@@ -121,8 +123,14 @@ export function GalleryCard({
             {horizontal && <ReadCountLabel as={TranslucentLabel} />}
             {horizontal && <LanguageLabel as={TranslucentLabel} />}
             {horizontal && <PageCountLabel as={TranslucentLabel} />}
-            {!horizontal && <TranslucentLabel>{'EN'}</TranslucentLabel>}
-            {!horizontal && <TranslucentLabel circular>{23}</TranslucentLabel>}
+            {!horizontal && !!data.language.code && (
+              <TranslucentLabel>
+                {data.language.code.toUpperCase()}
+              </TranslucentLabel>
+            )}
+            {!horizontal && (
+              <TranslucentLabel circular>{data.page_count}</TranslucentLabel>
+            )}
             <GalleryCardMenu />
           </ItemLabel>,
         ],

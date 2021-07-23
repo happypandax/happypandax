@@ -14,6 +14,7 @@ type ItemRender<T> = React.ComponentType<{
 
 interface ListViewProps<T> {
   items: T[];
+  onItemKey: (T) => any;
   itemRender: ItemRender<T>;
   size?: ItemSize;
 }
@@ -28,6 +29,7 @@ function ListViewList<T>({
   onScroll,
   scrollTop,
   autoHeight,
+  onItemKey,
 }: {
   width: number;
   height: number;
@@ -62,7 +64,10 @@ function ListViewList<T>({
 
           for (let i = fromIndex; i < toIndex; i++) {
             cols.push(
-              <div className={styles.item} style={{ flexGrow: 1 }}>
+              <div
+                key={onItemKey(items[i])}
+                className={styles.item}
+                style={{ flexGrow: 1 }}>
                 <ItemRender data={items[i]} horizontal size={size} fluid />
               </div>
             );
@@ -85,6 +90,7 @@ export default function ListView<T>({
   items,
   size = 'tiny',
   disableWindowScroll,
+  onItemKey,
   ...props
 }: {
   disableWindowScroll?: boolean;
@@ -99,6 +105,7 @@ export default function ListView<T>({
         items={items}
         itemRender={itemRender}
         disableWindowScroll={disableWindowScroll}
+        onItemKey={onItemKey}
         view={useCallback(
           (p: any) => (
             <ListViewList {...p} size={size} />

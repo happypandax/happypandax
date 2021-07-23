@@ -157,12 +157,13 @@ export function ViewAutoSizer({
   view: View,
   items,
   itemRender,
+  ...viewProps
 }: {
   disableWindowScroll?: boolean;
   itemRender: ItemRender;
   items?: any[];
   view: React.ElementType<ViewProps>;
-}) {
+} & Record<string, any>) {
   const elFunc = !disableWindowScroll
     ? useCallback(
         ({ width }) => {
@@ -178,6 +179,7 @@ export function ViewAutoSizer({
                   onScroll={onChildScroll}
                   scrollTop={scrollTop}
                   autoHeight
+                  {...viewProps}
                 />
               )}
             </WindowScroller>
@@ -193,6 +195,7 @@ export function ViewAutoSizer({
               itemRender={itemRender}
               height={height}
               width={width}
+              {...viewProps}
             />
           );
         },

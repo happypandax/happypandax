@@ -12,7 +12,7 @@ import {
 import { QueryType, useQueryType } from '../../client/queries';
 import { ItemType, ViewType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { ServerFilter, ServerSortIndex } from '../../misc/types';
+import { FieldPath, ServerFilter, ServerSortIndex } from '../../misc/types';
 
 export function SortButtonInput({
   itemType,
@@ -121,6 +121,7 @@ export function FilterButtonInput({
     QueryType.ITEMS,
     {
       item_type: ItemType.Filter,
+      fields: ['name'] as FieldPath<ServerFilter>[],
       limit: 9999, // no limit
     },
     { initialData }

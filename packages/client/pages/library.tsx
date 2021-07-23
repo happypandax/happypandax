@@ -1,6 +1,6 @@
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import { useRecoilState, useRecoilValue } from 'recoil';
 
@@ -20,6 +20,7 @@ import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
+import { ServerGallery, ServerItem } from '../misc/types';
 import { urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
@@ -45,13 +46,24 @@ export async function getServerSideProps(
     itemType = ItemType.Collection;
   }
 
-  const data = await server.library({
+  const data = await server.library<ServerGallery>({
     item_type: itemType,
     metatags: { favorite: urlQuery.query?.fav as boolean, trash: false },
     page: urlQuery.query?.p as number,
     sort_by: urlQuery.query?.sort as number,
     filter_id: urlQuery.query?.filter as number,
+    limit: urlQuery.query?.limit as number,
     sort_desc: urlQuery.query?.desc as boolean,
+    fields: [
+      'artists.preferred_name.name',
+      'preferred_title.name',
+      'number',
+      'page_count',
+      'language.code',
+      'progress.end',
+      'progress.percent',
+      'metatags.*',
+    ],
   });
 
   return {
@@ -67,11 +79,16 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   const [sort, setSort] = useRecoilState(LibraryState.sort);
   const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
   const display = useRecoilValue(LibraryState.display);
+  const itemCount = useRecoilValue(LibraryState.itemCount);
 
   const router = useRouter();
 
   // TODO: replace with useQuery with initialData?
   const [items, setItems] = useState(data);
+
+  useEffect(() => {
+    setItems(data);
+  }, [data]);
 
   useEffectOnce(() => {
     setFavorites((urlQuery.query?.fav as boolean) ?? false);
@@ -96,10 +113,16 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
     router.replace(urlstring({ filter }));
   }, [filter]);
 
+  useEffect(() => {
+    router.replace(urlstring({ limit: itemCount }));
+  }, [itemCount]);
+
   const pageHrefTemplate = useMemo(
     () => urlstring(router.asPath, { p: '${page}' }, { encode: false }),
     [router.query]
   );
+
+  const onItemKey = useCallback((item: ServerItem) => item.id, []);
 
   return (
     <PageLayout
@@ -166,6 +189,8 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
           activePage={urlQuery.query?.p}
           items={items.items}
           itemRender={GalleryCard}
+          itemsPerPage={itemCount}
+          onItemKey={onItemKey}
           totalItemCount={items.count}
           pagination={!!items.count}
           bottomPagination={!!items.count}></CardView>
@@ -175,6 +200,8 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
           hrefTemplate={pageHrefTemplate}
           items={items.items}
           activePage={urlQuery.query?.p}
+          onItemKey={onItemKey}
+          itemsPerPage={itemCount}
           itemRender={GalleryCard}
           totalItemCount={items.count}
           pagination={!!items.count}

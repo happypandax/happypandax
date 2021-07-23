@@ -1,96 +1,138 @@
-import { Label, Icon, Table, Header } from 'semantic-ui-react';
-import t from '../../misc/lang';
+import React, { useCallback, useContext, useState } from 'react';
+import { useRecoilState } from 'recoil';
+import { Header, Icon, Label, Table } from 'semantic-ui-react';
 
-export function LanguageLabel(props: React.ComponentProps<typeof Label>) {
+import t from '../../misc/lang';
+import { FieldPath, ServerGallery } from '../../misc/types';
+import { dateFromTimestamp } from '../../misc/utility';
+import { DataState } from '../../state';
+
+export const DataContext = React.createContext({
+  key: '',
+});
+
+export function LanguageLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof Label>) {
   return (
     <Label color="blue" basic {...props}>
       <Icon className="globe africa" />
-      {!props.children && 'English'}
-      {props.children}
+      {children}
     </Label>
   );
 }
 
-export function ReadCountLabel(props: React.ComponentProps<typeof Label>) {
+export function ReadCountLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof Label>) {
   return (
     <Label title={t`Timed read`} color="blue" basic {...props}>
       <Icon className="book open" />
-      23
+      {children}
     </Label>
   );
 }
 
-export function PageCountLabel(props: React.ComponentProps<typeof Label>) {
+export function PageCountLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof Label>) {
   return (
     <Label title={t`Page count`} color="blue" basic {...props}>
       <Icon name="clone outline" />
-      19
+      {children}
     </Label>
   );
 }
 
-export function StatusLabel(props: React.ComponentProps<typeof Label>) {
+export function StatusLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof Label>) {
   return (
     <Label title={t`Status`} color="blue" basic {...props}>
       <Icon name="calendar check" />
-      Ongoing
+      {children}
     </Label>
   );
 }
 
-export function GroupingNumberLabel(props: React.ComponentProps<typeof Label>) {
+export function GroupingNumberLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof Label>) {
   return (
-    <Label title={t`Number`} color="blue" basic {...props}>
-      1
+    <Label title={t`Group number`} color="blue" basic {...props}>
+      {children}
     </Label>
   );
 }
 
-export function DateAddedLabel(props: React.ComponentProps<typeof Label>) {
+export function DateLabel({
+  timestamp,
+  text,
+  ...props
+}: React.ComponentProps<typeof Label> & { text?: string; timestamp?: number }) {
+  const [showRelative, setShowRelative] = useState(true);
+
+  const date = dateFromTimestamp(timestamp, { relative: showRelative });
+
   return (
-    <Label title={t`Date added`} {...props}>
-      {t`Added`}
-      <Label.Detail>12 March</Label.Detail>
+    <Label
+      as="a"
+      {...props}
+      onClick={useCallback(() => setShowRelative(!showRelative), [
+        showRelative,
+      ])}>
+      {text}
+      <Label.Detail>{date ? date : t`Unknown`}</Label.Detail>
     </Label>
   );
 }
 
-export function LastReadLabel(props: React.ComponentProps<typeof Label>) {
-  return (
-    <Label title={t`Last read`} {...props}>
-      {t`Read`}
-      <Label.Detail>12 March</Label.Detail>
-    </Label>
-  );
+export function DateAddedLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof DateLabel>) {
+  return <DateLabel {...props} text={t`Added`} title={t`Date added`} />;
 }
 
-export function LastUpdatedLabel(props: React.ComponentProps<typeof Label>) {
-  return (
-    <Label title={t`Last updated`} {...props}>
-      {t`Updated`}
-      <Label.Detail>12 March</Label.Detail>
-    </Label>
-  );
+export function LastReadLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof DateLabel>) {
+  return <DateLabel {...props} text={t`Last read`} title={t`Last read`} />;
 }
 
-export function DatePublishedLabel(props: React.ComponentProps<typeof Label>) {
-  return (
-    <Label title={t`Date published`} {...props}>
-      {t`Published`}
-      <Label.Detail>12 March</Label.Detail>
-    </Label>
-  );
+export function LastUpdatedLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof DateLabel>) {
+  return <DateLabel {...props} text={t`Updated`} title={t`Last updated`} />;
 }
 
-export function TitleTable({ children }: { children?: React.ReactNode }) {
-  const titles = [
-    { language: 'English', title: 'Item Title' },
-    { language: 'Japanese', title: 'Item Alternative Title' },
-    { language: 'Russian', title: 'Item Alternative Title 2' },
-  ];
+export function DatePublishedLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof DateLabel>) {
+  return <DateLabel {...props} text={t`Published`} title={t`Date published`} />;
+}
 
-  const primary = titles[0];
-  const altTitles = titles.filter((v) => v !== primary);
+export function NameTable({
+  children,
+  dataPrimaryKey,
+  dataKey,
+}: {
+  dataKey: FieldPath;
+  dataPrimaryKey: FieldPath;
+  children?: React.ReactNode;
+}) {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
 
   return (
     <Table basic="very" compact="very" verticalAlign="middle">
@@ -98,22 +140,16 @@ export function TitleTable({ children }: { children?: React.ReactNode }) {
         <Table.Row>
           <Table.Cell colspan="2" textAlign="center">
             {children}
-            <GroupingNumberLabel
-              className="float-left"
-              circular
-              size="tiny"
-              color="black"
-            />
             <Label size="tiny" className="float-right">
               {t`ID`}
-              <Label.Detail>1234</Label.Detail>
+              <Label.Detail>{data?.id}</Label.Detail>
             </Label>
             <div>
-              <Header size="medium">{primary.title}</Header>
+              <Header size="medium">{data?.[dataPrimaryKey]?.name}</Header>
             </div>
           </Table.Cell>
         </Table.Row>
-        {altTitles.map((v) => (
+        {data?.[dataPrimaryKey]?.map?.((v) => (
           <Table.Row key={v.id ?? v.title} verticalAlign="middle">
             <Table.Cell collapsing>
               <LanguageLabel color={undefined} basic={false} size="tiny">

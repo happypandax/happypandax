@@ -9,15 +9,14 @@ import {
   UseQueryResult,
 } from 'react-query';
 
-import { ItemType } from '../misc/enums';
-import { ServerSortIndex } from '../misc/types';
+import { FieldPath, ServerSortIndex } from '../misc/types';
 import { urlstring } from '../misc/utility';
+
+import type ServerService from '../services/server';
 
 export enum QueryType {
   ITEMS,
   ITEM,
-  GALLERIES,
-  GALLERY,
   SORT_INDEXES,
   SERVER_STATUS,
 }
@@ -65,13 +64,23 @@ export function useMutationType<
   }
 }
 
+// If A is defined, it renders the rest of generics useless
+// see https://github.com/microsoft/TypeScript/issues/26242
+// and https://github.com/microsoft/TypeScript/issues/10571
 export function useQueryType<
-  T extends QueryActions,
-  K extends T['type'],
-  V extends Extract<T, { type: K }>['variables'],
-  R extends Extract<T, { type: K }>['dataType'],
-  D extends AxiosResponse<R>,
-  E extends AxiosError<D>
+  A = undefined,
+  T extends QueryActions<A> = QueryActions<A>,
+  K extends T['type'] = T['type'],
+  V extends Extract<T, { type: K }>['variables'] = Extract<
+    T,
+    { type: K }
+  >['variables'],
+  R extends Extract<T, { type: K }>['dataType'] = Extract<
+    T,
+    { type: K }
+  >['dataType'],
+  D extends AxiosResponse<R> = AxiosResponse<R>,
+  E extends AxiosError<D> = AxiosError<D>
 >(
   type: K,
   variables?: V,
@@ -97,26 +106,6 @@ export function useQueryType<
   };
 
   switch (type) {
-    case QueryType.GALLERY: {
-      return useQuery(
-        [type.toString(), variables],
-        () => {
-          return axios.get(urlstring('/api/gallery', variables));
-        },
-        opts
-      );
-    }
-
-    case QueryType.GALLERIES: {
-      return useQuery(
-        [type.toString(), variables],
-        () => {
-          return axios.get(urlstring('/api/galleries', variables));
-        },
-        opts
-      );
-    }
-
     case QueryType.SERVER_STATUS: {
       return useQuery(
         [type.toString()],
@@ -132,6 +121,16 @@ export function useQueryType<
         [type.toString()],
         () => {
           return axios.get(urlstring('/api/sort_indexes', variables));
+        },
+        opts
+      );
+    }
+
+    case QueryType.ITEM: {
+      return useQuery(
+        [type.toString(), variables],
+        () => {
+          return axios.get(urlstring('/api/item', variables));
         },
         opts
       );
@@ -161,21 +160,11 @@ interface Action {
 
 // ======================== QUERY ACTIONS ====================================
 
-interface QueryAction extends Action {
+interface QueryAction<T = undefined> extends Action {
   type: QueryType;
 }
 
-interface FetchGallery extends QueryAction {
-  type: QueryType.GALLERY;
-  variables: { id: number };
-}
-
-interface FetchGalleries extends QueryAction {
-  type: QueryType.GALLERIES;
-  variables?: { limit?: number };
-}
-
-interface FetchServerStatus extends QueryAction {
+interface FetchServerStatus<T = undefined> extends QueryAction<T> {
   type: QueryType.SERVER_STATUS;
   dataType: {
     loggedIn: boolean;
@@ -183,24 +172,39 @@ interface FetchServerStatus extends QueryAction {
   };
 }
 
-interface FetchSortIndexes extends QueryAction {
+interface FetchSortIndexes<T = undefined> extends QueryAction<T> {
   type: QueryType.SORT_INDEXES;
   dataType: ServerSortIndex[];
-  variables: { item_type: ItemType; translate?: boolean; locale?: string };
+  variables: Parameters<typeof ServerService['prototype']['sort_indexes']>[0];
 }
 
-interface FetchItems extends QueryAction {
+interface FetchItem<T = undefined> extends QueryAction<T> {
+  type: QueryType.ITEM;
+  dataType: Record<string, any>;
+  variables: Omit<
+    Parameters<typeof ServerService['prototype']['item']>[0],
+    'fields'
+  > & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
+interface FetchItems<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEMS;
   dataType: Record<string, any>[];
-  variables: { item_type: ItemType; limit?: number; offset?: number };
+  variables: Omit<
+    Parameters<typeof ServerService['prototype']['items']>[0],
+    'fields'
+  > & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
 }
 
-type QueryActions =
-  | FetchItems
-  | FetchSortIndexes
-  | FetchServerStatus
-  | FetchGallery
-  | FetchGalleries;
+type QueryActions<T = undefined> =
+  | FetchItem<T>
+  | FetchItems<T>
+  | FetchSortIndexes<T>
+  | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
 

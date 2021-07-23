@@ -7,7 +7,12 @@ import Client, {
 
 import { createCache } from '../misc/cache';
 import { ItemSort, ItemType } from '../misc/enums';
-import { ServerItem, ServerMetaTags, ServerSortIndex } from '../misc/types';
+import {
+  FieldPath,
+  ServerItem,
+  ServerMetaTags,
+  ServerSortIndex,
+} from '../misc/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
 
@@ -47,6 +52,7 @@ export default class ServerService extends Service {
   }
 
   async _call(func: string, args: JsonMap) {
+    global.app.log.d('calling', func, args);
     const data = await this.#client
       .send([
         {
@@ -55,6 +61,7 @@ export default class ServerService extends Service {
         },
       ])
       .then((d) => {
+        global.app.log.d(func, 'received data');
         this._throw_msg_error(d);
         return d?.data?.[0];
       });
@@ -102,18 +109,34 @@ export default class ServerService extends Service {
     return r;
   }
 
-  async items(args: { item_type: ItemType; offset?: number; limit?: number }) {
+  async item(args: {
+    item_type: ItemType;
+    item_id: number;
+    fields?: FieldPath[];
+  }) {
+    const data = await this._call('get_item', args);
+    this._throw_msg_error(data);
+    return data.data as JsonMap;
+  }
+
+  async items(args: {
+    item_type: ItemType;
+    fields?: FieldPath[];
+    offset?: number;
+    limit?: number;
+  }) {
     const data = await this._call('get_items', args);
     this._throw_msg_error(data);
     return data.data as { count: number; items: JsonMap[] };
   }
 
-  async library(args: {
+  async library<R = undefined>(args: {
     item_type: ItemType;
-    filter_id?: number;
-    metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
+    fields?: FieldPath<R>[];
     page?: number;
     limit?: number;
+    metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
+    filter_id?: number;
     sort_by?: ItemSort;
     sort_desc?: boolean;
     search_query?: string;
@@ -121,7 +144,10 @@ export default class ServerService extends Service {
   }) {
     const data = await this._call('library_view', args);
     this._throw_msg_error(data);
-    return data.data as { count: number; items: JsonMap[] };
+    return data.data as {
+      count: number;
+      items: R extends undefined ? JsonMap[] : R[];
+    };
   }
 
   async sort_indexes(args: {

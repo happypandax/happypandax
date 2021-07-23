@@ -2280,10 +2280,11 @@ __metadata:
     babel-plugin-superjson-next: ^0.3.0
     classnames: ^2.2.6
     darkreader: ^4.9.32
+    date-fns: ^2.22.1
     fomantic-ui: 2.8.7
     fomantic-ui-less: ^2.8.7
     gulp: 4.0.2
-    happypandax-client: ^2.1.1
+    happypandax-client: ^2.2.0
     lodash: ^4.17.21
     next: ^11.0.1
     next-connect: ^0.10.1
@@ -2303,7 +2304,8 @@ __metadata:
     storybook-addon-themes: ^6.1.0
     storybook-css-modules-preset: ^1.0.8
     superjson: ^1.7.4
-    ts-deep-pick: ^0.2.1
+    ts-deep-pick: ^0.2.2
+    ts-typetools: ^0.6.1
     ttag: ^1.7.24
     typescript: ^4.3.4
     webpack: ^5.43.0
@@ -7794,6 +7796,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"date-fns@npm:^2.22.1":
+  version: 2.22.1
+  resolution: "date-fns@npm:2.22.1"
+  checksum: a89dc6cdf3929b3f0d54d129a3c288df995fc3e6c8099dacc215e5404b4950fc8551d11a58968dfd3b8d576d0c5e637072f615e8f9c3e47d82c81e3952007d5b
+  languageName: node
+  linkType: hard
+
 "dateformat@npm:^2.0.0":
   version: 2.2.0
   resolution: "dateformat@npm:2.2.0"
@@ -10560,10 +10569,10 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"happypandax-client@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "happypandax-client@npm:2.1.1"
-  checksum: 75e3e57de16c60063a6b116db04554f9c0d80e06c5168a7086f75c23acbce635089ce60af042efc37adf8e4dfa2324c2ad2878381c28c01dd41e6d08a8732e28
+"happypandax-client@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "happypandax-client@npm:2.2.0"
+  checksum: 400ac3f8765a85275e9f3808de4a07df0dd540395e0ba29e682cefcd8a54b35be9dcda07d0b88c0ff7885afa5b4efdeef96feaeac614defc37a3c2e4476030e9
   languageName: node
   linkType: hard
 
@@ -18477,12 +18486,12 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"ts-deep-pick@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "ts-deep-pick@npm:0.2.1"
+"ts-deep-pick@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "ts-deep-pick@npm:0.2.2"
   dependencies:
-    ts-typetools: ^0.5.1
-  checksum: 0ffc3e9d763ae3dd361317c4ce3709326f8eb91f67db5852d4aaa1383cefe56e074dc9413301e05db3ee9d125981dd1fcb9a74d7d87f916d421718c90789d394
+    ts-typetools: ^0.6.1
+  checksum: 6396dbe39fc0be44978760828e925994bce9ac7e43e0ed1e8e9fa6f5b73c5958690ecd49396995a66e78c66516b62b901556d13eef8d7db011cbbe538398f563
   languageName: node
   linkType: hard
 
@@ -18531,10 +18540,10 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"ts-typetools@npm:^0.5.1":
-  version: 0.5.2
-  resolution: "ts-typetools@npm:0.5.2"
-  checksum: ee4c33417d37628ad83d9b807d5c62b9578eb64a678dfabb60a9942b7366d96783384e84688c4e329ded4b5b99931c3e7adfc144f2bae14c05c443e07f734c88
+"ts-typetools@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "ts-typetools@npm:0.6.1"
+  checksum: 5e3e53f8797e89f505f7984409c8e8eec5e0a35c9b22743ad65c7fe5b0133968c2621aef45f232a7dbbb188fb0c4aba5677c36834f5be895ee4a933a2c716d9f
   languageName: node
   linkType: hard
 

@@ -9,6 +9,7 @@ type ItemRender<T> = React.ComponentType<{ data: T }>;
 
 interface CardViewProps<T> {
   items: T[];
+  onItemKey: (T) => any;
   itemRender: ItemRender<T>;
 }
 
@@ -21,6 +22,7 @@ function CardViewGrid<T>({
   onScroll,
   scrollTop,
   autoHeight,
+  onItemKey,
 }: {
   width: number;
   height: number;
@@ -55,7 +57,7 @@ function CardViewGrid<T>({
 
           for (let i = fromIndex; i < toIndex; i++) {
             cols.push(
-              <div className={styles.item}>
+              <div key={onItemKey(items[i])} className={styles.item}>
                 <ItemRender data={items[i]} />
               </div>
             );
@@ -77,6 +79,7 @@ export default function CardView<T>({
   disableWindowScroll,
   items,
   itemRender,
+  onItemKey,
   ...props
 }: {
   disableWindowScroll?: boolean;
@@ -87,6 +90,7 @@ export default function CardView<T>({
       <ViewAutoSizer
         items={items}
         itemRender={itemRender}
+        onItemKey={onItemKey}
         disableWindowScroll={disableWindowScroll}
         view={CardViewGrid}
       />

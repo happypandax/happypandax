@@ -9,25 +9,35 @@ export interface DragItemData {
 export interface ServerItem {
   id: number;
   timestamp: number;
+  plugin: object;
 }
 
-export interface ServerParody extends ServerItem {}
-export interface ServerCircle extends ServerItem {
+interface ServerItemWithName extends ServerItem {
   name: string;
-  user_id: number;
-}
-export interface ServerUrl extends ServerItem {}
-export interface ServerLanguage extends ServerItem {
-  name: string;
-  code: string;
-  user_id: number;
 }
 
-export interface ServerItemName extends ServerItem {
+interface ServerItemWithNameLanguageAlias extends ServerItemWithName {
   language: ServerLanguage;
   language_id: number;
   alias_for_id: number;
-  name: string;
+}
+
+export interface ServerParody extends ServerItem {}
+
+export interface ServerParody extends ServerItem {}
+export interface ServerCircle extends ServerItemWithName {
+  user_id: number;
+}
+
+export interface ServerCategory extends ServerItemWithName {
+  user_id: number;
+}
+
+export interface ServerUrl extends ServerItemWithName {}
+export interface ServerStatus extends ServerItemWithName {}
+export interface ServerLanguage extends ServerItemWithName {
+  code: string;
+  user_id: number;
 }
 
 export interface ServerMetaTags extends ServerItem {
@@ -39,13 +49,21 @@ export interface ServerMetaTags extends ServerItem {
   read: boolean;
 }
 export interface ServerArtist extends ServerItem {
-  names: (ServerItemName & { artist_id: number })[];
-  preferred_name: ServerItemName & { artist_id: number };
+  names: (ServerItemWithNameLanguageAlias & { artist_id: number })[];
+  preferred_name: ServerItemWithNameLanguageAlias & { artist_id: number };
   circles: ServerCircle[];
   info: string;
   user_id: number;
   metatags: ServerMetaTags;
   urls: ServerUrl[];
+}
+
+export interface ServerGrouping extends ServerItemWithName {
+  language: ServerLanguage;
+  language_id: number;
+  status_id: number;
+  status: ServerStatus;
+  user_id: number;
 }
 
 export interface ServerGalleryTitle extends ServerItem {
@@ -54,13 +72,20 @@ export interface ServerGalleryTitle extends ServerItem {
   language_id: number;
   gallery_id: number;
   alias_for_id: number;
-  user_ud: number;
+  user_id: number;
 }
 
 type ServerItemTrash = {};
 
-export interface ServerGallery {
-  id: number;
+export interface ServerGalleryProgress extends ServerItem {
+  gallery_id: number;
+  page_id: number;
+  percent: number;
+  end: boolean;
+  last_updated: number;
+  user_id: number;
+}
+export interface ServerGallery extends ServerItem {
   titles: ServerGalleryTitle[];
   artists: ServerArtist[];
   circles: ServerCircle[];
@@ -73,22 +98,21 @@ export interface ServerGallery {
   phantom: boolean;
   number: number;
   category_id: number;
+  category: ServerCategory;
   language_id: number;
+  language: ServerLanguage;
   grouping_id: number;
+  grouping: ServerGrouping;
   taggable_id: number;
   user_id: number;
   metatags: ServerMetaTags;
+  progress: ServerGalleryProgress;
   urls: ServerUrl[];
   preferred_title: ServerGalleryTitle;
   times_read: number;
   rating: number;
+  page_count: number;
   trash: ServerItemTrash;
-}
-
-export interface ServerSortIndex {
-  index: number;
-  name: string;
-  item_type: ItemType;
 }
 
 export interface ServerFilter extends ServerItem {
@@ -97,4 +121,20 @@ export interface ServerFilter extends ServerItem {
   enforce: boolean;
   search_options: string[];
   user_id: number;
+}
+
+export type FieldPath<T = undefined> = T extends undefined
+  ?
+      | DeepPickPathPlain<ServerCircle>
+      | DeepPickPathPlain<ServerFilter>
+      | DeepPickPathPlain<ServerParody>
+      | DeepPickPathPlain<ServerLanguage>
+      | DeepPickPathPlain<ServerGallery>
+      | DeepPickPathPlain<ServerArtist>
+  : DeepPickPathPlain<T>;
+
+export interface ServerSortIndex {
+  index: number;
+  name: string;
+  item_type: ItemType;
 }
