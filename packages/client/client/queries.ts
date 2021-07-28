@@ -191,7 +191,7 @@ interface FetchItem<T = undefined> extends QueryAction<T> {
 
 interface FetchItems<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEMS;
-  dataType: Record<string, any>[];
+  dataType: Unwrap<ReturnType<typeof ServerService['prototype']['items']>>;
   variables: Omit<
     Parameters<typeof ServerService['prototype']['items']>[0],
     'fields'

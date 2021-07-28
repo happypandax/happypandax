@@ -2,14 +2,16 @@ import '../semantic/dist/semantic.css';
 import '../style/global.css';
 import 'animate.css';
 import 'react-virtualized/styles.css';
+import 'nprogress/css/nprogress.css';
 
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
-import { useMemo } from 'react';
+import NProgress from 'nprogress';
+import { useEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, useIsFetching } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { RecoilRoot } from 'recoil';
 
@@ -22,6 +24,44 @@ interface AppPageProps extends AppInitialProps {
   pageProps: {
     loggedIn: boolean;
   };
+}
+
+function Progress() {
+  const router = useRouter();
+  const isFetching = useIsFetching({
+    predicate: (q) => {
+      // TODO: filter out status ping query
+      return true;
+    },
+  });
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    NProgress.configure({ showSpinner: false });
+
+    router.events.on('routeChangeStart', () => {
+      NProgress.start();
+    });
+
+    router.events.on('routeChangeComplete', () => {
+      NProgress.done();
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isFetching) {
+      if (!started) {
+        NProgress.start();
+        setStarted(true);
+      }
+    } else {
+      NProgress.done();
+      setStarted(false);
+    }
+  }),
+    [isFetching];
+
+  return null;
 }
 
 export function AppRoot({
@@ -52,7 +92,10 @@ export function AppRoot({
             snapshot.set(AppState.loggedIn, pageProps.loggedIn);
           }
         }}>
-        <DndProvider backend={HTML5Backend}>{children}</DndProvider>
+        <DndProvider backend={HTML5Backend}>
+          <Progress />
+          {children}
+        </DndProvider>
       </RecoilRoot>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

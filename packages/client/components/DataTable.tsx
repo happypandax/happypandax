@@ -32,7 +32,7 @@ export function GalleryDataTable({
   >(DataState.data(contextKey), initialData);
   const [showDataText, setShowDataText] = useState(false);
 
-  useQueryType(
+  const { data: qData } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
@@ -63,8 +63,6 @@ export function GalleryDataTable({
       },
     }
   );
-
-  console.log(data);
 
   return (
     <DataContext.Provider value={{ key: contextKey }}>

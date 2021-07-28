@@ -2281,6 +2281,7 @@ __metadata:
     classnames: ^2.2.6
     darkreader: ^4.9.32
     date-fns: ^2.22.1
+    file-type: ^16.5.2
     fomantic-ui: 2.8.7
     fomantic-ui-less: ^2.8.7
     gulp: 4.0.2
@@ -2290,6 +2291,8 @@ __metadata:
     next-connect: ^0.10.1
     next-transpile-modules: ^8.0.0
     normalized-cache: ^0.0.3
+    nprogress: next
+    popper-max-size-modifier: ^0.2.0
     query-string: ^7.0.1
     react: ^17.0.1
     react-dnd: ^14.0.2
@@ -2300,6 +2303,7 @@ __metadata:
     react-use: ^17.2.1
     react-virtualized: ^9.22.3
     recoil: ^0.3.1
+    sanitize-filename: ^1.6.3
     semantic-ui-react: ^2.0.3
     storybook-addon-themes: ^6.1.0
     storybook-css-modules-preset: ^1.0.8
@@ -4210,6 +4214,13 @@ __metadata:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
   checksum: 8820b768ae6fc62e6a22e67bcf991d6c18f1ab869fad807b7cd38f50c094a99475fde97b815ea980205a71cbd506ae5bda8fcad5b3109b0f6fa4d38eb6724ef4
+  languageName: node
+  linkType: hard
+
+"@tokenizer/token@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@tokenizer/token@npm:0.1.1"
+  checksum: f495a1fe58da2cec4a45f02d302864484ecf3d00e343470b00ebcafd3248c3f252e0450e603838962f0ac3019477ad466b097134bc332d3f76441fc408a1dcfb
   languageName: node
   linkType: hard
 
@@ -9205,6 +9216,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"file-type@npm:^16.5.2":
+  version: 16.5.2
+  resolution: "file-type@npm:16.5.2"
+  dependencies:
+    readable-web-to-node-stream: ^3.0.0
+    strtok3: 6.1.3
+    token-types: ^3.0.0
+  checksum: 93e0342d871a8a1d19d625c37aaa0b19661f0adeb1184e2e38fd539840805501811203fa31b01d952e2d396c9e092c7ef9c327af560e8c4d6718cf811401e941
+  languageName: node
+  linkType: hard
+
 "file-uri-to-path@npm:1.0.0":
   version: 1.0.0
   resolution: "file-uri-to-path@npm:1.0.0"
@@ -11052,7 +11074,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"ieee754@npm:^1.1.4":
+"ieee754@npm:^1.1.4, ieee754@npm:^1.2.1":
   version: 1.2.1
   resolution: "ieee754@npm:1.2.1"
   checksum: 6c1cfab995ecab3b0dbb6cfb7e192686eb02f0f8e788f2d962e1fc02e2d5ab38a85e06d417221f136bd029663a77cdb920d99605d68d3730a05597dd7910426a
@@ -14104,6 +14126,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"nprogress@npm:next":
+  version: 1.0.0-1
+  resolution: "nprogress@npm:1.0.0-1"
+  checksum: 6b59c08b3d0114115e36a635ea4c09d913e4ab36af3aae91d1c0087c8895a7928718fec803319b1e195b3f30622e305f4a7391fcf29668c2b56b68d73fbcf6df
+  languageName: node
+  linkType: hard
+
 "nth-check@npm:^1.0.2":
   version: 1.0.2
   resolution: "nth-check@npm:1.0.2"
@@ -14855,6 +14884,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"peek-readable@npm:^3.1.4":
+  version: 3.1.4
+  resolution: "peek-readable@npm:3.1.4"
+  checksum: 8d9846623737a2a7cecf83dd855d23c17112ec14603ac6c430ba2253b3093d009a6a9d5868811b585650a7c827c174187de892396ba9d99230a0e532de148419
+  languageName: node
+  linkType: hard
+
 "performance-now@npm:^2.1.0":
   version: 2.1.0
   resolution: "performance-now@npm:2.1.0"
@@ -15014,6 +15050,15 @@ fsevents@^1.2.7:
   dependencies:
     "@babel/runtime": ^7.13.17
   checksum: 98cd991bba0ee0ec9b8926e374bc6701ebdff2ab9ab7258589046afbe90d3d4e7db48e7c9e32d3e36ba7a6d788ededc6ec053f64f448e6e765edabe9ce28d6aa
+  languageName: node
+  linkType: hard
+
+"popper-max-size-modifier@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "popper-max-size-modifier@npm:0.2.0"
+  peerDependencies:
+    "@popperjs/core": ^2.2.0
+  checksum: 749b888e8ac6466a87adad882dfe8a4ee6bf10d96ecea04f67f122e09281f9ea1ffcd055f327f3d79b988fa7ce1cccc45fc94b3d2ac084b2e59e86c1e6928917
   languageName: node
   linkType: hard
 
@@ -16073,6 +16118,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"readable-web-to-node-stream@npm:^3.0.0":
+  version: 3.0.2
+  resolution: "readable-web-to-node-stream@npm:3.0.2"
+  dependencies:
+    readable-stream: ^3.6.0
+  checksum: 3abfec81321447ff798072c3bc9cc2f463d76d6de045726964f17a0dca309d2d9eb7fe82898dff41fdaaf03c7cf235b862f945990fa139b88193488633fdeb26
+  languageName: node
+  linkType: hard
+
 "readdirp@npm:^2.2.1":
   version: 2.2.1
   resolution: "readdirp@npm:2.2.1"
@@ -16812,6 +16866,15 @@ fsevents@^1.2.7:
   bin:
     sane: ./src/cli.js
   checksum: e384e252021b1afef7459e994fe3ea79d114a0e7d23a03e660444abf15a2b4c50ce7eac2810b2c289e857c618d96fb35ee66356ebd4d6cb97cb11b54b2b29600
+  languageName: node
+  linkType: hard
+
+"sanitize-filename@npm:^1.6.3":
+  version: 1.6.3
+  resolution: "sanitize-filename@npm:1.6.3"
+  dependencies:
+    truncate-utf8-bytes: ^1.0.0
+  checksum: 3e15159360c46fe1846eaeff92a6139c1b0873337cd12c7df0aa8a8978dce0524f37510cc1814c2e82fd7663ec7a15147321b2e5dc0ed426dfa31f1ea93e3691
   languageName: node
   linkType: hard
 
@@ -17891,6 +17954,16 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"strtok3@npm:6.1.3":
+  version: 6.1.3
+  resolution: "strtok3@npm:6.1.3"
+  dependencies:
+    "@tokenizer/token": ^0.1.1
+    peek-readable: ^3.1.4
+  checksum: b030b0e1233eb67f73b340301589d39c2f94cbbc353beedf2f9d2ef8a7a0ec9d01ca89b80aafa1cf443c1446d3d5958d051f6e8e69390b95db02e7e08588e050
+  languageName: node
+  linkType: hard
+
 "style-loader@npm:^1.3.0":
   version: 1.3.0
   resolution: "style-loader@npm:1.3.0"
@@ -18423,6 +18496,16 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"token-types@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "token-types@npm:3.1.0"
+  dependencies:
+    "@tokenizer/token": ^0.1.1
+    ieee754: ^1.2.1
+  checksum: 53dcc9293e8551ae662b0cc6c4d2ebeb883baa25ac44242f2cfc96eea9de364a0bfe2d7eb7f8230de73c0c1faba1349212082546d465779f53b89c943f3add3e
+  languageName: node
+  linkType: hard
+
 "tough-cookie@npm:~2.5.0":
   version: 2.5.0
   resolution: "tough-cookie@npm:2.5.0"
@@ -18469,6 +18552,15 @@ fsevents@^1.2.7:
   dependencies:
     regexparam: ^1.3.0
   checksum: c65eb0b64a4e283a2524adb75cc09169b2be515e6df6254bbdf00934299270c1788ce09b05c9a3e36bd73315105478ef92bea95304df9c750f5098a82455ecad
+  languageName: node
+  linkType: hard
+
+"truncate-utf8-bytes@npm:^1.0.0":
+  version: 1.0.2
+  resolution: "truncate-utf8-bytes@npm:1.0.2"
+  dependencies:
+    utf8-byte-length: ^1.0.1
+  checksum: 208b1197a1067e43483d036ca98ea6c9b48a60324b08979b4a569f35fbec1f62617218d0d7d4f34657c37616b99a0eed7be681a656fea01331cf33a0f8158e1d
   languageName: node
   linkType: hard
 
@@ -19140,6 +19232,13 @@ typescript@^4.3.4:
   version: 3.1.1
   resolution: "use@npm:3.1.1"
   checksum: 8dd3bdeeda53864c779e0fa8d799064739708f80b45d06fa48a1a6ba192dc3f9e3266d4556f223cd718d27aedfd957922152e7463c00ac46e185f8331353fb6f
+  languageName: node
+  linkType: hard
+
+"utf8-byte-length@npm:^1.0.1":
+  version: 1.0.4
+  resolution: "utf8-byte-length@npm:1.0.4"
+  checksum: df2466d1c91c58f172258e98e5ccf08707ca8e719a5715342e69bd2ebd349d209a05d173f2c069586442f7f7de44bdb37a5a263c75f69768852842b09cc50a04
   languageName: node
   linkType: hard
 

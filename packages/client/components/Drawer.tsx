@@ -1,19 +1,19 @@
-import { useContext, useState, useCallback } from 'react';
-import { createContext, useMemo } from 'react';
+import classNames from 'classnames';
+import { useMemo, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import {
-  TransitionablePortal,
-  Segment,
-  Menu,
-  Label,
-  Icon,
   Dimmer,
-  Tab,
+  Icon,
+  Label,
   Ref,
+  Segment,
+  Tab,
+  TransitionablePortal,
 } from 'semantic-ui-react';
-import { DragItemData } from '../misc/types';
+
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
+import { DragItemData } from '../misc/types';
 import GalleryCard from './Gallery';
 import { EmptySegment } from './Misc';
 
@@ -62,9 +62,19 @@ export function RecentViewed() {
   return <>{!items.length && <EmptySegment />}</>;
 }
 
-export function Drawer() {
+export function Drawer({
+  className,
+  id,
+  onClose,
+}: {
+  className?: string;
+  id?: string;
+  onClose?: () => void;
+}) {
   return (
-    <Segment className="no-padding-segment min-200-h">
+    <Segment
+      id={id}
+      className={classNames('no-padding-segment min-200-h', className)}>
       <Tab
         menu={useMemo(
           () => ({ pointing: true, secondary: true, size: 'small' }),
@@ -92,20 +102,25 @@ export function Drawer() {
           []
         )}
       />
-      <Label
-        as="a"
-        attached="top right"
-        onClick={useCallback(() => undefined, [])}>
+      <Label as="a" attached="top right" onClick={onClose}>
         <Icon name="close" fitted />
       </Label>
     </Segment>
   );
 }
 
-export default function DrawerPortal() {
+export default function DrawerPortal({
+  open,
+  onClose,
+}: {
+  open?: boolean;
+  onClose?: () => void;
+}) {
   return (
-    <TransitionablePortal open={true}>
-      <Drawer />
+    <TransitionablePortal open={open} onClose={onClose}>
+      <div id="drawer">
+        <Drawer onClose={onClose} />
+      </div>
     </TransitionablePortal>
   );
 }

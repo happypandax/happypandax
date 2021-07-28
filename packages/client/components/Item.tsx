@@ -1,7 +1,16 @@
 import classNames from 'classnames';
+import { useRouter } from 'next/dist/client/router';
+import NextImage from 'next/image';
 import Link from 'next/link';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useDrag } from 'react-dnd';
+import { useSetRecoilState } from 'recoil';
 import {
   Card,
   Dimmer,
@@ -18,11 +27,19 @@ import {
 } from 'semantic-ui-react';
 
 import { ItemType } from '../misc/enums';
-import { DragItemData, ItemSize, ServerItem } from '../misc/types';
+import {
+  DragItemData,
+  ItemSize,
+  ServerItem,
+  ServerItemWithProfile,
+} from '../misc/types';
+import { AppState } from '../state';
 import styles from './Item.module.css';
 
 const ItemContext = React.createContext({
   isDragging: false,
+  openMenu: false,
+  onMenuClose: undefined as () => void,
   size: 'medium' as ItemSize,
   ActionContent: undefined as React.ElementType,
   Details: undefined as React.ElementType,
@@ -137,11 +154,15 @@ export function ItemMenuLabel({
 }: {
   children: React.ReactNode | React.ReactNode[];
 }) {
+  const { openMenu, onMenuClose } = useContext(ItemContext);
+
   return (
     <Popup
       hoverable
       on="click"
+      open={openMenu ? openMenu : undefined}
       hideOnScroll
+      onClose={onMenuClose}
       position="right center"
       trigger={useMemo(
         () => (
@@ -291,7 +312,42 @@ export function ItemCardActionContent({
   return <List horizontal={itemContext.horizontal}>{children}</List>;
 }
 
-export function ItemCardImage({ children }: { children?: React.ReactNode }) {
+function SemanticNextImage({
+  children,
+  width,
+  height,
+  ...props
+}: {
+  children: React.ReactNode;
+  width: number;
+  height: number;
+}) {
+  console.log(children);
+  let imgProps: any = {};
+  const children2 = React.Children.toArray(children).filter((c: any) => {
+    if (c?.type === 'img') {
+      imgProps = c.props;
+    } else {
+      return c;
+    }
+  });
+
+  return (
+    <div {...props}>
+      {children2}
+      <NextImage {...imgProps} src={imgProps?.src} />
+    </div>
+  );
+}
+
+export function ItemCardImage({
+  children,
+  src,
+}: {
+  children?: React.ReactNode;
+  src?: string | ServerItemWithProfile['profile'];
+}) {
+  const router = useRouter();
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -299,9 +355,22 @@ export function ItemCardImage({ children }: { children?: React.ReactNode }) {
 
   const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
 
+  const imgSrc = !src
+    ? '/img/default.png'
+    : typeof src === 'string'
+    ? src
+    : src.data
+    ? src.data
+    : '/img/default.png';
+
+  // const size = src && typeof src !== 'string' ? src.size : undefined;
+
   return (
     <Image
-      src="/img/default.png"
+      // as={!src || typeof src === 'string' ? 'img' : SemanticNextImage}
+      src={imgSrc}
+      // width={size?.[0]}
+      // height={size?.[1]}
       fluid={!itemContext.horizontal}
       centered={!itemContext.horizontal}
       className={classNames({
@@ -378,7 +447,9 @@ export function ItemCard({
   link?: boolean;
 }) {
   const [hover, setHover] = useState(false);
+  const [openMenu, setOpenMenu] = useState(false);
   const itemContext = useContext(ItemContext);
+  const setDrawerOpen = useSetRecoilState(AppState.drawerOpen);
 
   const [{ isDragging }, dragRef] = useDrag(
     () => ({
@@ -394,6 +465,12 @@ export function ItemCard({
     [dragData, draggable]
   );
 
+  useEffect(() => {
+    if (isDragging) {
+      setDrawerOpen(true);
+    }
+  }, [isDragging]);
+
   let itemSize = size ?? 'medium';
 
   const imageElement = horizontal ? (
@@ -404,14 +481,20 @@ export function ItemCard({
     </Image>
   );
 
+  const onMenuClose = useCallback(() => {
+    setOpenMenu(false);
+  }, []);
+
   return (
     <ItemContext.Provider
       value={{
         ...itemContext,
         isDragging,
+        onMenuClose,
         hover,
         href,
         disableModal,
+        openMenu,
         onDetailsOpen,
         Details,
         detailsData,
@@ -439,7 +522,11 @@ export function ItemCard({
             dragging: isDragging,
             horizontal: horizontal,
             [`${itemSize}-size`]: !horizontal,
-          })}>
+          })}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setOpenMenu(true);
+          }}>
           {}
           <Dimmer active={loading} inverted>
             <Loader inverted active={loading} />

@@ -22,9 +22,16 @@ interface ServerItemWithNameLanguageAlias extends ServerItemWithName {
   alias_for_id: number;
 }
 
-export interface ServerParody extends ServerItem {}
+export interface ServerItemWithProfile extends ServerItem {
+  profile: {
+    data: string;
+    size: [number, number];
+    command_id: number | null;
+  };
+}
 
 export interface ServerParody extends ServerItem {}
+
 export interface ServerCircle extends ServerItemWithName {
   user_id: number;
 }
@@ -85,7 +92,7 @@ export interface ServerGalleryProgress extends ServerItem {
   last_updated: number;
   user_id: number;
 }
-export interface ServerGallery extends ServerItem {
+export interface ServerGallery extends ServerItem, ServerItemWithProfile {
   titles: ServerGalleryTitle[];
   artists: ServerArtist[];
   circles: ServerCircle[];

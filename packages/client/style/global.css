@@ -1,4 +1,21 @@
+@import url('./nprogress.css');
 @import url('./reader.css');
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.overflow-x-hidden {
+    overflow-x: hidden;
+}
+
+.overflow-y-auto {
+    overflow-y: auto;
+}
+
+.overflow-y-hidden {
+    overflow-y: hidden;
+}
 
 .mb-auto {
     margin-bottom: auto;
@@ -40,14 +57,17 @@
 	user-select: none;
 }
 
-#bottom_zone {
+#bottom_zone, #drawer {
     position: fixed;
     left: 0;
     bottom: 0;
     right: 0;
     padding-left: 70px;
     padding-right: 5px;
-    padding-bottom: 10px;
+    padding-bottom: 20px;
+}
+
+#bottom_zone {
     pointer-events: none;
 }
 
@@ -57,7 +77,7 @@
     bottom: 0;
     left: 70px;
     right: 5px;
-    bottom: 10px;
+    bottom: 20px;
 }
 
 #bottom_zone > div > .item {
@@ -78,11 +98,11 @@
 }
 
 #bottom_zone > div > .item.bottom {
-    bottom: 0;
+    bottom: 0px;
 }
 
 #bottom_zone > div > .item.left {
-    left: 0;
+    left: 10px;
 }
 
 #bottom_zone > div > .item.flex {

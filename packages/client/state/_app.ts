@@ -7,4 +7,5 @@ export class AppState extends StateBlock {
 
   static home = defineAtom({ default: '/library' });
   static loggedIn = defineAtom({ default: false });
+  static drawerOpen = defineAtom({ default: false });
 }

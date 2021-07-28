@@ -39,6 +39,15 @@ function ReadButton() {
   );
 }
 
+function ContinueButton() {
+  return (
+    <Button color="orange" size="mini">
+      <Icon name="play" />
+      {t`Continue`}
+    </Button>
+  );
+}
+
 function SaveForLaterButton() {
   return (
     <Button size="mini">
@@ -48,11 +57,16 @@ function SaveForLaterButton() {
   );
 }
 
-function GalleryCardMenu() {
+function GalleryCardMenu({ hasProgress }: { hasProgress: boolean }) {
   return (
     <ItemMenuLabel>
-      <ItemMenuLabelItem icon="envelope open outline">{t`Read`}</ItemMenuLabelItem>
-      <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
+      {!hasProgress && (
+        <ItemMenuLabelItem icon="envelope open outline">{t`Read`}</ItemMenuLabelItem>
+      )}
+      {hasProgress && (
+        <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
+      )}
+      <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
     </ItemMenuLabel>
   );
 }
@@ -61,7 +75,16 @@ export type GalleryCardData = DeepPick<
   ServerGallery,
   | 'id'
   | 'preferred_title.name'
+  | 'artists.[].id'
   | 'artists.[].preferred_name.name'
+  | 'profile'
+  | 'number'
+  | 'metatags.favorite'
+  | 'metatags.read'
+  | 'metatags.readlater'
+  | 'metatags.inbox'
+  | 'progress.end'
+  | 'progress.percent'
   | 'page_count'
   | 'language.code'
 >;
@@ -85,6 +108,8 @@ export function GalleryCard({
   onDetailsOpen?: () => void;
   horizontal?: boolean;
 }) {
+  const hasProgress = !!data?.progress && !data?.progress?.end;
+
   return (
     <ItemCard
       type={ItemType.Gallery}
@@ -111,9 +136,9 @@ export function GalleryCard({
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             {!!data?.metatags?.inbox && <InboxIconLabel />}
-            {!data?.metatags?.read && <UnreadIconLabel />}
+            {!data?.metatags?.read && !hasProgress && <UnreadIconLabel />}
             {!!data?.metatags?.readlater && <ReadLaterIconLabel />}
-            {!!data?.progress && !data?.progress?.end && (
+            {hasProgress && (
               <ReadingIconLabel percent={data?.progress?.percent} />
             )}
             <ProgressLabel />
@@ -123,24 +148,25 @@ export function GalleryCard({
             {horizontal && <ReadCountLabel as={TranslucentLabel} />}
             {horizontal && <LanguageLabel as={TranslucentLabel} />}
             {horizontal && <PageCountLabel as={TranslucentLabel} />}
-            {!horizontal && !!data.language.code && (
+            {!horizontal && !!data?.language?.code && (
               <TranslucentLabel>
                 {data.language.code.toUpperCase()}
               </TranslucentLabel>
             )}
             {!horizontal && (
-              <TranslucentLabel circular>{data.page_count}</TranslucentLabel>
+              <TranslucentLabel circular>{data?.page_count}</TranslucentLabel>
             )}
-            <GalleryCardMenu />
+            <GalleryCardMenu hasProgress={hasProgress} />
           </ItemLabel>,
         ],
-        [horizontal]
+        [horizontal, hasProgress, data]
       )}
       actionContent={useCallback(
         () => (
           <ItemCardActionContent>
             <ItemCardActionContentItem>
-              <ReadButton />
+              {hasProgress && <ReadButton />}
+              {!hasProgress && <ContinueButton />}
             </ItemCardActionContentItem>
             <ItemCardActionContentItem>
               <SaveForLaterButton />
@@ -151,14 +177,14 @@ export function GalleryCard({
       )}
       image={useCallback(
         ({ children }: { children?: React.ReactNode }) => (
-          <ItemCardImage>{children}</ItemCardImage>
+          <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
         ),
-        []
+        [data.profile]
       )}>
       <ItemCardContent
         title={data?.preferred_title?.name ?? ''}
         subtitle={data?.artists.map((a) => (
-          <span>{a.preferred_name.name}</span>
+          <span key={a.id}>{a.preferred_name.name}</span>
         ))}>
         <ReadCountLabel />
       </ItemCardContent>

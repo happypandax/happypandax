@@ -10,7 +10,6 @@
 @color_5: @red;
 @font_family_1: 'happypandax';
 
-@import (inline) "nprogress.css";
 @import (inline) "s-alert.css";
 @import (inline) "react-carousel.css";
 @import "slick.less";
@@ -132,11 +131,11 @@ i.medium-size {
 .fullwidth {
     width: 100%;
 }
-.fullheight, body > div {
+.fullheight {
     height: 100% !important;
 }
 
-.min-fullheight, body > div {
+.min-fullheight {
     min-height: 100% !important;
 }
 

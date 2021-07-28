@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import React, { useCallback, useEffect, useState } from 'react';
 import Editor from 'react-simple-code-editor';
 import { useLocalStorage, useWindowScroll } from 'react-use';
+import { useRecoilState } from 'recoil';
 import {
   Button,
   Divider,
@@ -23,6 +24,7 @@ import Carousel, {
 
 import t from '../misc/lang';
 import { parseMarkdown, scrollToTop } from '../misc/utility';
+import { AppState } from '../state';
 
 export function TextEditor({
   value,
@@ -79,6 +81,22 @@ export function ScrollUpButton() {
   return (
     <Visible visible={visible}>
       <Button onClick={scrollToTop} icon="chevron up" size="small" basic />
+    </Visible>
+  );
+}
+
+export function DrawerButton() {
+  const [open, setOpen] = useRecoilState(AppState.drawerOpen);
+
+  return (
+    <Visible visible={!open}>
+      <Button
+        primary
+        circular
+        onClick={useCallback(() => setOpen(true), [])}
+        icon="window maximize outline"
+        size="small"
+      />
     </Visible>
   );
 }

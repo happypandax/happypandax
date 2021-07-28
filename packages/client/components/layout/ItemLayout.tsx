@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import maxSize from 'popper-max-size-modifier';
 import { useCallback, useMemo } from 'react';
 import {
   Button,
@@ -13,6 +14,35 @@ import { QueryType, useQueryType } from '../../client/queries';
 import { ItemType, ViewType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { FieldPath, ServerFilter, ServerSortIndex } from '../../misc/types';
+
+function PopupNoOverflow(props: React.ComponentProps<typeof Popup>) {
+  const applyMaxSize = useMemo(() => {
+    return {
+      name: 'applyMaxSize',
+      enabled: true,
+      phase: 'beforeWrite',
+      requires: ['maxSize'],
+      fn({ state }) {
+        // The `maxSize` modifier provides this data
+        const { width, height } = state.modifiersData.maxSize;
+
+        state.styles.popper = {
+          ...state.styles.popper,
+          maxWidth: `${Math.max(100, width)}px`,
+          maxHeight: `${Math.max(100, height)}px`,
+        };
+      },
+    };
+  }, []);
+
+  return (
+    <Popup
+      {...props}
+      offset={[20, 0]}
+      popperModifiers={[maxSize, applyMaxSize]}
+    />
+  );
+}
 
 export function SortButtonInput({
   itemType,
@@ -36,10 +66,16 @@ export function SortButtonInput({
   );
 
   return (
-    <Popup
+    <PopupNoOverflow
       on="click"
       position="left center"
       hoverable
+      eventsEnabled
+      positionFixed
+      flowing
+      wide
+      className={classNames('overflow-y-auto', 'overflow-x-hidden')}
+      popperDependencies={[data]}
       trigger={
         <Button
           icon="sort alphabet down"
@@ -68,7 +104,7 @@ export function SortButtonInput({
               ))}
         </Menu>
       </Popup.Content>
-    </Popup>
+    </PopupNoOverflow>
   );
 }
 
@@ -124,14 +160,27 @@ export function FilterButtonInput({
       fields: ['name'] as FieldPath<ServerFilter>[],
       limit: 9999, // no limit
     },
-    { initialData }
+    {
+      initialData: initialData
+        ? {
+            count: initialData.length,
+            items: initialData,
+          }
+        : undefined,
+    }
   );
 
   return (
-    <Popup
+    <PopupNoOverflow
       on="click"
       position="left center"
       hoverable
+      wide
+      flowing
+      positionFixed
+      className={classNames('overflow-y-auto', 'overflow-x-hidden')}
+      eventsEnabled
+      popperDependencies={[data]}
       trigger={
         <Button
           icon="filter"
@@ -144,7 +193,7 @@ export function FilterButtonInput({
       <Popup.Content>
         <Menu secondary vertical>
           {!!data?.data &&
-            data.data?.map?.((v) => (
+            data.data?.items?.map?.((v) => (
               <Menu.Item
                 key={v.id}
                 index={v.id}
@@ -159,7 +208,7 @@ export function FilterButtonInput({
             ))}
         </Menu>
       </Popup.Content>
-    </Popup>
+    </PopupNoOverflow>
   );
 }
 

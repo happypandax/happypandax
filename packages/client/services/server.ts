@@ -109,17 +109,17 @@ export default class ServerService extends Service {
     return r;
   }
 
-  async item(args: {
+  async item<R = undefined>(args: {
     item_type: ItemType;
     item_id: number;
     fields?: FieldPath[];
   }) {
     const data = await this._call('get_item', args);
     this._throw_msg_error(data);
-    return data.data as JsonMap;
+    return data.data as R extends undefined ? JsonMap : R;
   }
 
-  async items(args: {
+  async items<R = undefined>(args: {
     item_type: ItemType;
     fields?: FieldPath[];
     offset?: number;
@@ -127,7 +127,10 @@ export default class ServerService extends Service {
   }) {
     const data = await this._call('get_items', args);
     this._throw_msg_error(data);
-    return data.data as { count: number; items: JsonMap[] };
+    return data.data as {
+      count: number;
+      items: R extends undefined ? JsonMap[] : R[];
+    };
   }
 
   async library<R = undefined>(args: {

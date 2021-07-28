@@ -15,7 +15,7 @@ import {
 } from '../components/layout/ItemLayout';
 import PageLayout from '../components/layout/Page';
 import MainMenu, { MenuItem } from '../components/Menu';
-import { PageTitle, Visible } from '../components/Misc';
+import { EmptySegment, PageTitle, Visible } from '../components/Misc';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
 import { ItemType } from '../misc/enums';
@@ -57,6 +57,7 @@ export async function getServerSideProps(
     fields: [
       'artists.preferred_name.name',
       'preferred_title.name',
+      'profile',
       'number',
       'page_count',
       'language.code',
@@ -183,11 +184,13 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
         [favorites, filter, sort, sortDesc]
       )}>
       <PageTitle title={t`Library`} />
+      {!items.count && <EmptySegment />}
       {display === 'card' && (
         <CardView
           hrefTemplate={pageHrefTemplate}
           activePage={urlQuery.query?.p}
           items={items.items}
+          paddedChildren
           itemRender={GalleryCard}
           itemsPerPage={itemCount}
           onItemKey={onItemKey}

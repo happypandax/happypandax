@@ -1,15 +1,14 @@
-import { Dimmer, Portal, Segment, Sidebar } from 'semantic-ui-react';
+import classNames from 'classnames';
+import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useRecoilState } from 'recoil';
+import { Dimmer, Portal, Sidebar } from 'semantic-ui-react';
+
+import { AppState } from '../../state';
+import DrawerPortal from '../Drawer';
+import { DrawerButton, ScrollUpButton } from '../Misc';
 import MainSidebar from '../Sidebar';
-import { ScrollUpButton, Visible } from '../Misc';
-import classNames from 'classnames';
-import {
-  FilterButtonInput,
-  SortButtonInput,
-  OnlyFavoritesButton,
-  ClearFilterButton,
-} from './ItemLayout';
 
 export function BottomZoneItem({
   children,
@@ -46,6 +45,8 @@ export default function PageLayout({
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const [drawerOpen, setDrawerOpen] = useRecoilState(AppState.drawerOpen);
+
   return (
     <>
       <MainSidebar />
@@ -53,11 +54,18 @@ export default function PageLayout({
       <Sidebar.Pusher
         as={Dimmer.Dimmable}
         dimmed={dimmed}
-        className="force-viewport-size">
+        className={classNames()}>
         <Dimmer simple active={dimmed} />
         <DndProvider backend={HTML5Backend}>
           {children}
+          <DrawerPortal
+            open={drawerOpen}
+            onClose={useCallback(() => setDrawerOpen(false), [])}
+          />
           <BottomZone>
+            <BottomZoneItem x="left" y="bottom">
+              <DrawerButton />
+            </BottomZoneItem>
             <BottomZoneItem x="right" y="top" className="flex fullheight">
               {bottomZone}
               <ScrollUpButton />

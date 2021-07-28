@@ -32,7 +32,7 @@ function CardViewGrid<T>({
   autoHeight?: any;
 } & CardViewProps<T>) {
   const itemWidth = 200;
-  const rowHeight = 380;
+  const rowHeight = 400;
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil(items?.length ?? 0 / itemsPerRow);
