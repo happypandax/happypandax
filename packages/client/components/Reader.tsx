@@ -29,6 +29,7 @@ import Scroller from '@twiddly/scroller';
 
 import { useDocumentEvent, useInterval, useRefEvent } from '../hooks/utils';
 import t from '../misc/lang';
+import { ServerPage } from '../misc/types';
 import GalleryCard from './Gallery';
 import { Slider } from './Misc';
 
@@ -933,19 +934,49 @@ function Canvas({
   );
 }
 
-const PLACEHOLDERS = _.range(10).map((p) => ({
-  number: p + 1,
-  url: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
-    16
-  )}cc/ffffff?text=Page+${p + 1}`,
-}));
+// const PLACEHOLDERS = _.range(10).map((p) => ({
+//   number: p + 1,
+//   url: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
+//     16
+//   )}cc/ffffff?text=Page+${p + 1}`,
+// }));
 
-export default function Reader() {
-  const windowSize = 6;
-  const [pageCount, setPageCount] = useState(PLACEHOLDERS.length);
-  const [pageNumber, setPageNumber] = useState(1);
+type ReaderData = Optional<
+  DeepPick<
+    ServerPage,
+    | 'id'
+    | 'name'
+    | 'number'
+    | 'metatags.favorite'
+    | 'metatags.inbox'
+    | 'metatags.trash'
+    | 'profile'
+    | 'path'
+  >,
+  'profile'
+>;
+
+export default function Reader({
+  itemId,
+  initialData,
+  pageCount: pCount = 0,
+  windowSize = 6,
+  startPage = 1,
+  wheelZoom = false,
+  itemfit = ItemFit.Width,
+}: {
+  itemId: number;
+  initialData: ReaderData[];
+  pageCount?: number;
+  itemfit?: ItemFit;
+  windowSize?: number;
+  startPage?: number;
+  wheelZoom?: boolean;
+}) {
+  const [pageCount, setPageCount] = useState(pCount);
+  const [pageNumber, setPageNumber] = useState(startPage);
   const [pageFocus, setPageFocus] = useState(0);
-  const [pages, setPages] = useState([]);
+  const [pages, setPages] = useState(initialData ?? []);
   const [isEnd, setIsEnd] = useState(false);
 
   useEffect(() => {
@@ -955,7 +986,7 @@ export default function Reader() {
         if (n === pageNumber) {
           setPageFocus(i % windowSize);
         }
-        return PLACEHOLDERS[n - 1];
+        return pages[n - 1];
       })
     );
   }, [pageCount, pageNumber]);
@@ -987,7 +1018,7 @@ export default function Reader() {
         <EndContent />
       </Dimmer>
       <Canvas
-        wheelZoom={false}
+        wheelZoom={wheelZoom}
         label={useMemo(
           () => (
             <Label size="big" className="translucent-black">
@@ -1003,10 +1034,10 @@ export default function Reader() {
         }, [])}>
         {pages.map((p, idx) => (
           <CanvasImage
-            key={p.number}
-            href={p.url}
-            fit={ItemFit.Width}
-            wheelZoom={false}
+            key={p.id}
+            href={p?.profile?.data}
+            fit={itemfit}
+            wheelZoom={wheelZoom}
             focused={idx === pageFocus}
           />
         ))}

@@ -125,9 +125,21 @@ export interface ServerGallery extends ServerItem, ServerItemWithProfile {
 export interface ServerFilter extends ServerItem {
   name: string;
   filter: string;
+  info: string;
   enforce: boolean;
   search_options: string[];
   user_id: number;
+}
+
+export interface ServerPage extends ServerItemWithProfile {
+  number: number;
+  name: string;
+  path: string;
+  hash_id: number;
+  gallery_id: number;
+  in_archive: boolean;
+  user_id: number;
+  metatags: ServerMetaTags;
 }
 
 export type FieldPath<T = undefined> = T extends undefined
@@ -138,6 +150,7 @@ export type FieldPath<T = undefined> = T extends undefined
       | DeepPickPathPlain<ServerLanguage>
       | DeepPickPathPlain<ServerGallery>
       | DeepPickPathPlain<ServerArtist>
+      | DeepPickPathPlain<ServerPage>
   : DeepPickPathPlain<T>;
 
 export interface ServerSortIndex {

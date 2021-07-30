@@ -89,6 +89,12 @@
     pointer-events: auto;
 }
 
+#bottom_zone > div > .item.center {
+    right: 0;
+    left: 0;
+}
+
+
 #bottom_zone > div > .item.right {
     right: 0;
 }

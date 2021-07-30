@@ -1,0 +1,6 @@
+.pageinfo_message {
+    max-width: 80%;
+    width: max-content;
+    margin: auto !important;
+    opacity: 0.85;
+}

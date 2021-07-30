@@ -25,6 +25,7 @@ import Carousel, {
 import t from '../misc/lang';
 import { parseMarkdown, scrollToTop } from '../misc/utility';
 import { AppState } from '../state';
+import styles from './Misc.module.css';
 
 export function TextEditor({
   value,
@@ -393,5 +394,27 @@ export function LabeLAccordion({
       {show && children}
       {!show && <Divider hidden fitted />}
     </Segment>
+  );
+}
+
+export function PageInfoMessage({
+  props,
+  className,
+  color,
+  hidden,
+  size,
+  onDismiss,
+  children,
+}: React.ComponentProps<typeof Message>) {
+  return (
+    <Message
+      hidden={hidden}
+      color={color}
+      onDismiss={onDismiss}
+      size={size}
+      className={classNames(styles.pageinfo_message, className)}
+      {...props}>
+      {children}
+    </Message>
   );
 }

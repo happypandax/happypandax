@@ -18,7 +18,7 @@ export function BottomZoneItem({
 }: {
   className?: string;
   children?: React.ReactNode;
-  x: 'left' | 'right';
+  x: 'left' | 'right' | 'center';
   y: 'top' | 'bottom';
 }) {
   return <div className={classNames('item', x, y, className)}>{children}</div>;
@@ -37,11 +37,13 @@ export function BottomZone({ children }: { children?: React.ReactNode }) {
 export default function PageLayout({
   dimmed,
   menu,
+  bottomZoneRight,
   bottomZone,
   children,
 }: {
   dimmed?: boolean;
   menu?: React.ReactNode;
+  bottomZoneRight?: React.ReactNode;
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -63,11 +65,12 @@ export default function PageLayout({
             onClose={useCallback(() => setDrawerOpen(false), [])}
           />
           <BottomZone>
+            {bottomZone}
             <BottomZoneItem x="left" y="bottom">
               <DrawerButton />
             </BottomZoneItem>
             <BottomZoneItem x="right" y="top" className="flex fullheight">
-              {bottomZone}
+              {bottomZoneRight}
               <ScrollUpButton />
             </BottomZoneItem>
           </BottomZone>

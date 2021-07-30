@@ -133,6 +133,22 @@ export default class ServerService extends Service {
     };
   }
 
+  async related_items<R = undefined>(args: {
+    item_type: ItemType;
+    item_id: number;
+    related_type?: ItemType;
+    fields?: FieldPath[];
+    offset?: number;
+    limit?: number;
+  }) {
+    const data = await this._call('get_related_items', args);
+    this._throw_msg_error(data);
+    return data.data as {
+      count: number;
+      items: R extends undefined ? JsonMap[] : R[];
+    };
+  }
+
   async library<R = undefined>(args: {
     item_type: ItemType;
     fields?: FieldPath<R>[];

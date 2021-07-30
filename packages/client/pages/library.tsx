@@ -2,8 +2,10 @@ import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { Message } from 'semantic-ui-react';
 
+import { QueryType, useQueryType } from '../client/queries';
 import GalleryCard from '../components/Gallery';
 import {
   ClearFilterButton,
@@ -13,9 +15,14 @@ import {
   SortOrderButton,
   ViewButtons,
 } from '../components/layout/ItemLayout';
-import PageLayout from '../components/layout/Page';
+import PageLayout, { BottomZoneItem } from '../components/layout/Page';
 import MainMenu, { MenuItem } from '../components/Menu';
-import { EmptySegment, PageTitle, Visible } from '../components/Misc';
+import {
+  EmptySegment,
+  PageInfoMessage,
+  PageTitle,
+  Visible,
+} from '../components/Misc';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
 import { ItemType } from '../misc/enums';
@@ -70,6 +77,31 @@ export async function getServerSideProps(
   return {
     props: { data, urlQuery, itemType },
   };
+}
+
+function FilterPageMessage({ filterId }: { filterId: number }) {
+  const { data, isLoading } = useQueryType(QueryType.ITEM, {
+    item_type: ItemType.Filter,
+    item_id: filterId,
+    fields: ['name', 'info', 'filter'],
+  });
+
+  const setFilter = useSetRecoilState(LibraryState.filter);
+
+  return (
+    <PageInfoMessage
+      hidden={isLoading}
+      color="blue"
+      size="tiny"
+      onDismiss={useCallback(() => setFilter(undefined), [])}>
+      <Message.Header className="text-center">
+        {t`Filter`}: {data?.data?.name}
+      </Message.Header>
+      <Message.Content className="sub-text">
+        {data?.data?.info || data?.data?.filter}
+      </Message.Content>
+    </PageInfoMessage>
+  );
 }
 
 export default function Page({ data, urlQuery, itemType }: PageProps) {
@@ -142,7 +174,14 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
         ),
         [view, item]
       )}
-      bottomZone={useMemo(
+      bottomZone={useMemo(() => {
+        return filter ? (
+          <BottomZoneItem x="center" y="bottom">
+            <FilterPageMessage filterId={filter} />
+          </BottomZoneItem>
+        ) : null;
+      }, [filter])}
+      bottomZoneRight={useMemo(
         () => (
           <>
             <OnlyFavoritesButton active={favorites} setActive={setFavorites} />

@@ -54,7 +54,7 @@ declare global {
 
   export type PartialExcept<T, K extends keyof T> = Pick<T, K> & Partial<T>;
 
-  export type Optional<T, K extends keyof T> = PartialExcept<T, K>;
+  export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
   export type Replace<
     T,

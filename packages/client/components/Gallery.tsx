@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
 import { Button, Icon } from 'semantic-ui-react';
 
@@ -30,16 +31,22 @@ import {
   UnreadIconLabel,
 } from './Item';
 
-function ReadButton() {
+function ReadButton({ data }: { data: { id: number } }) {
   return (
-    <Button primary size="mini">
-      <Icon name="envelope open outline" />
-      {t`Read`}
-    </Button>
+    <Link
+      href={useMemo(() => ({ pathname: `/item/gallery/${data?.id}/page/1` }), [
+        data,
+      ])}
+      passHref>
+      <Button as="a" primary size="mini">
+        <Icon name="envelope open outline" />
+        {t`Read`}
+      </Button>
+    </Link>
   );
 }
 
-function ContinueButton() {
+function ContinueButton({ data }: { data: { id: number } }) {
   return (
     <Button color="orange" size="mini">
       <Icon name="play" />
@@ -165,15 +172,15 @@ export function GalleryCard({
         () => (
           <ItemCardActionContent>
             <ItemCardActionContentItem>
-              {hasProgress && <ReadButton />}
-              {!hasProgress && <ContinueButton />}
+              {!hasProgress && <ReadButton data={data} />}
+              {hasProgress && <ContinueButton data={data} />}
             </ItemCardActionContentItem>
             <ItemCardActionContentItem>
               <SaveForLaterButton />
             </ItemCardActionContentItem>
           </ItemCardActionContent>
         ),
-        []
+        [data]
       )}
       image={useCallback(
         ({ children }: { children?: React.ReactNode }) => (

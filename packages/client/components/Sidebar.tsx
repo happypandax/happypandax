@@ -167,8 +167,8 @@ export function MainSidebar({
               href="/library"
               icon={'grid layout'}>{t`Library`}</SidebarItem>
             <SidebarItem
-              href="/database"
-              icon={'cubes'}>{t`Database`}</SidebarItem>
+              href="/directory"
+              icon={'cubes'}>{t`Directory`}</SidebarItem>
             <DownloadSidebarItem />
             <MetadataSidebarItem />
             <SidebarItem href="/tasks" icon={'tasks'}>{t`Tasks`}</SidebarItem>
