@@ -1,4 +1,6 @@
+export { default as update } from 'immutability-helper';
 import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
+import JsonMap from 'happypandax-client';
 import Router from 'next/router';
 import querystring, {
   ParsedUrl,
@@ -59,6 +61,28 @@ export function scrollToElement(element: HTMLElement, smooth = true) {
   });
 }
 
+function formatQuery(query: StringifiableRecord) {
+  const q = { ...query };
+  Object.entries(q).forEach(([k, v]) => {
+    if (typeof v === 'object') {
+      q[k] = JSON.stringify(v);
+    }
+  });
+  return q;
+}
+
+function unformatQuery(query: StringifiableRecord) {
+  const q = { ...query };
+  Object.entries(q).forEach(([k, v]) => {
+    if (typeof v === 'string') {
+      try {
+        q[k] = JSON.parse(v);
+      } catch {}
+    }
+  });
+  return q;
+}
+
 export function urlstring(
   querypath: StringifiableRecord | string,
   query?: StringifiableRecord,
@@ -66,13 +90,14 @@ export function urlstring(
 ) {
   const path = typeof querypath === 'string' ? querypath : undefined;
   const q = typeof querypath !== 'string' ? querypath : query;
+
   return querystring.stringifyUrl(
     {
       url: path ?? Router.pathname,
-      query: {
+      query: formatQuery({
         ...(path ? {} : Router.query),
         ...q,
-      },
+      }),
     },
     { ...options, arrayFormat: 'index' }
   );
@@ -83,17 +108,19 @@ export function urlparse(
 ): Omit<ParsedUrl, 'query'> & {
   query: Record<
     string,
-    string | string[] | number[] | number | boolean | boolean[]
+    string | string[] | number[] | number | boolean | boolean[] | JsonMap
   >;
 } {
   let u = url ?? Router.asPath;
 
-  return querystring.parseUrl(u, {
+  const r = querystring.parseUrl(u, {
     parseBooleans: true,
     parseNumbers: true,
     parseFragmentIdentifier: true,
     arrayFormat: 'index',
   }) as any;
+  r.query = unformatQuery(r.query);
+  return r;
 }
 
 export function dateFromTimestamp(

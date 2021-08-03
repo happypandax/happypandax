@@ -27,9 +27,12 @@ import {
 
 import Scroller from '@twiddly/scroller';
 
+import { Query, QueryType } from '../client/queries';
 import { useDocumentEvent, useInterval, useRefEvent } from '../hooks/utils';
+import { ImageSize, ItemType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerPage } from '../misc/types';
+import { update } from '../misc/utility';
 import GalleryCard from './Gallery';
 import { Slider } from './Misc';
 
@@ -934,12 +937,15 @@ function Canvas({
   );
 }
 
-// const PLACEHOLDERS = _.range(10).map((p) => ({
-//   number: p + 1,
-//   url: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
-//     16
-//   )}cc/ffffff?text=Page+${p + 1}`,
-// }));
+const PLACEHOLDERS = _.range(10).map((p) => ({
+  id: p,
+  number: p + 1,
+  profile: {
+    data: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
+      16
+    )}cc/ffffff?text=Page+${p + 1}`,
+  },
+}));
 
 type ReaderData = Optional<
   DeepPick<
@@ -959,7 +965,7 @@ type ReaderData = Optional<
 export default function Reader({
   itemId,
   initialData,
-  pageCount: pCount = 0,
+  pageCount: initialPageCount = 0,
   windowSize = 6,
   startPage = 1,
   wheelZoom = false,
@@ -973,38 +979,110 @@ export default function Reader({
   startPage?: number;
   wheelZoom?: boolean;
 }) {
-  const [pageCount, setPageCount] = useState(pCount);
+  const [pageCount, setPageCount] = useState(initialPageCount);
   const [pageNumber, setPageNumber] = useState(startPage);
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState(initialData ?? []);
+  // indexes of pages that is currently active
+  const [pageWindow, setPageWindow] = useState([] as number[]);
   const [isEnd, setIsEnd] = useState(false);
 
+  const fetchingRef = useRef<number[]>();
+
+  useEffect(() => {
+    setPageCount(initialPageCount);
+  }, [initialPageCount]);
+
+  useEffect(() => {
+    setPages(initialData);
+  }, [initialData]);
+
+  // set window of active pages
   useEffect(() => {
     const windowed = windowedPages(pageNumber, windowSize, pageCount);
-    setPages(
+    setPageWindow(
       windowed.map((n, i) => {
         if (n === pageNumber) {
           setPageFocus(i % windowSize);
         }
-        return pages[n - 1];
+        return n - 1;
       })
     );
   }, [pageCount, pageNumber]);
 
+  // make sure page number is in sync
   useEffect(() => {
-    if (pages.length) {
-      if (pages[pageFocus].number !== pageNumber) {
-        setPageNumber(pages[pageFocus].number);
+    if (pages.length && pageWindow.length) {
+      const page = pages[pageWindow[pageFocus]];
+      if (page.number !== pageNumber) {
+        setPageNumber(page.number);
       }
     }
-  }, [pageFocus, pages, pageNumber]);
+  }, [pageFocus, pages, pageWindow, pageNumber]);
+
+  // fetch missing images for windowed pages
+
+  useEffect(() => {
+    if (!fetchingRef.current) {
+      fetchingRef.current = [];
+    }
+
+    // only if not already fetching
+    if (
+      pageWindow.length &&
+      !fetchingRef.current.includes(pages[pageWindow[pageWindow.length - 1]].id)
+    ) {
+      // only pages that dont have profile data and not currently fetching
+      const fetch_ids: number[] = [];
+      pageWindow
+        .map((i) => pages[i])
+        .filter((p) => !p?.profile?.data)
+        .forEach((p) => {
+          if (!fetchingRef.current.includes(p.id)) {
+            fetchingRef.current.push(p.id);
+            fetch_ids.push(p.id);
+          }
+        });
+
+      if (fetch_ids.length) {
+        // update page with new fetched profile
+        // todo: pages is part of state so may be stale, consider ref
+
+        Query.get(QueryType.PROFILE, {
+          item_type: ItemType.Page,
+          item_ids: fetch_ids,
+          profile_options: {
+            size: ImageSize.x1280,
+          },
+        }).then((r) => {
+          const spec = {};
+
+          Object.entries(r.data).forEach(([k, v]) => {
+            const pidx = pages.findIndex((x) => x.id === parseInt(k));
+            if (pidx !== -1) {
+              spec[pidx] = {
+                $set: {
+                  ...pages[pidx],
+                  profile: v,
+                },
+              };
+            }
+          });
+
+          if (Object.keys(spec).length) {
+            setPages(update(pages, spec));
+          }
+        });
+      }
+    }
+  }, [pageWindow]);
 
   const onFocusChild = useCallback(
     (child) => {
-      const childNumber = Math.max(0, Math.min(child, pages.length - 1));
+      const childNumber = Math.max(0, Math.min(child, pageWindow.length - 1));
       setPageFocus(childNumber);
     },
-    [pages]
+    [pageWindow]
   );
 
   return (
@@ -1032,10 +1110,10 @@ export default function Reader({
         onEnd={useCallback(() => {
           setIsEnd(true);
         }, [])}>
-        {pages.map((p, idx) => (
+        {pageWindow.map((i, idx) => (
           <CanvasImage
-            key={p.id}
-            href={p?.profile?.data}
+            key={pages[i].id}
+            href={pages[i]?.profile?.data}
             fit={itemfit}
             wheelZoom={wheelZoom}
             focused={idx === pageFocus}

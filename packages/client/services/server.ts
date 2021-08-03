@@ -1,4 +1,5 @@
 import Client, {
+  AnyJson,
   JsonMap,
   log,
   ServerErrorMsg,
@@ -6,9 +7,12 @@ import Client, {
 } from 'happypandax-client';
 
 import { createCache } from '../misc/cache';
-import { ItemSort, ItemType } from '../misc/enums';
+import { CommandState, ItemSort, ItemType } from '../misc/enums';
 import {
+  CommandID,
+  CommandProgress,
   FieldPath,
+  ProfileOptions,
   ServerItem,
   ServerMetaTags,
   ServerSortIndex,
@@ -25,6 +29,7 @@ export default class ServerService extends Service {
   constructor(endpoint?: { host: string; port: number }) {
     super(ServiceType.Server);
 
+    log.enabled = false;
     log.logger = {
       debug: global.app.log.d,
       info: global.app.log.i,
@@ -149,6 +154,16 @@ export default class ServerService extends Service {
     };
   }
 
+  async profile(args: {
+    item_type: ItemType;
+    item_ids: number[];
+    profile_options?: ProfileOptions;
+  }) {
+    const data = await this._call('get_profile', args);
+    this._throw_msg_error(data);
+    return data.data as { [key: string]: number };
+  }
+
   async library<R = undefined>(args: {
     item_type: ItemType;
     fields?: FieldPath<R>[];
@@ -177,5 +192,35 @@ export default class ServerService extends Service {
     const data = await this._call('get_sort_indexes', args);
     this._throw_msg_error(data);
     return data.data as ServerSortIndex[];
+  }
+
+  async start_command(args: { command_ids: number[] }) {
+    const data = await this._call('start_command', args);
+    this._throw_msg_error(data);
+    return data.data as Record<CommandID, CommandState>;
+  }
+
+  async stop_command(args: { command_ids: number[] }) {
+    const data = await this._call('stop_command', args);
+    this._throw_msg_error(data);
+    return data.data as Record<CommandID, CommandState>;
+  }
+
+  async command_state(args: { command_ids: number[] }) {
+    const data = await this._call('get_command_state', args);
+    this._throw_msg_error(data);
+    return data.data as Record<CommandID, CommandState>;
+  }
+
+  async command_value(args: { command_ids: number[] }) {
+    const data = await this._call('get_command_value', args);
+    this._throw_msg_error(data);
+    return data.data as Record<CommandID, AnyJson>;
+  }
+
+  async command_progress(args: { command_ids: number[] }) {
+    const data = await this._call('get_command_progress', args);
+    this._throw_msg_error(data);
+    return data.data as Record<CommandID, CommandProgress>;
   }
 }

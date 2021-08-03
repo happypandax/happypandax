@@ -15,6 +15,7 @@
   "dependencies": {
     "@brainhubeu/react-carousel": "^2.0.3",
     "@grabrinc/isomorphic-logger": "^0.1.59",
+    "@msgpack/msgpack": "^2.7.0",
     "@ts-stack/markdown": "^1.4.0",
     "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66",
     "animate.css": "^4.1.1",
@@ -24,12 +25,14 @@
     "date-fns": "^2.22.1",
     "file-type": "^16.5.2",
     "fomantic-ui-less": "^2.8.7",
-    "happypandax-client": "^2.2.0",
+    "happypandax-client": "^3.0.0",
+    "immutability-helper": "^3.1.1",
     "lodash": "^4.17.21",
     "next": "^11.0.1",
     "next-connect": "^0.10.1",
     "normalized-cache": "^0.0.3",
     "nprogress": "next",
+    "p-queue": "^6.6.2",
     "popper-max-size-modifier": "^0.2.0",
     "query-string": "^7.0.1",
     "react": "^17.0.1",
@@ -44,7 +47,8 @@
     "sanitize-filename": "^1.6.3",
     "semantic-ui-react": "^2.0.3",
     "superjson": "^1.7.4",
-    "ttag": "^1.7.24"
+    "ttag": "^1.7.24",
+    "zeromq": "^6.0.0-beta.6"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",

@@ -1,4 +1,4 @@
-import { ItemType } from './enums';
+import { CommandState, ImageSize, ItemType, ProgressType } from './enums';
 
 export type ItemSize = 'tiny' | 'mini' | 'small' | 'medium' | 'large';
 
@@ -158,3 +158,24 @@ export interface ServerSortIndex {
   name: string;
   item_type: ItemType;
 }
+
+export type CommandID = string;
+
+export interface CommandProgress {
+  title: string;
+  value: number;
+  subtitle: string;
+  subtype: ProgressType;
+  max: number;
+  perfect: number;
+  type: ProgressType;
+  text: string;
+  timestamp: number;
+  state: CommandState;
+}
+
+export type ProfileOptions = {
+  size?: ImageSize;
+  url?: boolean;
+  uri?: boolean;
+};

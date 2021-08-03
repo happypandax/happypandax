@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import {
   InitialDataFunction,
   useMutation,
@@ -15,6 +15,7 @@ import { urlstring } from '../misc/utility';
 import type ServerService from '../services/server';
 
 export enum QueryType {
+  PROFILE = 1,
   ITEMS,
   ITEM,
   SORT_INDEXES,
@@ -22,7 +23,7 @@ export enum QueryType {
 }
 
 export enum MutatationType {
-  LOGIN,
+  LOGIN = 50,
   UPDATE_GALLERY,
 }
 
@@ -178,6 +179,12 @@ interface FetchSortIndexes<T = undefined> extends QueryAction<T> {
   variables: Parameters<typeof ServerService['prototype']['sort_indexes']>[0];
 }
 
+interface FetchProfile<T = undefined> extends QueryAction<T> {
+  type: QueryType.PROFILE;
+  dataType: Unwrap<ReturnType<ServerService['profile']>>;
+  variables: Parameters<ServerService['profile']>[0];
+}
+
 interface FetchItem<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEM;
   dataType: Record<string, any>;
@@ -201,6 +208,7 @@ interface FetchItems<T = undefined> extends QueryAction<T> {
 }
 
 type QueryActions<T = undefined> =
+  | FetchProfile<T>
   | FetchItem<T>
   | FetchItems<T>
   | FetchSortIndexes<T>
@@ -227,3 +235,33 @@ interface UpdateGallery extends MutationAction {
 }
 
 type MutationActions = LoginAction | UpdateGallery;
+
+// ======================== NORMAL QUERY ====================================
+
+type Actions<T = undefined> = MutationActions | QueryActions<T>;
+
+export class Query {
+  static get<
+    A = undefined,
+    T extends Actions<A> = Actions<A>,
+    K extends T['type'] = T['type'],
+    V extends Extract<T, { type: K }>['variables'] = Extract<
+      T,
+      { type: K }
+    >['variables'],
+    R extends Extract<T, { type: K }>['dataType'] = Extract<
+      T,
+      { type: K }
+    >['dataType']
+  >(action: K, variables?: V, config?: Parameters<AxiosInstance['get']>[1]) {
+    switch (action) {
+      case QueryType.PROFILE: {
+        variables;
+        return axios.get<R>(urlstring('/api/profile', variables as any));
+      }
+
+      default:
+        throw Error('Invalid action type');
+    }
+  }
+}

@@ -2259,6 +2259,7 @@ __metadata:
     "@brainhubeu/react-carousel": ^2.0.3
     "@grabrinc/isomorphic-logger": ^0.1.59
     "@mdx-js/react": ^1.6.22
+    "@msgpack/msgpack": ^2.7.0
     "@storybook/addon-actions": ^6.3.1
     "@storybook/addon-docs": ^6.3.1
     "@storybook/addon-essentials": ^6.3.1
@@ -2285,13 +2286,15 @@ __metadata:
     fomantic-ui: 2.8.7
     fomantic-ui-less: ^2.8.7
     gulp: 4.0.2
-    happypandax-client: ^2.2.0
+    happypandax-client: ^3.0.0
+    immutability-helper: ^3.1.1
     lodash: ^4.17.21
     next: ^11.0.1
     next-connect: ^0.10.1
     next-transpile-modules: ^8.0.0
     normalized-cache: ^0.0.3
     nprogress: next
+    p-queue: ^6.6.2
     popper-max-size-modifier: ^0.2.0
     query-string: ^7.0.1
     react: ^17.0.1
@@ -2314,6 +2317,7 @@ __metadata:
     typescript: ^4.3.4
     webpack: ^5.43.0
     webpack-merge: ^5.8.0
+    zeromq: ^6.0.0-beta.6
   languageName: unknown
   linkType: soft
 
@@ -2445,6 +2449,13 @@ __metadata:
     call-me-maybe: ^1.0.1
     glob-to-regexp: ^0.3.0
   checksum: e01193b783ed7682710a9af87ba05c69d15cc2183eedca36e37c720bbb7d7449f7d5cd8ad15c991f20c5d95cdce1a3a10ef6d82b1bb8a9762a193ad4245cc9da
+  languageName: node
+  linkType: hard
+
+"@msgpack/msgpack@npm:^2.7.0":
+  version: 2.7.0
+  resolution: "@msgpack/msgpack@npm:2.7.0"
+  checksum: a810502e2675c99b2d5af5c3b11d40ad0f5f5b027df9cf7551fe1eef28967959c1905e9d33ea5e307a32e162957c4b6a158c1b2a16d14c7a7fe882c27352ac96
   languageName: node
   linkType: hard
 
@@ -8867,6 +8878,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventemitter3@npm:^4.0.4":
+  version: 4.0.7
+  resolution: "eventemitter3@npm:4.0.7"
+  checksum: 1fc12c7bc3b4194c50975827e72d56ff57c32b75a4c7dbf4d5eebf3c8371f6f1aad6799150b609de1b867c0d8a9885c08b6ca5e7e0dc437d6152f3063b2607dd
+  languageName: node
+  linkType: hard
+
 "events@npm:^3.0.0, events@npm:^3.2.0":
   version: 3.3.0
   resolution: "events@npm:3.3.0"
@@ -10591,10 +10609,12 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"happypandax-client@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "happypandax-client@npm:2.2.0"
-  checksum: 400ac3f8765a85275e9f3808de4a07df0dd540395e0ba29e682cefcd8a54b35be9dcda07d0b88c0ff7885afa5b4efdeef96feaeac614defc37a3c2e4476030e9
+"happypandax-client@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "happypandax-client@npm:3.0.0"
+  dependencies:
+    "@msgpack/msgpack": ^2.7.0
+  checksum: b9f14c576f53ec5d8d507b65a97dac55b9e7cc18558ee7cac338b741842b4cd0030599851b2d0d0d75e190b304453fc6255f806c007e092ca6ae831a335e396a
   languageName: node
   linkType: hard
 
@@ -11126,6 +11146,13 @@ fsevents@^1.2.7:
   version: 8.0.1
   resolution: "immer@npm:8.0.1"
   checksum: a8c8d531af8f968f4d5a2ec3c5eeb6dd6933c69d216b3f8c55275e34c87926d556db4e3d81f5f038e66f9886e874da4ab4f7ffe228e33d718593820e2f57b68f
+  languageName: node
+  linkType: hard
+
+"immutability-helper@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "immutability-helper@npm:3.1.1"
+  checksum: a5c54826f57a2abd81a5ed083a5a2a6a555d74a16e31c218b3f613e01f65135e5955a46b8df27b5dcbacfe7837dd57f59bd90cc3eefbab4df880e6cc66cb61bc
   languageName: node
   linkType: hard
 
@@ -13932,6 +13959,17 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"node-gyp-build@npm:^4.1.0":
+  version: 4.2.3
+  resolution: "node-gyp-build@npm:4.2.3"
+  bin:
+    node-gyp-build: bin.js
+    node-gyp-build-optional: optional.js
+    node-gyp-build-test: build-test.js
+  checksum: 8512c25498b1605dbe9d2605cac7f8996d18c35097b3079b232674b0f3b8f1559be6f531ec3a00a94f90a0a69ccc452edb62f8f6dfff8caa3abe4b729cc21b06
+  languageName: node
+  linkType: hard
+
 "node-gyp@npm:latest":
   version: 7.1.2
   resolution: "node-gyp@npm:7.1.2"
@@ -14576,7 +14614,17 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"p-timeout@npm:^3.1.0":
+"p-queue@npm:^6.6.2":
+  version: 6.6.2
+  resolution: "p-queue@npm:6.6.2"
+  dependencies:
+    eventemitter3: ^4.0.4
+    p-timeout: ^3.2.0
+  checksum: e95a48f421589ac95dc8913bc949e4c73cfc40c294580f176d2e1af6fa525459ed340c9e8d72a9947ca25e5f79f1d5cfbc10f546f958a324704bfcc838340cee
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^3.1.0, p-timeout@npm:^3.2.0":
   version: 3.2.0
   resolution: "p-timeout@npm:3.2.0"
   dependencies:
@@ -20056,6 +20104,16 @@ typescript@^4.3.4:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 096c3b40beb2804659539be1605a35c58eb0c85285f94b77b3e924f42ee265c1a40bf9f4153770039517146b469a964d51742395f35ca8135fc9f7e4982b785d
+  languageName: node
+  linkType: hard
+
+"zeromq@npm:^6.0.0-beta.6":
+  version: 6.0.0-beta.6
+  resolution: "zeromq@npm:6.0.0-beta.6"
+  dependencies:
+    node-gyp: latest
+    node-gyp-build: ^4.1.0
+  checksum: 66391bc143c7800a09f8e6634ff1582054fa5c06a5bb7211348475c06310bd8c4c34b957ea0eabfd7aa724f3ae1b467f84957695644137cb1ef81648a1ba33c9
   languageName: node
   linkType: hard
 
