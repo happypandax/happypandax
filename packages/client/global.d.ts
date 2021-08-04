@@ -48,13 +48,18 @@ declare type DeepPickPathPlain<T, Glob extends string = '.*'> = (
       : T extends Array<infer T>
       ? _InnerKey<T, '', Glob>
       : {
-          [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob>;
+          [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
         }[_KeyOfUnion<T>])
   | '*'
 ) &
   string;
 
-type _InnerKey<T, key extends string, Glob extends string> = (
+type _InnerKey<
+  T,
+  key extends string,
+  Glob extends string,
+  parentType = undefined
+> = (
   T extends Opaque
     ? never
     : T extends Primitive
@@ -63,14 +68,16 @@ type _InnerKey<T, key extends string, Glob extends string> = (
     ? T extends Primitive
       ? never
       : `${key}${_InnerKey<T, '', Glob> & string}` | `${key}${Glob}`
+    : T extends parentType
+    ? `${key}`
     : {
         [key2 in _KeyOfUnion<T>]:
           | `${key}${Glob}`
           | `${key}${'.'}${key2}`
           | `${key}${'.'}${_InnerKey<T[key2], key2, Glob> & string}`;
       }[_KeyOfUnion<T>]
-) extends infer Key
-  ? Key
+) extends infer key
+  ? key
   : never;
 
 type _KeyOfUnion<T> = UnionKeyOf<T> & string;

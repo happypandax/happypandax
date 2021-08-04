@@ -11,7 +11,9 @@ import React, {
 import {
   useFullscreen,
   useHarmonicIntervalFn,
+  useIsomorphicLayoutEffect,
   useKeyPressEvent,
+  useUpdateEffect,
 } from 'react-use';
 import useMeasureDirty from 'react-use/lib/useMeasureDirty';
 import {
@@ -27,11 +29,11 @@ import {
 
 import Scroller from '@twiddly/scroller';
 
-import { Query, QueryType } from '../client/queries';
+import { Query, QueryType, useQueryType } from '../client/queries';
 import { useDocumentEvent, useInterval, useRefEvent } from '../hooks/utils';
 import { ImageSize, ItemType } from '../misc/enums';
 import t from '../misc/lang';
-import { ServerPage } from '../misc/types';
+import { FieldPath, ServerPage } from '../misc/types';
 import { update } from '../misc/utility';
 import GalleryCard from './Gallery';
 import { Slider } from './Misc';
@@ -48,8 +50,13 @@ export enum ItemFit {
   Auto,
 }
 
-export function windowedPages(page: number, size: number, total: number) {
-  const start = 0;
+export function windowedPages(
+  page: number,
+  size: number,
+  total: number,
+  startIndex: number = 0
+) {
+  const start = startIndex - 1;
 
   page = Math.min(page, total);
   page = Math.max(page, start);
@@ -133,7 +140,10 @@ function CanvasImage({
   focused?: boolean;
 }) {
   const preload = useRef(new Image());
-  preload.current.src = href;
+
+  if (href && !preload.current.src) {
+    preload.current.src = href;
+  }
 
   const ref = useRef<HTMLDivElement>();
   const refContent = useRef<HTMLImageElement>();
@@ -175,7 +185,7 @@ function CanvasImage({
     }
   );
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const { offsetHeight, offsetWidth } = refContent.current;
     if (fit === ItemFit.Contain) {
       if (offsetWidth >= offsetHeight) {
@@ -196,68 +206,66 @@ function CanvasImage({
     }
   }, [fit]);
 
-  // initialize Scroller
-  useEffect(() => {
-    const func = scrollRender.bind(undefined, refContent.current);
-    const s = new Scroller(
-      (left, top, zoom) => {
-        let offsetLeft = 0;
-        let offsetTop = 0;
-        //  make sure item is centered if containted by canvas
-        if (itemContained({ left, top, zoom }, true, false)) {
-          offsetLeft =
-            (ref.current.clientWidth - left) / 2 -
-            (refContent.current.offsetWidth * zoom) / 2;
-          // console.log([
-          //   ref.current.clientWidth,
-          //   refContent.current.offsetWidth,
-          // ]);
-          // make sure item is still in view
-          // offsetLeft = itemContained(
-          //   { left: left - offsetLeft, top, zoom },
-          //   true,
-          //   false
-          // )
-          //   ? offsetLeft
-          //   : 0;
-        }
-        if (itemContained({ left, top, zoom }, false, true)) {
-          offsetTop =
-            (ref.current.clientHeight - top) / 2 -
-            (refContent.current.offsetHeight * zoom) / 2;
+  const onPublish = useCallback((left, top, zoom) => {
+    if (!ref.current) return;
 
-          // make sure item is still in view
-          // offsetTop = itemContained(
-          //   { left, top: top - offsetTop, zoom },
-          //   false,
-          //   true
-          // )
-          //   ? offsetTop
-          //   : 0;
-        }
+    let offsetLeft = 0;
+    let offsetTop = 0;
+    //  make sure item is centered if containted by canvas
+    if (itemContained({ left, top, zoom }, true, false)) {
+      offsetLeft =
+        (ref.current.clientWidth - left) / 2 -
+        (refContent.current.offsetWidth * zoom) / 2;
+      // console.log([ref.current.clientWidth, refContent.current.offsetWidth]);
+      // make sure item is still in view
+      // offsetLeft = itemContained(
+      //   { left: left - offsetLeft, top, zoom },
+      //   true,
+      //   false
+      // )
+      //   ? offsetLeft
+      //   : 0;
+    }
+    if (itemContained({ left, top, zoom }, false, true)) {
+      offsetTop =
+        (ref.current.clientHeight - top) / 2 -
+        (refContent.current.offsetHeight * zoom) / 2;
 
-        // console.log([left, top, offsetLeft, offsetTop, zoom]);
-        func(left - offsetLeft, top - offsetTop, zoom);
-        setZoomLevel(zoom);
-      },
-      {
-        scrollingX: true,
-        scrollingy: true,
-        bouncing: true,
-        locking: false,
-        zooming: true,
-        animating: true,
-        animationDuration: 250,
-      }
-    );
+      // make sure item is still in view
+      // offsetTop = itemContained(
+      //   { left, top: top - offsetTop, zoom },
+      //   false,
+      //   true
+      // )
+      //   ? offsetTop
+      //   : 0;
+    }
 
-    setScroller(s);
+    // console.log([left, top, offsetLeft, offsetTop, zoom]);
+
+    // console.log([left - offsetLeft, top - offsetTop, zoom]);
+    scrollRender(refContent.current, left - offsetLeft, top - offsetTop, zoom);
+    setZoomLevel(zoom);
   }, []);
 
-  // lock scrolling in direction where item is fully contained
-  useEffect(() => {
-    if (!scroller) return;
+  // initialize Scroller
+  useIsomorphicLayoutEffect(() => {
+    const s = new Scroller(onPublish, {
+      scrollingX: true,
+      scrollingy: true,
+      bouncing: true,
+      locking: false,
+      zooming: true,
+      animating: true,
+      animationDuration: 250,
+    });
 
+    setScroller(s);
+  }, [onPublish]);
+
+  // lock scrolling in direction where item is fully contained
+  useIsomorphicLayoutEffect(() => {
+    if (!scroller) return;
     if (itemContained(scroller.getValues(), true, false)) {
       scroller.options.scrollingX = false;
     } else {
@@ -292,7 +300,7 @@ function CanvasImage({
   const { width: refWidth, height: refHeight } = useMeasureDirty(ref);
 
   // initialize dimensions
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!scroller) return;
 
     const container = ref.current;
@@ -492,6 +500,15 @@ function CanvasImage({
       )}
       <img
         draggable="false"
+        onLoad={useCallback(
+          (e) => {
+            if (scroller) {
+              const { left, top, zoom } = scroller.getValues();
+              onPublish(left, top, zoom);
+            }
+          },
+          [scroller, onPublish]
+        )}
         ref={refContent}
         onDragStart={(e) => {
           e.preventDefault();
@@ -770,7 +787,9 @@ function Canvas({
     if (!scroller) return;
     refScrollComplete.current = () => {
       const child = getCurrentChild();
-      onFocusChild?.(child);
+      if (!isNaN(child)) {
+        onFocusChild?.(child);
+      }
     };
   }, [onFocusChild, getCurrentChild, scroller]);
 
@@ -937,17 +956,7 @@ function Canvas({
   );
 }
 
-const PLACEHOLDERS = _.range(10).map((p) => ({
-  id: p,
-  number: p + 1,
-  profile: {
-    data: `https://via.placeholder.com/1400x2200/cc${(10 * (p + 1)).toString(
-      16
-    )}cc/ffffff?text=Page+${p + 1}`,
-  },
-}));
-
-type ReaderData = Optional<
+export type ReaderData = Optional<
   DeepPick<
     ServerPage,
     | 'id'
@@ -962,20 +971,34 @@ type ReaderData = Optional<
   'profile'
 >;
 
+const pageFields: FieldPath<ServerPage>[] = [
+  'id',
+  'name',
+  'number',
+  'metatags.favorite',
+  'metatags.inbox',
+  'metatags.trash',
+  'path',
+];
+
 export default function Reader({
   itemId,
   initialData,
   pageCount: initialPageCount = 0,
-  windowSize = 6,
+  windowSize: initialWindowSize = 10,
+  remoteWindowSize: initialRemoteWindowSize,
   startPage = 1,
+  onPage,
   wheelZoom = false,
-  itemfit = ItemFit.Width,
+  itemfit = ItemFit.Height,
 }: {
   itemId: number;
   initialData: ReaderData[];
   pageCount?: number;
   itemfit?: ItemFit;
   windowSize?: number;
+  remoteWindowSize?: number;
+  onPage?: (page: ReaderData) => void;
   startPage?: number;
   wheelZoom?: boolean;
 }) {
@@ -983,11 +1006,25 @@ export default function Reader({
   const [pageNumber, setPageNumber] = useState(startPage);
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState(initialData ?? []);
+
+  const [windowSize, setWindowSize] = useState(
+    Math.min(initialWindowSize, initialData ? initialData.length : pageCount)
+  );
+  const [remoteWindowSize, setRemoteWindowSize] = useState(
+    Math.max(40, initialRemoteWindowSize ?? Math.ceil(windowSize * 2))
+  );
+
   // indexes of pages that is currently active
   const [pageWindow, setPageWindow] = useState([] as number[]);
   const [isEnd, setIsEnd] = useState(false);
 
-  const fetchingRef = useRef<number[]>();
+  const fetchingMoreRef = useRef({
+    fetching: false,
+    previousNumber: pageNumber,
+  });
+  const fetchingImagesRef = useRef<number[]>();
+
+  // initial props
 
   useEffect(() => {
     setPageCount(initialPageCount);
@@ -997,40 +1034,144 @@ export default function Reader({
     setPages(initialData);
   }, [initialData]);
 
-  // set window of active pages
   useEffect(() => {
-    const windowed = windowedPages(pageNumber, windowSize, pageCount);
-    setPageWindow(
-      windowed.map((n, i) => {
-        if (n === pageNumber) {
-          setPageFocus(i % windowSize);
-        }
-        return n - 1;
-      })
+    setWindowSize(
+      Math.min(initialWindowSize, initialData ? initialData.length : pageCount)
     );
-  }, [pageCount, pageNumber]);
+  }, [initialWindowSize, pageCount, initialData]);
 
-  // make sure page number is in sync
+  useEffect(() => {
+    setRemoteWindowSize(
+      Math.max(40, initialRemoteWindowSize ?? Math.ceil(windowSize * 2))
+    );
+  }, [initialRemoteWindowSize]);
+
+  const { data } = useQueryType(
+    QueryType.PAGES,
+    {
+      gallery_id: itemId,
+      number: startPage,
+      window_size: remoteWindowSize,
+      fields: pageFields,
+    },
+    { enabled: !!!initialData }
+  );
+
+  useEffect(() => {
+    if (data && !!!initialData) {
+      setPages(data.data.items as ReaderData[]);
+      setPageCount(data.data.count);
+    }
+  }, [data, initialData]);
+
+  //
+
   useEffect(() => {
     if (pages.length && pageWindow.length) {
-      const page = pages[pageWindow[pageFocus]];
-      if (page.number !== pageNumber) {
-        setPageNumber(page.number);
-      }
+      // there should be no issue with the page being wrong here
+      onPage?.(pages[pageWindow[pageFocus]]);
     }
-  }, [pageFocus, pages, pageWindow, pageNumber]);
+  }, [pageNumber]);
+
+  // Two layers of "windows", one for the actual pages fetched from the server (remote), another for the active pages to be loaded (images) for the client (local)
+  // When the local window runs out of pages, the remote window readjusts and fetches more pages if needed
+
+  // // Remote window, track page focus and fetch missing pages from the server when needed
+  useUpdateEffect(() => {
+    if (!pageWindow.length || isNaN(pageFocus)) {
+      return;
+    }
+
+    // how close to the edge of the local window needed to be before more pages should be fetched
+    const offset = Math.min(Math.floor(windowSize / 2), 3);
+
+    const leftPageFocusOffset = Math.max(pageFocus - offset, 0);
+    const rightPageFocusOffset = Math.min(
+      pageFocus + offset,
+      pageWindow.length - 1
+    );
+    let fetchMore: 'left' | 'right' = undefined;
+
+    // when close to the left side and the page on the left side is not the first, fetch more
+    if (
+      pageWindow[leftPageFocusOffset] === 0 &&
+      pages[pageWindow[leftPageFocusOffset]].number !== 1
+    ) {
+      fetchMore = 'left';
+    }
+    // when close to the right side and the page on the right side is not the last, fetch more
+    else if (
+      pageWindow[rightPageFocusOffset] === pages.length - 1 &&
+      pages[pageWindow[rightPageFocusOffset]].number !== pageCount
+    ) {
+      fetchMore = 'right';
+    }
+
+    const pNumber = pages[pageWindow[pageFocus]].number;
+
+    if (
+      fetchMore &&
+      !fetchingMoreRef.current.fetching &&
+      fetchingMoreRef.current.previousNumber !== pNumber
+    ) {
+      // when the focus gets corrected by the local window, this hook will retrigger so we need to make sure we don't refetch
+      fetchingMoreRef.current.previousNumber = pNumber;
+
+      fetchingMoreRef.current.fetching = true;
+      Query.get(QueryType.PAGES, {
+        gallery_id: itemId,
+        number: pNumber,
+        fields: pageFields,
+        window_size: remoteWindowSize,
+      })
+        .then((r) => {
+          setPages(r.data.items as ReaderData[]);
+          setPageCount(r.data.count);
+        })
+        .finally(() => {
+          fetchingMoreRef.current.fetching = false;
+        });
+    }
+  }, [pageWindow, pageFocus]);
+
+  // Local window, set window of active local pages based on page number
+  useEffect(() => {
+    if (fetchingMoreRef.current.fetching) {
+      return;
+    }
+
+    const idx = Math.max(
+      0,
+      pages.findIndex((p) => p.number === pageNumber)
+    );
+
+    const windowed = windowedPages(idx, windowSize, pages.length - 1);
+
+    // correct focus, this is after more pages have been fetched, then the focus can point to the wrong page
+    windowed.forEach((n, i) => {
+      if (pages[n].number === pageNumber && i !== pageFocus) {
+        setPageFocus(i);
+      }
+    });
+
+    if (!_.isEqual(pageWindow, windowed)) {
+      setPageWindow(windowed);
+    }
+  }, [windowSize, pageNumber, pages, pageWindow]);
 
   // fetch missing images for windowed pages
 
   useEffect(() => {
-    if (!fetchingRef.current) {
-      fetchingRef.current = [];
+    if (!fetchingImagesRef.current) {
+      fetchingImagesRef.current = [];
     }
 
     // only if not already fetching
     if (
       pageWindow.length &&
-      !fetchingRef.current.includes(pages[pageWindow[pageWindow.length - 1]].id)
+      !fetchingImagesRef.current.includes(
+        pages[pageWindow[pageWindow.length - 1]].id
+      )
     ) {
       // only pages that dont have profile data and not currently fetching
       const fetch_ids: number[] = [];
@@ -1038,15 +1179,15 @@ export default function Reader({
         .map((i) => pages[i])
         .filter((p) => !p?.profile?.data)
         .forEach((p) => {
-          if (!fetchingRef.current.includes(p.id)) {
-            fetchingRef.current.push(p.id);
+          if (!fetchingImagesRef.current.includes(p.id)) {
+            fetchingImagesRef.current.push(p.id);
             fetch_ids.push(p.id);
           }
         });
 
       if (fetch_ids.length) {
         // update page with new fetched profile
-        // todo: pages is part of state so may be stale, consider ref
+        // todo: pages is part of state so may be stale, consider ref?
 
         Query.get(QueryType.PROFILE, {
           item_type: ItemType.Page,
@@ -1058,7 +1199,14 @@ export default function Reader({
           const spec = {};
 
           Object.entries(r.data).forEach(([k, v]) => {
-            const pidx = pages.findIndex((x) => x.id === parseInt(k));
+            const pid = parseInt(k);
+            const pidx = pages.findIndex((x) => x.id === pid);
+
+            const r_idx = fetchingImagesRef.current.indexOf(pid);
+            if (r_idx !== -1) {
+              fetchingImagesRef.current.splice(r_idx, 1);
+            }
+
             if (pidx !== -1) {
               spec[pidx] = {
                 $set: {
@@ -1075,14 +1223,24 @@ export default function Reader({
         });
       }
     }
-  }, [pageWindow]);
+  }, [pageWindow, pages]);
 
   const onFocusChild = useCallback(
     (child) => {
       const childNumber = Math.max(0, Math.min(child, pageWindow.length - 1));
       setPageFocus(childNumber);
+
+      // make sure page number is in sync
+      if (pages.length && pageWindow.length) {
+        const page = pages[pageWindow[childNumber]];
+        if (page.number !== pageNumber) {
+          setPageNumber(page.number);
+        }
+      } else {
+        setPageNumber(0);
+      }
     },
-    [pageWindow]
+    [pageWindow, pages]
   );
 
   return (

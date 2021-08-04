@@ -69,6 +69,7 @@ export async function getServerSideProps(
       'page_count',
       'language.code',
       'progress.end',
+      'progress.page.number',
       'progress.percent',
       'metatags.*',
     ],

@@ -1,13 +1,18 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
+import { useRouter } from 'next/dist/client/router';
 import dynamic from 'next/dynamic';
+import { useCallback, useState } from 'react';
 
 import PageLayout from '../../../../../components/layout/Page';
+import { PageTitle } from '../../../../../components/Misc';
 import { ItemType } from '../../../../../misc/enums';
-import { ServerPage } from '../../../../../misc/types';
-import { urlparse } from '../../../../../misc/utility';
+import t from '../../../../../misc/lang';
+import { ServerGallery, ServerPage } from '../../../../../misc/types';
+import { replaceURL, urlparse, urlstring } from '../../../../../misc/utility';
 import { ServiceType } from '../../../../../services/constants';
 import ServerService from '../../../../../services/server';
 
+import type { ReaderData } from '../../../../../components/Reader';
 const Reader = dynamic(() => import('../../../../../components/Reader'), {
   ssr: false,
 });
@@ -15,7 +20,8 @@ const Reader = dynamic(() => import('../../../../../components/Reader'), {
 interface PageProps {
   itemId: number;
   startPage: number;
-  data: Unwrap<ServerService['related_items']>;
+  data: Unwrap<ServerService['pages']>;
+  title: string;
   urlQuery: ReturnType<typeof urlparse>;
 }
 
@@ -36,18 +42,32 @@ export async function getServerSideProps(
 
   let startPage = parseInt(context.query.number as string);
 
+  console.log(context.query);
+
   if (isNaN(startPage)) {
     startPage = 1;
   }
 
-  let data: Unwrap<ServerService['related_items']>;
+  let data: Unwrap<ServerService['pages']>;
+  let title = 'Gallery';
+
+  // TODO: ensure it isn't lower than local window size or the page will error out
+  const remoteWindowSize = 40;
 
   if (!redirect) {
-    data = await server.related_items<ServerPage>({
-      item_id: itemId,
+    const gallery = await server.item<ServerGallery>({
       item_type: ItemType.Gallery,
-      related_type: ItemType.Page,
-      limit: 0,
+      item_id: itemId,
+      fields: ['preferred_title.name'],
+    });
+    if (gallery.preferred_title) {
+      title = gallery.preferred_title.name;
+    }
+
+    data = await server.pages({
+      gallery_id: itemId,
+      window_size: remoteWindowSize,
+      number: startPage,
       fields: [
         'id',
         'name',
@@ -62,18 +82,34 @@ export async function getServerSideProps(
 
   return {
     redirect,
-    props: { itemId, data, startPage, urlQuery },
+    props: { itemId, data, startPage, urlQuery, title },
   };
 }
 
 export default function Page(props: PageProps) {
+  const router = useRouter();
+  const [number, setNumber] = useState(props.startPage);
+
+  const onPage = useCallback((page: ReaderData) => {
+    const u = urlparse();
+    replaceURL(
+      urlstring(
+        `/item/gallery/${props.itemId}/page/${page.number}`,
+        u.query as any
+      )
+    );
+    setNumber(page.number);
+  }, []);
+
   return (
     <PageLayout>
+      <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
       <Reader
         itemId={props.itemId}
         pageCount={props.data.count}
         startPage={props.startPage}
         initialData={props.data.items as ServerPage[]}
+        onPage={onPage}
       />
     </PageLayout>
   );

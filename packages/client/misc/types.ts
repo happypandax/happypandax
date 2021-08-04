@@ -86,6 +86,7 @@ type ServerItemTrash = {};
 
 export interface ServerGalleryProgress extends ServerItem {
   gallery_id: number;
+  page: ServerPage;
   page_id: number;
   percent: number;
   end: boolean;
@@ -149,8 +150,8 @@ export type FieldPath<T = undefined> = T extends undefined
       | DeepPickPathPlain<ServerParody>
       | DeepPickPathPlain<ServerLanguage>
       | DeepPickPathPlain<ServerGallery>
-      | DeepPickPathPlain<ServerArtist>
       | DeepPickPathPlain<ServerPage>
+      | DeepPickPathPlain<ServerArtist>
   : DeepPickPathPlain<T>;
 
 export interface ServerSortIndex {

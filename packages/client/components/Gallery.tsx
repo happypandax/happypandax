@@ -31,6 +31,25 @@ import {
   UnreadIconLabel,
 } from './Item';
 
+export type GalleryCardData = DeepPick<
+  ServerGallery,
+  | 'id'
+  | 'preferred_title.name'
+  | 'artists.[].id'
+  | 'artists.[].preferred_name.name'
+  | 'profile'
+  | 'number'
+  | 'metatags.favorite'
+  | 'metatags.read'
+  | 'metatags.readlater'
+  | 'metatags.inbox'
+  | 'progress.end'
+  | 'progress.page.number'
+  | 'progress.percent'
+  | 'page_count'
+  | 'language.code'
+>;
+
 function ReadButton({ data }: { data: { id: number } }) {
   return (
     <Link
@@ -46,12 +65,25 @@ function ReadButton({ data }: { data: { id: number } }) {
   );
 }
 
-function ContinueButton({ data }: { data: { id: number } }) {
+function ContinueButton({
+  data,
+}: {
+  data: DeepPick<GalleryCardData, 'id' | 'progress.page.number'>;
+}) {
   return (
-    <Button color="orange" size="mini">
-      <Icon name="play" />
-      {t`Continue`}
-    </Button>
+    <Link
+      href={useMemo(
+        () => ({
+          pathname: `/item/gallery/${data?.id}/page/${data.progress.page.number}`,
+        }),
+        [data]
+      )}
+      passHref>
+      <Button color="orange" size="mini">
+        <Icon name="play" />
+        {t`Continue`}
+      </Button>
+    </Link>
   );
 }
 
@@ -77,25 +109,6 @@ function GalleryCardMenu({ hasProgress }: { hasProgress: boolean }) {
     </ItemMenuLabel>
   );
 }
-
-export type GalleryCardData = DeepPick<
-  ServerGallery,
-  | 'id'
-  | 'preferred_title.name'
-  | 'artists.[].id'
-  | 'artists.[].preferred_name.name'
-  | 'profile'
-  | 'number'
-  | 'metatags.favorite'
-  | 'metatags.read'
-  | 'metatags.readlater'
-  | 'metatags.inbox'
-  | 'progress.end'
-  | 'progress.percent'
-  | 'page_count'
-  | 'language.code'
->;
-
 export function GalleryCard({
   size,
   data,

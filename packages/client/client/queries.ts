@@ -16,6 +16,7 @@ import type ServerService from '../services/server';
 
 export enum QueryType {
   PROFILE = 1,
+  PAGES,
   ITEMS,
   ITEM,
   SORT_INDEXES,
@@ -147,6 +148,16 @@ export function useQueryType<
       );
     }
 
+    case QueryType.PAGES: {
+      return useQuery(
+        [type.toString()],
+        () => {
+          return axios.get(urlstring('/api/pages', variables));
+        },
+        opts
+      );
+    }
+
     default:
       throw Error('Invalid query type');
   }
@@ -207,10 +218,19 @@ interface FetchItems<T = undefined> extends QueryAction<T> {
   };
 }
 
+interface FetchPages<T = undefined> extends QueryAction<T> {
+  type: QueryType.PAGES;
+  dataType: Unwrap<ReturnType<ServerService['pages']>>;
+  variables: Omit<Parameters<ServerService['pages']>[0], 'fields'> & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
   | FetchItems<T>
+  | FetchPages<T>
   | FetchSortIndexes<T>
   | FetchServerStatus<T>;
 
@@ -256,8 +276,10 @@ export class Query {
   >(action: K, variables?: V, config?: Parameters<AxiosInstance['get']>[1]) {
     switch (action) {
       case QueryType.PROFILE: {
-        variables;
         return axios.get<R>(urlstring('/api/profile', variables as any));
+      }
+      case QueryType.PAGES: {
+        return axios.get<R>(urlstring('/api/pages', variables as any));
       }
 
       default:

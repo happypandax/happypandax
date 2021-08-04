@@ -1,6 +1,6 @@
 export { default as update } from 'immutability-helper';
 import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
-import JsonMap from 'happypandax-client';
+import { JsonMap } from 'happypandax-client';
 import Router from 'next/router';
 import querystring, {
   ParsedUrl,
@@ -84,12 +84,12 @@ function unformatQuery(query: StringifiableRecord) {
 }
 
 export function urlstring(
-  querypath: StringifiableRecord | string,
+  querypath?: StringifiableRecord | string,
   query?: StringifiableRecord,
   options?: StringifyOptions
 ) {
   const path = typeof querypath === 'string' ? querypath : undefined;
-  const q = typeof querypath !== 'string' ? querypath : query;
+  const q = typeof querypath !== 'string' && querypath ? querypath : query;
 
   return querystring.stringifyUrl(
     {
@@ -135,4 +135,17 @@ export function dateFromTimestamp(
   return relative
     ? formatDistanceToNowStrict(d, { addSuffix })
     : format(d, 'PPpp');
+}
+
+// Replaces the URL without reloading unlike location.replace, also keeps state and title if unspecififed
+export function replaceURL(
+  url: string | URL,
+  nextState?: any,
+  nextTitle?: string
+) {
+  history.replaceState(
+    nextState ?? history.state,
+    nextTitle ?? window.document.title,
+    url
+  );
 }

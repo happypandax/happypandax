@@ -15,6 +15,7 @@ import {
   ProfileOptions,
   ServerItem,
   ServerMetaTags,
+  ServerPage,
   ServerSortIndex,
 } from '../misc/types';
 import { Service } from './base';
@@ -151,6 +152,21 @@ export default class ServerService extends Service {
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
+    };
+  }
+
+  async pages(args: {
+    gallery_id: number;
+    number?: number;
+    window_size?: number;
+    fields?: FieldPath[];
+    profile_options?: ProfileOptions;
+  }) {
+    const data = await this._call('get_pages', args);
+    this._throw_msg_error(data);
+    return data.data as {
+      count: number;
+      items: PartialExcept<ServerPage, 'id'>[];
     };
   }
 
