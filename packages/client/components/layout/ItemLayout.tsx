@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import maxSize from 'popper-max-size-modifier';
 import { useCallback, useMemo } from 'react';
 import {
   Button,
@@ -14,35 +13,7 @@ import { QueryType, useQueryType } from '../../client/queries';
 import { ItemType, ViewType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { FieldPath, ServerFilter, ServerSortIndex } from '../../misc/types';
-
-function PopupNoOverflow(props: React.ComponentProps<typeof Popup>) {
-  const applyMaxSize = useMemo(() => {
-    return {
-      name: 'applyMaxSize',
-      enabled: true,
-      phase: 'beforeWrite',
-      requires: ['maxSize'],
-      fn({ state }) {
-        // The `maxSize` modifier provides this data
-        const { width, height } = state.modifiersData.maxSize;
-
-        state.styles.popper = {
-          ...state.styles.popper,
-          maxWidth: `${Math.max(100, width)}px`,
-          maxHeight: `${Math.max(100, height)}px`,
-        };
-      },
-    };
-  }, []);
-
-  return (
-    <Popup
-      {...props}
-      offset={[20, 0]}
-      popperModifiers={[maxSize, applyMaxSize]}
-    />
-  );
-}
+import { PopupNoOverflow } from '../Misc';
 
 export function SortButtonInput({
   itemType,

@@ -1,7 +1,8 @@
 import '@brainhubeu/react-carousel/lib/style.css';
 
 import classNames from 'classnames';
-import React, { useCallback, useEffect, useState } from 'react';
+import maxSize from 'popper-max-size-modifier';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Editor from 'react-simple-code-editor';
 import { useLocalStorage, useWindowScroll } from 'react-use';
 import { useRecoilState } from 'recoil';
@@ -12,6 +13,7 @@ import {
   Icon,
   Label,
   Message,
+  Popup,
   Segment,
 } from 'semantic-ui-react';
 
@@ -86,7 +88,7 @@ export function ScrollUpButton() {
   );
 }
 
-export function DrawerButton() {
+export function DrawerButton({ basic }: { basic?: boolean }) {
   const [open, setOpen] = useRecoilState(AppState.drawerOpen);
 
   return (
@@ -94,6 +96,7 @@ export function DrawerButton() {
       <Button
         primary
         circular
+        basic={basic}
         onClick={useCallback(() => setOpen(true), [])}
         icon="window maximize outline"
         size="small"
@@ -416,5 +419,34 @@ export function PageInfoMessage({
       {...props}>
       {children}
     </Message>
+  );
+}
+
+export function PopupNoOverflow(props: React.ComponentProps<typeof Popup>) {
+  const applyMaxSize = useMemo(() => {
+    return {
+      name: 'applyMaxSize',
+      enabled: true,
+      phase: 'beforeWrite',
+      requires: ['maxSize'],
+      fn({ state }) {
+        // The `maxSize` modifier provides this data
+        const { width, height } = state.modifiersData.maxSize;
+
+        state.styles.popper = {
+          ...state.styles.popper,
+          maxWidth: `${Math.max(100, width)}px`,
+          maxHeight: `${Math.max(100, height)}px`,
+        };
+      },
+    };
+  }, []);
+
+  return (
+    <Popup
+      {...props}
+      offset={[20, 0]}
+      popperModifiers={[maxSize, applyMaxSize]}
+    />
   );
 }

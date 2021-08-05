@@ -37,10 +37,12 @@ export function BottomZone({ children }: { children?: React.ReactNode }) {
 export default function PageLayout({
   dimmed,
   menu,
+  basicDrawerButton,
   bottomZoneRight,
   bottomZone,
   children,
 }: {
+  basicDrawerButton?: boolean;
   dimmed?: boolean;
   menu?: React.ReactNode;
   bottomZoneRight?: React.ReactNode;
@@ -67,7 +69,7 @@ export default function PageLayout({
           <BottomZone>
             {bottomZone}
             <BottomZoneItem x="left" y="bottom">
-              <DrawerButton />
+              <DrawerButton basic={basicDrawerButton} />
             </BottomZoneItem>
             <BottomZoneItem x="right" y="top" className="flex fullheight">
               {bottomZoneRight}

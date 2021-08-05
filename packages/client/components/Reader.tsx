@@ -23,6 +23,7 @@ import {
   Header,
   Icon,
   Label,
+  Popup,
   Rating,
   Segment,
 } from 'semantic-ui-react';
@@ -991,6 +992,7 @@ export default function Reader({
   onPage,
   wheelZoom = false,
   itemfit = ItemFit.Height,
+  padded,
 }: {
   itemId: number;
   initialData: ReaderData[];
@@ -1001,6 +1003,7 @@ export default function Reader({
   onPage?: (page: ReaderData) => void;
   startPage?: number;
   wheelZoom?: boolean;
+  padded?: boolean;
 }) {
   const [pageCount, setPageCount] = useState(initialPageCount);
   const [pageNumber, setPageNumber] = useState(startPage);
@@ -1244,7 +1247,12 @@ export default function Reader({
   );
 
   return (
-    <Dimmer.Dimmable as={Segment} inverted blurring dimmed={isEnd}>
+    <Dimmer.Dimmable
+      as={Segment}
+      inverted
+      blurring
+      dimmed={isEnd}
+      className={classNames({ 'no-padding-segment': !padded }, 'no-margins')}>
       <Dimmer
         active={isEnd}
         className="fluid-dimmer"
@@ -1391,5 +1399,31 @@ export function EndContent({}: {}) {
         </Grid.Column>
       </Grid.Row>
     </Grid>
+  );
+}
+
+export function ReaderSettingsButton({ className }: { className?: string }) {
+  return (
+    <Popup
+      on="click"
+      position="left center"
+      hoverable
+      wide
+      flowing
+      positionFixed
+      className={classNames('overflow-y-auto', 'overflow-x-hidden')}
+      eventsEnabled
+      popperDependencies={[data]}
+      trigger={
+        <Button
+          icon="setting"
+          secondary
+          basic
+          circular
+          className={classNames(className)}
+        />
+      }>
+      <Popup.Content>hello</Popup.Content>
+    </Popup>
   );
 }

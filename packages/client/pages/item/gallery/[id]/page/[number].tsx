@@ -1,9 +1,11 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import { useRouter } from 'next/dist/client/router';
 import dynamic from 'next/dynamic';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import PageLayout from '../../../../../components/layout/Page';
+import PageLayout, {
+  BottomZoneItem,
+} from '../../../../../components/layout/Page';
 import { PageTitle } from '../../../../../components/Misc';
 import { ItemType } from '../../../../../misc/enums';
 import t from '../../../../../misc/lang';
@@ -16,6 +18,15 @@ import type { ReaderData } from '../../../../../components/Reader';
 const Reader = dynamic(() => import('../../../../../components/Reader'), {
   ssr: false,
 });
+const ReaderSettingsButton = dynamic(
+  () =>
+    import('../../../../../components/Reader').then(
+      (m) => m.ReaderSettingsButton
+    ),
+  {
+    ssr: false,
+  }
+);
 
 interface PageProps {
   itemId: number;
@@ -102,7 +113,15 @@ export default function Page(props: PageProps) {
   }, []);
 
   return (
-    <PageLayout>
+    <PageLayout
+      basicDrawerButton
+      bottomZone={useMemo(() => {
+        return (
+          <BottomZoneItem x="right" y="bottom">
+            <ReaderSettingsButton />
+          </BottomZoneItem>
+        );
+      }, [])}>
       <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
       <Reader
         itemId={props.itemId}
