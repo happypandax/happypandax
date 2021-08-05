@@ -251,3 +251,15 @@ export enum DataMode {
   READ_ONLY,
   DEFAULT,
 }
+
+export enum ReadingDirection {
+  TopToBottom,
+  LeftToRight,
+}
+
+export enum ItemFit {
+  Height,
+  Width,
+  Contain,
+  Auto,
+}

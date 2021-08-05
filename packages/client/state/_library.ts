@@ -1,7 +1,7 @@
 import { ItemType, ViewType } from '../misc/enums';
 import StateBlock, { defineAtom } from './_base';
 
-export class LibraryState extends StateBlock {
+export default class _LibraryState extends StateBlock {
   static favorites = defineAtom({
     default: false,
   });

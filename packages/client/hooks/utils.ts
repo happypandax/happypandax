@@ -1,8 +1,8 @@
-import { DependencyList, useRef, RefObject, useEffect } from 'react';
+import { DependencyList, RefObject, useEffect, useRef, useState } from 'react';
 
-export function useDocumentEvent<E extends keyof HTMLElementEventMap, F>(
+export function useBodyEvent<E extends keyof HTMLBodyElementEventMap, F>(
   name: E,
-  func: (this: HTMLElement, ev: HTMLElementEventMap[E]) => any,
+  func: (this: HTMLBodyElement, ev: HTMLBodyElementEventMap[E]) => any,
   options?: boolean | AddEventListenerOptions,
   deps?: DependencyList,
   featureCheck?: () => boolean
@@ -13,6 +13,24 @@ export function useDocumentEvent<E extends keyof HTMLElementEventMap, F>(
 
       return () => {
         document.body.removeEventListener(name, func);
+      };
+    }, deps);
+  }
+}
+
+export function useDocumentEvent<E extends keyof DocumentEventMap, F>(
+  name: E,
+  func: (this: Document, ev: DocumentEventMap[E]) => any,
+  options?: boolean | AddEventListenerOptions,
+  deps?: DependencyList,
+  featureCheck?: () => boolean
+) {
+  if (featureCheck?.() ?? true) {
+    useEffect(() => {
+      document.addEventListener(name, func, options);
+
+      return () => {
+        document.removeEventListener(name, func);
       };
     }, deps);
   }
@@ -63,4 +81,19 @@ export function useInterval(
 
     return undefined;
   }, [delay]);
+}
+
+export function useTabActive() {
+  const [active, setActive] = useState(true);
+
+  useDocumentEvent(
+    'visibilitychange',
+    () => {
+      setActive(document.visibilityState === 'visible');
+    },
+    {},
+    []
+  );
+
+  return active;
 }

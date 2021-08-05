@@ -2,7 +2,7 @@ import { DataMode, ItemType } from '../misc/enums';
 import { ServerItem } from '../misc/types';
 import StateBlock, { defineAtom } from './_base';
 
-export class DataState extends StateBlock {
+export default class _DataState extends StateBlock {
   static data = defineAtom(
     { default: undefined as PartialExcept<ServerItem, 'id'> | undefined },
     true

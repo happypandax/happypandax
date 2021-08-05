@@ -2,24 +2,27 @@ import useEffect, { useState } from 'react';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import { RecoilState, SetterOrUpdater, useRecoilState } from 'recoil';
 
-import { AppState } from './_app';
+import AppState from './_app';
 import StateBlock from './_base';
-import { DataState } from './_data';
-import { LibraryState } from './_library';
+import DataState from './_data';
+import LibraryState from './_library';
+import ReaderState from './_reader';
 
 ((...cls: StateBlock[]) => {
   cls.forEach((c) => StateBlock.setup(c));
-})(AppState, LibraryState, DataState);
+})(AppState, LibraryState, DataState, ReaderState);
 
 export function useInitialRecoilState<T>(
   state: RecoilState<T>,
   optional?: T
 ): [T, SetterOrUpdater<T>] {
   const [value, setValue] = useRecoilState(state);
-  const [optionalValue, setOptionalValue] = useState([value, optional]);
+  const [optionalValue, setOptionalValue] = useState(
+    optional === undefined ? undefined : [value, optional]
+  );
 
   useEffectOnce(() => {
-    if (optional === value) {
+    if (optional === undefined || optional === value) {
       setOptionalValue(undefined);
     } else {
       setValue(optional);
@@ -40,10 +43,12 @@ export function useInitialRecoilState<T>(
 
 export function useInitialRecoilValue<T>(state: RecoilState<T>, optional?: T) {
   const [value, setValue] = useRecoilState(state);
-  const [optionalValue, setOptionalValue] = useState([value, optional]);
+  const [optionalValue, setOptionalValue] = useState(
+    optional === undefined ? undefined : [value, optional]
+  );
 
   useEffectOnce(() => {
-    if (optional === value) {
+    if (optional === undefined || optional === value) {
       setOptionalValue(undefined);
     } else {
       setValue(optional);
@@ -59,4 +64,4 @@ export function useInitialRecoilValue<T>(state: RecoilState<T>, optional?: T) {
     : optionalValue[1];
 }
 
-export { AppState, LibraryState, DataState };
+export { AppState, LibraryState, DataState, ReaderState };

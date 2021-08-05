@@ -1,5 +1,4 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
-import { useRouter } from 'next/dist/client/router';
 import dynamic from 'next/dynamic';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -15,13 +14,25 @@ import { ServiceType } from '../../../../../services/constants';
 import ServerService from '../../../../../services/server';
 
 import type { ReaderData } from '../../../../../components/Reader';
+
 const Reader = dynamic(() => import('../../../../../components/Reader'), {
   ssr: false,
 });
+
 const ReaderSettingsButton = dynamic(
   () =>
     import('../../../../../components/Reader').then(
       (m) => m.ReaderSettingsButton
+    ),
+  {
+    ssr: false,
+  }
+);
+
+const ReaderAutoNavigateButton = dynamic(
+  () =>
+    import('../../../../../components/Reader').then(
+      (m) => m.ReaderAutoNavigateButton
     ),
   {
     ssr: false,
@@ -98,7 +109,6 @@ export async function getServerSideProps(
 }
 
 export default function Page(props: PageProps) {
-  const router = useRouter();
   const [number, setNumber] = useState(props.startPage);
 
   const onPage = useCallback((page: ReaderData) => {
@@ -112,16 +122,19 @@ export default function Page(props: PageProps) {
     setNumber(page.number);
   }, []);
 
+  const stateKey = 'page';
+
   return (
     <PageLayout
       basicDrawerButton
       bottomZone={useMemo(() => {
         return (
           <BottomZoneItem x="right" y="bottom">
-            <ReaderSettingsButton />
+            <ReaderAutoNavigateButton stateKey={stateKey} />
+            <ReaderSettingsButton stateKey={stateKey} />
           </BottomZoneItem>
         );
-      }, [])}>
+      }, [stateKey])}>
       <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
       <Reader
         itemId={props.itemId}
@@ -129,6 +142,7 @@ export default function Page(props: PageProps) {
         startPage={props.startPage}
         initialData={props.data.items as ServerPage[]}
         onPage={onPage}
+        stateKey={stateKey}
       />
     </PageLayout>
   );

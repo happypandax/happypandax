@@ -16,39 +16,47 @@ import {
   useUpdateEffect,
 } from 'react-use';
 import useMeasureDirty from 'react-use/lib/useMeasureDirty';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   Button,
+  Checkbox,
   Dimmer,
+  Form,
   Grid,
   Header,
   Icon,
   Label,
-  Popup,
+  Modal,
   Rating,
   Segment,
+  Select,
 } from 'semantic-ui-react';
 
 import Scroller from '@twiddly/scroller';
 
 import { Query, QueryType, useQueryType } from '../client/queries';
-import { useDocumentEvent, useInterval, useRefEvent } from '../hooks/utils';
-import { ImageSize, ItemType } from '../misc/enums';
+import { useBodyEvent, useRefEvent, useTabActive } from '../hooks/utils';
+import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
 import { FieldPath, ServerPage } from '../misc/types';
-import { update } from '../misc/utility';
+import { getPageWidth, getScreenWidth, update } from '../misc/utility';
+import {
+  ReaderState,
+  useInitialRecoilState,
+  useInitialRecoilValue,
+} from '../state';
 import GalleryCard from './Gallery';
 import { Slider } from './Misc';
 
-export enum ReadingDirection {
-  TopToBottom,
-  LeftToRight,
-}
-
-export enum ItemFit {
-  Height,
-  Width,
-  Contain,
-  Auto,
+function getOptimalImageSize() {
+  const w = getPageWidth();
+  const s = getScreenWidth();
+  if (w > 2400 || s > 2400) return ImageSize.Original;
+  if (w > 1600 || s > 1600) return ImageSize.x2400;
+  else if (w > 1280 || s > 1600) return ImageSize.x1600;
+  else if (w > 980) return ImageSize.x1280;
+  else if (w > 768) return ImageSize.x960;
+  else return ImageSize.x768;
 }
 
 export function windowedPages(
@@ -57,6 +65,8 @@ export function windowedPages(
   total: number,
   startIndex: number = 0
 ) {
+  if (!total) return [];
+
   const start = startIndex - 1;
 
   page = Math.min(page, total);
@@ -329,7 +339,7 @@ function CanvasImage({
     [zoomLevel, scroller, itemContained, direction]
   );
 
-  useDocumentEvent(
+  useBodyEvent(
     'mousemove',
     (e) => {
       if (!refMouseDown.current) {
@@ -349,7 +359,7 @@ function CanvasImage({
     [scroller]
   );
 
-  useDocumentEvent(
+  useBodyEvent(
     'mouseup',
     (e) => {
       if (!refMouseDown.current) {
@@ -552,12 +562,13 @@ function Canvas({
   children,
   direction = ReadingDirection.TopToBottom,
   focusChild = 0,
-  autoNavigateInterval = 5000,
+  autoNavigateInterval = 5,
   autoNavigate,
   wheelZoom,
   label,
   onFocusChild,
   onEnd,
+  stateKey,
 }: {
   children?: any;
   direction?: ReadingDirection;
@@ -565,6 +576,7 @@ function Canvas({
   autoNavigateInterval?: number;
   focusChild?: number;
   wheelZoom?: boolean;
+  stateKey?: string;
   autoNavigate?: boolean;
   onFocusChild?: (number) => void;
   onEnd?: () => void;
@@ -577,9 +589,14 @@ function Canvas({
   const refContent = useRef<HTMLDivElement>();
   const refScrollComplete = useRef<() => void>();
   const [showFullscreen, setShowFullscreen] = useState(false);
+  const tabActive = useTabActive();
   const isFullscreen = useFullscreen(ref, showFullscreen, {
     onClose: () => setShowFullscreen(false),
   });
+
+  const setAutoNavigateCounter = useSetRecoilState(
+    ReaderState.autoNavigateCounter(stateKey)
+  );
 
   const [scroller, setScroller] = useState<Scroller>();
 
@@ -602,7 +619,7 @@ function Canvas({
     setScroller(s);
   }, []);
 
-  useDocumentEvent(
+  useBodyEvent(
     'mousemove',
     (e) => {
       if (!refIsPanning.current) {
@@ -622,7 +639,7 @@ function Canvas({
     [scroller]
   );
 
-  useDocumentEvent(
+  useBodyEvent(
     'mouseup',
     (e) => {
       if (!refIsPanning.current) {
@@ -648,7 +665,7 @@ function Canvas({
     () => !!window.ontouchstart
   );
 
-  useDocumentEvent(
+  useBodyEvent(
     'touchmove',
     (e) => {
       scroller.doTouchMove(e.touches, e.timeStamp);
@@ -658,7 +675,7 @@ function Canvas({
     () => !!window.ontouchstart
   );
 
-  useDocumentEvent(
+  useBodyEvent(
     'touchend',
     (e) => {
       scroller.doTouchEnd(e.timeStamp);
@@ -795,15 +812,33 @@ function Canvas({
   }, [onFocusChild, getCurrentChild, scroller]);
 
   // auto navigate
-  useInterval(
-    () => {
-      scrollToChild(getNextChild(), true);
-    },
-    autoNavigate && focusChild < React.Children.count(children) - 1
-      ? autoNavigateInterval
-      : null,
-    [getNextChild]
-  );
+  useIsomorphicLayoutEffect(() => {
+    if (
+      tabActive &&
+      autoNavigate &&
+      focusChild < React.Children.count(children) - 1
+    ) {
+      let c = autoNavigateInterval;
+      const t = setInterval(() => {
+        if (refIsPanning.current) return;
+        c--;
+        setAutoNavigateCounter(c);
+        if (!c) {
+          scrollToChild(getNextChild(), true);
+          c = autoNavigateInterval;
+        }
+      }, 1000);
+
+      return () => clearInterval(t);
+    }
+  }, [
+    autoNavigate,
+    tabActive,
+    getNextChild,
+    children,
+    focusChild,
+    autoNavigateInterval,
+  ]);
 
   useRefEvent(
     ref,
@@ -990,23 +1025,74 @@ export default function Reader({
   remoteWindowSize: initialRemoteWindowSize,
   startPage = 1,
   onPage,
-  wheelZoom = false,
-  itemfit = ItemFit.Height,
+  autoNavigate: initialAutoNavigate,
+  autoNavigateInterval: initialAutoNavigateInterval,
+  stretchFit: initialStretchfit,
+  fit: initialFit,
+  wheelZoom: initialWheelZoom,
+  direction: initialDirection,
+  scaling: initialScaling,
+  stateKey,
   padded,
 }: {
   itemId: number;
   initialData: ReaderData[];
   pageCount?: number;
-  itemfit?: ItemFit;
+  autoNavigateInterval?: number;
+  fit?: ItemFit;
+  stretchFit?: boolean;
+  autoNavigate?: boolean;
+  direction?: ReadingDirection;
+  scaling?: ImageSize | 0;
   windowSize?: number;
   remoteWindowSize?: number;
   onPage?: (page: ReaderData) => void;
   startPage?: number;
   wheelZoom?: boolean;
   padded?: boolean;
+  stateKey?: string;
 }) {
-  const [pageCount, setPageCount] = useState(initialPageCount);
-  const [pageNumber, setPageNumber] = useState(startPage);
+  const scaling = useInitialRecoilValue(
+    ReaderState.scaling(stateKey),
+    initialScaling
+  );
+  const wheelZoom = useInitialRecoilValue(
+    ReaderState.wheelZoom(stateKey),
+    initialWheelZoom
+  );
+  const stretchFit = useInitialRecoilValue(
+    ReaderState.stretchFit(stateKey),
+    initialStretchfit
+  );
+  const autoNavigate = useInitialRecoilValue(
+    ReaderState.autoNavigate(stateKey),
+    initialAutoNavigate
+  );
+  const autoNavigateInterval = useInitialRecoilValue(
+    ReaderState.autoNavigateInterval(stateKey),
+    initialAutoNavigateInterval
+  );
+  const fit = useInitialRecoilValue(ReaderState.fit(stateKey), initialFit);
+  const direction = useInitialRecoilValue(
+    ReaderState.direction(stateKey),
+    initialDirection
+  );
+
+  const [isEnd, setIsEnd] = useInitialRecoilState(
+    ReaderState.endReached(stateKey),
+    false
+  );
+
+  const [pageCount, setPageCount] = useInitialRecoilState(
+    ReaderState.pageCount(stateKey),
+    initialPageCount
+  );
+
+  const [pageNumber, setPageNumber] = useInitialRecoilState(
+    ReaderState.pageNumber(stateKey),
+    startPage
+  );
+
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState(initialData ?? []);
 
@@ -1019,7 +1105,6 @@ export default function Reader({
 
   // indexes of pages that is currently active
   const [pageWindow, setPageWindow] = useState([] as number[]);
-  const [isEnd, setIsEnd] = useState(false);
 
   const fetchingMoreRef = useRef({
     fetching: false,
@@ -1049,6 +1134,8 @@ export default function Reader({
     );
   }, [initialRemoteWindowSize]);
 
+  //
+
   const { data } = useQueryType(
     QueryType.PAGES,
     {
@@ -1076,46 +1163,58 @@ export default function Reader({
     }
   }, [pageNumber]);
 
+  useUpdateEffect(() => {
+    setPages([]);
+    setPageWindow([]);
+  }, [scaling]);
+
   // Two layers of "windows", one for the actual pages fetched from the server (remote), another for the active pages to be loaded (images) for the client (local)
   // When the local window runs out of pages, the remote window readjusts and fetches more pages if needed
 
   // // Remote window, track page focus and fetch missing pages from the server when needed
   useUpdateEffect(() => {
-    if (!pageWindow.length || isNaN(pageFocus)) {
+    if (isNaN(pageFocus)) {
       return;
     }
 
-    // how close to the edge of the local window needed to be before more pages should be fetched
-    const offset = Math.min(Math.floor(windowSize / 2), 3);
-
-    const leftPageFocusOffset = Math.max(pageFocus - offset, 0);
-    const rightPageFocusOffset = Math.min(
-      pageFocus + offset,
-      pageWindow.length - 1
-    );
     let fetchMore: 'left' | 'right' = undefined;
 
-    // when close to the left side and the page on the left side is not the first, fetch more
-    if (
-      pageWindow[leftPageFocusOffset] === 0 &&
-      pages[pageWindow[leftPageFocusOffset]].number !== 1
-    ) {
+    if (pageWindow.length) {
+      // how close to the edge of the local window needed to be before more pages should be fetched
+      const offset = Math.min(Math.floor(windowSize / 2), 3);
+
+      const leftPageFocusOffset = Math.max(pageFocus - offset, 0);
+      const rightPageFocusOffset = Math.min(
+        pageFocus + offset,
+        pageWindow.length - 1
+      );
+
+      // when close to the left side and the page on the left side is not the first, fetch more
+      if (
+        pageWindow[leftPageFocusOffset] === 0 &&
+        pages[pageWindow[leftPageFocusOffset]].number !== 1
+      ) {
+        fetchMore = 'left';
+      }
+      // when close to the right side and the page on the right side is not the last, fetch more
+      else if (
+        pageWindow[rightPageFocusOffset] === pages.length - 1 &&
+        pages[pageWindow[rightPageFocusOffset]].number !== pageCount
+      ) {
+        fetchMore = 'right';
+      }
+    } else if (pages.length || pageCount) {
       fetchMore = 'left';
     }
-    // when close to the right side and the page on the right side is not the last, fetch more
-    else if (
-      pageWindow[rightPageFocusOffset] === pages.length - 1 &&
-      pages[pageWindow[rightPageFocusOffset]].number !== pageCount
-    ) {
-      fetchMore = 'right';
-    }
 
-    const pNumber = pages[pageWindow[pageFocus]].number;
+    const pNumber = pageWindow.length
+      ? pages[pageWindow[pageFocus]].number
+      : pageNumber;
 
     if (
       fetchMore &&
       !fetchingMoreRef.current.fetching &&
-      fetchingMoreRef.current.previousNumber !== pNumber
+      (!pages.length || fetchingMoreRef.current.previousNumber !== pNumber)
     ) {
       // when the focus gets corrected by the local window, this hook will retrigger so we need to make sure we don't refetch
       fetchingMoreRef.current.previousNumber = pNumber;
@@ -1128,10 +1227,13 @@ export default function Reader({
         window_size: remoteWindowSize,
       })
         .then((r) => {
+          // required, or pageWindow hook won't see it in time
+          fetchingMoreRef.current.fetching = false;
           setPages(r.data.items as ReaderData[]);
           setPageCount(r.data.count);
         })
         .finally(() => {
+          // in case of error
           fetchingMoreRef.current.fetching = false;
         });
     }
@@ -1148,7 +1250,11 @@ export default function Reader({
       pages.findIndex((p) => p.number === pageNumber)
     );
 
-    const windowed = windowedPages(idx, windowSize, pages.length - 1);
+    const windowed = windowedPages(
+      idx,
+      windowSize,
+      Math.max(pages.length - 1, 0)
+    );
 
     // correct focus, this is after more pages have been fetched, then the focus can point to the wrong page
     windowed.forEach((n, i) => {
@@ -1189,14 +1295,20 @@ export default function Reader({
         });
 
       if (fetch_ids.length) {
-        // update page with new fetched profile
-        // todo: pages is part of state so may be stale, consider ref?
+        // this updates page with new fetched profile
+
+        // TODO: pages is part of state so may be stale, consider ref?
+
+        let size = ImageSize.x1280;
+        if (scaling !== undefined) {
+          size = scaling === 0 ? getOptimalImageSize() : scaling;
+        }
 
         Query.get(QueryType.PROFILE, {
           item_type: ItemType.Page,
           item_ids: fetch_ids,
           profile_options: {
-            size: ImageSize.x1280,
+            size,
           },
         }).then((r) => {
           const spec = {};
@@ -1226,7 +1338,7 @@ export default function Reader({
         });
       }
     }
-  }, [pageWindow, pages]);
+  }, [pageWindow, pages, scaling]);
 
   const onFocusChild = useCallback(
     (child) => {
@@ -1262,7 +1374,11 @@ export default function Reader({
         <EndContent />
       </Dimmer>
       <Canvas
+        stateKey={stateKey}
         wheelZoom={wheelZoom}
+        direction={direction}
+        autoNavigate={autoNavigate}
+        autoNavigateInterval={autoNavigateInterval}
         label={useMemo(
           () => (
             <Label size="big" className="translucent-black">
@@ -1274,13 +1390,21 @@ export default function Reader({
         focusChild={pageFocus}
         onFocusChild={onFocusChild}
         onEnd={useCallback(() => {
-          setIsEnd(true);
-        }, [])}>
+          if (!fetchingMoreRef.current.fetching) {
+            // is probably fetching more pages, don't end yet
+            if (pageCount && !pageWindow.length) {
+              return;
+            }
+            setIsEnd(true);
+          }
+        }, [pageCount, pageWindow])}>
         {pageWindow.map((i, idx) => (
           <CanvasImage
-            key={pages[i].id}
+            key={`${pages[i].id}-${stretchFit}`}
             href={pages[i]?.profile?.data}
-            fit={itemfit}
+            fit={fit}
+            stretchFit={stretchFit}
+            direction={direction}
             wheelZoom={wheelZoom}
             focused={idx === pageFocus}
           />
@@ -1402,28 +1526,199 @@ export function EndContent({}: {}) {
   );
 }
 
-export function ReaderSettingsButton({ className }: { className?: string }) {
+const sizeOptions = [
+  { key: 'auto', text: t`Auto`, value: ItemFit.Auto },
+  { key: 'contain', text: t`Contain`, value: ItemFit.Contain },
+  { key: 'height', text: t`Height`, value: ItemFit.Height },
+  { key: 'width', text: t`Width`, value: ItemFit.Width },
+];
+
+const scalingOptions = [
+  { key: 0, text: t`Auto`, value: 0 },
+  { key: ImageSize.Original, text: t`Original`, value: ImageSize.Original },
+  { key: ImageSize.x2400, text: t`x2400`, value: ImageSize.x2400 },
+  { key: ImageSize.x1600, text: t`x1600`, value: ImageSize.x1600 },
+  { key: ImageSize.x1280, text: t`x1280`, value: ImageSize.x1280 },
+  { key: ImageSize.x960, text: t`x960`, value: ImageSize.x960 },
+  { key: ImageSize.x768, text: t`x768`, value: ImageSize.x768 },
+];
+
+const directionOptions = [
+  {
+    key: ReadingDirection.TopToBottom,
+    text: t`↓ Top to Bottom`,
+    value: ReadingDirection.TopToBottom,
+  },
+  {
+    key: ReadingDirection.LeftToRight,
+    text: t`→ Left to Right`,
+    value: ReadingDirection.LeftToRight,
+  },
+];
+
+export function ReaderSettings({
+  stateKey,
+  ...props
+}: React.ComponentProps<typeof Segment> & { stateKey?: string }) {
+  const [fit, setFit] = useRecoilState(ReaderState.fit(stateKey));
+  const [stretchFit, setStretchFit] = useRecoilState(
+    ReaderState.stretchFit(stateKey)
+  );
+  const [autoNavigateInterval, setAutoNavigateInterval] = useRecoilState(
+    ReaderState.autoNavigateInterval(stateKey)
+  );
+  const [scaling, setScaling] = useRecoilState(ReaderState.scaling(stateKey));
+  const [wheelZoom, setWheelZoom] = useRecoilState(
+    ReaderState.wheelZoom(stateKey)
+  );
+  const [direction, setDirection] = useRecoilState(
+    ReaderState.direction(stateKey)
+  );
+
   return (
-    <Popup
-      on="click"
-      position="left center"
-      hoverable
-      wide
-      flowing
-      positionFixed
-      className={classNames('overflow-y-auto', 'overflow-x-hidden')}
-      eventsEnabled
-      popperDependencies={[data]}
-      trigger={
-        <Button
-          icon="setting"
-          secondary
-          basic
-          circular
-          className={classNames(className)}
+    <Segment basic size="tiny" {...props}>
+      <Form size="small">
+        <Form.Field
+          control={Select}
+          disabled
+          label={t`Direction`}
+          nChange={useCallback((ev, data) => {
+            ev.preventDefault();
+            setDirection(data.value);
+          }, [])}
+          value={direction}
+          placeholder={t`Direction`}
+          defaultValue={ReadingDirection.TopToBottom}
+          options={directionOptions}
         />
-      }>
-      <Popup.Content>hello</Popup.Content>
-    </Popup>
+
+        <Form.Group>
+          <Form.Field
+            control={Select}
+            label={t`Fit`}
+            placeholder={t`Fit`}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+              setFit(data.value);
+            }, [])}
+            value={fit}
+            defaultValue={ItemFit.Auto}
+            options={sizeOptions}
+            width={10}
+          />
+
+          <Form.Field width={6}>
+            <Checkbox
+              label={t`Stretch`}
+              checked={stretchFit}
+              onChange={useCallback((ev, data) => {
+                ev.preventDefault();
+                setStretchFit(data.checked);
+              }, [])}
+            />
+          </Form.Field>
+        </Form.Group>
+
+        <Form.Field
+          control={Select}
+          label={t`Scaling`}
+          onChange={useCallback((ev, data) => {
+            ev.preventDefault();
+            setScaling(data.value);
+          }, [])}
+          value={scaling}
+          placeholder={t`Scaling`}
+          defaultValue={0}
+          options={scalingOptions}
+        />
+
+        <Form.Field
+          onChange={useCallback((ev) => {
+            ev.preventDefault();
+            const v = parseFloat(ev.target.value);
+            setAutoNavigateInterval(isNaN(v) ? 12 : v);
+          }, [])}>
+          <label>{t`Auto navigate interval (seconds)`}</label>
+          <input value={autoNavigateInterval} type="number" min={0} />
+        </Form.Field>
+
+        <Form.Field>
+          <label>{t`Zoom with mouse wheel`}</label>
+          <Checkbox
+            toggle
+            checked={wheelZoom}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+              setWheelZoom(data.checked);
+            }, [])}
+          />
+        </Form.Field>
+      </Form>
+    </Segment>
+  );
+}
+
+export function ReaderSettingsButton({
+  stateKey,
+  ...props
+}: React.ComponentProps<typeof Button> & {
+  stateKey?: string;
+}) {
+  return (
+    <Modal
+      size="mini"
+      closeIcon
+      trigger={<Button icon="setting" secondary basic circular {...props} />}>
+      <Modal.Header>
+        <Icon name="setting" /> {t`Reader Settings`}
+      </Modal.Header>
+      <Modal.Content>
+        <ReaderSettings stateKey={stateKey} className="no-padding-segment" />
+      </Modal.Content>
+    </Modal>
+  );
+}
+
+export function ReaderAutoNavigateButton({
+  stateKey,
+  ...props
+}: React.ComponentProps<typeof Button> & {
+  stateKey?: string;
+}) {
+  const [autoNavigate, setAutoNavigate] = useRecoilState(
+    ReaderState.autoNavigate(stateKey)
+  );
+
+  const pageNumber = useRecoilValue(ReaderState.pageNumber(stateKey));
+  const pageCount = useRecoilValue(ReaderState.pageCount(stateKey));
+  const autoNavigateCounter = useRecoilValue(
+    ReaderState.autoNavigateCounter(stateKey)
+  );
+
+  return (
+    <Button
+      icon={
+        autoNavigate ? (pageNumber === pageCount ? 'pause' : 'play') : 'pause'
+      }
+      content={
+        autoNavigate && autoNavigateCounter && autoNavigateCounter <= 10
+          ? autoNavigateCounter
+          : undefined
+      }
+      secondary
+      color={
+        autoNavigate
+          ? pageNumber === pageCount
+            ? 'orange'
+            : 'green'
+          : undefined
+      }
+      basic
+      circular
+      {...props}
+      onClick={useCallback(() => {
+        setAutoNavigate(!autoNavigate);
+      }, [autoNavigate])}
+    />
   );
 }

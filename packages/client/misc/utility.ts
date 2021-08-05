@@ -149,3 +149,19 @@ export function replaceURL(
     url
   );
 }
+
+export function getPageWidth() {
+  return window.innerWidth;
+}
+
+export function getPageHeight() {
+  return window.innerHeight;
+}
+
+export function getScreenWidth() {
+  return screen.width;
+}
+
+export function getScreenHeight() {
+  return screen.height;
+}
