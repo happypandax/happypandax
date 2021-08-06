@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import _ from 'lodash';
+import Link from 'next/link';
 import React, {
   useCallback,
   useEffect,
@@ -38,14 +39,20 @@ import { Query, QueryType, useQueryType } from '../client/queries';
 import { useBodyEvent, useRefEvent, useTabActive } from '../hooks/utils';
 import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
-import { FieldPath, ServerPage } from '../misc/types';
-import { getPageWidth, getScreenWidth, update } from '../misc/utility';
+import { FieldPath, ServerGallery, ServerPage } from '../misc/types';
+import {
+  getPageWidth,
+  getScreenWidth,
+  update,
+  urlparse,
+  urlstring,
+} from '../misc/utility';
 import {
   ReaderState,
   useInitialRecoilState,
   useInitialRecoilValue,
 } from '../state';
-import GalleryCard from './Gallery';
+import GalleryCard, { GalleryCardData } from './Gallery';
 import { Slider } from './Misc';
 
 function getOptimalImageSize() {
@@ -1018,7 +1025,7 @@ const pageFields: FieldPath<ServerPage>[] = [
 ];
 
 export default function Reader({
-  itemId,
+  item,
   initialData,
   pageCount: initialPageCount = 0,
   windowSize: initialWindowSize = 10,
@@ -1034,8 +1041,9 @@ export default function Reader({
   scaling: initialScaling,
   stateKey,
   padded,
+  children,
 }: {
-  itemId: number;
+  item: DeepPick<ServerGallery, 'id'>;
   initialData: ReaderData[];
   pageCount?: number;
   autoNavigateInterval?: number;
@@ -1051,6 +1059,7 @@ export default function Reader({
   wheelZoom?: boolean;
   padded?: boolean;
   stateKey?: string;
+  children?: React.ReactNode;
 }) {
   const scaling = useInitialRecoilValue(
     ReaderState.scaling(stateKey),
@@ -1139,7 +1148,7 @@ export default function Reader({
   const { data } = useQueryType(
     QueryType.PAGES,
     {
-      gallery_id: itemId,
+      gallery_id: item.id,
       number: startPage,
       window_size: remoteWindowSize,
       fields: pageFields,
@@ -1163,10 +1172,27 @@ export default function Reader({
     }
   }, [pageNumber]);
 
+  console.log(pageNumber);
+
+  useEffect(() => {
+    if (pageNumber > pageCount) {
+      console.log([pageNumber, pageCount, pageFocus]);
+      setPageNumber(1);
+    }
+  }, [pageCount]);
+
   useUpdateEffect(() => {
     setPages([]);
     setPageWindow([]);
   }, [scaling]);
+
+  useUpdateEffect(() => {
+    setPageNumber(1);
+    setPageFocus(0);
+    setPages([]);
+    setPageWindow([]);
+    setIsEnd(false);
+  }, [scaling, item]);
 
   // Two layers of "windows", one for the actual pages fetched from the server (remote), another for the active pages to be loaded (images) for the client (local)
   // When the local window runs out of pages, the remote window readjusts and fetches more pages if needed
@@ -1221,7 +1247,7 @@ export default function Reader({
 
       fetchingMoreRef.current.fetching = true;
       Query.get(QueryType.PAGES, {
-        gallery_id: itemId,
+        gallery_id: item.id,
         number: pNumber,
         fields: pageFields,
         window_size: remoteWindowSize,
@@ -1371,7 +1397,7 @@ export default function Reader({
         onClickOutside={useCallback(() => {
           setIsEnd(false);
         }, [])}>
-        <EndContent />
+        {children}
       </Dimmer>
       <Canvas
         stateKey={stateKey}
@@ -1420,7 +1446,7 @@ const data = (id: number, title = 'title_test', artist = 'testy') => ({
   artists: [{ preferred_name: { name: artist } }],
 });
 
-function ReadNext() {
+function ReadNext({ random }: { random?: DeepPick<ServerGallery, 'id'> }) {
   const [countDownEnabled, setCountDownEnabled] = useState(true);
   const [countdown, setCountdown] = useState(15);
 
@@ -1446,7 +1472,16 @@ function ReadNext() {
           <Header
             textAlign="center"
             size="medium">{t`Read the next one`}</Header>
-          <Button>{t`Pick a random`}</Button>
+          {!!random && (
+            <Link
+              passHref
+              href={urlstring(
+                `/item/gallery/${random.id}/page/1`,
+                urlparse().query as any
+              )}>
+              <Button as="a">{t`Pick a random`}</Button>
+            </Link>
+          )}
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
@@ -1482,7 +1517,12 @@ function ReadNext() {
   );
 }
 
-export function EndContent({}: {}) {
+export function EndContent({
+  sameArtist = [],
+  random,
+}: {
+  sameArtist?: GalleryCardData[];
+} & React.ComponentProps<typeof ReadNext>) {
   return (
     <Grid as={Segment} centered fluid className="max-h-full overflow-auto">
       <Grid.Row>
@@ -1499,16 +1539,15 @@ export function EndContent({}: {}) {
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <ReadNext />
+          <ReadNext random={random} />
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
           <Slider label={t`From same artist`} color="blue">
-            <GalleryCard size="small" data={data(4)} />
-            <GalleryCard size="small" data={data(5)} />
-            <GalleryCard size="small" data={data(6)} />
-            <GalleryCard size="small" data={data(7)} />
+            {sameArtist.map((i) => (
+              <GalleryCard key={i.id} size="small" data={i} />
+            ))}
           </Slider>
         </Grid.Column>
       </Grid.Row>

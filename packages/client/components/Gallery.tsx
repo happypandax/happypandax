@@ -4,7 +4,7 @@ import { Button, Icon } from 'semantic-ui-react';
 
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
-import { ItemSize, ServerGallery, ServerItem } from '../misc/types';
+import { FieldPath, ItemSize, ServerGallery, ServerItem } from '../misc/types';
 import {
   GroupingNumberLabel,
   LanguageLabel,
@@ -49,6 +49,19 @@ export type GalleryCardData = DeepPick<
   | 'page_count'
   | 'language.code'
 >;
+
+export const galleryCardDataFields: FieldPath<ServerGallery>[] = [
+  'artists.preferred_name.name',
+  'preferred_title.name',
+  'profile',
+  'number',
+  'page_count',
+  'language.code',
+  'progress.end',
+  'progress.page.number',
+  'progress.percent',
+  'metatags.*',
+];
 
 function ReadButton({ data }: { data: { id: number } }) {
   return (

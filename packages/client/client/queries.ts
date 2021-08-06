@@ -19,6 +19,7 @@ export enum QueryType {
   PAGES,
   ITEMS,
   ITEM,
+  RELATED_ITEMS,
   SORT_INDEXES,
   SERVER_STATUS,
 }
@@ -148,6 +149,16 @@ export function useQueryType<
       );
     }
 
+    case QueryType.RELATED_ITEMS: {
+      return useQuery(
+        [type.toString()],
+        () => {
+          return axios.get(urlstring('/api/related_items', variables));
+        },
+        opts
+      );
+    }
+
     case QueryType.PAGES: {
       return useQuery(
         [type.toString()],
@@ -218,6 +229,14 @@ interface FetchItems<T = undefined> extends QueryAction<T> {
   };
 }
 
+interface FetchRelatedItems<T = undefined> extends QueryAction<T> {
+  type: QueryType.RELATED_ITEMS;
+  dataType: Unwrap<ReturnType<ServerService['related_items']>>;
+  variables: Omit<Parameters<ServerService['related_items']>[0], 'fields'> & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
 interface FetchPages<T = undefined> extends QueryAction<T> {
   type: QueryType.PAGES;
   dataType: Unwrap<ReturnType<ServerService['pages']>>;
@@ -231,6 +250,7 @@ type QueryActions<T = undefined> =
   | FetchItem<T>
   | FetchItems<T>
   | FetchPages<T>
+  | FetchRelatedItems<T>
   | FetchSortIndexes<T>
   | FetchServerStatus<T>;
 

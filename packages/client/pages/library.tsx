@@ -6,7 +6,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { Message } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../client/queries';
-import GalleryCard from '../components/Gallery';
+import GalleryCard, { galleryCardDataFields } from '../components/Gallery';
 import {
   ClearFilterButton,
   FilterButtonInput,
@@ -53,6 +53,8 @@ export async function getServerSideProps(
     itemType = ItemType.Collection;
   }
 
+  const group = server.create_group_call();
+
   const data = await server.library<ServerGallery>({
     item_type: itemType,
     metatags: { favorite: urlQuery.query?.fav as boolean, trash: false },
@@ -61,18 +63,7 @@ export async function getServerSideProps(
     filter_id: urlQuery.query?.filter as number,
     limit: urlQuery.query?.limit as number,
     sort_desc: urlQuery.query?.desc as boolean,
-    fields: [
-      'artists.preferred_name.name',
-      'preferred_title.name',
-      'profile',
-      'number',
-      'page_count',
-      'language.code',
-      'progress.end',
-      'progress.page.number',
-      'progress.percent',
-      'metatags.*',
-    ],
+    fields: galleryCardDataFields,
   });
 
   return {
