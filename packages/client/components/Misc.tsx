@@ -26,7 +26,8 @@ import Carousel, {
 
 import t from '../misc/lang';
 import { parseMarkdown, scrollToTop } from '../misc/utility';
-import { AppState } from '../state';
+import { AppState, MiscState } from '../state';
+import { useInitialRecoilState } from '../state/index';
 import styles from './Misc.module.css';
 
 export function TextEditor({
@@ -225,6 +226,9 @@ function SliderNav({
 }
 
 export function Slider({
+  open: initialOpen,
+  defaultOpen,
+  stateKey,
   infinite,
   children,
   label,
@@ -233,10 +237,17 @@ export function Slider({
   className,
   ...props
 }: {
+  open?: boolean;
+  defaultOpen?: boolean;
+  stateKey?: string;
   infinite?: boolean;
   autoplay?: boolean;
   label?: React.ReactNode;
 } & React.ComponentProps<typeof Segment>) {
+  const [open, setOpen] = useInitialRecoilState(
+    MiscState.label_accordion_open(stateKey),
+    initialOpen ?? defaultOpen
+  );
   const items = React.Children.toArray(children);
 
   const plugins: (string | object)[] = [
@@ -268,88 +279,102 @@ export function Slider({
   return (
     <Segment basic {...props} className={classNames('slider', className)}>
       {!!label && (
-        <Label color={color} attached="top">
+        <Label
+          color={color}
+          attached="top"
+          as={initialOpen === false ? undefined : 'a'}
+          onClick={useCallback(
+            (e) => {
+              e.preventDefault();
+              if (initialOpen === undefined) {
+                setOpen(!open);
+              }
+            },
+            [open]
+          )}>
           {label}
           <Label.Detail>{items.length}</Label.Detail>{' '}
         </Label>
       )}
-      {!items.length && <EmptySegment />}
-      {items && (
-        <Carousel
-          draggable
-          plugins={plugins}
-          slides={items}
-          breakpoints={{
-            460: {
-              plugins: [
-                ...plugins,
-                {
-                  resolve: slidesToShowPlugin,
-                  options: {
-                    numberOfSlides: 2,
+      <Visible visible={initialOpen || open}>
+        {!items.length && <EmptySegment />}
+        {items && (
+          <Carousel
+            draggable
+            plugins={plugins}
+            slides={items}
+            breakpoints={{
+              460: {
+                plugins: [
+                  ...plugins,
+                  {
+                    resolve: slidesToShowPlugin,
+                    options: {
+                      numberOfSlides: 2,
+                    },
                   },
-                },
-                {
-                  resolve: slidesToScrollPlugin,
-                  options: {
-                    numberOfSlides: 1,
+                  {
+                    resolve: slidesToScrollPlugin,
+                    options: {
+                      numberOfSlides: 1,
+                    },
                   },
-                },
-              ],
-            },
-            675: {
-              plugins: [
-                ...plugins,
-                {
-                  resolve: slidesToShowPlugin,
-                  options: {
-                    numberOfSlides: 3,
+                ],
+              },
+              675: {
+                plugins: [
+                  ...plugins,
+                  {
+                    resolve: slidesToShowPlugin,
+                    options: {
+                      numberOfSlides: 3,
+                    },
                   },
-                },
-                {
-                  resolve: slidesToScrollPlugin,
-                  options: {
-                    numberOfSlides: 2,
+                  {
+                    resolve: slidesToScrollPlugin,
+                    options: {
+                      numberOfSlides: 2,
+                    },
                   },
-                },
-              ],
-            },
-            1200: {
-              plugins: [
-                ...plugins,
-                {
-                  resolve: slidesToShowPlugin,
-                  options: {
-                    numberOfSlides: 5,
+                ],
+              },
+              1200: {
+                plugins: [
+                  ...plugins,
+                  {
+                    resolve: slidesToShowPlugin,
+                    options: {
+                      numberOfSlides: 5,
+                    },
                   },
-                },
-                {
-                  resolve: slidesToScrollPlugin,
-                  options: {
-                    numberOfSlides: 3,
+                  {
+                    resolve: slidesToScrollPlugin,
+                    options: {
+                      numberOfSlides: 3,
+                    },
                   },
-                },
-              ],
-            },
-            1800: {
-              plugins: [
-                ...plugins,
-                {
-                  resolve: slidesToShowPlugin,
-                  options: {
-                    numberOfSlides: 7,
+                ],
+              },
+              1800: {
+                plugins: [
+                  ...plugins,
+                  {
+                    resolve: slidesToShowPlugin,
+                    options: {
+                      numberOfSlides: 7,
+                    },
                   },
-                },
-                {
-                  resolve: slidesToScrollPlugin,
-                  options: {
-                    numberOfSlides: 3,
+                  {
+                    resolve: slidesToScrollPlugin,
+                    options: {
+                      numberOfSlides: 3,
+                    },
                   },
-                },
-              ],
-            },
-          }}></Carousel>
-      )}
+                ],
+              },
+            }}></Carousel>
+        )}
+      </Visible>
     </Segment>
   );
 }

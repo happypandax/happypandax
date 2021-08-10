@@ -59,10 +59,12 @@ export async function getServerSideProps(
     item_type: itemType,
     metatags: { favorite: urlQuery.query?.fav as boolean, trash: false },
     page: urlQuery.query?.p as number,
-    sort_by: urlQuery.query?.sort as number,
+    sort_options: {
+      by: urlQuery.query?.sort as number,
+      desc: urlQuery.query?.desc as boolean,
+    },
     filter_id: urlQuery.query?.filter as number,
     limit: urlQuery.query?.limit as number,
-    sort_desc: urlQuery.query?.desc as boolean,
     fields: galleryCardDataFields,
   });
 

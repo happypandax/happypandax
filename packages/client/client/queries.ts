@@ -210,10 +210,7 @@ interface FetchProfile<T = undefined> extends QueryAction<T> {
 interface FetchItem<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEM;
   dataType: Record<string, any>;
-  variables: Omit<
-    Parameters<typeof ServerService['prototype']['item']>[0],
-    'fields'
-  > & {
+  variables: Omit<Parameters<ServerService['item']>[0], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
@@ -295,6 +292,9 @@ export class Query {
     >['dataType']
   >(action: K, variables?: V, config?: Parameters<AxiosInstance['get']>[1]) {
     switch (action) {
+      case QueryType.ITEM: {
+        return axios.get<R>(urlstring('/api/item', variables as any));
+      }
       case QueryType.PROFILE: {
         return axios.get<R>(urlstring('/api/profile', variables as any));
       }

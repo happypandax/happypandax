@@ -32,7 +32,7 @@ export default class PixieService extends Service {
     return this.#connected;
   }
 
-  connect(endpoint?: string) {
+  async connect(endpoint?: string) {
     this.#socket.connect(endpoint ?? this.endpoint);
     this.#connected = true;
   }

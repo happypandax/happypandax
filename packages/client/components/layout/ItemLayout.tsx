@@ -164,19 +164,21 @@ export function FilterButtonInput({
       <Popup.Content>
         <Menu secondary vertical>
           {!!data?.data &&
-            data.data?.items?.map?.((v) => (
-              <Menu.Item
-                key={v.id}
-                index={v.id}
-                active={active === v.id}
-                icon="filter"
-                color="blue"
-                name={v.name}
-                onClick={() => {
-                  setActive(v.id);
-                }}
-              />
-            ))}
+            data.data?.items
+              ?.sort((a, b) => a.name.localeCompare(b.name))
+              .map?.((v) => (
+                <Menu.Item
+                  key={v.id}
+                  index={v.id}
+                  active={active === v.id}
+                  icon="filter"
+                  color="blue"
+                  name={v.name}
+                  onClick={() => {
+                    setActive(v.id);
+                  }}
+                />
+              ))}
         </Menu>
       </Popup.Content>
     </PopupNoOverflow>

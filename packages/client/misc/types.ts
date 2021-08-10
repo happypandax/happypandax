@@ -1,4 +1,10 @@
-import { CommandState, ImageSize, ItemType, ProgressType } from './enums';
+import {
+  CommandState,
+  ImageSize,
+  ItemSort,
+  ItemType,
+  ProgressType,
+} from './enums';
 
 export type ItemSize = 'tiny' | 'mini' | 'small' | 'medium' | 'large';
 
@@ -71,6 +77,7 @@ export interface ServerGrouping extends ServerItemWithName {
   status_id: number;
   status: ServerStatus;
   user_id: number;
+  galleries: any;
 }
 
 export interface ServerGalleryTitle extends ServerItem {
@@ -179,4 +186,9 @@ export type ProfileOptions = {
   size?: ImageSize;
   url?: boolean;
   uri?: boolean;
+};
+
+export type SortOptions = {
+  by?: ItemSort;
+  desc?: boolean;
 };

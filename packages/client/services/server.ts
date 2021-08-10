@@ -8,16 +8,18 @@ import Client, {
 } from 'happypandax-client';
 
 import { createCache } from '../misc/cache';
-import { CommandState, ItemSort, ItemType } from '../misc/enums';
+import { CommandState, ItemType } from '../misc/enums';
 import {
   CommandID,
   CommandProgress,
   FieldPath,
   ProfileOptions,
+  ServerGallery,
   ServerItem,
   ServerMetaTags,
   ServerPage,
   ServerSortIndex,
+  SortOptions,
 } from '../misc/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
@@ -86,6 +88,32 @@ export default class ServerService extends Service {
     return new GroupCall();
   }
 
+  async properties<
+    K extends (
+      | 'version'
+      | 'user'
+      | 'state'
+      | 'update'
+      | 'guest_allowed'
+      | 'no_namespace_key'
+      | 'webserver'
+      | 'webserver.host'
+      | 'webserver.port'
+      | 'webserver.ssl'
+      | 'pixie'
+      | 'pixie.connect'
+    )[]
+  >(
+    args: {
+      keys: K;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_properties', args, group);
+    throw_msg_error(data);
+    return data.data as Record<Unwrap<K>, any>;
+  }
+
   async login(
     user?: string,
     password?: string,
@@ -115,11 +143,34 @@ export default class ServerService extends Service {
     return r;
   }
 
+  async get_config(
+    args: {
+      cfg: Record<string, AnyJson>;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_config', args, group);
+    throw_msg_error(data);
+    return data.data as JsonMap;
+  }
+
+  async set_config(
+    args: {
+      cfg: Record<string, AnyJson>;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('set_config', args, group);
+    throw_msg_error(data);
+    return data.data as AnyJson;
+  }
+
   async item<R = undefined>(
     args: {
       item_type: ItemType;
       item_id: number | number[];
       fields?: FieldPath[];
+      profile_options?: ProfileOptions;
     },
     group?: GroupCall
   ) {
@@ -134,6 +185,7 @@ export default class ServerService extends Service {
       fields?: FieldPath[];
       offset?: number;
       limit?: number;
+      profile_options?: ProfileOptions;
     },
     group?: GroupCall
   ) {
@@ -153,6 +205,7 @@ export default class ServerService extends Service {
       fields?: FieldPath[];
       offset?: number;
       limit?: number;
+      profile_options?: ProfileOptions;
     },
     group?: GroupCall
   ) {
@@ -162,6 +215,22 @@ export default class ServerService extends Service {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
     };
+  }
+
+  async from_grouping(
+    args: {
+      gallery_id?: number;
+      grouping_id?: number;
+      number?: number;
+      prev?: boolean;
+      fields?: FieldPath[];
+      profile_options?: ProfileOptions;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_from_grouping', args, group);
+    throw_msg_error(data);
+    return data.data as null | ServerGallery;
   }
 
   async pages(
@@ -203,8 +272,7 @@ export default class ServerService extends Service {
       limit?: number;
       metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
       filter_id?: number;
-      sort_by?: ItemSort;
-      sort_desc?: boolean;
+      sort_options?: SortOptions;
       search_query?: string;
       search_options?: {};
     },
@@ -325,6 +393,8 @@ export class GroupCall {
       if (e === timeoutError) {
         global.app.log.c("forgot to call 'GroupCall.call()' for: ", func);
         this.#promises_resolves.forEach(([_, reject]) => reject(e));
+      } else {
+        global.app.log.e(e);
       }
     });
 

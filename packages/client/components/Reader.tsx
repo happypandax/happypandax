@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React, {
   useCallback,
   useEffect,
@@ -48,11 +49,12 @@ import {
   urlstring,
 } from '../misc/utility';
 import {
+  AppState,
   ReaderState,
   useInitialRecoilState,
   useInitialRecoilValue,
 } from '../state';
-import GalleryCard, { GalleryCardData } from './Gallery';
+import GalleryCard, { GalleryCardData, galleryCardDataFields } from './Gallery';
 import { Slider } from './Misc';
 
 function getOptimalImageSize() {
@@ -1172,8 +1174,6 @@ export default function Reader({
     }
   }, [pageNumber]);
 
-  console.log(pageNumber);
-
   useEffect(() => {
     if (pageNumber > pageCount) {
       console.log([pageNumber, pageCount, pageFocus]);
@@ -1440,32 +1440,102 @@ export default function Reader({
   );
 }
 
-const data = (id: number, title = 'title_test', artist = 'testy') => ({
+const gdata = (id: number, title = 'title_test', artist = 'testy') => ({
   id,
   preferred_title: { name: title },
   artists: [{ preferred_name: { name: artist } }],
 });
 
-function ReadNext({ random }: { random?: DeepPick<ServerGallery, 'id'> }) {
-  const [countDownEnabled, setCountDownEnabled] = useState(true);
+function ReadNext({
+  random,
+  nextChapter,
+  nextInReadingList,
+  stateKey,
+}: {
+  random?: DeepPick<ServerGallery, 'id'>;
+  nextChapter?: GalleryCardData;
+  nextInReadingList?: GalleryCardData;
+  stateKey?: string;
+}) {
+  const router = useRouter();
+  const isEnd = useRecoilValue(ReaderState.endReached(stateKey));
+
+  const [countDownEnabled, setCountDownEnabled] = useState<
+    'session' | 'chapter' | 'readinglist'
+  >();
+
   const [countdown, setCountdown] = useState(15);
+  const [readingSession, setReadingSession] = useRecoilState(
+    AppState.readingSession
+  );
+
+  const { data: sessionData, isLoading } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_type: ItemType.Gallery,
+      item_id: readingSession?.[0],
+      profile_options: { size: ImageSize.Medium },
+      fields: galleryCardDataFields,
+    },
+    { enabled: !!readingSession.length }
+  );
 
   useHarmonicIntervalFn(
     () => {
       if (countdown === 1) {
-        // fire
+        let nextId = 0;
+        switch (countDownEnabled) {
+          case 'chapter':
+            nextId = nextChapter.id;
+            break;
+          case 'session':
+            nextId = sessionData.data.id;
+            break;
+          case 'readinglist':
+            nextId = nextInReadingList.id;
+            break;
+        }
+
+        if (nextId) {
+          router
+            .push(
+              urlstring(
+                `/item/gallery/${nextId}/page/1`,
+                urlparse().query as any
+              )
+            )
+            .then(() => {
+              setReadingSession(readingSession.slice(1));
+            });
+        }
       }
       setCountdown(Math.max(countdown - 1, 0));
     },
-    countDownEnabled && countdown ? 1000 : null
+    isEnd && !isLoading && countDownEnabled && countdown ? 1000 : null
   );
+
+  useEffect(() => {
+    const t = 15;
+    if (sessionData) {
+      setCountDownEnabled('session');
+      setCountdown(t);
+    } else if (nextChapter) {
+      setCountDownEnabled('chapter');
+      setCountdown(t);
+    } else if (nextInReadingList) {
+      setCountDownEnabled('readinglist');
+      setCountdown(t);
+    } else {
+      setCountDownEnabled(undefined);
+    }
+  }, [isEnd, nextChapter, nextInReadingList, sessionData]);
 
   return (
     <Grid
       centered
       columns="equal"
       onClick={() => {
-        setCountDownEnabled(false);
+        setCountDownEnabled(undefined);
       }}>
       <Grid.Row>
         <Grid.Column textAlign="center">
@@ -1485,33 +1555,50 @@ function ReadNext({ random }: { random?: DeepPick<ServerGallery, 'id'> }) {
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
-        <Grid.Column textAlign="center">
-          <Segment tertiary basic>
-            <Header textAlign="center" size="small">
-              {t`Next...`}{' '}
-              {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
-            </Header>
-            <GalleryCard size="medium" data={data(1)} />
-          </Segment>
-        </Grid.Column>
-        <Grid.Column textAlign="center">
-          <Segment tertiary basic>
-            <Header textAlign="center" size="small">
-              {t`Next Chapter...`}{' '}
-              {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
-            </Header>
-            <GalleryCard size="medium" data={data(2)} />
-          </Segment>
-        </Grid.Column>
-        <Grid.Column textAlign="center">
-          <Segment tertiary basic>
-            <Header textAlign="center" size="small">
-              {t`Next in reading list...`}{' '}
-              {countDownEnabled ? '(' + t`in ${countdown}` + ')' : ''}
-            </Header>
-            <GalleryCard size="medium" data={data(3)} />
-          </Segment>
-        </Grid.Column>
+        {!!sessionData && (
+          <Grid.Column textAlign="center">
+            <Segment tertiary basic>
+              <Header textAlign="center" size="small">
+                {t`Next in session...`}{' '}
+                {countDownEnabled === 'session'
+                  ? '(' + t`in ${countdown}` + ')'
+                  : ''}
+              </Header>
+              <GalleryCard
+                size="medium"
+                data={sessionData.data as ServerGallery}
+              />
+            </Segment>
+          </Grid.Column>
+        )}
+
+        {!!nextChapter && (
+          <Grid.Column textAlign="center">
+            <Segment tertiary basic>
+              <Header textAlign="center" size="small">
+                {t`Next chapter...`}{' '}
+                {countDownEnabled === 'chapter'
+                  ? '(' + t`in ${countdown}` + ')'
+                  : ''}
+              </Header>
+              <GalleryCard size="medium" data={nextChapter} />
+            </Segment>
+          </Grid.Column>
+        )}
+
+        {!!nextInReadingList && (
+          <Grid.Column textAlign="center">
+            <Segment tertiary basic>
+              <Header textAlign="center" size="small">
+                {t`Next in reading list...`}{' '}
+                {countDownEnabled === 'readinglist'
+                  ? '(' + t`in ${countdown}` + ')'
+                  : ''}
+              </Header>
+              <GalleryCard size="medium" data={nextInReadingList} />
+            </Segment>
+          </Grid.Column>
+        )}
       </Grid.Row>
     </Grid>
   );
@@ -1519,10 +1606,29 @@ function ReadNext({ random }: { random?: DeepPick<ServerGallery, 'id'> }) {
 
 export function EndContent({
   sameArtist = [],
-  random,
+  series = [],
+  readingList = [],
+  stateKey,
+  ...readNextProps
 }: {
   sameArtist?: GalleryCardData[];
+  series?: GalleryCardData[];
+  readingList?: GalleryCardData[];
+  stateKey?: string;
 } & React.ComponentProps<typeof ReadNext>) {
+  const readingSession = useRecoilValue(AppState.readingSession);
+
+  const { data } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_type: ItemType.Gallery,
+      item_id: readingSession,
+      profile_options: { size: ImageSize.Small },
+      fields: galleryCardDataFields,
+    },
+    { enabled: !!readingSession.length }
+  );
+
   return (
     <Grid as={Segment} centered fluid className="max-h-full overflow-auto">
       <Grid.Row>
@@ -1539,12 +1645,57 @@ export function EndContent({
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <ReadNext random={random} />
+          <ReadNext
+            {...readNextProps}
+            stateKey={stateKey}
+            nextInReadingList={readingList?.[0]}
+          />
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <Slider label={t`From same artist`} color="blue">
+          <Slider
+            stateKey="this_session"
+            defaultOpen={false}
+            label={t`This session`}
+            color="red">
+            {((data?.data as any) as ServerGallery[])?.map?.((g) => (
+              <GalleryCard key={g.id} size="small" data={g} />
+            ))}
+          </Slider>
+        </Grid.Column>
+      </Grid.Row>
+      {!!series.length && (
+        <Grid.Row>
+          <Grid.Column>
+            <Slider stateKey="series" label={t`Series`} color="teal">
+              {series.map((i) => (
+                <GalleryCard key={i.id} size="small" data={i} />
+              ))}
+            </Slider>
+          </Grid.Column>
+        </Grid.Row>
+      )}
+      <Grid.Row>
+        <Grid.Column>
+          <Slider
+            stateKey="reading_list"
+            label={t`Reading list`}
+            defaultOpen={false}
+            color="violet">
+            {readingList.map((i) => (
+              <GalleryCard key={i.id} size="small" data={i} />
+            ))}
+          </Slider>
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Grid.Column>
+          <Slider
+            stateKey="same_artist"
+            label={t`From same artist`}
+            defaultOpen={!series?.length}
+            color="blue">
             {sameArtist.map((i) => (
               <GalleryCard key={i.id} size="small" data={i} />
             ))}
@@ -1553,11 +1704,11 @@ export function EndContent({
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <Slider label={t`Just like this one`} color="violet">
-            <GalleryCard size="small" data={data(8)} />
-            <GalleryCard size="small" data={data(9)} />
-            <GalleryCard size="small" data={data(10)} />
-            <GalleryCard size="small" data={data(11)} />
+          <Slider stateKey="similar" label={t`Just like this one`}>
+            <GalleryCard size="small" data={gdata(8)} />
+            <GalleryCard size="small" data={gdata(9)} />
+            <GalleryCard size="small" data={gdata(10)} />
+            <GalleryCard size="small" data={gdata(11)} />
           </Slider>
         </Grid.Column>
       </Grid.Row>
@@ -1675,7 +1826,7 @@ export function ReaderSettings({
           onChange={useCallback((ev) => {
             ev.preventDefault();
             const v = parseFloat(ev.target.value);
-            setAutoNavigateInterval(isNaN(v) ? 12 : v);
+            setAutoNavigateInterval(Math.max(3, isNaN(v) ? 12 : v));
           }, [])}>
           <label>{t`Auto navigate interval (seconds)`}</label>
           <input value={autoNavigateInterval} type="number" min={0} />

@@ -64,7 +64,7 @@ export function GroupingNumberLabel({
   ...props
 }: React.ComponentProps<typeof Label>) {
   return (
-    <Label title={t`Group number`} color="blue" basic {...props}>
+    <Label title={t`Group number`} color="teal" basic {...props}>
       {children}
     </Label>
   );

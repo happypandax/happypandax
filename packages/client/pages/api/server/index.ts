@@ -19,8 +19,19 @@ const errTxt = "Momo didn't find anything!";
 async function getPixie() {
   const pixie = global.app.service.get(ServiceType.Pixie);
   if (!pixie.connected) {
-    // TODO: query this info from the HPX server
-    pixie.connect(PIXIE_ENDPOINT);
+    let addr = PIXIE_ENDPOINT;
+    if (!addr) {
+      const server = global.app.service.get(ServiceType.Server);
+      const s = server.status();
+      if (s.connected && s.loggedIn) {
+        const props = await server.properties({ keys: ['pixie.connect'] });
+        addr = props.pixie.connect;
+      } else {
+        throw Error('server not connected');
+      }
+    }
+
+    pixie.connect(addr);
   }
   return pixie;
 }

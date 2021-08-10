@@ -1,4 +1,4 @@
-import { DragBoard } from './Drawer';
+import { SelectedBoard } from './Drawer';
 import { GalleryCard } from './Gallery';
 import PageLayout from './layout/Page';
 
@@ -22,6 +22,6 @@ export const Draggable = () => (
   <PageLayout>
     <GalleryCard data={data(1)} horizontal size="tiny" />
     <GalleryCard data={data(2)} />
-    <DragBoard />
+    <SelectedBoard />
   </PageLayout>
 );

@@ -109,7 +109,13 @@ function SaveForLaterButton() {
   );
 }
 
-function GalleryCardMenu({ hasProgress }: { hasProgress: boolean }) {
+function GalleryCardMenu({
+  hasProgress,
+  read,
+}: {
+  hasProgress: boolean;
+  read: boolean;
+}) {
   return (
     <ItemMenuLabel>
       {!hasProgress && (
@@ -118,7 +124,11 @@ function GalleryCardMenu({ hasProgress }: { hasProgress: boolean }) {
       {hasProgress && (
         <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
       )}
+      <ItemMenuLabelItem icon="plus">{t`Add to session`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
+      {!read && (
+        <ItemMenuLabelItem icon="envelope open outline">{t`Mark as read`}</ItemMenuLabelItem>
+      )}
     </ItemMenuLabel>
   );
 }
@@ -161,11 +171,6 @@ export function GalleryCard({
         () => [
           <ItemLabel x="left" y="top">
             <HeartIconLabel />
-            {!!data?.number && data?.number > 0 && (
-              <GroupingNumberLabel as={TranslucentLabel}>
-                {data?.number}
-              </GroupingNumberLabel>
-            )}
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             {!!data?.metatags?.inbox && <InboxIconLabel />}
@@ -173,6 +178,11 @@ export function GalleryCard({
             {!!data?.metatags?.readlater && <ReadLaterIconLabel />}
             {hasProgress && (
               <ReadingIconLabel percent={data?.progress?.percent} />
+            )}
+            {!!data?.number && data?.number > 0 && (
+              <GroupingNumberLabel as={TranslucentLabel}>
+                {data?.number}
+              </GroupingNumberLabel>
             )}
             <ProgressLabel />
           </ItemLabel>,
@@ -189,7 +199,10 @@ export function GalleryCard({
             {!horizontal && (
               <TranslucentLabel circular>{data?.page_count}</TranslucentLabel>
             )}
-            <GalleryCardMenu hasProgress={hasProgress} />
+            <GalleryCardMenu
+              hasProgress={hasProgress}
+              read={data?.metatags?.read}
+            />
           </ItemLabel>,
         ],
         [horizontal, hasProgress, data]
