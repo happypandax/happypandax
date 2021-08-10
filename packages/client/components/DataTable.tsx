@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { Header, Icon, Label, Table } from 'semantic-ui-react';
+import { Header, Table } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../client/queries';
 import { ItemType } from '../misc/enums';
@@ -21,6 +21,7 @@ import {
   LastUpdatedLabel,
   NameTable,
   PageCountLabel,
+  ParodyLabels,
   ReadCountLabel,
   StatusLabel,
   TagsTable,
@@ -43,6 +44,7 @@ export function GalleryDataTable({
     item_type: ItemType.Gallery,
     item_id: initialData.id,
     fields: [
+      'titles.name',
       'titles.language.name',
       'preferred_title.name',
       'language.name',
@@ -52,6 +54,8 @@ export function GalleryDataTable({
       'artists.names.name',
       'artists.circles.name',
       'artists.preferred_name.name',
+      'parodies.names.name',
+      'parodies.preferred_name.name',
       'rating',
       'page_count',
       'category.name',
@@ -80,7 +84,7 @@ export function GalleryDataTable({
       <DataTable showDataText={showDataText}>
         <DataTableItem>
           <NameTable dataKey="titles" dataPrimaryKey="preferred_title">
-            <Label
+            {/* <Label
               as="a"
               onClick={useCallback(() => {
                 setShowDataText(true);
@@ -88,7 +92,7 @@ export function GalleryDataTable({
               className="float-right"
               size="tiny">
               <Icon name="pencil" /> {t`Edit`}
-            </Label>
+            </Label> */}
             <GroupingNumberLabel
               className="float-left"
               circular
@@ -114,6 +118,9 @@ export function GalleryDataTable({
         </DataTableItem>
         <DataTableItem name={t`Circle`}>
           <CircleLabels />
+        </DataTableItem>
+        <DataTableItem name={t`Parody`}>
+          <ParodyLabels />
         </DataTableItem>
         <DataTableItem name={t`Tags`}>
           <TagsTable />

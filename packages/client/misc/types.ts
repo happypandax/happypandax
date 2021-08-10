@@ -41,7 +41,10 @@ export interface ServerItemWithProfile extends ServerItem {
   };
 }
 
-export interface ServerParody extends ServerItem {}
+export interface ServerParody extends ServerItem {
+  names: (ServerItemWithNameLanguageAlias & { parody_id: number })[];
+  preferred_name: ServerItemWithNameLanguageAlias & { parody_id: number };
+}
 
 export interface ServerCircle extends ServerItemWithName {
   user_id: number;
