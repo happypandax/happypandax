@@ -1,25 +1,7 @@
 import classNames from 'classnames';
-import {
-  useContext,
-  useState,
-  useCallback,
-  createContext,
-  useMemo,
-} from 'react';
-import {
-  Segment,
-  Menu,
-  Label,
-  Icon,
-  Grid,
-  Dimmer,
-  Table,
-  Header,
-  Tab,
-  Ref,
-  Modal,
-  Button,
-} from 'semantic-ui-react';
+import { useMemo } from 'react';
+import { Header, Icon, Modal, Segment, Tab } from 'semantic-ui-react';
+
 import t from '../misc/lang';
 
 function GeneralPane() {
@@ -110,7 +92,6 @@ export default function SettingsModal({
     <Modal
       dimmer="inverted"
       closeIcon
-      centered={false}
       {...props}
       className={classNames('min-400-h', className)}>
       <Modal.Header>

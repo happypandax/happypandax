@@ -22,6 +22,11 @@ interface ServerItemWithName extends ServerItem {
   name: string;
 }
 
+interface ServerItemTaggable extends ServerItem {
+  taggable_id: number;
+  tags: ServerNamespaceTag[];
+}
+
 interface ServerItemWithNameLanguageAlias extends ServerItemWithName {
   language: ServerLanguage;
   language_id: number;
@@ -51,6 +56,15 @@ export interface ServerStatus extends ServerItemWithName {}
 export interface ServerLanguage extends ServerItemWithName {
   code: string;
   user_id: number;
+}
+
+export interface ServerNamespace extends ServerItemWithName {}
+
+export interface ServerTag extends ServerItemWithName {}
+
+export interface ServerNamespaceTag extends ServerItem {
+  namespace: ServerNamespace;
+  tag: ServerTag;
 }
 
 export interface ServerMetaTags extends ServerItem {
@@ -100,7 +114,10 @@ export interface ServerGalleryProgress extends ServerItem {
   last_updated: number;
   user_id: number;
 }
-export interface ServerGallery extends ServerItem, ServerItemWithProfile {
+export interface ServerGallery
+  extends ServerItem,
+    ServerItemWithProfile,
+    ServerItemTaggable {
   titles: ServerGalleryTitle[];
   artists: ServerArtist[];
   circles: ServerCircle[];
@@ -118,7 +135,6 @@ export interface ServerGallery extends ServerItem, ServerItemWithProfile {
   language: ServerLanguage;
   grouping_id: number;
   grouping: ServerGrouping;
-  taggable_id: number;
   user_id: number;
   metatags: ServerMetaTags;
   progress: ServerGalleryProgress;

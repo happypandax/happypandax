@@ -1,25 +1,17 @@
 import classNames from 'classnames';
+import { useMemo } from 'react';
 import {
-  useContext,
-  useState,
-  useCallback,
-  createContext,
-  useMemo,
-} from 'react';
-import {
-  Segment,
-  Menu,
-  Label,
-  Icon,
-  Grid,
-  Dimmer,
-  Table,
-  Header,
-  Tab,
-  Ref,
-  Modal,
   Button,
+  Grid,
+  Header,
+  Icon,
+  Label,
+  Modal,
+  Segment,
+  Tab,
+  Table,
 } from 'semantic-ui-react';
+
 import t from '../misc/lang';
 import { EmptySegment } from './Misc';
 
@@ -120,7 +112,7 @@ function InfoPane() {
           </Button>
           <Button size="small" floated="right">
             <Icon name="settings" />
-            {t`Reset settings`}
+            {t`Reset client settings`}
           </Button>
         </Grid.Column>
       </Grid.Row>
@@ -184,7 +176,6 @@ export default function AboutModal({
     <Modal
       dimmer="inverted"
       closeIcon
-      centered={false}
       {...props}
       className={classNames('min-300-h', className)}>
       <Modal.Content as={Segment} basic>
@@ -201,7 +192,10 @@ export default function AboutModal({
         className="no-margins">
         {t`HappyPanda X is a cross platform manga/doujinshi manager made out of pure`}
         <Icon name="heart" color="red" size="large" />
-        {t`by`} Twiddly
+        {t`by`}{' '}
+        <a href="https://twitter.com/twiddly_" target="_blank">
+          Twiddly
+        </a>
       </Segment>
     </Modal>
   );

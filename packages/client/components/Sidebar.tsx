@@ -15,6 +15,8 @@ import {
 } from 'semantic-ui-react/dist/commonjs/generic';
 
 import t from '../misc/lang';
+import AboutModal from './About';
+import SettingsModal from './Settings';
 
 const SidebarContext = createContext({
   iconOnly: false,
@@ -26,6 +28,7 @@ function SidebarItem({
   children,
   label,
   labelColor,
+  onClick,
   icon,
 }: {
   href?: string;
@@ -33,31 +36,41 @@ function SidebarItem({
   className?: string;
   label?: string;
   labelColor?: SemanticCOLORS;
+  onClick?: React.ComponentProps<typeof Menu.Item>['onClick'];
   children?: React.ReactNode;
 }) {
   const context = useContext(SidebarContext);
 
-  return (
+  const menuItem = (
+    <Menu.Item
+      as={href ? 'a' : undefined}
+      onClick={onClick}
+      className={classNames(className)}>
+      {!!icon && (
+        <Icon
+          size="large"
+          {...(typeof icon === 'string' ? { name: icon } : icon)}
+          className={classNames(
+            'left',
+            typeof icon !== 'string' ? icon.className : ''
+          )}
+        />
+      )}
+      {!context.iconOnly && children}
+      {label && (
+        <Label color={labelColor} floating>
+          {label}
+        </Label>
+      )}
+    </Menu.Item>
+  );
+
+  return href ? (
     <Link href={href} passHref>
-      <Menu.Item as={href ? 'a' : undefined} className={classNames(className)}>
-        {!!icon && (
-          <Icon
-            size="large"
-            {...(typeof icon === 'string' ? { name: icon } : icon)}
-            className={classNames(
-              'left',
-              typeof icon !== 'string' ? icon.className : ''
-            )}
-          />
-        )}
-        {!context.iconOnly && children}
-        {label && (
-          <Label color={labelColor} floating>
-            {label}
-          </Label>
-        )}
-      </Menu.Item>
+      {menuItem}
     </Link>
+  ) : (
+    menuItem
   );
 }
 
@@ -175,10 +188,14 @@ export function MainSidebar({
           </div>
           <div className="bottom-aligned">
             <TrashSidebarItem />
-            <SidebarItem
-              href="/preferences"
-              icon={'settings'}>{t`Preferences`}</SidebarItem>
-            <SidebarItem href="/about" icon={'info'}>{t`About`}</SidebarItem>
+            <SettingsModal
+              trigger={
+                <SidebarItem icon={'settings'}>{t`Preferences`}</SidebarItem>
+              }
+            />
+            <AboutModal
+              trigger={<SidebarItem icon={'info'}>{t`About`}</SidebarItem>}
+            />
           </div>
         </div>
       </SidebarContext.Provider>

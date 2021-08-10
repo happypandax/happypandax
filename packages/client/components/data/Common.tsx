@@ -1,14 +1,16 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { useRecoilState } from 'recoil';
-import { Header, Icon, Label, Table } from 'semantic-ui-react';
+import { Header, Icon, Label, List, Table } from 'semantic-ui-react';
 
+import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { FieldPath, ServerGallery } from '../../misc/types';
+import { FieldPath, ServerGallery, ServerTag } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { DataState } from '../../state';
 
 export const DataContext = React.createContext({
   key: '',
+  type: ItemType.Gallery,
 });
 
 export function LanguageLabel({
@@ -43,6 +45,20 @@ export function PageCountLabel({
     <Label title={t`Page count`} color="blue" basic {...props}>
       <Icon name="clone outline" />
       {children}
+    </Label>
+  );
+}
+
+export function CategoryLabel() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  return (
+    <Label title={t`Category`} color="black" basic>
+      <Icon name="folder outline" />
+      {data?.category?.name}
     </Label>
   );
 }
@@ -120,6 +136,60 @@ export function DatePublishedLabel({
   return <DateLabel {...props} text={t`Published`} title={t`Date published`} />;
 }
 
+export function ArtistLabels() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  return (
+    <Label.Group color="blue">
+      {data?.artists?.map?.((a) => (
+        <Label>
+          <Icon name="user outline" /> {a?.preferred_name?.name}
+        </Label>
+      ))}
+    </Label.Group>
+  );
+}
+
+export function CircleLabels() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  return (
+    <Label.Group>
+      {data?.circles?.map?.((c) => (
+        <Label color="teal">
+          <Icon name="group" /> {c.name}
+        </Label>
+      ))}
+      {data?.artists.flatMap?.((a) =>
+        a?.circles?.map?.((c) => (
+          <Label basic color="teal" className="border-dashed">
+            <Icon name="group" /> {c.name}
+          </Label>
+        ))
+      )}
+    </Label.Group>
+  );
+}
+
+export function GroupingLabel() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  return (
+    <Label basic>
+      <Icon className="stream" /> {data?.grouping?.name}
+    </Label>
+  );
+}
+
 export function NameTable({
   children,
   dataPrimaryKey,
@@ -163,6 +233,79 @@ export function NameTable({
             </Table.Cell>
           </Table.Row>
         ))}
+      </Table.Body>
+    </Table>
+  );
+}
+
+export function UrlList() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  return (
+    <List>
+      {data?.urls?.map?.((u) => (
+        <List.Item as="a" target="_blank">
+          {u.name}
+        </List.Item>
+      ))}
+    </List>
+  );
+}
+
+export function TagsTable() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  const freeTags: ServerTag[] = [];
+  const tags = {} as Record<string, ServerTag[]>;
+
+  data?.tags?.forEach?.((t) => {
+    // TODO: query this value from server
+    if (t?.namespace?.name === '__namespace__') {
+      freeTags.push(t.tag);
+    } else {
+      const l = tags[t?.namespace?.name] ?? [];
+      tags[t?.namespace?.name] = [...l, t.tag];
+    }
+  });
+
+  return (
+    <Table basic="very" compact="very" verticalAlign="middle" size="small">
+      <Table.Body>
+        {!!freeTags.length && (
+          <Table.Row>
+            <Table.Cell colspan="2">
+              {freeTags
+                .sort((a, b) => a?.name?.localeCompare?.(b?.name))
+                .map((x) => (
+                  <Label key={x?.id}>{x?.name}</Label>
+                ))}
+            </Table.Cell>
+          </Table.Row>
+        )}
+        {Object.entries(tags)
+          .sort((a, b) => a[0]?.localeCompare?.(b[0]))
+          .map(([ns, t]) => (
+            <Table.Row key={ns} verticalAlign="middle">
+              <Table.Cell collapsing className="sub-text">
+                {ns}
+              </Table.Cell>
+              <Table.Cell>
+                <Label.Group>
+                  {t
+                    .sort((a, b) => a?.name?.localeCompare?.(b?.name))
+                    .map((x) => (
+                      <Label key={x?.id}>{x?.name}</Label>
+                    ))}
+                </Label.Group>
+              </Table.Cell>
+            </Table.Row>
+          ))}
       </Table.Body>
     </Table>
   );

@@ -1604,6 +1604,34 @@ function ReadNext({
   );
 }
 
+function EndRating() {
+  return (
+    <Grid as={Segment} basic textAlign="center">
+      <Grid.Row>
+        <Grid.Column>
+          <Icon className="meh outline" size="big" />
+        </Grid.Column>
+        <Grid.Column>
+          <Icon
+            className="meh rolling eyes outline"
+            size="big"
+            color="yellow"
+          />
+        </Grid.Column>
+        <Grid.Column>
+          <Icon className="flushed outline" size="big" color="orange" />
+        </Grid.Column>
+        <Grid.Column>
+          <Icon className="grin hearts outline" size="big" color="red" />
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row>
+        <Rating size="massive" icon="star" maxRating={10} />
+      </Grid.Row>
+    </Grid>
+  );
+}
+
 export function EndContent({
   sameArtist = [],
   series = [],
@@ -1632,15 +1660,13 @@ export function EndContent({
   return (
     <Grid as={Segment} centered fluid className="max-h-full overflow-auto">
       <Grid.Row>
-        <Grid.Column>
+        <Grid.Column width={16}>
           <Header
             textAlign="center"
             size="large">{t`What did you think?`}</Header>
         </Grid.Column>
-      </Grid.Row>
-      <Grid.Row>
-        <Grid.Column>
-          <Rating size="massive" icon="star" maxRating={10} />
+        <Grid.Column width={16} textAlign="center">
+          <EndRating />
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>

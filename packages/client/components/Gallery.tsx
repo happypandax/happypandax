@@ -71,7 +71,7 @@ function ReadButton({ data }: { data: { id: number } }) {
       ])}
       passHref>
       <Button as="a" primary size="mini">
-        <Icon name="envelope open outline" />
+        <Icon name="book open" />
         {t`Read`}
       </Button>
     </Link>
@@ -119,7 +119,7 @@ function GalleryCardMenu({
   return (
     <ItemMenuLabel>
       {!hasProgress && (
-        <ItemMenuLabelItem icon="envelope open outline">{t`Read`}</ItemMenuLabelItem>
+        <ItemMenuLabelItem icon="book open">{t`Read`}</ItemMenuLabelItem>
       )}
       {hasProgress && (
         <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
@@ -127,7 +127,10 @@ function GalleryCardMenu({
       <ItemMenuLabelItem icon="plus">{t`Add to session`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
       {!read && (
-        <ItemMenuLabelItem icon="envelope open outline">{t`Mark as read`}</ItemMenuLabelItem>
+        <ItemMenuLabelItem icon="eye">{t`Mark as read`}</ItemMenuLabelItem>
+      )}
+      {read && (
+        <ItemMenuLabelItem icon="eye">{t`Mark as unread`}</ItemMenuLabelItem>
       )}
     </ItemMenuLabel>
   );
