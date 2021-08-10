@@ -153,11 +153,30 @@ export function ArtistLabels() {
   );
 }
 
+export function ParodyLabels() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  return (
+    <Label.Group color="violet">
+      {data?.parodies?.map?.((a) => (
+        <Label>{a?.preferred_name?.name}</Label>
+      ))}
+    </Label.Group>
+  );
+}
+
 export function CircleLabels() {
   const ctx = useContext(DataContext);
   const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
     DataState.data(ctx.key)
   );
+
+  const artistCircles = data?.artists
+    ?.flatMap?.((a) => a?.circles?.map?.((c) => c))
+    ?.filter?.((c) => !data?.circles?.find?.((c2) => c2.id === c.id));
 
   return (
     <Label.Group>
@@ -166,13 +185,11 @@ export function CircleLabels() {
           <Icon name="group" /> {c.name}
         </Label>
       ))}
-      {data?.artists.flatMap?.((a) =>
-        a?.circles?.map?.((c) => (
-          <Label basic color="teal" className="border-dashed">
-            <Icon name="group" /> {c.name}
-          </Label>
-        ))
-      )}
+      {artistCircles?.map?.((c) => (
+        <Label basic color="teal" className="border-dashed">
+          <Icon name="group" /> {c?.name}
+        </Label>
+      ))}
     </Label.Group>
   );
 }
@@ -204,6 +221,11 @@ export function NameTable({
     DataState.data(ctx.key)
   );
 
+  const names =
+    dataPrimaryKey && data?.[dataPrimaryKey]
+      ? data?.[dataKey]?.filter?.((n) => n?.id !== data?.[dataPrimaryKey]?.id)
+      : data?.[dataKey];
+
   return (
     <Table basic="very" compact="very" verticalAlign="middle">
       <Table.Body>
@@ -219,16 +241,16 @@ export function NameTable({
             </div>
           </Table.Cell>
         </Table.Row>
-        {data?.[dataPrimaryKey]?.map?.((v) => (
-          <Table.Row key={v.id ?? v.title} verticalAlign="middle">
+        {names?.map?.((v) => (
+          <Table.Row key={v.id ?? v.name} verticalAlign="middle">
             <Table.Cell collapsing>
               <LanguageLabel color={undefined} basic={false} size="tiny">
-                {v.language}
+                {v?.language?.name}
               </LanguageLabel>
             </Table.Cell>
             <Table.Cell>
               <Header size="tiny" className="sub-text">
-                {v.title}
+                {v.name}
               </Header>
             </Table.Cell>
           </Table.Row>
@@ -245,10 +267,15 @@ export function UrlList() {
   );
 
   return (
-    <List>
+    <List size="small" relaxed>
       {data?.urls?.map?.((u) => (
-        <List.Item as="a" target="_blank">
-          {u.name}
+        <List.Item>
+          <List.Icon name="external share" />
+          <List.Content>
+            <a href={u.name} target="_blank">
+              {u.name}
+            </a>
+          </List.Content>
         </List.Item>
       ))}
     </List>
