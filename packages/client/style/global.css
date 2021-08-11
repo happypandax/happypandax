@@ -135,3 +135,7 @@
 .fluid-dimmer > .content {
     width: 100%;
 }
+
+.sticky-page-sidebar.right {
+    padding-right: 60px;
+}

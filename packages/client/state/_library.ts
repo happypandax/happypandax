@@ -1,4 +1,5 @@
 import { ItemType, ViewType } from '../misc/enums';
+import { ServerItem } from '../misc/types';
 import StateBlock, { defineAtom } from './_base';
 
 export default class _LibraryState extends StateBlock {
@@ -32,5 +33,13 @@ export default class _LibraryState extends StateBlock {
 
   static itemCount = defineAtom({
     default: 30,
+  });
+
+  static sidebarVisible = defineAtom({
+    default: false,
+  });
+
+  static sidebarData = defineAtom({
+    default: undefined as PartialExcept<ServerItem, 'id'>,
   });
 }

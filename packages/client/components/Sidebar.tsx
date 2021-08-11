@@ -6,14 +6,24 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
-import { Icon, IconProps, Label, Menu, Sidebar } from 'semantic-ui-react';
+import {
+  Icon,
+  IconProps,
+  Label,
+  Menu,
+  Ref,
+  Segment,
+  Sidebar,
+} from 'semantic-ui-react';
 import {
   SemanticCOLORS,
   SemanticICONS,
 } from 'semantic-ui-react/dist/commonjs/generic';
 
+import { useDocumentEvent } from '../hooks/utils';
 import t from '../misc/lang';
 import AboutModal from './About';
 import SettingsModal from './Settings';
@@ -204,3 +214,63 @@ export function MainSidebar({
 }
 
 export default MainSidebar;
+
+function mainMenuProps() {
+  const el = document.getElementById('main-menu');
+  const r = {
+    height: 0,
+    fixed: el?.classList?.contains?.('fixed'),
+  };
+  if (el && !r.fixed && el.offsetHeight) {
+    r.height = el.offsetHeight;
+  }
+  return r;
+}
+
+export function StickySidebar({
+  visible,
+  ...props
+}: {
+  visible?: boolean;
+} & React.ComponentProps<typeof Sidebar>) {
+  const ref = useRef<HTMLDivElement>();
+
+  const computeTop = useCallback(() => {
+    if (visible) {
+      const mh = mainMenuProps();
+      const t = Math.max(0, window.scrollY - mh.height);
+      ref.current.style.top = `${t}px`;
+      if (mh.height && (mh.fixed || !t)) {
+        ref.current.style.setProperty('max-height', '94vh', 'important');
+      } else {
+        ref.current.style.setProperty('max-height', '98vh', 'important');
+      }
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    ref.current.style.setProperty('max-height', '98vh', 'important');
+    ref.current.style.paddingRight = `calc(${
+      window.innerWidth - document.body.offsetWidth
+    }px + ${ref.current.style.paddingRight ?? 0})`;
+    ref.current.style.transition =
+      'transform 300ms ease, -webkit-transform 300ms ease, top 0.15s ease-in 0s';
+  }, []);
+
+  useEffect(computeTop, [visible]);
+
+  useDocumentEvent('scroll', computeTop, { passive: true }, [computeTop]);
+
+  return (
+    <Ref innerRef={ref}>
+      <Sidebar
+        as={Segment}
+        size="very wide"
+        animation="overlay"
+        {...props}
+        visible={visible}
+        direction="right"
+      />
+    </Ref>
+  );
+}

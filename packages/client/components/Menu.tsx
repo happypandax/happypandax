@@ -135,6 +135,7 @@ export function MainMenu({
 
   return (
     <Menu
+      id="main-menu"
       size="tiny"
       fluid
       borderless={borderless}

@@ -71,7 +71,7 @@ function ReadButton({ data }: { data: { id: number } }) {
       ])}
       passHref>
       <Button as="a" primary size="mini">
-        <Icon name="book open" />
+        <Icon className="book open" />
         {t`Read`}
       </Button>
     </Link>
