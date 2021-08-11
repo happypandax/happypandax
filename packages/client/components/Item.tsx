@@ -26,6 +26,7 @@ import {
   Ref,
 } from 'semantic-ui-react';
 
+import { LibraryContext } from '../client/context';
 import { ItemType } from '../misc/enums';
 import {
   DragItemData,
@@ -33,7 +34,7 @@ import {
   ServerItem,
   ServerItemWithProfile,
 } from '../misc/types';
-import { AppState } from '../state';
+import { AppState, LibraryState } from '../state';
 import styles from './Item.module.css';
 
 const ItemContext = React.createContext({
@@ -252,20 +253,37 @@ export function ItemCardContent({
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const setLibrarySidebarVisible = useSetRecoilState(
+    LibraryState.sidebarVisible
+  );
+  const setLibrarySidebarData = useSetRecoilState(LibraryState.sidebarData);
+
   const Details = itemContext.Details;
 
   const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
+
+  const libraryContext = useContext(LibraryContext);
 
   return (
     <>
       <Dimmer.Dimmable
         as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
-        onClick={useCallback(() => {
-          if (!itemContext.horizontal) {
-            setDetailsOpen(true);
-            itemContext.onDetailsOpen?.();
-          }
-        }, [itemContext.horizontal])}
+        onClick={useCallback(
+          (ev) => {
+            if (!itemContext.horizontal) {
+              ev.preventDefault();
+              if (libraryContext) {
+                ev.stopPropagation();
+                setLibrarySidebarData(itemContext.detailsData);
+                setLibrarySidebarVisible(true);
+              } else {
+                setDetailsOpen(true);
+                itemContext.onDetailsOpen?.();
+              }
+            }
+          },
+          [itemContext.horizontal, itemContext.detailsData, libraryContext]
+        )}
         className="content">
         {!!itemContext.Details &&
           !itemContext.horizontal &&
@@ -322,7 +340,6 @@ function SemanticNextImage({
   width: number;
   height: number;
 }) {
-  console.log(children);
   let imgProps: any = {};
   const children2 = React.Children.toArray(children).filter((c: any) => {
     if (c?.type === 'img') {
@@ -355,6 +372,14 @@ export function ItemCardImage({
 
   const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
 
+  const setLibrarySidebarVisible = useSetRecoilState(
+    LibraryState.sidebarVisible
+  );
+
+  const setLibrarySidebarData = useSetRecoilState(LibraryState.sidebarData);
+
+  const libraryContext = useContext(LibraryContext);
+
   const imgSrc = !src
     ? '/img/default.png'
     : typeof src === 'string'
@@ -376,12 +401,22 @@ export function ItemCardImage({
       className={classNames({
         [`${itemContext.size}-size`]: itemContext.horizontal,
       })}
-      onClick={useCallback(() => {
-        if (itemContext.horizontal) {
-          setDetailsOpen(true);
-          itemContext.onDetailsOpen?.();
-        }
-      }, [itemContext.horizontal])}
+      onClick={useCallback(
+        (ev) => {
+          if (itemContext.horizontal) {
+            ev.peventDefault();
+            if (libraryContext) {
+              ev.stopPropagation();
+              setLibrarySidebarData(itemContext.detailsData);
+              setLibrarySidebarVisible(true);
+            } else {
+              setDetailsOpen(true);
+              itemContext.onDetailsOpen?.();
+            }
+          }
+        },
+        [itemContext.horizontal, itemContext.detailsData, libraryContext]
+      )}
       dimmer={{
         active: itemContext.hover && !itemContext.horizontal,
         inverted: true,
