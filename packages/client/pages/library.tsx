@@ -16,7 +16,7 @@ import {
   SortButtonInput,
   SortOrderButton,
   ViewButtons,
-} from '../components/layout/ItemLayout';
+} from '../components/layout/GalleryLayout';
 import PageLayout, { BottomZoneItem } from '../components/layout/Page';
 import MainMenu, { MenuItem } from '../components/Menu';
 import {
@@ -173,76 +173,73 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   const onItemKey = useCallback((item: ServerItem) => item.id, []);
 
   return (
-    <LibraryContext.Provider value={true}>
-      <PageLayout
-        menu={useMemo(
-          () => (
-            <MainMenu>
-              <MenuItem>
-                <ViewButtons
-                  view={view}
-                  setView={setView}
-                  item={item}
-                  setItem={setItem}
-                />
-              </MenuItem>
-            </MainMenu>
-          ),
-          [view, item]
-        )}
-        bottomZone={useMemo(() => {
-          return filter ? (
-            <BottomZoneItem x="center" y="bottom">
-              <FilterPageMessage filterId={filter} />
-            </BottomZoneItem>
-          ) : null;
-        }, [filter])}
-        bottomZoneRight={useMemo(
-          () => (
-            <>
-              <OnlyFavoritesButton
-                active={favorites}
-                setActive={setFavorites}
+    <PageLayout
+      menu={useMemo(
+        () => (
+          <MainMenu>
+            <MenuItem>
+              <ViewButtons
+                view={view}
+                setView={setView}
+                item={item}
+                setItem={setItem}
               />
-              <div className="medium-margin-top">
-                <div className="pos-relative">
-                  <FilterButtonInput active={filter} setActive={setFilter} />
-                  <Visible visible={!!filter}>
-                    <ClearFilterButton
-                      onClick={() => {
-                        setFilter(undefined);
-                      }}
-                      className="accented_button"
-                      size="mini"
-                    />
-                  </Visible>
-                </div>
-              </div>
-              <div className="medium-margin-top mb-auto">
-                <div className="pos-relative">
-                  <SortButtonInput
-                    itemType={itemType}
-                    active={sort}
-                    setActive={setSort}
+            </MenuItem>
+          </MainMenu>
+        ),
+        [view, item]
+      )}
+      bottomZone={useMemo(() => {
+        return filter ? (
+          <BottomZoneItem x="center" y="bottom">
+            <FilterPageMessage filterId={filter} />
+          </BottomZoneItem>
+        ) : null;
+      }, [filter])}
+      bottomZoneRight={useMemo(
+        () => (
+          <>
+            <OnlyFavoritesButton active={favorites} setActive={setFavorites} />
+            <div className="medium-margin-top">
+              <div className="pos-relative">
+                <FilterButtonInput active={filter} setActive={setFilter} />
+                <Visible visible={!!filter}>
+                  <ClearFilterButton
+                    onClick={() => {
+                      setFilter(undefined);
+                    }}
+                    className="accented_button"
+                    size="mini"
                   />
-                  <Visible visible={true}>
-                    <SortOrderButton
-                      descending={sortDesc}
-                      onClick={() => {
-                        setSortDesc(!sortDesc);
-                      }}
-                      className="accented_button"
-                      size="mini"
-                    />
-                  </Visible>
-                </div>
+                </Visible>
               </div>
-            </>
-          ),
-          [favorites, filter, sort, sortDesc]
-        )}>
-        <PageTitle title={t`Library`} />
-        {!items.count && <EmptySegment />}
+            </div>
+            <div className="medium-margin-top mb-auto">
+              <div className="pos-relative">
+                <SortButtonInput
+                  itemType={itemType}
+                  active={sort}
+                  setActive={setSort}
+                />
+                <Visible visible={true}>
+                  <SortOrderButton
+                    descending={sortDesc}
+                    onClick={() => {
+                      setSortDesc(!sortDesc);
+                    }}
+                    className="accented_button"
+                    size="mini"
+                  />
+                </Visible>
+              </div>
+            </div>
+          </>
+        ),
+        [favorites, filter, sort, sortDesc]
+      )}>
+      <PageTitle title={t`Library`} />
+      {!items.count && <EmptySegment />}
+      <LibraryContext.Provider value={true}>
         <LibrarySidebar />
         {display === 'card' && (
           <CardView
@@ -269,7 +266,7 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
             pagination={!!items.count}
             bottomPagination={!!items.count}></ListView>
         )}
-      </PageLayout>
-    </LibraryContext.Provider>
+      </LibraryContext.Provider>
+    </PageLayout>
   );
 }

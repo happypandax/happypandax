@@ -263,3 +263,9 @@ export enum ItemFit {
   Contain,
   Auto,
 }
+
+export enum DrawerTab {
+  Queue = 0,
+  Selected,
+  Recent,
+}

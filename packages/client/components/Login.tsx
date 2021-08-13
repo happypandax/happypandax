@@ -12,7 +12,7 @@ import {
 import { MutatationType, useMutationType } from '../client/queries';
 import t from '../misc/lang';
 import { AppState } from '../state';
-import { LabeLAccordion } from './Misc';
+import { LabelAccordion } from './Misc';
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [endpoint, setEndpoint] = useState({
@@ -86,7 +86,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             endpoint: getEndpoint(),
           });
         }}>
-        <LabeLAccordion label="Server">
+        <LabelAccordion label="Server">
           <Segment basic>
             <Form.Group>
               <Form.Input
@@ -113,7 +113,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
                 type="number"></Form.Input>
             </Form.Group>
           </Segment>
-        </LabeLAccordion>
+        </LabelAccordion>
         <Form.Input
           name="username"
           label={t`Username`}

@@ -6,7 +6,7 @@ import {
   OnlyFavoritesButton,
   SortButtonInput,
   SortOrderButton,
-} from './ItemLayout';
+} from './GalleryLayout';
 import PageLayout from './Page';
 
 export default {

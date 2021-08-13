@@ -1,32 +1,26 @@
+import { DrawerTab } from '../misc/enums';
 import StateBlock, { defineAtom } from './_base';
-
-const localStorageEffect = (key, session = false) => ({ setSelf, onSet }) => {
-  const storage = session ? sessionStorage : localStorage;
-
-  const savedValue = storage.getItem(key);
-
-  if (savedValue != null) {
-    setSelf(JSON.parse(savedValue));
-  }
-
-  onSet((newValue) => {
-    storage.setItem(key, JSON.stringify(newValue));
-  });
-};
+import { localStorageEffect } from './_statehelpers';
 
 export default class _AppState extends StateBlock {
   static theme = defineAtom({
     default: 'light' as 'light' | 'dark',
   });
 
+  static sameMachine = defineAtom({ default: true });
+
   static home = defineAtom({ default: '/library' });
 
   static loggedIn = defineAtom({ default: false });
 
   static drawerOpen = defineAtom({ default: false });
+  static drawerTab = defineAtom({
+    default: DrawerTab.Queue,
+    effects_UNSTABLE: [localStorageEffect('drawing_tab')],
+  });
 
-  static readingSession = defineAtom({
+  static readingQueue = defineAtom({
     default: [] as number[],
-    effects_UNSTABLE: [localStorageEffect('reading_session', true)],
+    effects_UNSTABLE: [localStorageEffect('reading_queue', true)],
   });
 }

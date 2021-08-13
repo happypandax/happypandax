@@ -2280,6 +2280,7 @@ __metadata:
     babel-plugin-lodash: ^3.3.4
     babel-plugin-superjson-next: ^0.3.0
     classnames: ^2.2.6
+    colorthief: ^2.3.2
     darkreader: ^4.9.32
     date-fns: ^2.22.1
     file-type: ^16.5.2
@@ -7161,6 +7162,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"colorthief@npm:^2.3.2":
+  version: 2.3.2
+  resolution: "colorthief@npm:2.3.2"
+  dependencies:
+    get-pixels: ^3.3.2
+    quantize: "github:lokesh/quantize"
+  checksum: 30dc73cc60fd63e161628e73a840f2d09e217df2a9ff6cb6318c1bae29c1bca2b9ea044119bf892d9674172e39258be00b45038ca9207295f0c6c47e0b7a94a8
+  languageName: node
+  linkType: hard
+
 "combined-stream@npm:^1.0.6, combined-stream@npm:^1.0.8, combined-stream@npm:~1.0.6":
   version: 1.0.8
   resolution: "combined-stream@npm:1.0.8"
@@ -7778,6 +7789,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cwise-compiler@npm:^1.1.2":
+  version: 1.1.3
+  resolution: "cwise-compiler@npm:1.1.3"
+  dependencies:
+    uniq: ^1.0.0
+  checksum: a588c305d57d63fa301aaf302d624593de860737365cdd94710e9eebaa53fceb5339ba70ea112f79a58d4ad6ef222b45437dcea87e8b97d6d6432bd55f874628
+  languageName: node
+  linkType: hard
+
 "cyclist@npm:^1.0.1":
   version: 1.0.1
   resolution: "cyclist@npm:1.0.1"
@@ -7808,6 +7828,13 @@ __metadata:
   dependencies:
     assert-plus: ^1.0.0
   checksum: 5959409ee42dc4bdbf3fa384b801ece580ca336658bb0342ffab0099b3fc6bf9b3e239e1b82dcc4fcaeee315353e08f2eae47b0928a6a579391598c44958afa1
+  languageName: node
+  linkType: hard
+
+"data-uri-to-buffer@npm:0.0.3":
+  version: 0.0.3
+  resolution: "data-uri-to-buffer@npm:0.0.3"
+  checksum: b06f98c932627367b24605244dc5a8aa699a31e508dff0c52f020bc3c2bc3b12372c3774d6834b7f02704916fc5cb850e13df7686b16d5487cd83e4fbe17ba80
   languageName: node
   linkType: hard
 
@@ -9867,6 +9894,25 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"get-pixels@npm:^3.3.2":
+  version: 3.3.3
+  resolution: "get-pixels@npm:3.3.3"
+  dependencies:
+    data-uri-to-buffer: 0.0.3
+    jpeg-js: ^0.4.1
+    mime-types: ^2.0.1
+    ndarray: ^1.0.13
+    ndarray-pack: ^1.1.1
+    node-bitmap: 0.0.1
+    omggif: ^1.0.5
+    parse-data-uri: ^0.2.0
+    pngjs: ^3.3.3
+    request: ^2.44.0
+    through: ^2.3.4
+  checksum: ee55aca50521bde777cebc4f593b54fa9cd1c25353a78d7cb06a717192292839987296cbefa0be134e214818158d3f4ea7855e63ab38623123d9fb1b18d528c9
+  languageName: node
+  linkType: hard
+
 "get-stream@npm:^4.0.0":
   version: 4.1.0
   resolution: "get-stream@npm:4.1.0"
@@ -11324,6 +11370,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"iota-array@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "iota-array@npm:1.0.0"
+  checksum: 5ee5b56a24eff8e351d15c9772b18f3bf8412db1b264a9c513bb9a3e24d9f379ee92aebc944e09b135effd1627a7f9606b877a7b0de390707c0485208a88f504
+  languageName: node
+  linkType: hard
+
 "ip-regex@npm:^1.0.1":
   version: 1.0.3
   resolution: "ip-regex@npm:1.0.3"
@@ -11454,7 +11507,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"is-buffer@npm:^1.1.5":
+"is-buffer@npm:^1.0.2, is-buffer@npm:^1.1.5":
   version: 1.1.6
   resolution: "is-buffer@npm:1.1.6"
   checksum: 336ec78f00e88efe6ff6f1aa08d06aadb942a6cd320e5f538ac00648378fb964743b3737c88ce7ce8741c067e4a3b78f596b83ee1a3c72dc2885ea0b03dc84f2
@@ -12154,6 +12207,13 @@ fsevents@^1.2.7:
     merge-stream: ^2.0.0
     supports-color: ^8.0.0
   checksum: 8d7ab8cdf6e66fd676b933f142191158be3541bcdc29c4f839e4b9e03ef755dc8741623645758f75ee23acc98038b28f6e9141e49ec7ffef56c51561f7db06f6
+  languageName: node
+  linkType: hard
+
+"jpeg-js@npm:^0.4.1":
+  version: 0.4.3
+  resolution: "jpeg-js@npm:0.4.3"
+  checksum: c882ae02b8639d92b0004520dc949363dd1ff9dcfbadbb93f1760c9a3aab894fdca66af2ff57bcdb85a2741dba51cbaf748745eb3165bf2b73bdef2cfd639442
   languageName: node
   linkType: hard
 
@@ -13454,6 +13514,22 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"mime-db@npm:1.49.0":
+  version: 1.49.0
+  resolution: "mime-db@npm:1.49.0"
+  checksum: c5ac8ff35fad969136dd07da73dc5d13a121a9e444954a9f4afb7ebf988989f5a502e35c29ac8a590276f7d0443330d0014cfbbc98eaffc487c3b7c5b005af60
+  languageName: node
+  linkType: hard
+
+"mime-types@npm:^2.0.1":
+  version: 2.1.32
+  resolution: "mime-types@npm:2.1.32"
+  dependencies:
+    mime-db: 1.49.0
+  checksum: 91addbdc0c2a91bb142ecfe13bffe6b1d41f2ec12931756c54c9d85737f022f507d1e5a441ec50c21d59ae8e6f2a118a55a7f6d8467d49fe06ef6d25151d9657
+  languageName: node
+  linkType: hard
+
 "mime-types@npm:^2.1.12, mime-types@npm:^2.1.27, mime-types@npm:~2.1.19, mime-types@npm:~2.1.24":
   version: 2.1.29
   resolution: "mime-types@npm:2.1.29"
@@ -13806,6 +13882,26 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"ndarray-pack@npm:^1.1.1":
+  version: 1.2.1
+  resolution: "ndarray-pack@npm:1.2.1"
+  dependencies:
+    cwise-compiler: ^1.1.2
+    ndarray: ^1.0.13
+  checksum: 30f1106151d768a6014315de3b02e2e797b92bf60f864eed6d0a1d49cc0bf3bc12e75eb63e83694c404c74e4b0de961672041d8fd8ec2021b878e419add67402
+  languageName: node
+  linkType: hard
+
+"ndarray@npm:^1.0.13":
+  version: 1.0.19
+  resolution: "ndarray@npm:1.0.19"
+  dependencies:
+    iota-array: ^1.0.0
+    is-buffer: ^1.0.2
+  checksum: d272243069d5f0073cd702ebc4a75d96a2da3ff365ff58b221cf165641f77ada4a2da6f7e3601884f1236d119fa4ced100ee9f378d3b9f83147cd7d466169716
+  languageName: node
+  linkType: hard
+
 "negotiator@npm:0.6.2":
   version: 0.6.2
   resolution: "negotiator@npm:0.6.2"
@@ -13940,6 +14036,13 @@ fsevents@^1.2.7:
     lower-case: ^2.0.2
     tslib: ^2.0.3
   checksum: 84db4909caec37504c6655f995a004067f8733be8cd8d849f1578661b60a1685e086325fa4e1a5e8ce94e7416c1d0f037e2a00f635a14457183de80ab4fc7612
+  languageName: node
+  linkType: hard
+
+"node-bitmap@npm:0.0.1":
+  version: 0.0.1
+  resolution: "node-bitmap@npm:0.0.1"
+  checksum: 40ccda7b47bd4bada9cd24b9838234fc2dc03fe8eeda0414d01da15521a732cdcd32af13b4499be78c93d0dd1b94a09c3903dc22eca91ba0ce332bc90abd84a2
   languageName: node
   linkType: hard
 
@@ -14382,6 +14485,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"omggif@npm:^1.0.5":
+  version: 1.0.10
+  resolution: "omggif@npm:1.0.10"
+  checksum: a871594f9e90eaf467b1d3047bf541bedb07ba8a83ba9a097ae4e6343889e0ab494a8581bc34e522ae5513834af55edfaca7d16e3df7b48110c49b46526f215c
+  languageName: node
+  linkType: hard
+
 "on-finished@npm:~2.3.0":
   version: 2.3.0
   resolution: "on-finished@npm:2.3.0"
@@ -14687,6 +14797,15 @@ fsevents@^1.2.7:
     pbkdf2: ^3.0.3
     safe-buffer: ^5.1.1
   checksum: aa3f44d62837eedab98601c04c872a48c57be039e3e37ffafd53fd1a0415540f05b8800d3f70cea35c65cfdee0656d98ea1b4a77a96903a480afda8f91e4a4c3
+  languageName: node
+  linkType: hard
+
+"parse-data-uri@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "parse-data-uri@npm:0.2.0"
+  dependencies:
+    data-uri-to-buffer: 0.0.3
+  checksum: 08e8b54c2b3ff3940f98503c9d101c31dd037d3a8aaae7d08d93b2dce58a2ba5d3cc4a669c45a3b63c146af7000b5aea955a9e92218518e191b84f335f10caae
   languageName: node
   linkType: hard
 
@@ -15080,6 +15199,13 @@ fsevents@^1.2.7:
   version: 0.5.3
   resolution: "plural-forms@npm:0.5.3"
   checksum: 2253238f445f8bca0cde701a521db506fc284fc0a6531f26339581f7b92ebf5cfa76c4480b28f000758df0c7cd4a260a93a9dcb5d87d5d0d0d3cd902e90192a4
+  languageName: node
+  linkType: hard
+
+"pngjs@npm:^3.3.3":
+  version: 3.4.0
+  resolution: "pngjs@npm:3.4.0"
+  checksum: aa6d2cb4dd770cab9b06d9169aa94f134d7ff7dae3a73310709f0f0b4cdbcca2a8bfa7fa6f4d610719d5a3aa848447e6a755730e5dc911a38e8ec4d7a64dc214
   languageName: node
   linkType: hard
 
@@ -15576,6 +15702,13 @@ fsevents@^1.2.7:
   version: 6.5.2
   resolution: "qs@npm:6.5.2"
   checksum: fa0410eff2c05ce3328e11f82db4015e7819c986ee056d6b62b06ae112f4929af09ea3b879ca168ff9f0338f50972bba487ad0e46c879e42bfaf63c3c2ea7f09
+  languageName: node
+  linkType: hard
+
+"quantize@github:lokesh/quantize":
+  version: 1.2.0
+  resolution: "quantize@https://github.com/lokesh/quantize.git#commit=f572abd2646b5944852535c8a26fdb958a5d7c4b"
+  checksum: 5824571adc2bdbfc01965378125bfafb616f9082eb2a9a521f6f7676b07da886e50ad4b574bdd33dee717e6bf8bed555345a1399ec99b03eaa9c7363344dc1c6
   languageName: node
   linkType: hard
 
@@ -16547,7 +16680,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"request@npm:^2.88.2":
+"request@npm:^2.44.0, request@npm:^2.88.2":
   version: 2.88.2
   resolution: "request@npm:2.88.2"
   dependencies:
@@ -18402,7 +18535,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"through@npm:2.x.x, through@npm:^2.3.6, through@npm:~2.3.6":
+"through@npm:2.x.x, through@npm:^2.3.4, through@npm:^2.3.6, through@npm:~2.3.6":
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: 918d9151680b5355990011eb8c4b02e8cb8cf6e9fb6ea3d3e5a1faa688343789e261634ae35de4ea9167ab029d1e7bac6af2fe61b843931768d405fdc3e8897c
@@ -19001,7 +19134,7 @@ typescript@^4.3.4:
   languageName: node
   linkType: hard
 
-"uniq@npm:^1.0.1":
+"uniq@npm:^1.0.0, uniq@npm:^1.0.1":
   version: 1.0.1
   resolution: "uniq@npm:1.0.1"
   checksum: a5603a5b3128616f268e7695e47cd1eb8d583cf8ee1278434140cd83d2f3f98e5d65a22cf4187f0345ca8d8a0a9f1d07e1f06cb46312135ad4a6303fd28fc317

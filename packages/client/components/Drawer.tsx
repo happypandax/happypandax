@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { useRecoilState } from 'recoil';
 import {
@@ -40,7 +40,7 @@ export function SelectedBoard({}: {}) {
 
   return (
     <Ref innerRef={dropRef}>
-      <Dimmer.Dimmable className="min-200-h" dimmed={isOver}>
+      <Dimmer.Dimmable dimmed={isOver}>
         <Dimmer active={isOver}>
           <Icon size="large" name="plus" inverted />
         </Dimmer>
@@ -59,17 +59,16 @@ export function SelectedBoard({}: {}) {
   );
 }
 
-export function SessionBoard({}: {}) {
-  const [readingSession, setReadingSession] = useRecoilState(
-    AppState.readingSession
-  );
+export function QueueBoard({}: {}) {
+  const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
   const [items, setItems] = useState<GalleryCardData[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [{ isOver }, dropRef] = useDrop(
     () => ({
       accept: ItemType.Gallery.toString(),
       drop: (item: DragItemData, monitor) => {
-        setReadingSession([...readingSession, item.data.id]);
+        setReadingQueue([...readingQueue, item.data.id]);
       },
       canDrop: (item, monitor) => !items.find((v) => v.id === item.data.id),
       collect: (monitor) => ({
@@ -77,14 +76,13 @@ export function SessionBoard({}: {}) {
         dragData: monitor.getItem() as DragItemData | null,
       }),
     }),
-    [items, readingSession]
+    [items, readingQueue]
   );
 
   useEffect(() => {
-    const f_ids = readingSession.filter(
-      (i) => !items.find((i2) => i2.id === i)
-    );
+    const f_ids = readingQueue.filter((i) => !items.find((i2) => i2.id === i));
     if (f_ids.length) {
+      setLoading(true);
       Query.get(QueryType.ITEM, {
         item_id: f_ids,
         item_type: ItemType.Gallery,
@@ -92,15 +90,22 @@ export function SessionBoard({}: {}) {
           size: ImageSize.Small,
         },
         fields: galleryCardDataFields,
-      }).then((r) => {
-        setItems([...items, ...(r.data as GalleryCardData[])]);
-      });
+      })
+        .then((r) => {
+          setItems([...items, ...(r.data as GalleryCardData[])]);
+        })
+        .finally(() => setLoading(false));
     }
-  }, [readingSession]);
+  }, [readingQueue]);
 
   return (
     <Ref innerRef={dropRef}>
-      <Dimmer.Dimmable className="min-200-h" dimmed={isOver}>
+      <Dimmer.Dimmable
+        dimmed={isOver}
+        loading={loading}
+        as={Segment}
+        basic
+        className="no-padding-segment">
         <Dimmer active={isOver}>
           <Icon size="large" name="plus" inverted />
         </Dimmer>
@@ -125,6 +130,14 @@ export function RecentViewed() {
   return <>{!items.length && <EmptySegment />}</>;
 }
 
+function DrawerPane({ children }: { children: React.ReactNode }) {
+  return (
+    <Tab.Pane basic className="no-padding-segment min-200-h max-200-h">
+      {children}
+    </Tab.Pane>
+  );
+}
+
 export function Drawer({
   className,
   id,
@@ -134,11 +147,15 @@ export function Drawer({
   id?: string;
   onClose?: () => void;
 }) {
+  const [drawerTab, setDrawerTab] = useRecoilState(AppState.drawerTab);
+
   return (
-    <Segment
-      id={id}
-      className={classNames('no-padding-segment min-200-h', className)}>
+    <Segment id={id} className={classNames('no-padding-segment', className)}>
       <Tab
+        activeIndex={drawerTab}
+        onTabChange={useCallback((ev, d) => {
+          setDrawerTab(parseInt(d.activeIndex as string, 10));
+        }, [])}
         menu={useMemo(
           () => ({ pointing: true, secondary: true, size: 'small' }),
           []
@@ -146,27 +163,40 @@ export function Drawer({
         panes={useMemo(
           () => [
             {
-              menuItem: t`Selected`,
+              menuItem: {
+                key: 'queue',
+                content: t`Queue`,
+                icon: 'book open',
+              },
               render: () => (
-                <Tab.Pane basic className="no-padding-segment">
+                <DrawerPane>
+                  <QueueBoard />
+                </DrawerPane>
+              ),
+            },
+            {
+              menuItem: {
+                key: 'selected',
+                content: t`Selected`,
+                icon: 'object ungroup outline icon',
+              },
+              render: () => (
+                <DrawerPane>
                   <SelectedBoard />
-                </Tab.Pane>
+                </DrawerPane>
               ),
             },
+
             {
-              menuItem: t`Session`,
+              menuItem: {
+                key: 'recent',
+                content: t`Recently viewed`,
+                icon: 'history',
+              },
               render: () => (
-                <Tab.Pane basic className="no-padding-segment">
-                  <SessionBoard />
-                </Tab.Pane>
-              ),
-            },
-            {
-              menuItem: t`Recently viewed`,
-              render: () => (
-                <Tab.Pane basic className="no-padding-segment">
+                <DrawerPane>
                   <RecentViewed />
-                </Tab.Pane>
+                </DrawerPane>
               ),
             },
           ],

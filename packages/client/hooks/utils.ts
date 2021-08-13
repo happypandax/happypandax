@@ -37,7 +37,7 @@ export function useDocumentEvent<E extends keyof DocumentEventMap, F>(
 }
 
 export function useRefEvent<
-  R extends HTMLElement,
+  R extends HTMLElement | Document,
   E extends keyof HTMLElementEventMap
 >(
   ref: RefObject<R>,

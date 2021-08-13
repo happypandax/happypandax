@@ -128,13 +128,14 @@ export function dateFromTimestamp(
   {
     relative = false,
     addSuffix = true,
-  }: { relative?: boolean; addSuffix?: boolean }
+    format: dateFormat = 'PPpp',
+  }: { relative?: boolean; addSuffix?: boolean; format?: 'PPpp' | 'PPP' }
 ) {
   if (!timestamp) return t`Unknown`;
   const d = fromUnixTime(timestamp);
   return relative
     ? formatDistanceToNowStrict(d, { addSuffix })
-    : format(d, 'PPpp');
+    : format(d, dateFormat);
 }
 
 // Replaces the URL without reloading unlike location.replace, also keeps state and title if unspecififed
@@ -165,3 +166,26 @@ export function getScreenWidth() {
 export function getScreenHeight() {
   return screen.height;
 }
+
+export const animateCSS = (
+  node: HTMLElement,
+  animation: string,
+  prefixAnimation = true,
+  prefix = 'animate__'
+) =>
+  // We create a Promise and return it
+  new Promise((resolve, reject) => {
+    const animationName = prefixAnimation ? `${prefix}${animation}` : animation;
+
+    node.classList.add(`${prefix}animated`, animationName);
+
+    // When the animation ends, we clean the classes and resolve the Promise
+    function handleAnimationEnd(event) {
+      event.stopPropagation();
+      node.classList.remove(`${prefix}animated`, animationName);
+      node.removeEventListener('animationend', handleAnimationEnd);
+      resolve('Animation ended');
+    }
+
+    node.addEventListener('animationend', handleAnimationEnd, { once: true });
+  });

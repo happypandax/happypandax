@@ -1,288 +1,443 @@
 import classNames from 'classnames';
-import { useCallback, useMemo } from 'react';
+import ColorThief from 'colorthief';
+import Link from 'next/link';
+import React, {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   Button,
-  ButtonGroup,
-  Dropdown,
+  Container,
+  Divider,
+  Grid,
+  Header,
   Icon,
+  Image,
+  Label,
   Menu,
-  Popup,
+  Segment,
 } from 'semantic-ui-react';
 
-import { QueryType, useQueryType } from '../../client/queries';
-import { ItemType, ViewType } from '../../misc/enums';
+import { DataContext } from '../../client/context';
+import { useRefEvent } from '../../hooks/utils';
+import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { FieldPath, ServerFilter, ServerSortIndex } from '../../misc/types';
-import { PopupNoOverflow } from '../Misc';
+import { FieldPath, ServerGallery } from '../../misc/types';
+import { animateCSS, urlstring } from '../../misc/utility';
+import { AppState, DataState } from '../../state';
+import {
+  ArtistLabels,
+  CircleLabels,
+  DateAddedLabel,
+  DatePublishedLabel,
+  GroupingLabel,
+  LanguageLabel,
+  LastReadLabel,
+  LastUpdatedLabel,
+  NameTable,
+  ParodyLabels,
+  TagsTable,
+  UrlList,
+} from '../data/Common';
+import MainMenu, { ConnectionItem, MenuItem } from '../Menu';
+import styles from './ItemLayout.module.css';
 
-export function SortButtonInput({
-  itemType,
+function ParallaxDiv({
+  children,
+  target,
+
   className,
-  data: initialData,
-  active,
-  setActive,
-}: {
-  itemType: ItemType;
-  className?: string;
-  active?: number;
-  data?: ServerSortIndex[];
-  setActive: (f: number) => void;
-}) {
-  const { data } = useQueryType(
-    QueryType.SORT_INDEXES,
-    {
-      item_type: itemType,
-    },
-    { initialData }
-  );
+  ...props
+}: { target?: RefObject<HTMLElement | Document> } & Omit<
+  React.HTMLProps<HTMLDivElement>,
+  'target'
+>) {
+  const targetRef = target ?? useRef(window?.document);
+  const ref = useRef<HTMLDivElement>();
+  const runningAnimationRef = useRef({
+    running: false,
+    startPos: 0,
+    lastOffset: 0,
+    velocity: 0.5,
+    ease: 0.05,
+  });
 
-  return (
-    <PopupNoOverflow
-      on="click"
-      position="left center"
-      hoverable
-      eventsEnabled
-      positionFixed
-      flowing
-      wide
-      className={classNames('overflow-y-auto', 'overflow-x-hidden')}
-      popperDependencies={[data]}
-      trigger={
-        <Button
-          icon="sort alphabet down"
-          primary
-          circular
-          className={classNames(className)}
-        />
-      }>
-      <Popup.Content>
-        <Menu secondary vertical>
-          {!!data?.data &&
-            data.data
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((v) => (
-                <Menu.Item
-                  key={v.index}
-                  index={v.index}
-                  active={v.index === active}
-                  icon="sort"
-                  color="blue"
-                  name={v.name}
-                  onClick={() => {
-                    setActive(v.index);
-                  }}
-                />
-              ))}
-        </Menu>
-      </Popup.Content>
-    </PopupNoOverflow>
-  );
-}
+  useRefEvent(
+    targetRef,
+    'scroll',
+    (ev) => {
+      if (!ref.current) {
+        return;
+      }
 
-export function SortOrderButton(
-  props: React.ComponentProps<typeof Button> & { descending?: boolean }
-) {
-  return (
-    <Button
-      icon={{
-        className: props.descending
-          ? 'sort amount down'
-          : 'sort amount down alternate',
-      }}
-      primary
-      circular
-      basic
-      color="blue"
-      title={t`Sort order`}
-      {...props}
-    />
-  );
-}
+      if (!runningAnimationRef.current.running) {
+        runningAnimationRef.current.running = true;
 
-export function ClearFilterButton(props: React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      icon="close"
-      primary
-      circular
-      basic
-      color="red"
-      title={t`Clear filter`}
-      {...props}
-    />
-  );
-}
+        if (runningAnimationRef.current.startPos) {
+          runningAnimationRef.current.startPos = ref.current.offsetTop;
+        }
 
-export function FilterButtonInput({
-  className,
-  active,
-  data: initialData,
-  setActive,
-}: {
-  className?: string;
-  active: number;
-  setActive: (f: number) => void;
-  data?: ServerFilter[];
-}) {
-  const { data } = useQueryType(
-    QueryType.ITEMS,
-    {
-      item_type: ItemType.Filter,
-      fields: ['name'] as FieldPath<ServerFilter>[],
-      limit: 9999, // no limit
-    },
-    {
-      initialData: initialData
-        ? {
-            count: initialData.length,
-            items: initialData,
+        const loop = () => {
+          if (!ref.current) {
+            return;
           }
-        : undefined,
-    }
-  );
 
-  return (
-    <PopupNoOverflow
-      on="click"
-      position="left center"
-      hoverable
-      wide
-      flowing
-      positionFixed
-      className={classNames('overflow-y-auto', 'overflow-x-hidden')}
-      eventsEnabled
-      popperDependencies={[data]}
-      trigger={
-        <Button
-          icon="filter"
-          primary
-          inverted={!!!active}
-          circular
-          className={classNames(className)}
-        />
-      }>
-      <Popup.Content>
-        <Menu secondary vertical>
-          {!!data?.data &&
-            data.data?.items
-              ?.sort((a, b) => a.name.localeCompare(b.name))
-              .map?.((v) => (
-                <Menu.Item
-                  key={v.id}
-                  index={v.id}
-                  active={active === v.id}
-                  icon="filter"
-                  color="blue"
-                  name={v.name}
-                  onClick={() => {
-                    setActive(v.id);
-                  }}
-                />
-              ))}
-        </Menu>
-      </Popup.Content>
-    </PopupNoOverflow>
-  );
-}
+          const offset = window.scrollY;
+          const delta =
+            (offset - runningAnimationRef.current.lastOffset) *
+            runningAnimationRef.current.velocity *
+            runningAnimationRef.current.ease;
 
-export function OnlyFavoritesButton({
-  className,
-  active,
-  setActive,
-}: {
-  className?: string;
-  active: boolean;
-  setActive: (boolean) => void;
-}) {
-  return (
-    <Button
-      icon="heart"
-      title={t`Show only favorites`}
-      basic={!active}
-      color="red"
-      onClick={useCallback(() => {
-        setActive(!active);
-      }, [active])}
-      circular
-      className={classNames(className)}
-    />
-  );
-}
+          if (Math.abs(delta) < 0.05) {
+            runningAnimationRef.current.lastOffset = offset;
+            runningAnimationRef.current.running = false;
+            return;
+          }
 
-export function ViewButtons({
-  size = 'tiny',
-  item,
-  setItem,
-  setView,
-  view,
-}: {
-  size?: React.ComponentProps<typeof ButtonGroup>['size'];
-  view: ViewType;
-  setView: (view: ViewType) => void;
-  item: ItemType;
-  setItem: (item: ItemType) => void;
-}) {
-  const options = useMemo(
-    () => [
-      {
-        text: (
-          <>
-            <Icon name="th" /> {t`All`}
-          </>
-        ),
-        value: ViewType.All,
-      },
-      {
-        text: (
-          <>
-            <Icon name="archive" /> {t`Library`}
-          </>
-        ),
-        value: ViewType.Library,
-      },
-      {
-        text: (
-          <>
-            <Icon name="inbox" /> {t`Inbox`}
-          </>
-        ),
-        value: ViewType.Inbox,
-      },
-    ],
+          ref.current.style.transform = `translate(0, ${
+            runningAnimationRef.current.startPos -
+            runningAnimationRef.current.lastOffset
+          }px)`;
+
+          runningAnimationRef.current.lastOffset += delta;
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+      }
+    },
+    { passive: true },
     []
   );
 
   return (
-    <ButtonGroup toggle basic size={size}>
-      <Dropdown
-        selectOnBlur={false}
-        disabled={view === ViewType.Favorite}
-        basic
-        className="active"
-        value={view}
-        options={options}
-        button
-      />
-      <Button
-        primary
-        basic={item === ItemType.Collection}
-        onClick={useCallback(() => {
-          setItem(ItemType.Collection);
-        }, [])}>{t`Collection`}</Button>
-      <Button
-        primary
-        basic={item === ItemType.Gallery}
-        onClick={useCallback(() => {
-          setItem(ItemType.Gallery);
-        }, [])}>{t`Gallery`}</Button>
-    </ButtonGroup>
+    <div ref={ref} {...props} className={classNames(className)}>
+      {children}
+    </div>
   );
 }
 
-export default function ItemLayout({
+export type GalleryHeaderData = DeepPick<
+  ServerGallery,
+  | 'id'
+  | 'preferred_title.name'
+  | 'artists.[].id'
+  | 'artists.[].preferred_name.name'
+  | 'profile'
+  | 'number'
+  | 'metatags.favorite'
+  | 'metatags.read'
+  | 'metatags.readlater'
+  | 'metatags.inbox'
+  | 'progress.end'
+  | 'progress.page.number'
+  | 'progress.percent'
+  | 'language.code'
+  | 'language.name'
+  | 'last_read'
+  | 'last_updated'
+  | 'timestamp'
+>;
+
+export const galleryHeaderDataFields: FieldPath<ServerGallery>[] = [
+  'artists.names.name',
+  'artists.circles.name',
+  'artists.preferred_name.name',
+  'parodies.names.name',
+  'parodies.preferred_name.name',
+  'preferred_title.name',
+  'preferred_title.language.name',
+  'titles.name',
+  'titles.language.name',
+  'language.name',
+  'grouping.name',
+  'grouping.status.name',
+  'tags.namespace.name',
+  'tags.tag.name',
+  'category.name',
+  'urls.name',
+  'times_read',
+  'circles.name',
+  'profile',
+  'number',
+  'language.code',
+  'progress.end',
+  'progress.page.number',
+  'progress.percent',
+  'metatags.*',
+  'last_read',
+  'last_updated',
+  'timestamp',
+  'pub_date',
+];
+
+function LabelFields({
   children,
+  className,
+  ...props
+}: React.HTMLProps<HTMLDivElement>) {
+  return (
+    <div {...props} className={classNames('ui form', className)}>
+      {children}
+    </div>
+  );
+}
+
+function LabelField({
+  label,
+  children,
+  padded = true,
 }: {
+  padded?: boolean;
+  label?: React.ReactNode;
   children?: React.ReactNode;
 }) {
-  return <div></div>;
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <div
+        className={classNames(styles.label_children, {
+          [styles.label_children_padded]: padded,
+        })}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
+  const contextKey = 'header_' + DataState.getKey(ItemType.Gallery, data);
+  const heroRef = useRef<HTMLDivElement>();
+  const heroImgRef = useRef<HTMLImageElement>();
+  const colorThief = useMemo(() => new ColorThief(), []);
+
+  const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
+
+  const sameMachine = useRecoilValue(AppState.sameMachine);
+  const setData = useSetRecoilState(DataState.data(contextKey));
+
+  useEffect(() => {
+    setData(data as PartialExcept<ServerGallery, 'id'>);
+    animateCSS(heroImgRef.current, styles.fadeInDownImage, false);
+  }, [data]);
+
+  useEffect(() => {
+    const setColor = () => {
+      const c = colorThief.getColor(heroImgRef.current);
+      heroRef.current.style.backgroundColor = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+    };
+    if (heroImgRef.current.complete) {
+      setColor();
+    } else {
+      heroImgRef.current.onload = setColor;
+    }
+  }, [data]);
+
+  const hasProgress = !!data?.progress && !data?.progress?.end;
+
+  const inReadingQueue = readingQueue?.includes?.(data?.id);
+
+  return (
+    <DataContext.Provider value={{ key: contextKey, type: ItemType.Gallery }}>
+      <div ref={heroRef} className={classNames(styles.header_hero)}>
+        <Container className="pos-relative">
+          <ParallaxDiv>
+            <img
+              className="animate__slower"
+              ref={heroImgRef}
+              src={data.profile.data}
+            />
+          </ParallaxDiv>
+        </Container>
+      </div>
+      <Container>
+        <Segment basic className="no-margins no-top-padding no-right-padding">
+          <div className={classNames(styles.header_content)}>
+            <div className={styles.cover_column}>
+              <Image
+                centered
+                rounded
+                id={styles.cover}
+                src={data.profile.data}
+                width={data.profile.size[0]}
+              />
+              <Divider hidden />
+              <Divider fitted horizontal>
+                <Header as="h5">
+                  <Button size="mini" basic>
+                    <Icon name="cogs" /> {t`Configuration`}
+                  </Button>
+                  <Button size="mini" basic>
+                    <Icon name="file alternate" /> {t`Log`}
+                  </Button>
+                </Header>
+              </Divider>
+              <Divider hidden />
+              <Grid>
+                {hasProgress && (
+                  <Grid.Row centered textAlign="center">
+                    <Button as="div" labelPosition="right">
+                      <Button color="orange" size="small">
+                        <Icon className="play" /> {t`Continue`}
+                      </Button>
+                      <Label basic color="orange" pointing="left">
+                        {Math.round(data?.progress?.percent)}%
+                      </Label>
+                    </Button>
+                  </Grid.Row>
+                )}
+                <Grid.Row centered textAlign="center">
+                  <Button.Group size="small">
+                    {sameMachine && (
+                      <Button
+                        icon="external"
+                        toggle
+                        title={t`Open in external viewer`}
+                      />
+                    )}
+                    <Link
+                      href={urlstring(`/item/gallery/${data?.id}/page/1`)}
+                      passHref>
+                      <Button as="a" primary>
+                        <Icon className="book open" /> {t`Read`}
+                      </Button>
+                    </Link>
+                    <Button.Or text={t`Or`} />
+                    {!data?.metatags?.readlater && (
+                      <Button>
+                        <Icon name="bookmark outline" /> {t`Save for later`}
+                      </Button>
+                    )}
+                    {data?.metatags?.readlater && (
+                      <Button positive>
+                        <Icon name="bookmark" /> {t`Saved for later`}
+                      </Button>
+                    )}
+                    <Button
+                      color="red"
+                      basic={!inReadingQueue}
+                      onClick={useCallback(() => {
+                        if (inReadingQueue) {
+                          setReadingQueue(
+                            readingQueue.filter((i) => i !== data?.id)
+                          );
+                        } else {
+                          setReadingQueue([...readingQueue, data?.id]);
+                        }
+                      }, [readingQueue, data?.id, inReadingQueue])}
+                      icon="open book"
+                      title={
+                        inReadingQueue
+                          ? t`Remove from reading queue`
+                          : t`Add to reading queue`
+                      }
+                    />
+                  </Button.Group>
+                </Grid.Row>
+                <Grid.Row>
+                  <LabelFields>
+                    <LabelField label={t`Rating`}>test</LabelField>
+                    <LabelField label={t`Artist`}>
+                      <ArtistLabels />
+                    </LabelField>
+
+                    <LabelField label={t`Circle`}>
+                      <CircleLabels />
+                    </LabelField>
+                    <LabelField label={t`Parody`}>
+                      <ParodyLabels />
+                    </LabelField>
+                    <LabelField label={t`Language`}>
+                      <LanguageLabel>{data?.language?.name}</LanguageLabel>
+                    </LabelField>
+
+                    <LabelField label={t`Published`}>
+                      <DatePublishedLabel />
+                    </LabelField>
+                  </LabelFields>
+                </Grid.Row>
+              </Grid>
+            </div>
+            <Segment className="no-margins no-right-padding" basic>
+              <NameTable
+                dataKey="titles"
+                dataPrimaryKey="preferred_title"></NameTable>
+              <Header textAlign="center">
+                <LastReadLabel timestamp={data?.last_read} />
+                <LastUpdatedLabel timestamp={data?.last_updated} />
+                <DateAddedLabel timestamp={data?.timestamp} />
+              </Header>
+              <Divider hidden className="small" />
+              <LabelFields>
+                <LabelField label={t`Series`} padded={false}>
+                  <GroupingLabel />
+                </LabelField>
+                <LabelField label={t`Tags`} padded={false}>
+                  <TagsTable />
+                </LabelField>
+                <LabelField label={t`External links`} padded={false}>
+                  <UrlList />
+                </LabelField>
+              </LabelFields>
+            </Segment>
+          </div>
+        </Segment>
+      </Container>
+    </DataContext.Provider>
+  );
+}
+
+export function ItemMenu({
+  data,
+  children,
+}: {
+  data: DeepPick<
+    ServerGallery,
+    | 'id'
+    | 'metatags.favorite'
+    | 'metatags.read'
+    | 'metatags.inbox'
+    | 'metatags.readlater'
+  >;
+  children?: React.ReactNode;
+}) {
+  const readingQueue = useRecoilValue(AppState.readingQueue);
+
+  return (
+    <MainMenu absolutePosition size="mini" connectionItem={false}>
+      <MenuItem icon="heart" color="red"></MenuItem>
+      {children}
+      <Menu.Menu position="right">
+        {readingQueue?.includes?.(data?.id) && (
+          <MenuItem
+            icon={{
+              className: 'book open',
+              color: 'red',
+              bordered: true,
+              inverted: true,
+            }}
+            title={`This item is in your reading queue`}></MenuItem>
+        )}
+        {data?.metatags?.inbox && (
+          <MenuItem
+            icon={{ name: 'inbox', bordered: true, inverted: true }}
+            title={`This item is in your inbox`}></MenuItem>
+        )}
+        {data?.metatags?.readlater && (
+          <MenuItem
+            icon={{ name: 'bookmark', bordered: true, inverted: true }}
+            title={`Saved for later`}></MenuItem>
+        )}
+        {!data?.metatags?.read && (
+          <MenuItem
+            icon={{ name: 'eye slash outline', bordered: true, inverted: true }}
+            title={`This item has not been read yet`}></MenuItem>
+        )}
+        <ConnectionItem />
+      </Menu.Menu>
+    </MainMenu>
+  );
 }

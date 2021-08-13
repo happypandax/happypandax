@@ -2,16 +2,11 @@ import React, { useCallback, useContext, useState } from 'react';
 import { useRecoilState } from 'recoil';
 import { Header, Icon, Label, List, Table } from 'semantic-ui-react';
 
-import { ItemType } from '../../misc/enums';
+import { DataContext } from '../../client/context';
 import t from '../../misc/lang';
 import { FieldPath, ServerGallery, ServerTag } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { DataState } from '../../state';
-
-export const DataContext = React.createContext({
-  key: '',
-  type: ItemType.Gallery,
-});
 
 export function LanguageLabel({
   children,
@@ -132,8 +127,18 @@ export function LastUpdatedLabel({
 export function DatePublishedLabel({
   children,
   ...props
-}: React.ComponentProps<typeof DateLabel>) {
-  return <DateLabel {...props} text={t`Published`} title={t`Date published`} />;
+}: React.ComponentProps<typeof Label>) {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
+    DataState.data(ctx.key)
+  );
+
+  const date = dateFromTimestamp(data?.pub_date, {
+    relative: false,
+    format: 'PPP',
+  });
+
+  return <Header size="tiny">{date ? date : t`Unknown`}</Header>;
 }
 
 export function ArtistLabels() {
@@ -227,7 +232,7 @@ export function NameTable({
       : data?.[dataKey];
 
   return (
-    <Table basic="very" compact="very" verticalAlign="middle">
+    <Table basic="very" compact="very" verticalAlign="middle" stackable>
       <Table.Body>
         <Table.Row>
           <Table.Cell colspan="2" textAlign="center">
@@ -302,7 +307,12 @@ export function TagsTable() {
   });
 
   return (
-    <Table basic="very" compact="very" verticalAlign="middle" size="small">
+    <Table
+      basic="very"
+      compact="very"
+      verticalAlign="middle"
+      size="small"
+      stackable>
       <Table.Body>
         {!!freeTags.length && (
           <Table.Row>

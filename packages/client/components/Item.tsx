@@ -54,6 +54,20 @@ const ItemContext = React.createContext({
   horizontal: false,
 });
 
+export function QueueIconLabel() {
+  return (
+    <Icon
+      className="book open"
+      color="red"
+      bordered
+      inverted
+      size="small"
+      link
+      title={`This item is in your reading queue`}
+    />
+  );
+}
+
 export function InboxIconLabel() {
   return (
     <Icon
@@ -75,7 +89,7 @@ export function ReadLaterIconLabel() {
       inverted
       size="small"
       link
-      title={`Save for later`}
+      title={`Saved for later`}
     />
   );
 }
@@ -404,7 +418,7 @@ export function ItemCardImage({
       onClick={useCallback(
         (ev) => {
           if (itemContext.horizontal) {
-            ev.peventDefault();
+            ev.preventDefault();
             if (libraryContext) {
               ev.stopPropagation();
               setLibrarySidebarData(itemContext.detailsData);
@@ -430,7 +444,7 @@ export function ItemCardImage({
                   closeIcon
                   dimmer="inverted"
                   onClose={onDetailsClose}>
-                  <Details />
+                  <Details data={itemContext.detailsData} />
                 </ItemDetailsModal>
               )}
             {children}
@@ -545,7 +559,7 @@ export function ItemCard({
           onMouseEnter={useCallback(() => setHover(true), [])}
           onMouseLeave={useCallback(() => setHover(false), [])}
           centered={centered}
-          link={link}
+          link={link ?? !!href}
           style={
             isDragging
               ? {

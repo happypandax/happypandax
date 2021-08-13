@@ -267,6 +267,8 @@ export default class ServerService extends Service {
   async library<R = undefined>(
     args: {
       item_type: ItemType;
+      item_id?: number;
+      related_type?: ItemType;
       fields?: FieldPath<R>[];
       page?: number;
       limit?: number;

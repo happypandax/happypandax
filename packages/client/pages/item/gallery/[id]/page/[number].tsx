@@ -76,7 +76,7 @@ export async function getServerSideProps(
   const itemId = parseInt(context.query.id as string);
 
   if (isNaN(itemId)) {
-    redirect = { permanent: false, destination: '/library', statusCode: 307 };
+    redirect = { permanent: false, destination: '/library' };
   }
 
   const urlQuery = urlparse(context.resolvedUrl);
@@ -88,10 +88,9 @@ export async function getServerSideProps(
     redirect = {
       permanent: false,
       destination: urlstring(
-        `/item/gallery/${itemId}/${startPage}`,
-        urlQuery as any
+        `/item/gallery/${itemId}/page/${startPage}`,
+        urlQuery.query as any
       ),
-      statusCode: 307,
     };
   }
 
@@ -275,6 +274,7 @@ export default function Page(props: PageProps) {
         stateKey={stateKey}>
         <EndContent
           stateKey={stateKey}
+          item={props.item}
           series={props.series}
           readingList={props.readingList}
           nextChapter={props.nextChapter}

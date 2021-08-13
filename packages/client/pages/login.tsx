@@ -46,12 +46,12 @@ export default function Page({ next }: PageProps) {
     <>
       <PageTitle title={t`Login`} />
       <Grid
-        className="fullheight overflow-hidden"
+        className="main-content overflow-hidden"
         centered
         verticalAlign="middle">
         <Grid.Row>
           <Grid.Column
-            className="animate__animated animate__fadeInDown"
+            className="animate__animated vanishIn"
             width="7"
             widescreen="3"
             largescreen="4"

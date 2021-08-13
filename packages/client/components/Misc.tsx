@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import maxSize from 'popper-max-size-modifier';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Editor from 'react-simple-code-editor';
-import { useLocalStorage, useWindowScroll } from 'react-use';
+import { useWindowScroll } from 'react-use';
 import { useRecoilState } from 'recoil';
 import {
   Button,
@@ -226,8 +226,8 @@ function SliderNav({
 }
 
 export function Slider({
-  open: initialOpen,
-  defaultOpen,
+  show: initialShow,
+  defaultShow,
   stateKey,
   infinite,
   children,
@@ -237,8 +237,8 @@ export function Slider({
   className,
   ...props
 }: {
-  open?: boolean;
-  defaultOpen?: boolean;
+  show?: boolean;
+  defaultShow?: boolean;
   stateKey?: string;
   infinite?: boolean;
   autoplay?: boolean;
@@ -246,7 +246,7 @@ export function Slider({
 } & React.ComponentProps<typeof Segment>) {
   const [open, setOpen] = useInitialRecoilState(
     MiscState.label_accordion_open(stateKey),
-    initialOpen ?? defaultOpen
+    initialShow ?? defaultShow
   );
   const items = React.Children.toArray(children);
 
@@ -282,21 +282,22 @@ export function Slider({
         <Label
           color={color}
           attached="top"
-          as={initialOpen === false ? undefined : 'a'}
+          as={initialShow === false ? undefined : 'a'}
           onClick={useCallback(
             (e) => {
               e.preventDefault();
-              if (initialOpen === undefined) {
+              if (initialShow === undefined) {
                 setOpen(!open);
               }
             },
             [open]
           )}>
+          <Icon name={open ? 'caret down' : 'caret right'} />
           {label}
           <Label.Detail>{items.length}</Label.Detail>{' '}
         </Label>
       )}
-      <Visible visible={initialOpen || open}>
+      <Visible visible={initialShow || open}>
         {!items.length && <EmptySegment />}
         {items && (
           <Carousel
@@ -379,26 +380,31 @@ export function Slider({
   );
 }
 
-export function LabeLAccordion({
-  saveKey,
+export function LabelAccordion({
+  stateKey,
   children,
   className,
   basic = true,
   label,
   detail,
+  show: initialShow,
+  defaultShow,
   color,
   attached = 'top',
   ...props
 }: {
-  saveKey?: string;
+  stateKey?: string;
+  show?: boolean;
+  defaultShow?: boolean;
   attached?: React.ComponentProps<typeof Label>['attached'];
   color?: React.ComponentProps<typeof Label>['color'];
   label?: React.ReactNode;
   detail?: React.ReactNode;
 } & React.ComponentProps<typeof Segment>) {
-  const key = '__labelaccordion' + (saveKey ?? '');
-  const [value, setValue, remove] = useLocalStorage(key);
-  const [show, setShow] = useState(value ?? true);
+  const [show, setShow] = useInitialRecoilState(
+    MiscState.label_accordion_open(stateKey),
+    initialShow ?? defaultShow
+  );
 
   return (
     <Segment
@@ -409,12 +415,15 @@ export function LabeLAccordion({
         as="a"
         color={color}
         attached={attached}
-        onClick={useCallback(() => {
-          setShow(!show);
-          if (saveKey) {
-            setValue(!show);
-          }
-        }, [show, saveKey])}>
+        onClick={useCallback(
+          (e) => {
+            e.preventDefault();
+            if (initialShow === undefined) {
+              setShow(!open);
+            }
+          },
+          [open]
+        )}>
         <Icon name={show ? 'caret down' : 'caret right'} />
         {label}
         {!!detail && <Label.Detail>{detail}</Label.Detail>}

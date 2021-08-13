@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { Header, Table } from 'semantic-ui-react';
 
+import { DataContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
@@ -11,7 +12,6 @@ import {
   ArtistLabels,
   CategoryLabel,
   CircleLabels,
-  DataContext,
   DateAddedLabel,
   DatePublishedLabel,
   GroupingLabel,
@@ -60,14 +60,13 @@ export function GalleryDataTable({
       'page_count',
       'category.name',
       'circles.name',
-      'category.name',
       'urls.name',
       'last_read',
       'last_updated',
+      'timestamp',
+      'pub_date',
       'tags.namespace.name',
       'tags.tag.name',
-      'pub_date',
-      'timestamp',
       'urls.name',
       'times_read',
     ],
@@ -122,6 +121,9 @@ export function GalleryDataTable({
         <DataTableItem name={t`Parody`}>
           <ParodyLabels />
         </DataTableItem>
+        <DataTableItem name={t`Published`}>
+          <DatePublishedLabel />
+        </DataTableItem>
         <DataTableItem name={t`Tags`}>
           <TagsTable />
         </DataTableItem>
@@ -130,7 +132,6 @@ export function GalleryDataTable({
         </DataTableItem>
         <DataTableItem textAlign="center">
           <LastReadLabel timestamp={data?.last_read} />
-          <DatePublishedLabel timestamp={data?.pub_date} />
           <LastUpdatedLabel timestamp={data?.last_updated} />
           <DateAddedLabel timestamp={data?.timestamp} />
         </DataTableItem>

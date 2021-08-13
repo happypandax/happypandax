@@ -26,15 +26,16 @@ export function MenuItem({
   className,
   icon,
   children,
+  ...props
 }: {
   icon?: SemanticICONS | IconProps;
   children?: React.ReactNode;
   className?: string;
-}) {
+} & React.ComponentProps<typeof Menu.Item>) {
   //   const context = useContext(MenuContext);
 
   return (
-    <Menu.Item className={classNames(className)}>
+    <Menu.Item className={classNames(className)} {...props}>
       {!!icon && (
         <Icon
           size="large"
@@ -50,7 +51,7 @@ export function MenuItem({
   );
 }
 
-function ConnectionItem({
+export function ConnectionItem({
   position = 'right',
 }: {
   position?: 'left' | 'right';
@@ -124,11 +125,17 @@ export function MainMenu({
   hidden,
   borderless,
   fixed,
+  size = 'tiny',
+  absolutePosition,
+  connectionItem = true,
   children,
 }: {
   hidden?: boolean;
+  size?: React.ComponentProps<typeof Menu>['size'];
   borderless?: boolean;
+  absolutePosition?: boolean;
   fixed?: boolean;
+  connectionItem?: boolean;
   children?: React.ReactNode;
 }) {
   if (hidden) return <></>;
@@ -136,16 +143,17 @@ export function MainMenu({
   return (
     <Menu
       id="main-menu"
-      size="tiny"
+      size={size}
       fluid
       borderless={borderless}
       fixed={fixed ? 'top' : undefined}
       secondary={!fixed}
       className={classNames(
-        'pusher no-margins standard-z-index post-relative'
+        'pusher no-margins standard-z-index',
+        absolutePosition ? 'pos-absolute' : 'pos-relative'
       )}>
       {children}
-      <ConnectionItem />
+      {connectionItem && <ConnectionItem />}
     </Menu>
   );
 }

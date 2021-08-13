@@ -1,11 +1,11 @@
-import GalleryCard from './Gallery';
-import { ViewButtons as ViewButtonsC } from './layout/ItemLayout';
 import { Label } from 'semantic-ui-react';
+
+import GalleryCard from './Gallery';
+import { ViewButtons as ViewButtonsC } from './layout/GalleryLayout';
 import {
   EmptySegment,
-  LabeLAccordion as LabelAccordionC,
+  LabelAccordion as LabelAccordionC,
   Slider as SliderC,
-  TitleSegment,
 } from './Misc';
 
 export default {

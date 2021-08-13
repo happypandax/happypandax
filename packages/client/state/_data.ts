@@ -11,6 +11,6 @@ export default class _DataState extends StateBlock {
   static mode = defineAtom({ default: DataMode.DEFAULT }, true);
 
   static getKey(type: ItemType, data: { id: number }) {
-    return `${type}-${data.id}`;
+    return `${type}-${data?.id}`;
   }
 }

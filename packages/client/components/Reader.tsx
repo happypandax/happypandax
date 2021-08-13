@@ -1461,23 +1461,21 @@ function ReadNext({
   const isEnd = useRecoilValue(ReaderState.endReached(stateKey));
 
   const [countDownEnabled, setCountDownEnabled] = useState<
-    'session' | 'chapter' | 'readinglist'
+    'queue' | 'chapter' | 'readinglist'
   >();
 
   const [countdown, setCountdown] = useState(15);
-  const [readingSession, setReadingSession] = useRecoilState(
-    AppState.readingSession
-  );
+  const readingQueue = useRecoilValue(AppState.readingQueue);
 
-  const { data: sessionData, isLoading } = useQueryType(
+  const { data: queueData, isLoading } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
-      item_id: readingSession?.[0],
+      item_id: readingQueue?.[0],
       profile_options: { size: ImageSize.Medium },
       fields: galleryCardDataFields,
     },
-    { enabled: !!readingSession.length }
+    { enabled: !!readingQueue.length }
   );
 
   useHarmonicIntervalFn(
@@ -1488,8 +1486,8 @@ function ReadNext({
           case 'chapter':
             nextId = nextChapter.id;
             break;
-          case 'session':
-            nextId = sessionData.data.id;
+          case 'queue':
+            nextId = queueData.data.id;
             break;
           case 'readinglist':
             nextId = nextInReadingList.id;
@@ -1497,16 +1495,9 @@ function ReadNext({
         }
 
         if (nextId) {
-          router
-            .push(
-              urlstring(
-                `/item/gallery/${nextId}/page/1`,
-                urlparse().query as any
-              )
-            )
-            .then(() => {
-              setReadingSession(readingSession.slice(1));
-            });
+          router.push(
+            urlstring(`/item/gallery/${nextId}/page/1`, urlparse().query as any)
+          );
         }
       }
       setCountdown(Math.max(countdown - 1, 0));
@@ -1516,8 +1507,8 @@ function ReadNext({
 
   useEffect(() => {
     const t = 15;
-    if (sessionData) {
-      setCountDownEnabled('session');
+    if (queueData) {
+      setCountDownEnabled('queue');
       setCountdown(t);
     } else if (nextChapter) {
       setCountDownEnabled('chapter');
@@ -1528,7 +1519,7 @@ function ReadNext({
     } else {
       setCountDownEnabled(undefined);
     }
-  }, [isEnd, nextChapter, nextInReadingList, sessionData]);
+  }, [isEnd, nextChapter, nextInReadingList, queueData]);
 
   return (
     <Grid
@@ -1555,18 +1546,18 @@ function ReadNext({
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
-        {!!sessionData && (
+        {!!queueData && (
           <Grid.Column textAlign="center">
             <Segment tertiary basic>
               <Header textAlign="center" size="small">
-                {t`Next in session...`}{' '}
-                {countDownEnabled === 'session'
+                {t`Next in queue...`}{' '}
+                {countDownEnabled === 'queue'
                   ? '(' + t`in ${countdown}` + ')'
                   : ''}
               </Header>
               <GalleryCard
                 size="medium"
-                data={sessionData.data as ServerGallery}
+                data={queueData.data as ServerGallery}
               />
             </Segment>
           </Grid.Column>
@@ -1636,25 +1627,39 @@ export function EndContent({
   sameArtist = [],
   series = [],
   readingList = [],
+  item,
   stateKey,
   ...readNextProps
 }: {
+  item?: PartialExcept<ServerGallery, 'id'>;
   sameArtist?: GalleryCardData[];
   series?: GalleryCardData[];
   readingList?: GalleryCardData[];
   stateKey?: string;
 } & React.ComponentProps<typeof ReadNext>) {
-  const readingSession = useRecoilValue(AppState.readingSession);
+  const endReached = useRecoilValue(ReaderState.endReached(stateKey));
+  const [_readingQueue, setReadingQueue] = useRecoilState(
+    AppState.readingQueue
+  );
+  const readingQueue = _readingQueue.filter((n) => n !== item?.id);
 
-  const { data } = useQueryType(
+  useEffect(() => {
+    if (endReached) {
+      if (_readingQueue.includes(item.id)) {
+        setReadingQueue(readingQueue);
+      }
+    }
+  }, [endReached, item]);
+
+  const { data: queueData } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
-      item_id: readingSession,
+      item_id: readingQueue,
       profile_options: { size: ImageSize.Small },
       fields: galleryCardDataFields,
     },
-    { enabled: !!readingSession.length }
+    { enabled: !!readingQueue.length }
   );
 
   return (
@@ -1681,11 +1686,11 @@ export function EndContent({
       <Grid.Row>
         <Grid.Column>
           <Slider
-            stateKey="this_session"
+            stateKey="this_queue"
             defaultOpen={false}
-            label={t`This session`}
+            label={t`Queue`}
             color="red">
-            {((data?.data as any) as ServerGallery[])?.map?.((g) => (
+            {((queueData?.data as any) as ServerGallery[])?.map?.((g) => (
               <GalleryCard key={g.id} size="small" data={g} />
             ))}
           </Slider>
@@ -1706,8 +1711,9 @@ export function EndContent({
         <Grid.Column>
           <Slider
             stateKey="reading_list"
+            autoplay
             label={t`Reading list`}
-            defaultOpen={false}
+            defaultShow={false}
             color="violet">
             {readingList.map((i) => (
               <GalleryCard key={i.id} size="small" data={i} />
@@ -1720,7 +1726,7 @@ export function EndContent({
           <Slider
             stateKey="same_artist"
             label={t`From same artist`}
-            defaultOpen={!series?.length}
+            defaultShow={!sameArtist?.length}
             color="blue">
             {sameArtist.map((i) => (
               <GalleryCard key={i.id} size="small" data={i} />
@@ -1730,7 +1736,7 @@ export function EndContent({
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <Slider stateKey="similar" label={t`Just like this one`}>
+          <Slider autoplay stateKey="similar" label={t`Just like this one`}>
             <GalleryCard size="small" data={gdata(8)} />
             <GalleryCard size="small" data={gdata(9)} />
             <GalleryCard size="small" data={gdata(10)} />

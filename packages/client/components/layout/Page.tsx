@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useRecoilState } from 'recoil';
-import { Dimmer, Portal, Sidebar } from 'semantic-ui-react';
+import { Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
 
 import { AppState } from '../../state';
 import DrawerPortal from '../Drawer';
@@ -39,10 +39,12 @@ export default function PageLayout({
   menu,
   basicDrawerButton,
   bottomZoneRight,
+  centered,
   bottomZone,
   children,
 }: {
   basicDrawerButton?: boolean;
+  centered?: boolean;
   dimmed?: boolean;
   menu?: React.ReactNode;
   bottomZoneRight?: React.ReactNode;
@@ -61,7 +63,8 @@ export default function PageLayout({
         className={classNames()}>
         <Dimmer simple active={dimmed} />
         <DndProvider backend={HTML5Backend}>
-          {children}
+          {centered && <Container>{children}</Container>}
+          {!centered && children}
           <DrawerPortal
             open={drawerOpen}
             onClose={useCallback(() => setDrawerOpen(false), [])}

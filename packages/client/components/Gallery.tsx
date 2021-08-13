@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { Button, Icon } from 'semantic-ui-react';
 
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
 import { FieldPath, ItemSize, ServerGallery, ServerItem } from '../misc/types';
+import { AppState } from '../state';
 import {
   GroupingNumberLabel,
   LanguageLabel,
@@ -25,6 +27,7 @@ import {
   ItemMenuLabel,
   ItemMenuLabelItem,
   ProgressLabel,
+  QueueIconLabel,
   ReadingIconLabel,
   ReadLaterIconLabel,
   TranslucentLabel,
@@ -109,6 +112,22 @@ function SaveForLaterButton() {
   );
 }
 
+function AddToQueueButton({ data }: { data: GalleryCardData }) {
+  const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
+
+  return (
+    <Button
+      color="red"
+      size="mini"
+      onClick={useCallback(() => {
+        setReadingQueue([...readingQueue, data.id]);
+      }, [data, readingQueue])}>
+      <Icon name="plus" />
+      {t`Add to queue`}
+    </Button>
+  );
+}
+
 function GalleryCardMenu({
   hasProgress,
   read,
@@ -124,7 +143,7 @@ function GalleryCardMenu({
       {hasProgress && (
         <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
       )}
-      <ItemMenuLabelItem icon="plus">{t`Add to session`}</ItemMenuLabelItem>
+      <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
       {!read && (
         <ItemMenuLabelItem icon="eye">{t`Mark as read`}</ItemMenuLabelItem>
@@ -156,9 +175,12 @@ export function GalleryCard({
 }) {
   const hasProgress = !!data?.progress && !data?.progress?.end;
 
+  const readingQueue = useRecoilValue(AppState.readingQueue);
+
   return (
     <ItemCard
       type={ItemType.Gallery}
+      href={`/item/gallery/${data.id}`}
       dragData={data}
       draggable={draggable}
       centered
@@ -176,6 +198,7 @@ export function GalleryCard({
             <HeartIconLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="top">
+            {readingQueue?.includes?.(data?.id) && <QueueIconLabel />}
             {!!data?.metatags?.inbox && <InboxIconLabel />}
             {!data?.metatags?.read && !hasProgress && <UnreadIconLabel />}
             {!!data?.metatags?.readlater && <ReadLaterIconLabel />}
@@ -208,7 +231,7 @@ export function GalleryCard({
             />
           </ItemLabel>,
         ],
-        [horizontal, hasProgress, data]
+        [horizontal, hasProgress, data, readingQueue]
       )}
       actionContent={useCallback(
         () => (
@@ -217,12 +240,17 @@ export function GalleryCard({
               {!hasProgress && <ReadButton data={data} />}
               {hasProgress && <ContinueButton data={data} />}
             </ItemCardActionContentItem>
+            {!(['tiny', 'small', 'mini'] as ItemSize[]).includes(size) && (
+              <ItemCardActionContentItem>
+                <AddToQueueButton data={data} />
+              </ItemCardActionContentItem>
+            )}
             <ItemCardActionContentItem>
               <SaveForLaterButton />
             </ItemCardActionContentItem>
           </ItemCardActionContent>
         ),
-        [data]
+        [data, size]
       )}
       image={useCallback(
         ({ children }: { children?: React.ReactNode }) => (
