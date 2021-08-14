@@ -17,7 +17,10 @@ import { ImageSize, ItemType } from '../misc/enums';
 import t from '../misc/lang';
 import { DragItemData } from '../misc/types';
 import { AppState } from '../state';
-import GalleryCard, { GalleryCardData, galleryCardDataFields } from './Gallery';
+import GalleryCard, {
+  GalleryCardData,
+  galleryCardDataFields,
+} from './item/Gallery';
 import { EmptySegment } from './Misc';
 
 export function SelectedBoard({}: {}) {

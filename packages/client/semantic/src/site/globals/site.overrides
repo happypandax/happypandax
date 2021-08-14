@@ -111,7 +111,7 @@ i.medium-size {
 
 .card-item {
     position: absolute !important;
-    margin: 0.25rem !important;
+    margin: 0.25rem;
     display: flex;
     align-items: center;
 }
@@ -126,6 +126,11 @@ i.medium-size {
 }
 .card-item.top, .pos-top {
     top: 0;
+}
+
+.card-item.center {
+    left: 45%;
+    right: 0;
 }
 
 .fullwidth {

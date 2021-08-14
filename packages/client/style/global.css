@@ -173,3 +173,11 @@
     filter: blur(0px);
 }
 }
+
+.mt-neg-50 {
+    margin-top: -50%;
+}
+
+.mt-neg-25 {
+    margin-top: -25%;
+}

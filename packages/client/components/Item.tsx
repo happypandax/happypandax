@@ -197,7 +197,7 @@ export function ItemLabel({
   y = 'top',
   children,
 }: {
-  x?: 'left' | 'right';
+  x?: 'left' | 'right' | 'center';
   y?: 'top' | 'bottom';
   children?: React.ReactNode;
 }) {
@@ -207,7 +207,7 @@ export function ItemLabel({
 }
 
 // https://github.com/Semantic-Org/Semantic-UI-React/issues/3950
-export function HeartIconLabel({
+export function FavoriteLabel({
   onRate,
   defaultRating,
 }: {
@@ -311,7 +311,7 @@ export function ItemCardContent({
             </ItemDetailsModal>
           )}
         <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
-          <itemContext.ActionContent />
+          {!!itemContext.ActionContent && <itemContext.ActionContent />}
         </Dimmer>
         {itemContext.horizontal && (
           <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
@@ -522,13 +522,13 @@ export function ItemCard({
 
   let itemSize = size ?? 'medium';
 
-  const imageElement = horizontal ? (
-    <Image />
-  ) : (
-    <Image>
-      <ActionContent />
-    </Image>
-  );
+  const imageElement = Image ? (
+    horizontal ? (
+      <Image />
+    ) : (
+      <Image>{!!ActionContent && <ActionContent />}</Image>
+    )
+  ) : undefined;
 
   const onMenuClose = useCallback(() => {
     setOpenMenu(false);
@@ -587,11 +587,11 @@ export function ItemCard({
                   <a>{imageElement}</a>
                 </Link>
               )}
-              {!!!href && imageElement}
+              {!!!href && !!imageElement && imageElement}
               {labels}
             </ItemCardLabels>
           )}
-          {horizontal && imageElement}
+          {horizontal && !!imageElement && imageElement}
           {children}
         </Card>
       </Ref>

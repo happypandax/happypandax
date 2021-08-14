@@ -8,7 +8,7 @@ import { Message } from 'semantic-ui-react';
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
 import { GalleryDataTable } from '../components/DataTable';
-import GalleryCard, { galleryCardDataFields } from '../components/Gallery';
+import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import {
   ClearFilterButton,
   FilterButtonInput,
@@ -28,7 +28,7 @@ import {
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
-import { ItemType } from '../misc/enums';
+import { ItemType, ViewType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerGallery, ServerItem } from '../misc/types';
 import { urlparse, urlstring } from '../misc/utility';
@@ -58,9 +58,22 @@ export async function getServerSideProps(
 
   const group = server.create_group_call();
 
+  const view = urlQuery.query?.view;
+
+  const metatags = {
+    trash: false,
+    favorite: urlQuery.query?.fav as boolean,
+    inbox:
+      ViewType.Library === view
+        ? false
+        : ViewType.Inbox === view
+        ? true
+        : undefined,
+  };
+
   const data = await server.library<ServerGallery>({
     item_type: itemType,
-    metatags: { favorite: urlQuery.query?.fav as boolean, trash: false },
+    metatags,
     page: urlQuery.query?.p as number,
     sort_options: {
       by: urlQuery.query?.sort as number,
@@ -146,6 +159,10 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   });
 
   useUpdateEffect(() => {
+    router.replace(urlstring({ view: view }));
+  }, [view]);
+
+  useUpdateEffect(() => {
     router.replace(urlstring({ fav: favorites || undefined }));
   }, [favorites]);
 
@@ -180,9 +197,9 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
             <MenuItem>
               <ViewButtons
                 view={view}
-                setView={setView}
+                onView={setView}
                 item={item}
-                setItem={setItem}
+                onItem={setItem}
               />
             </MenuItem>
           </MainMenu>

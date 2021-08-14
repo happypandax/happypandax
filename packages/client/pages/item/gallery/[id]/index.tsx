@@ -1,12 +1,13 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import { useRouter } from 'next/dist/client/router';
-import { useMemo } from 'react';
-import { Container, Grid, Segment } from 'semantic-ui-react';
+import { useCallback, useMemo } from 'react';
+import { Container, Grid, Icon, Label, Segment } from 'semantic-ui-react';
 
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
-} from '../../../../components/Gallery';
+} from '../../../../components/item/Gallery';
+import PageCard, { pageCardDataFields } from '../../../../components/item/Page';
 import {
   GalleryHeaderData,
   galleryHeaderDataFields,
@@ -14,10 +15,17 @@ import {
   ItemMenu,
 } from '../../../../components/layout/ItemLayout';
 import PageLayout from '../../../../components/layout/Page';
-import { Slider } from '../../../../components/Misc';
+import { PageTitle, Slider } from '../../../../components/Misc';
+import CardView from '../../../../components/view/CardView';
+import ListView from '../../../../components/view/ListView';
 import { ImageSize, ItemType } from '../../../../misc/enums';
 import t from '../../../../misc/lang';
-import { ServerGallery, ServerGrouping } from '../../../../misc/types';
+import {
+  ServerGallery,
+  ServerGrouping,
+  ServerItem,
+  ServerPage,
+} from '../../../../misc/types';
 import { urlparse, urlstring } from '../../../../misc/utility';
 import { ServiceType } from '../../../../services/constants';
 import ServerService from '../../../../services/server';
@@ -83,19 +91,19 @@ export async function getServerSideProps(
         series = r.items?.[0]?.galleries?.filter((g) => g.id !== itemId);
       });
 
-    // server
-    //   .library<ServerPage>({
-    //     item_type: ItemType.Gallery,
-    //     item_id: itemId,
-    //     related_type: ItemType.Page,
-    //     metatags: { trash: false },
-    //     page: urlQuery.query?.pp as number,
-    //     limit: urlQuery.query?.pplimit as number,
-    //     fields: [],
-    //   })
-    //   .then((r) => {
-    //     pages = r;
-    //   });
+    server
+      .library<ServerPage>({
+        item_type: ItemType.Gallery,
+        item_id: itemId,
+        related_type: ItemType.Page,
+        metatags: { trash: false },
+        page: urlQuery.query?.pp as number,
+        limit: urlQuery.query?.pplimit as number,
+        fields: pageCardDataFields,
+      })
+      .then((r) => {
+        pages = r;
+      });
 
     await group.call();
 
@@ -127,6 +135,8 @@ export default function Page(props: PageProps) {
     [router.query]
   );
 
+  const onItemKey = useCallback((item: ServerItem) => item.id, []);
+
   return (
     <PageLayout
       menu={useMemo(
@@ -135,6 +145,7 @@ export default function Page(props: PageProps) {
         ),
         [props.item]
       )}>
+      <PageTitle title={props?.item?.preferred_title?.name} />
       <GalleryItemHeader data={props.item} />
       <Container>
         <Segment basic>
@@ -164,33 +175,40 @@ export default function Page(props: PageProps) {
                 stateKey="similar_page"
                 label={t`Just like this one`}></Slider>
             </Grid.Row>
-            {/* <Grid.Row>
-            {display === 'card' && (
-              <CardView
-                hrefTemplate={pageHrefTemplate}
-                activePage={props.urlQuery.query?.p}
-                items={props.pages.items}
-                paddedChildren
-                itemRender={GalleryCard}
-                itemsPerPage={30}
-                onItemKey={onItemKey}
-                totalItemCount={items.count}
-                pagination={!!items.count}
-                bottomPagination={!!items.count}></CardView>
-            )}
-            {display === 'list' && (
-              <ListView
-                hrefTemplate={pageHrefTemplate}
-                items={items.items}
-                activePage={urlQuery.query?.p}
-                onItemKey={onItemKey}
-                itemsPerPage={itemCount}
-                itemRender={GalleryCard}
-                totalItemCount={items.count}
-                pagination={!!items.count}
-                bottomPagination={!!items.count}></ListView>
-            )}
-          </Grid.Row> */}
+            <Grid.Row as={Segment} basic>
+              <Label attached="top">
+                <Icon name="clone outline" />
+                {t`Pages`}
+                <Label.Detail>{props.pages.count}</Label.Detail>
+              </Label>
+              {display === 'card' && (
+                <CardView
+                  hrefTemplate={pageHrefTemplate}
+                  fluid
+                  activePage={props.urlQuery.query?.pp}
+                  items={props.pages.items}
+                  paddedChildren
+                  itemRender={PageCard}
+                  itemsPerPage={30}
+                  onItemKey={onItemKey}
+                  totalItemCount={props.pages.count}
+                  pagination={!!props.pages.count}
+                  bottomPagination={!!props.pages.count}></CardView>
+              )}
+              {display === 'list' && (
+                <ListView
+                  hrefTemplate={pageHrefTemplate}
+                  fluid
+                  items={props.pages.items}
+                  activePage={props.urlQuery.query?.pp}
+                  onItemKey={onItemKey}
+                  itemsPerPage={30}
+                  itemRender={PageCard}
+                  totalItemCount={props.pages.count}
+                  pagination={!!props.pages.count}
+                  bottomPagination={!!props.pages.count}></ListView>
+              )}
+            </Grid.Row>
           </Grid>
         </Segment>
       </Container>

@@ -70,6 +70,17 @@ export function StatusLabel({
   );
 }
 
+export function PageNumberLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof Label>) {
+  return (
+    <Label title={t`Page number`} color="black" basic {...props}>
+      {children}
+    </Label>
+  );
+}
+
 export function GroupingNumberLabel({
   children,
   ...props

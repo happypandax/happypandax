@@ -401,10 +401,12 @@ export function LabelAccordion({
   label?: React.ReactNode;
   detail?: React.ReactNode;
 } & React.ComponentProps<typeof Segment>) {
-  const [show, setShow] = useInitialRecoilState(
-    MiscState.label_accordion_open(stateKey),
-    initialShow ?? defaultShow
-  );
+  const [show, setShow] = stateKey
+    ? useInitialRecoilState(
+        MiscState.label_accordion_open(stateKey),
+        initialShow ?? defaultShow
+      )
+    : useState(initialShow ?? defaultShow);
 
   return (
     <Segment

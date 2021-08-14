@@ -76,21 +76,6 @@ export enum ImageSize {
   x768 = 14,
 }
 
-export enum ViewType {
-  // Contains all items except items in Trash
-  All = 6,
-  // Contains all items except items in Inbox and Trash
-  Library = 1,
-  // Contains all favourite items (mutually exclusive with items in Inbox)
-  Favorite = 2,
-  // Contains only items in Inbox
-  Inbox = 3,
-  // Contains only items in Trash
-  Trash = 4,
-  // Contains only items in ReadLater
-  ReadLater = 5,
-}
-
 export enum ItemSort {
   // Gallery Random
   GalleryRandom = 1,
@@ -268,4 +253,13 @@ export enum DrawerTab {
   Queue = 0,
   Selected,
   Recent,
+}
+
+export enum ViewType {
+  // Contains all items except items in Trash
+  All = 1,
+  // Contains all items except items in Inbox and Trash
+  Library = 2,
+  // Contains only items in Inbox
+  Inbox = 3,
 }

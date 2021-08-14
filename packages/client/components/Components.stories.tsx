@@ -1,6 +1,6 @@
 import { Label } from 'semantic-ui-react';
 
-import GalleryCard from './Gallery';
+import GalleryCard from './item/Gallery';
 import { ViewButtons as ViewButtonsC } from './layout/GalleryLayout';
 import {
   EmptySegment,

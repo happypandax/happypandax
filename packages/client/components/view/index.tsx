@@ -218,6 +218,7 @@ export function PaginatedView({
   itemCount = 0,
   activePage,
   onPageChange,
+  fluid,
   hrefTemplate,
   ...props
 }: {
@@ -227,6 +228,7 @@ export function PaginatedView({
   sidebarVisible?: boolean;
   sidebarContent?: React.ReactNode | React.ReactNode[];
   pagination?: boolean;
+  fluid?: boolean;
   totalItemCount?: number;
   itemCount?: number;
   itemsPerPage?: number;
@@ -266,7 +268,7 @@ export function PaginatedView({
       as={Segment}
       basic
       {...props}
-      className={classNames('no-padding-segment', props.className)}>
+      className={classNames('no-padding-segment', { fluid }, props.className)}>
       <Sidebar
         visible={sidebarVisible}
         animation={sidebarAnimation}

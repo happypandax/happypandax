@@ -58,21 +58,27 @@ export default function Page({ next }: PageProps) {
             mobile="15"
             tablet="9"
             computer="7">
-            <div className="center-text">
-              <img src="/img/hpx_logo.svg" className="hpxlogo" alt="hpxlogo" />
-            </div>
-            <Divider hidden horizontal />
-            <Segment clearing>
-              <LoginForm
-                onSuccess={useCallback(() => {
-                  setLoggedIn(true);
+            <div className="mt-neg-25">
+              <div className="center-text">
+                <img
+                  src="/img/hpx_logo.svg"
+                  className="hpxlogo"
+                  alt="hpxlogo"
+                />
+              </div>
+              <Divider hidden horizontal />
+              <Segment clearing>
+                <LoginForm
+                  onSuccess={useCallback(() => {
+                    setLoggedIn(true);
 
-                  if (next) {
-                    router.replace(next, undefined);
-                  }
-                }, [home, next])}
-              />
-            </Segment>
+                    if (next) {
+                      router.replace(next, undefined);
+                    }
+                  }, [home, next])}
+                />
+              </Segment>
+            </div>
           </Grid.Column>
         </Grid.Row>
       </Grid>

@@ -54,7 +54,10 @@ import {
   useInitialRecoilState,
   useInitialRecoilValue,
 } from '../state';
-import GalleryCard, { GalleryCardData, galleryCardDataFields } from './Gallery';
+import GalleryCard, {
+  GalleryCardData,
+  galleryCardDataFields,
+} from './item/Gallery';
 import { Slider } from './Misc';
 
 function getOptimalImageSize() {

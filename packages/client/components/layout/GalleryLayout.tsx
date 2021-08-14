@@ -212,15 +212,15 @@ export function OnlyFavoritesButton({
 export function ViewButtons({
   size = 'small',
   item,
-  setItem,
-  setView,
+  onView,
+  onItem,
   view,
 }: {
   size?: React.ComponentProps<typeof ButtonGroup>['size'];
   view: ViewType;
-  setView: (view: ViewType) => void;
+  onView: (view: ViewType) => void;
   item: ItemType;
-  setItem: (item: ItemType) => void;
+  onItem: (item: ItemType) => void;
 }) {
   const options = useMemo(
     () => [
@@ -260,6 +260,10 @@ export function ViewButtons({
         basic
         className="active"
         value={view}
+        onChange={useCallback((ev, data) => {
+          ev.preventDefault();
+          onView?.(data.value as ViewType);
+        }, [])}
         options={options}
         button
       />
@@ -267,13 +271,13 @@ export function ViewButtons({
         primary
         basic={item === ItemType.Collection}
         onClick={useCallback(() => {
-          setItem(ItemType.Collection);
+          onItem?.(ItemType.Collection);
         }, [])}>{t`Collection`}</Button>
       <Button
         primary
         basic={item === ItemType.Gallery}
         onClick={useCallback(() => {
-          setItem(ItemType.Gallery);
+          onItem?.(ItemType.Gallery);
         }, [])}>{t`Gallery`}</Button>
     </ButtonGroup>
   );

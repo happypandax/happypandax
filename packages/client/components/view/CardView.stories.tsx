@@ -1,4 +1,4 @@
-import GalleryCard from '../Gallery';
+import GalleryCard from '../item/Gallery';
 import CardView from './CardView';
 
 export default {

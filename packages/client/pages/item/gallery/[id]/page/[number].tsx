@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GalleryCardData,
   galleryCardDataFields,
-} from '../../../../../components/Gallery';
+} from '../../../../../components/item/Gallery';
 import PageLayout, {
   BottomZoneItem,
 } from '../../../../../components/layout/Page';

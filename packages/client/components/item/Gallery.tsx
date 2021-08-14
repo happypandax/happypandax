@@ -3,20 +3,25 @@ import { useCallback, useMemo } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { Button, Icon } from 'semantic-ui-react';
 
-import { ItemType } from '../misc/enums';
-import t from '../misc/lang';
-import { FieldPath, ItemSize, ServerGallery, ServerItem } from '../misc/types';
-import { AppState } from '../state';
+import { ItemType } from '../../misc/enums';
+import t from '../../misc/lang';
+import {
+  FieldPath,
+  ItemSize,
+  ServerGallery,
+  ServerItem,
+} from '../../misc/types';
+import { AppState } from '../../state';
 import {
   GroupingNumberLabel,
   LanguageLabel,
   PageCountLabel,
   ReadCountLabel,
   StatusLabel,
-} from './data/Common';
-import { GalleryDataTable } from './DataTable';
+} from '../data/Common';
+import { GalleryDataTable } from '../DataTable';
 import {
-  HeartIconLabel,
+  FavoriteLabel,
   InboxIconLabel,
   ItemCard,
   ItemCardActionContent,
@@ -32,7 +37,7 @@ import {
   ReadLaterIconLabel,
   TranslucentLabel,
   UnreadIconLabel,
-} from './Item';
+} from '../Item';
 
 export type GalleryCardData = DeepPick<
   ServerGallery,
@@ -128,7 +133,7 @@ function AddToQueueButton({ data }: { data: GalleryCardData }) {
   );
 }
 
-function GalleryCardMenu({
+function GalleryMenu({
   hasProgress,
   read,
 }: {
@@ -151,9 +156,11 @@ function GalleryCardMenu({
       {read && (
         <ItemMenuLabelItem icon="eye">{t`Mark as unread`}</ItemMenuLabelItem>
       )}
+      <ItemMenuLabelItem icon="trash">{t`Delete`}</ItemMenuLabelItem>
     </ItemMenuLabel>
   );
 }
+
 export function GalleryCard({
   size,
   data,
@@ -195,7 +202,7 @@ export function GalleryCard({
       labels={useMemo(
         () => [
           <ItemLabel x="left" y="top">
-            <HeartIconLabel />
+            <FavoriteLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             {readingQueue?.includes?.(data?.id) && <QueueIconLabel />}
@@ -205,7 +212,7 @@ export function GalleryCard({
             {hasProgress && (
               <ReadingIconLabel percent={data?.progress?.percent} />
             )}
-            {!!data?.number && data?.number > 0 && (
+            {data?.number !== undefined && data?.number > 0 && (
               <GroupingNumberLabel as={TranslucentLabel}>
                 {data?.number}
               </GroupingNumberLabel>
@@ -225,7 +232,7 @@ export function GalleryCard({
             {!horizontal && (
               <TranslucentLabel circular>{data?.page_count}</TranslucentLabel>
             )}
-            <GalleryCardMenu
+            <GalleryMenu
               hasProgress={hasProgress}
               read={data?.metatags?.read}
             />

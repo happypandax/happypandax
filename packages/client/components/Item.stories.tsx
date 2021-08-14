@@ -1,5 +1,5 @@
 import { SelectedBoard } from './Drawer';
-import { GalleryCard } from './Gallery';
+import { GalleryCard } from './item/Gallery';
 import PageLayout from './layout/Page';
 
 export default {

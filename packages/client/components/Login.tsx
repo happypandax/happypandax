@@ -59,8 +59,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <>
       <Button
-        primary
         fluid
+        basic
         color="violet"
         onClick={(e) => {
           e.preventDefault();
