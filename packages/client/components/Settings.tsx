@@ -36,6 +36,7 @@ export function SettingsTab() {
           {
             menuItem: {
               key: 'general',
+              icon: 'cog',
               content: t`General`,
             },
             render: () => (
@@ -46,7 +47,20 @@ export function SettingsTab() {
           },
           {
             menuItem: {
+              key: 'plugins',
+              icon: 'cubes',
+              content: t`Plugins`,
+            },
+            render: () => (
+              <Tab.Pane basic className="no-padding-segment">
+                <NetworkPane />
+              </Tab.Pane>
+            ),
+          },
+          {
+            menuItem: {
               key: 'network',
+              icon: 'project diagram',
               content: t`Network`,
             },
             render: () => (
@@ -58,6 +72,7 @@ export function SettingsTab() {
           {
             menuItem: {
               key: 'server',
+              icon: <Icon className="hpx-standard" />,
               content: t`Server`,
             },
             render: () => (
@@ -69,6 +84,7 @@ export function SettingsTab() {
           {
             menuItem: {
               key: 'advanced',
+              icon: 'exclamation triangle',
               content: t`Advanced`,
             },
             render: () => (
@@ -98,7 +114,7 @@ export default function SettingsModal({
         <Icon name="settings" />
         {t`Preferences`}
       </Modal.Header>
-      <Modal.Content as={Segment} basic>
+      <Modal.Content as={Segment} className="no-margins" basic>
         <SettingsTab />
       </Modal.Content>
     </Modal>

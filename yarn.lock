@@ -2015,13 +2015,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@brainhubeu/react-carousel@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "@brainhubeu/react-carousel@npm:2.0.3"
+"@brainhubeu/react-carousel@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "@brainhubeu/react-carousel@npm:2.0.4"
   peerDependencies:
     react: ^16.8.0
     react-dom: ^16.8.0
-  checksum: 8f9be783750bfa26134f56baa32cbbe7d8e2c9c753548e32dd4faf19751bca178dc79bb74cdddd129fea7264fa79cd9d8759f7afc30602d32772b7eb7f4f9a0d
+  checksum: 8f9690e7a42e281ce912de823313506cb7d7aac8e1e4d1d67f60786da9d653c78dae48dd5a678c9b1382922cc02f0467365dcd2d0bdabe9aa39700ae676f44e5
   languageName: node
   linkType: hard
 
@@ -2256,7 +2256,7 @@ __metadata:
   dependencies:
     "@babel/core": ^7.13.10
     "@babel/plugin-proposal-decorators": ^7.14.5
-    "@brainhubeu/react-carousel": ^2.0.3
+    "@brainhubeu/react-carousel": ^2.0.4
     "@grabrinc/isomorphic-logger": ^0.1.59
     "@mdx-js/react": ^1.6.22
     "@msgpack/msgpack": ^2.7.0
@@ -2312,6 +2312,7 @@ __metadata:
     storybook-addon-themes: ^6.1.0
     storybook-css-modules-preset: ^1.0.8
     superjson: ^1.7.4
+    swiper: ^6.8.1
     ts-deep-pick: ^0.2.2
     ts-typetools: ^0.6.1
     ttag: ^1.7.24
@@ -2322,12 +2323,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@happypandax/momo@workspace:packages/momo":
+  version: 0.0.0-use.local
+  resolution: "@happypandax/momo@workspace:packages/momo"
+  languageName: unknown
+  linkType: soft
+
 "@happypandax/tools@workspace:packages/tools":
   version: 0.0.0-use.local
   resolution: "@happypandax/tools@workspace:packages/tools"
   dependencies:
     "@types/node": ^14.14.35
-    happypandax-client: ^2.0.1
+    happypandax-client: ^3.0.0
     ts-node: ^9.1.1
     typescript: ^4.2.3
   languageName: unknown
@@ -8225,6 +8232,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dom7@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "dom7@npm:3.0.0"
+  dependencies:
+    ssr-window: ^3.0.0-alpha.1
+  checksum: 8beff48475ec564d96a5bcec88eac784d1ff2ceca0f663cfb6a5f54fcebd5b5bf805b508161c24ededf7f84d02af7a976b340e86082b11673345d6c216abd8af
+  languageName: node
+  linkType: hard
+
 "domain-browser@npm:4.19.0":
   version: 4.19.0
   resolution: "domain-browser@npm:4.19.0"
@@ -10645,13 +10661,6 @@ fsevents@^1.2.7:
   version: 1.0.2
   resolution: "hamt_plus@npm:1.0.2"
   checksum: b1b1d65d19546a513cd68ea8e9970b5e76c61549bd395ea7d8f809d439940738cc5a36eaa712668e69099a5fd62cfafb8c34079e392697f31eee04ab5b6d4094
-  languageName: node
-  linkType: hard
-
-"happypandax-client@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "happypandax-client@npm:2.0.1"
-  checksum: cd622eac464b4dd31de72a8c351df313acd72d62d694a31fa2e1385dfca5d1fcec910195370dde01758abd50d91ee2b99e09bfcf57e01c1889a727fe775c0d53
   languageName: node
   linkType: hard
 
@@ -17658,6 +17667,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"ssr-window@npm:^3.0.0, ssr-window@npm:^3.0.0-alpha.1":
+  version: 3.0.0
+  resolution: "ssr-window@npm:3.0.0"
+  checksum: 36ac4b6ba91d0cafc83f43aff094b1e32ce55e3f8b31e4538694b203f4b797690b66c7aca17a3f514df82868271a7248514b5b6aca766eb50c97e6fe77b32358
+  languageName: node
+  linkType: hard
+
 "ssri@npm:^6.0.1":
   version: 6.0.1
   resolution: "ssri@npm:6.0.1"
@@ -18279,6 +18295,16 @@ fsevents@^1.2.7:
     es6-iterator: ^2.0.1
     es6-symbol: ^3.1.1
   checksum: 3f6cc0c85d163f50c6c3c93eec28b2f55a79e5659723abb1b7172b2efdff99656b0f5df976ebc125824aec886afed9574757f7ea992d33bde1045d9007a8dcf7
+  languageName: node
+  linkType: hard
+
+"swiper@npm:^6.8.1":
+  version: 6.8.1
+  resolution: "swiper@npm:6.8.1"
+  dependencies:
+    dom7: ^3.0.0
+    ssr-window: ^3.0.0
+  checksum: 1bb2d303bd869e306ec92e430e4da6a11c05a12155e399f4b414ff4ec9c8511c8c309182d4897c1d93a129663ca4fdb02b3730539e7e8c86f1528c704e8a583d
   languageName: node
   linkType: hard
 

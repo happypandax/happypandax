@@ -110,7 +110,7 @@ function TrashSidebarItem() {
       href="/trash"
       icon={'trash'}
       label="23"
-      labelColor="red">{t`Downloads`}</SidebarItem>
+      labelColor="red">{t`Trash`}</SidebarItem>
   );
 }
 
@@ -183,7 +183,7 @@ export function MainSidebar({
           </div>
           <div className="middle-aligned">
             <SidebarItem
-              href="/favorite"
+              href="/favorites"
               icon={{ name: 'heart', color: 'red' }} // <-- use React.memo
             >{t`Favorites`}</SidebarItem>
             <SidebarItem
@@ -194,7 +194,6 @@ export function MainSidebar({
               icon={'cubes'}>{t`Directory`}</SidebarItem>
             <DownloadSidebarItem />
             <MetadataSidebarItem />
-            <SidebarItem href="/tasks" icon={'tasks'}>{t`Tasks`}</SidebarItem>
           </div>
           <div className="bottom-aligned">
             <TrashSidebarItem />
@@ -216,14 +215,19 @@ export function MainSidebar({
 export default MainSidebar;
 
 function mainMenuProps() {
-  const el = document.getElementById('main-menu');
+  const fixedEl: HTMLDivElement = document.querySelector('.main-menu.fixed');
   const r = {
-    height: 0,
-    fixed: el?.classList?.contains?.('fixed'),
+    height: fixedEl?.offsetHeight ?? 0,
+    fixed: !!fixedEl,
   };
-  if (el && !r.fixed && el.offsetHeight) {
-    r.height = el.offsetHeight;
+
+  if (!r.fixed) {
+    const el: HTMLDivElement = document.querySelector('.main-menu:not(.fixed)');
+    if (el.offsetHeight) {
+      r.height = el.offsetHeight;
+    }
   }
+  console.log(r);
   return r;
 }
 
@@ -238,10 +242,10 @@ export function StickySidebar({
   const computeTop = useCallback(() => {
     if (visible) {
       const mh = mainMenuProps();
-      const t = Math.max(0, window.scrollY - mh.height);
+      const t = Math.max(0, window.scrollY + (mh.fixed ? 0 : -mh.height));
       ref.current.style.top = `${t}px`;
       if (mh.height && (mh.fixed || !t)) {
-        ref.current.style.setProperty('max-height', '94vh', 'important');
+        ref.current.style.setProperty('max-height', '94.5vh', 'important');
       } else {
         ref.current.style.setProperty('max-height', '98vh', 'important');
       }

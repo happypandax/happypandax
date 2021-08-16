@@ -1,6 +1,11 @@
 @import url('./nprogress.css');
 @import url('./reader.css');
 
+html, body {
+    min-height: 100%;
+    height: auto;
+}
+
 .overflow-x-auto {
     overflow-x: auto;
 }

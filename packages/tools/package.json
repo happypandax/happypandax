@@ -6,7 +6,7 @@
     "start": "ts-node --log-error -T ./index.ts"
   },
   "dependencies": {
-    "happypandax-client": "^2.0.1"
+    "happypandax-client": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^14.14.35",

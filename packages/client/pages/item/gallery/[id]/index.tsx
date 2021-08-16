@@ -15,7 +15,12 @@ import {
   ItemMenu,
 } from '../../../../components/layout/ItemLayout';
 import PageLayout from '../../../../components/layout/Page';
-import { PageTitle, Slider } from '../../../../components/Misc';
+import {
+  PageTitle,
+  SimilarItemsSlider,
+  Slider,
+  SliderElement,
+} from '../../../../components/Misc';
 import CardView from '../../../../components/view/CardView';
 import ListView from '../../../../components/view/ListView';
 import { ImageSize, ItemType } from '../../../../misc/enums';
@@ -92,15 +97,18 @@ export async function getServerSideProps(
       });
 
     server
-      .library<ServerPage>({
-        item_type: ItemType.Gallery,
-        item_id: itemId,
-        related_type: ItemType.Page,
-        metatags: { trash: false },
-        page: urlQuery.query?.pp as number,
-        limit: urlQuery.query?.pplimit as number,
-        fields: pageCardDataFields,
-      })
+      .library<ServerPage>(
+        {
+          item_type: ItemType.Gallery,
+          item_id: itemId,
+          related_type: ItemType.Page,
+          metatags: { trash: false },
+          page: urlQuery.query?.pp as number,
+          limit: (urlQuery.query?.pplimit as number) ?? 50,
+          fields: pageCardDataFields,
+        },
+        group
+      )
       .then((r) => {
         pages = r;
       });
@@ -154,7 +162,9 @@ export default function Page(props: PageProps) {
               <Grid.Row>
                 <Slider stateKey="series_page" label={t`Series`} color="teal">
                   {props?.series?.map?.((i) => (
-                    <GalleryCard key={i.id} size="small" data={i} />
+                    <SliderElement key={i.id}>
+                      <GalleryCard size="small" data={i} />
+                    </SliderElement>
                   ))}
                 </Slider>
               </Grid.Row>
@@ -163,19 +173,23 @@ export default function Page(props: PageProps) {
               <Slider
                 stateKey="same_artist_page"
                 label={t`From same artist`}
+                defaultShow={!!props?.sameArtist?.length}
                 color="blue">
                 {props?.sameArtist?.map?.((i) => (
-                  <GalleryCard key={i.id} size="small" data={i} />
+                  <SliderElement key={i.id}>
+                    <GalleryCard size="small" data={i} />
+                  </SliderElement>
                 ))}
               </Slider>
             </Grid.Row>
             <Grid.Row>
-              <Slider
-                autoplay
+              <SimilarItemsSlider
                 stateKey="similar_page"
-                label={t`Just like this one`}></Slider>
+                item={props.item}
+                type={ItemType.Gallery}
+              />
             </Grid.Row>
-            <Grid.Row as={Segment} basic>
+            <Grid.Row as={Segment} basic id="pages">
               <Label attached="top">
                 <Icon name="clone outline" />
                 {t`Pages`}

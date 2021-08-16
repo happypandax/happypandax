@@ -1,10 +1,10 @@
 import classNames from 'classnames';
-import { createContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { Icon, IconProps, Menu, Popup, Ref } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
 import { QueryType, useQueryType } from '../client/queries';
-import { useInterval } from '../hooks/utils';
+import { useDocumentEvent, useInterval } from '../hooks/utils';
 import styles from './Menu.module.css';
 
 const MenuContext = createContext({});
@@ -134,27 +134,63 @@ export function MainMenu({
   size?: React.ComponentProps<typeof Menu>['size'];
   borderless?: boolean;
   absolutePosition?: boolean;
-  fixed?: boolean;
+  fixed?: React.ComponentProps<typeof Menu>['fixed'] | boolean;
   connectionItem?: boolean;
   children?: React.ReactNode;
 }) {
+  const ref = useRef<HTMLDivElement>();
+
+  const [isFixed, setIsFixed] = useState<
+    React.ComponentProps<typeof Menu>['fixed'] | boolean
+  >();
+
+  const fixMenu = useCallback(() => {
+    if (window.scrollY > ref.current.offsetHeight * 1.4) {
+      if (isFixed !== fixed) {
+        setIsFixed(fixed);
+      }
+    } else {
+      if (isFixed !== undefined) {
+        setIsFixed(undefined);
+      }
+    }
+  }, [fixed, isFixed]);
+
+  useEffect(() => fixMenu(), []);
+
+  useDocumentEvent(
+    'scroll',
+    () => {
+      fixMenu();
+    },
+    { passive: true },
+    [fixMenu]
+  );
+
   if (hidden) return <></>;
 
-  return (
+  const el = (fixed) => (
     <Menu
-      id="main-menu"
       size={size}
       fluid
       borderless={borderless}
-      fixed={fixed ? 'top' : undefined}
+      fixed={fixed === true ? 'top' : fixed ?? undefined}
       secondary={!fixed}
       className={classNames(
+        'main-menu',
         'pusher no-margins standard-z-index',
         absolutePosition ? 'pos-absolute' : 'pos-relative'
       )}>
       {children}
       {connectionItem && <ConnectionItem />}
     </Menu>
+  );
+
+  return (
+    <>
+      {!!isFixed && el()}
+      <Ref innerRef={ref}>{el(isFixed)}</Ref>
+    </>
   );
 }
 

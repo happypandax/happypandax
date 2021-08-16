@@ -58,7 +58,7 @@ import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import { Slider } from './Misc';
+import { SimilarItemsSlider, Slider, SliderElement } from './Misc';
 
 function getOptimalImageSize() {
   const w = getPageWidth();
@@ -1694,7 +1694,9 @@ export function EndContent({
             label={t`Queue`}
             color="red">
             {((queueData?.data as any) as ServerGallery[])?.map?.((g) => (
-              <GalleryCard key={g.id} size="small" data={g} />
+              <SliderElement key={g.id}>
+                <GalleryCard size="small" data={g} />
+              </SliderElement>
             ))}
           </Slider>
         </Grid.Column>
@@ -1704,7 +1706,9 @@ export function EndContent({
           <Grid.Column>
             <Slider stateKey="series" label={t`Series`} color="teal">
               {series.map((i) => (
-                <GalleryCard key={i.id} size="small" data={i} />
+                <SliderElement key={i.id}>
+                  <GalleryCard size="small" data={i} />
+                </SliderElement>
               ))}
             </Slider>
           </Grid.Column>
@@ -1719,7 +1723,9 @@ export function EndContent({
             defaultShow={false}
             color="violet">
             {readingList.map((i) => (
-              <GalleryCard key={i.id} size="small" data={i} />
+              <SliderElement key={i.id}>
+                <GalleryCard size="small" data={i} />
+              </SliderElement>
             ))}
           </Slider>
         </Grid.Column>
@@ -1732,19 +1738,16 @@ export function EndContent({
             defaultShow={!sameArtist?.length}
             color="blue">
             {sameArtist.map((i) => (
-              <GalleryCard key={i.id} size="small" data={i} />
+              <SliderElement key={i.id}>
+                <GalleryCard size="small" data={i} />
+              </SliderElement>
             ))}
           </Slider>
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <Slider autoplay stateKey="similar" label={t`Just like this one`}>
-            <GalleryCard size="small" data={gdata(8)} />
-            <GalleryCard size="small" data={gdata(9)} />
-            <GalleryCard size="small" data={gdata(10)} />
-            <GalleryCard size="small" data={gdata(11)} />
-          </Slider>
+          <SimilarItemsSlider item={item} type={ItemType.Gallery} />
         </Grid.Column>
       </Grid.Row>
     </Grid>

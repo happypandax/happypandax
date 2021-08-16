@@ -151,6 +151,18 @@ export function AboutTab() {
           },
           {
             menuItem: {
+              key: 'activity',
+              icon: 'exchange',
+              content: t`Activity`,
+            },
+            render: () => (
+              <Tab.Pane basic className="no-padding-segment">
+                <StatsPane />
+              </Tab.Pane>
+            ),
+          },
+          {
+            menuItem: {
               key: 'statistics',
               icon: 'bar chart',
               content: t`Statistics`,

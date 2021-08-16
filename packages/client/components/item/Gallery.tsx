@@ -21,6 +21,7 @@ import {
 } from '../data/Common';
 import { GalleryDataTable } from '../DataTable';
 import {
+  ActivityLabel,
   FavoriteLabel,
   InboxIconLabel,
   ItemCard,
@@ -31,7 +32,6 @@ import {
   ItemLabel,
   ItemMenuLabel,
   ItemMenuLabelItem,
-  ProgressLabel,
   QueueIconLabel,
   ReadingIconLabel,
   ReadLaterIconLabel,
@@ -143,13 +143,17 @@ function GalleryMenu({
   return (
     <ItemMenuLabel>
       {!hasProgress && (
-        <ItemMenuLabelItem icon="book open">{t`Read`}</ItemMenuLabelItem>
+        <>
+          <ItemMenuLabelItem icon="book open">{t`Read`}</ItemMenuLabelItem>
+          <ItemMenuLabelItem icon="book open">{t`Read in New Tab`}</ItemMenuLabelItem>
+        </>
       )}
       {hasProgress && (
         <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
       )}
       <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
+      <ItemMenuLabelItem icon="exchange">{t`Show activity`}</ItemMenuLabelItem>
       {!read && (
         <ItemMenuLabelItem icon="eye">{t`Mark as read`}</ItemMenuLabelItem>
       )}
@@ -217,7 +221,7 @@ export function GalleryCard({
                 {data?.number}
               </GroupingNumberLabel>
             )}
-            <ProgressLabel />
+            <ActivityLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="bottom">
             {horizontal && <StatusLabel as={TranslucentLabel} />}

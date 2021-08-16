@@ -1,4 +1,4 @@
-import { ItemType, ViewType } from '../misc/enums';
+import { ItemSort, ItemType, ViewType } from '../misc/enums';
 import { ServerItem } from '../misc/types';
 import StateBlock, { defineAtom } from './_base';
 
@@ -12,15 +12,19 @@ export default class _LibraryState extends StateBlock {
   });
 
   static sort = defineAtom({
-    default: undefined as number,
+    default: ItemSort.GalleryDate,
   });
 
   static sortDesc = defineAtom({
-    default: false,
+    default: true,
   });
 
   static display = defineAtom({
     default: 'card' as 'list' | 'card',
+  });
+
+  static query = defineAtom({
+    default: '',
   });
 
   static view = defineAtom({
@@ -31,7 +35,7 @@ export default class _LibraryState extends StateBlock {
     default: ItemType.Gallery,
   });
 
-  static itemCount = defineAtom({
+  static limit = defineAtom({
     default: 30,
   });
 

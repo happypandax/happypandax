@@ -20,6 +20,7 @@ export enum QueryType {
   ITEMS,
   ITEM,
   RELATED_ITEMS,
+  SIMILAR,
   SORT_INDEXES,
   SERVER_STATUS,
 }
@@ -169,6 +170,16 @@ export function useQueryType<
       );
     }
 
+    case QueryType.SIMILAR: {
+      return useQuery(
+        [type.toString()],
+        () => {
+          return axios.get(urlstring('/api/similar', variables));
+        },
+        opts
+      );
+    }
+
     default:
       throw Error('Invalid query type');
   }
@@ -242,6 +253,14 @@ interface FetchPages<T = undefined> extends QueryAction<T> {
   };
 }
 
+interface FetchSimilar<T = undefined> extends QueryAction<T> {
+  type: QueryType.SIMILAR;
+  dataType: Unwrap<ReturnType<ServerService['similar']>>;
+  variables: Omit<Parameters<ServerService['similar']>[0], 'fields'> & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -249,6 +268,7 @@ type QueryActions<T = undefined> =
   | FetchPages<T>
   | FetchRelatedItems<T>
   | FetchSortIndexes<T>
+  | FetchSimilar<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================

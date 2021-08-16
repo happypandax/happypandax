@@ -277,10 +277,29 @@ export default class ServerService extends Service {
       sort_options?: SortOptions;
       search_query?: string;
       search_options?: {};
+      profile_options?: ProfileOptions;
     },
     group?: GroupCall
   ) {
     const data = await this._call('library_view', args, group);
+    throw_msg_error(data);
+    return data.data as {
+      count: number;
+      items: R extends undefined ? JsonMap[] : R[];
+    };
+  }
+
+  async similar<R = undefined>(
+    args: {
+      item_type: ItemType;
+      item_id: number;
+      fields?: FieldPath<R>[];
+      limit?: number;
+      profile_options?: ProfileOptions;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_similar', args, group);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -391,7 +410,7 @@ export class GroupCall {
 
     this.#promises.push(p);
 
-    promiseTimeout(p, 1000).catch((e) => {
+    promiseTimeout(p, 10000).catch((e) => {
       if (e === timeoutError) {
         global.app.log.c("forgot to call 'GroupCall.call()' for: ", func);
         this.#promises_resolves.forEach(([_, reject]) => reject(e));

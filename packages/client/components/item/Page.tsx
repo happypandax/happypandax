@@ -5,6 +5,7 @@ import t from '../../misc/lang';
 import { FieldPath, ItemSize, ServerPage } from '../../misc/types';
 import { PageNumberLabel } from '../data/Common';
 import {
+  ActivityLabel,
   FavoriteLabel,
   InboxIconLabel,
   ItemCard,
@@ -12,7 +13,6 @@ import {
   ItemLabel,
   ItemMenuLabel,
   ItemMenuLabelItem,
-  ProgressLabel,
 } from '../Item';
 
 export type PageCardData = DeepPick<
@@ -75,7 +75,7 @@ export function PageCard({
           </ItemLabel>,
           <ItemLabel x="right" y="top">
             {!!data?.metatags?.inbox && <InboxIconLabel />}
-            <ProgressLabel />
+            <ActivityLabel />
           </ItemLabel>,
           <ItemLabel x="center" y="bottom">
             {data?.number !== undefined && (

@@ -3,5 +3,5 @@
   "version": "0.1.0",
   "dependencies": ["pybind11", "fmt", "catch2", "python3"],
   "builtin-baseline": "9f6157af4e5b04ab3cc63150a20b1bad901a7d0b",
-  "overrides": [{ "name": "python3", "version": "3.7.4" }]
+  "overrides": [{ "name": "python3", "version": "3.8.10" }]
 }

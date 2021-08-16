@@ -38,7 +38,7 @@ class HPX {
     ]
   ) {
     for (const f of functions) {
-      console.log(`Measurin ${f[1]}...`);
+      console.log(`Measuring ${f[1]}...`);
       await this.call([{ fname: f[0], ...f[1] }]);
     }
   }

@@ -257,9 +257,9 @@ export enum DrawerTab {
 
 export enum ViewType {
   // Contains all items except items in Trash
-  All = 1,
+  All = 0,
   // Contains all items except items in Inbox and Trash
-  Library = 2,
+  Library = 1,
   // Contains only items in Inbox
-  Inbox = 3,
+  Inbox = 2,
 }

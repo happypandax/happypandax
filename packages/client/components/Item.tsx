@@ -224,9 +224,9 @@ export function FavoriteLabel({
   );
 }
 
-export function ProgressLabel() {
+export function ActivityLabel() {
   return (
-    <TranslucentLabel size="mini" circular basic={false}>
+    <TranslucentLabel floating size="mini" circular basic={false}>
       <Loader inline active size="mini" />
     </TranslucentLabel>
   );
@@ -371,6 +371,8 @@ function SemanticNextImage({
   );
 }
 
+const defaultImage = '/img/default.png';
+
 export function ItemCardImage({
   children,
   src,
@@ -381,6 +383,16 @@ export function ItemCardImage({
   const router = useRouter();
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const imgSrc = !src
+    ? defaultImage
+    : typeof src === 'string'
+    ? src
+    : src.data
+    ? src.data
+    : defaultImage;
+
+  const [imageErr, setImageErr] = useState(false);
 
   const Details = itemContext.Details;
 
@@ -394,20 +406,12 @@ export function ItemCardImage({
 
   const libraryContext = useContext(LibraryContext);
 
-  const imgSrc = !src
-    ? '/img/default.png'
-    : typeof src === 'string'
-    ? src
-    : src.data
-    ? src.data
-    : '/img/default.png';
-
   // const size = src && typeof src !== 'string' ? src.size : undefined;
 
   return (
     <Image
       // as={!src || typeof src === 'string' ? 'img' : SemanticNextImage}
-      src={imgSrc}
+      src={imageErr ? defaultImage : imgSrc}
       // width={size?.[0]}
       // height={size?.[1]}
       fluid={!itemContext.horizontal}
@@ -431,6 +435,9 @@ export function ItemCardImage({
         },
         [itemContext.horizontal, itemContext.detailsData, libraryContext]
       )}
+      onError={useCallback(() => {
+        setImageErr(true);
+      }, [imgSrc])}
       dimmer={{
         active: itemContext.hover && !itemContext.horizontal,
         inverted: true,

@@ -1,9 +1,10 @@
+import classNames from 'classnames';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { Message } from 'semantic-ui-react';
+import { Menu, Message } from 'semantic-ui-react';
 
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
@@ -21,6 +22,7 @@ import PageLayout, { BottomZoneItem } from '../components/layout/Page';
 import MainMenu, { MenuItem } from '../components/Menu';
 import {
   EmptySegment,
+  ItemSearch,
   PageInfoMessage,
   PageTitle,
   Visible,
@@ -28,7 +30,7 @@ import {
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
-import { ItemType, ViewType } from '../misc/enums';
+import { ItemSort, ItemType, ViewType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerGallery, ServerItem } from '../misc/types';
 import { urlparse, urlstring } from '../misc/utility';
@@ -64,20 +66,21 @@ export async function getServerSideProps(
     trash: false,
     favorite: urlQuery.query?.fav as boolean,
     inbox:
-      ViewType.Library === view
-        ? false
+      ViewType.All === view
+        ? undefined
         : ViewType.Inbox === view
         ? true
-        : undefined,
+        : false,
   };
 
   const data = await server.library<ServerGallery>({
     item_type: itemType,
     metatags,
+    search_query: urlQuery.query?.q as string,
     page: urlQuery.query?.p as number,
     sort_options: {
-      by: urlQuery.query?.sort as number,
-      desc: urlQuery.query?.desc as boolean,
+      by: (urlQuery.query?.sort as number) ?? ItemSort.GalleryDate,
+      desc: (urlQuery.query?.desc as boolean) ?? true,
     },
     filter_id: urlQuery.query?.filter as number,
     limit: urlQuery.query?.limit as number,
@@ -135,39 +138,54 @@ function LibrarySidebar() {
 export default function Page({ data, urlQuery, itemType }: PageProps) {
   const [item, setItem] = useRecoilState(LibraryState.item);
   const [view, setView] = useRecoilState(LibraryState.view);
+  const [query, setQuery] = useRecoilState(LibraryState.query);
   const [favorites, setFavorites] = useRecoilState(LibraryState.favorites);
   const [filter, setFilter] = useRecoilState(LibraryState.filter);
   const [sort, setSort] = useRecoilState(LibraryState.sort);
   const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
-  const display = useRecoilValue(LibraryState.display);
-  const itemCount = useRecoilValue(LibraryState.itemCount);
+  const [limit, setLimit] = useRecoilState(LibraryState.limit);
+  const [display, setDisplay] = useRecoilState(LibraryState.display);
 
   const router = useRouter();
 
-  // TODO: replace with useQuery with initialData?
-  const [items, setItems] = useState(data);
-
-  useEffect(() => {
-    setItems(data);
-  }, [data]);
-
   useEffectOnce(() => {
-    setFavorites((urlQuery.query?.fav as boolean) ?? false);
-    setSortDesc((urlQuery.query?.desc as boolean) ?? false);
-    setSort(urlQuery.query?.sort as number);
-    setFilter(urlQuery.query?.filter as number);
+    if (urlQuery.query?.fav !== undefined) {
+      setFavorites(urlQuery.query.fav as boolean);
+    }
+    if (urlQuery.query?.desc !== undefined) {
+      setSortDesc(urlQuery.query.desc as boolean);
+    }
+    if (urlQuery.query?.sort !== undefined) {
+      setSort(urlQuery.query.sort as number);
+    }
+    if (urlQuery.query?.filter !== undefined) {
+      setFilter(urlQuery.query.filter as number);
+    }
+    if (urlQuery.query?.view !== undefined) {
+      setView(urlQuery.query.view as number);
+    }
+    if (urlQuery.query?.limit !== undefined) {
+      setLimit(urlQuery.query.limit as number);
+    }
+    if (urlQuery.query?.display !== undefined) {
+      setDisplay(urlQuery.query.display as 'card' | 'list');
+    }
   });
 
   useUpdateEffect(() => {
-    router.replace(urlstring({ view: view }));
+    router.replace(urlstring({ view }));
   }, [view]);
+
+  useUpdateEffect(() => {
+    router.replace(urlstring({ display }));
+  }, [display]);
 
   useUpdateEffect(() => {
     router.replace(urlstring({ fav: favorites || undefined }));
   }, [favorites]);
 
   useUpdateEffect(() => {
-    router.replace(urlstring({ desc: sortDesc || undefined }));
+    router.replace(urlstring({ desc: sortDesc }));
   }, [sortDesc]);
 
   useUpdateEffect(() => {
@@ -179,8 +197,12 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   }, [filter]);
 
   useEffect(() => {
-    router.replace(urlstring({ limit: itemCount }));
-  }, [itemCount]);
+    router.replace(urlstring({ limit }));
+  }, [limit]);
+
+  useEffect(() => {
+    router.replace(urlstring({ q: query }));
+  }, [query]);
 
   const pageHrefTemplate = useMemo(
     () => urlstring(router.asPath, { p: '${page}' }, { encode: false }),
@@ -193,8 +215,8 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu>
-            <MenuItem>
+          <MainMenu fixed>
+            <MenuItem className={classNames('no-right-padding')}>
               <ViewButtons
                 view={view}
                 onView={setView}
@@ -202,9 +224,26 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
                 onItem={setItem}
               />
             </MenuItem>
+            <Menu.Menu position="left" className="fullwidth">
+              <MenuItem className={classNames('fullwidth')}>
+                <ItemSearch
+                  onSearch={(query) => {
+                    setQuery(query);
+                  }}
+                  onClear={() => {
+                    setQuery('');
+                  }}
+                  defaultValue={(urlQuery.query?.q as string) ?? query}
+                  placeholder={t`Search using tags, titles, names, artists... Press "/" to search`}
+                  showOptions
+                  size="small"
+                  fluid
+                />
+              </MenuItem>
+            </Menu.Menu>
           </MainMenu>
         ),
-        [view, item]
+        [view, item, itemType, query, urlQuery.query?.q]
       )}
       bottomZone={useMemo(() => {
         return filter ? (
@@ -255,33 +294,33 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
         [favorites, filter, sort, sortDesc]
       )}>
       <PageTitle title={t`Library`} />
-      {!items.count && <EmptySegment />}
+      {!data.count && <EmptySegment />}
       <LibraryContext.Provider value={true}>
         <LibrarySidebar />
         {display === 'card' && (
           <CardView
             hrefTemplate={pageHrefTemplate}
             activePage={urlQuery.query?.p}
-            items={items.items}
+            items={data.items}
             paddedChildren
             itemRender={GalleryCard}
-            itemsPerPage={itemCount}
+            itemsPerPage={limit}
             onItemKey={onItemKey}
-            totalItemCount={items.count}
-            pagination={!!items.count}
-            bottomPagination={!!items.count}></CardView>
+            totalItemCount={data.count}
+            pagination={!!data.count}
+            bottomPagination={!!data.count}></CardView>
         )}
         {display === 'list' && (
           <ListView
             hrefTemplate={pageHrefTemplate}
-            items={items.items}
+            items={data.items}
             activePage={urlQuery.query?.p}
             onItemKey={onItemKey}
-            itemsPerPage={itemCount}
+            itemsPerPage={limit}
             itemRender={GalleryCard}
-            totalItemCount={items.count}
-            pagination={!!items.count}
-            bottomPagination={!!items.count}></ListView>
+            totalItemCount={data.count}
+            pagination={!!data.count}
+            bottomPagination={!!data.count}></ListView>
         )}
       </LibraryContext.Provider>
     </PageLayout>

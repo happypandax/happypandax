@@ -1,8 +1,15 @@
 import '@brainhubeu/react-carousel/lib/style.css';
+import 'swiper/swiper-bundle.css';
 
 import classNames from 'classnames';
 import maxSize from 'popper-max-size-modifier';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Editor from 'react-simple-code-editor';
 import { useWindowScroll } from 'react-use';
 import { useRecoilState } from 'recoil';
@@ -11,24 +18,29 @@ import {
   Divider,
   Header,
   Icon,
+  Input,
   Label,
   Message,
   Popup,
+  Search,
   Segment,
 } from 'semantic-ui-react';
+import SwiperCore, { Autoplay, Navigation } from 'swiper/core';
+import { Swiper, SwiperSlide } from 'swiper/react';
 
-import Carousel, {
-  arrowsPlugin,
-  autoplayPlugin,
-  slidesToScrollPlugin,
-  slidesToShowPlugin,
-} from '@brainhubeu/react-carousel';
 
+
+import { QueryType, useQueryType } from '../client/queries';
+import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
+import { ServerGallery, ServerItem } from '../misc/types';
 import { parseMarkdown, scrollToTop } from '../misc/utility';
 import { AppState, MiscState } from '../state';
 import { useInitialRecoilState } from '../state/index';
+import GalleryCard, { galleryCardDataFields } from './item/Gallery';
 import styles from './Misc.module.css';
+
+SwiperCore.use([Navigation, Autoplay]);
 
 export function TextEditor({
   value,
@@ -220,10 +232,12 @@ function SliderNav({
       circular
       inverted
       link
-      className={classNames('slide-next', direction)}
+      className={classNames(`slide-next-${direction}`, 'slide-next')}
     />
   );
 }
+
+export const SliderElement = SwiperSlide;
 
 export function Slider({
   show: initialShow,
@@ -232,6 +246,8 @@ export function Slider({
   infinite,
   children,
   label,
+  showCount = true,
+  touchStartPreventDefault = false,
   color,
   autoplay,
   className,
@@ -241,40 +257,25 @@ export function Slider({
   defaultShow?: boolean;
   stateKey?: string;
   infinite?: boolean;
+  showCount?: boolean;
+  touchStartPreventDefault?: boolean;
   autoplay?: boolean;
   label?: React.ReactNode;
 } & React.ComponentProps<typeof Segment>) {
   const [open, setOpen] = useInitialRecoilState(
-    MiscState.label_accordion_open(stateKey),
+    MiscState.labelAccordionOpen(stateKey),
     initialShow ?? defaultShow
   );
+
+  const swiper = useRef<SwiperCore>();
+
   const items = React.Children.toArray(children);
 
-  const plugins: (string | object)[] = [
-    {
-      resolve: arrowsPlugin,
-      options: {
-        arrowLeft: <SliderNav direction="left" />,
-        arrowLeftDisabled: <SliderNav direction="left" disabled />,
-        arrowRight: <SliderNav direction="right" />,
-        arrowRightDisabled: <SliderNav direction="right" disabled />,
-        addArrowClickHandler: true,
-      },
-    },
-  ];
-
-  if (infinite) {
-    plugins.push('infinite');
-  }
-
-  if (autoplay) {
-    plugins.push({
-      resolve: autoplayPlugin,
-      options: {
-        interval: 10000,
-      },
-    });
-  }
+  useEffect(() => {
+    if (swiper.current) {
+      swiper.current.update();
+    }
+  }, [children]);
 
   return (
     <Segment basic {...props} className={classNames('slider', className)}>
@@ -294,86 +295,66 @@ export function Slider({
           )}>
           <Icon name={open ? 'caret down' : 'caret right'} />
           {label}
-          <Label.Detail>{items.length}</Label.Detail>{' '}
+          {showCount && <Label.Detail>{items.length}</Label.Detail>}
         </Label>
       )}
       <Visible visible={initialShow || open}>
         {!items.length && <EmptySegment />}
         {items && (
-          <Carousel
-            draggable
-            plugins={plugins}
-            slides={items}
-            breakpoints={{
-              460: {
-                plugins: [
-                  ...plugins,
-                  {
-                    resolve: slidesToShowPlugin,
-                    options: {
-                      numberOfSlides: 2,
-                    },
-                  },
-                  {
-                    resolve: slidesToScrollPlugin,
-                    options: {
-                      numberOfSlides: 1,
-                    },
-                  },
-                ],
-              },
-              675: {
-                plugins: [
-                  ...plugins,
-                  {
-                    resolve: slidesToShowPlugin,
-                    options: {
-                      numberOfSlides: 3,
-                    },
-                  },
-                  {
-                    resolve: slidesToScrollPlugin,
-                    options: {
-                      numberOfSlides: 2,
-                    },
-                  },
-                ],
-              },
-              1200: {
-                plugins: [
-                  ...plugins,
-                  {
-                    resolve: slidesToShowPlugin,
-                    options: {
-                      numberOfSlides: 5,
-                    },
-                  },
-                  {
-                    resolve: slidesToScrollPlugin,
-                    options: {
-                      numberOfSlides: 3,
-                    },
-                  },
-                ],
-              },
-              1800: {
-                plugins: [
-                  ...plugins,
-                  {
-                    resolve: slidesToShowPlugin,
-                    options: {
-                      numberOfSlides: 7,
-                    },
-                  },
-                  {
-                    resolve: slidesToScrollPlugin,
-                    options: {
-                      numberOfSlides: 3,
-                    },
-                  },
-                ],
-              },
-            }}></Carousel>
+          <Swiper
+            onSwiper={useCallback((s) => {
+              swiper.current = s;
+            }, [])}
+            autoplay={useMemo(
+              () =>
+                autoplay
+                  ? {
+                      delay: 10000,
+                      pauseOnMouseEnter: true,
+                      stopOnLastSlide: false,
+                    }
+                  : undefined,
+              [autoplay]
+            )}
+            loop={infinite}
+            slidesPerView={3}
+            touchStartPreventDefault={touchStartPreventDefault}
+            navigation={useMemo(
+              () => ({
+                nextEl: '.slide-next-right',
+                prevEl: '.slide-next-left',
+              }),
+              []
+            )}
+            breakpoints={useMemo(
+              () => ({
+                460: {
+                  slidesPerView: 2,
+                  slidesPerGroup: 2,
+                },
+                675: {
+                  slidesPerView: 3,
+                  slidesPerGroup: 3,
+                },
+                980: {
+                  slidesPerView: 4,
+                  slidesPerGroup: 3,
+                },
+                1200: {
+                  slidesPerView: 5,
+                  slidesPerGroup: 3,
+                },
+                1800: {
+                  slidesPerView: 6,
+                  slidesPerGroup: 3,
+                },
+              }),
+              []
+            )}>
+            {children}
+            <SliderNav direction="left" />
+            <SliderNav direction="right" />
+          </Swiper>
         )}
       </Visible>
     </Segment>
@@ -403,7 +384,7 @@ export function LabelAccordion({
 } & React.ComponentProps<typeof Segment>) {
   const [show, setShow] = stateKey
     ? useInitialRecoilState(
-        MiscState.label_accordion_open(stateKey),
+        MiscState.labelAccordionOpen(stateKey),
         initialShow ?? defaultShow
       )
     : useState(initialShow ?? defaultShow);
@@ -484,5 +465,136 @@ export function PopupNoOverflow(props: React.ComponentProps<typeof Popup>) {
       offset={[20, 0]}
       popperModifiers={[maxSize, applyMaxSize]}
     />
+  );
+}
+
+export function IdentityChildren({ children }) {
+  return children;
+}
+
+export function ItemSearch({
+  size,
+  fluid,
+  transparent = true,
+  placeholder,
+  defaultValue,
+  onSearch,
+  showOptions,
+  onClear: cOnClear,
+  className,
+}: {
+  fluid?: boolean;
+  transparent?: boolean;
+  defaultValue?: string;
+  showOptions?: boolean;
+  placeholder?: string;
+  onSearch?: (query: string, options: object) => void;
+  onClear?: () => void;
+  size?: React.ComponentProps<typeof Search>['size'];
+  className?: string;
+}) {
+  const [query, setQuery] = useState('');
+
+  const onSubmit = useCallback(
+    (ev) => {
+      ev?.preventDefault?.();
+      onSearch?.(query, {});
+    },
+    [query]
+  );
+
+  const onClear = useCallback(() => {
+    setQuery('');
+    cOnClear?.();
+  }, [cOnClear]);
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className={classNames({ fullwidth: fluid }, className)}>
+      <Search
+        size={size}
+        input={useMemo(
+          () => (
+            <Input
+              fluid={fluid}
+              className={classNames({ secondary: transparent })}
+              placeholder={placeholder}
+              label={
+                showOptions ? (
+                  <IdentityChildren>
+                    <div>
+                      <Popup
+                        trigger={
+                          <Button
+                            basic
+                            type="button"
+                            size={size}
+                            icon={
+                              <Icon.Group>
+                                <Icon name="options" />
+                                <Icon name="search" corner />
+                              </Icon.Group>
+                            }
+                          />
+                        }
+                        hoverable
+                        on="click"
+                        hideOnScroll>
+                        options
+                      </Popup>
+                      {!!query && <Icon name="remove" link onClick={onClear} />}
+                    </div>
+                  </IdentityChildren>
+                ) : undefined
+              }
+              icon={{ name: 'search', link: true, onClick: onSubmit }}
+              tabIndex={0}
+            />
+          ),
+          [size, onClear, query, onSubmit, showOptions, placeholder]
+        )}
+        minCharacters={2}
+        onSearchChange={useCallback((ev, d) => {
+          ev.preventDefault();
+          setQuery(d.value);
+        }, [])}
+        fluid={fluid}
+        value={query}
+        defaultValue={defaultValue}
+      />
+    </form>
+  );
+}
+
+export function SimilarItemsSlider({
+  type,
+  stateKey,
+  item,
+}: {
+  type: ItemType;
+  stateKey?: string;
+  item: DeepPick<ServerItem, 'id'>;
+}) {
+  const { data, isLoading } = useQueryType(QueryType.SIMILAR, {
+    item_id: item.id,
+    item_type: type,
+    fields: galleryCardDataFields,
+    limit: 50,
+  });
+
+  return (
+    <Slider
+      autoplay
+      loading={isLoading}
+      stateKey={stateKey}
+      showCount={false}
+      label={t`Just like this one`}>
+      {(data?.data.items as ServerGallery[])?.map?.((i) => (
+        <SliderElement key={i.id}>
+          <GalleryCard size="small" data={i} />
+        </SliderElement>
+      ))}
+    </Slider>
   );
 }
