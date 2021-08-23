@@ -1,15 +1,22 @@
 import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 import { CommandState } from '../misc/enums';
-import { CommandID } from '../misc/types';
+import { CommandID, CommandIDKey } from '../misc/types';
 import { urlstring } from '../misc/utility';
 import ServerService from '../services/server';
 
-type ValueCallback = (
-  values: Unwrap<ReturnType<ServerService['command_value']>>
-) => void;
+type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;
 
-export class Command {
+type CommandIDs<T> = CommandID<T> | number[];
+
+interface CommandOptions<T> {
+  poll?: boolean;
+  interval?: number;
+  callback?: ValueCallback<T>;
+}
+
+export class Command<T = unknown> {
   interval: number;
   command_ids: number[];
   scalar: boolean;
@@ -18,14 +25,11 @@ export class Command {
     all: ValueCallback[];
   };
 
-  #resolved_ids: { [key: CommandID]: any };
-  #state: { [key: CommandID]: CommandState };
+  #resolved_ids: { [key: CommandIDKey]: any };
+  #state: { [key: CommandIDKey]: CommandState };
   #poll_id: NodeJS.Timeout | undefined;
 
-  constructor(
-    command_ids?: number | number[],
-    options?: { poll?: boolean; interval?: number }
-  ) {
+  constructor(command_ids?: CommandIDs<T>, options?: CommandOptions<T>) {
     this.#state = {};
     this.#resolved_ids = {};
 
@@ -34,7 +38,7 @@ export class Command {
       this.scalar = true;
     } else {
       this.scalar = false;
-      this.command_ids = command_ids ? command_ids : [];
+      this.command_ids = command_ids ? (command_ids as number[]) : [];
     }
 
     this.command_ids.forEach((v) => (this.#state[v.toString()] = undefined));
@@ -44,7 +48,11 @@ export class Command {
       all: [],
     };
 
-    this.interval = options?.interval ?? 3000;
+    this.interval = options?.interval ?? 1500;
+
+    if (options?.callback) {
+      this.setCallback(options.callback);
+    }
 
     if (options?.poll ?? true) {
       this._start_poll();
@@ -153,7 +161,7 @@ export class Command {
   }
 
   _return(
-    data: Record<CommandID, any>,
+    data: Record<CommandIDKey, any>,
     command_ids: number[] | number = undefined
   ) {
     if (command_ids) {
@@ -222,4 +230,24 @@ export class Command {
     );
     return this._return(r.data, command_ids);
   }
+}
+
+export function useCommand<T = unknown>(
+  command_ids: CommandIDs<T>,
+  options: CommandOptions<T>
+) {
+  const [cmd, setCmd] = useState<Command<T>>();
+
+  useEffect(
+    () => {
+      if (command_ids) {
+        setCmd(new Command(command_ids, options));
+      } else {
+        setCmd(undefined);
+      }
+    },
+    typeof command_ids === 'number' ? [command_ids] : (command_ids as number[])
+  );
+
+  return cmd;
 }

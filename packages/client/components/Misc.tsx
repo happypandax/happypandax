@@ -18,18 +18,15 @@ import {
   Divider,
   Header,
   Icon,
-  Input,
   Label,
   Message,
   Popup,
-  Search,
   Segment,
 } from 'semantic-ui-react';
 import SwiperCore, { Autoplay, Navigation } from 'swiper/core';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
-
-
+import { useCommand } from '../client/command';
 import { QueryType, useQueryType } from '../client/queries';
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
@@ -256,6 +253,7 @@ export function Slider({
   show?: boolean;
   defaultShow?: boolean;
   stateKey?: string;
+  loading?: boolean;
   infinite?: boolean;
   showCount?: boolean;
   touchStartPreventDefault?: boolean;
@@ -311,6 +309,7 @@ export function Slider({
                   ? {
                       delay: 10000,
                       pauseOnMouseEnter: true,
+                      disableOnInteraction: false,
                       stopOnLastSlide: false,
                     }
                   : undefined,
@@ -318,6 +317,7 @@ export function Slider({
             )}
             loop={infinite}
             slidesPerView={3}
+            watchOverflow
             touchStartPreventDefault={touchStartPreventDefault}
             navigation={useMemo(
               () => ({
@@ -468,105 +468,6 @@ export function PopupNoOverflow(props: React.ComponentProps<typeof Popup>) {
   );
 }
 
-export function IdentityChildren({ children }) {
-  return children;
-}
-
-export function ItemSearch({
-  size,
-  fluid,
-  transparent = true,
-  placeholder,
-  defaultValue,
-  onSearch,
-  showOptions,
-  onClear: cOnClear,
-  className,
-}: {
-  fluid?: boolean;
-  transparent?: boolean;
-  defaultValue?: string;
-  showOptions?: boolean;
-  placeholder?: string;
-  onSearch?: (query: string, options: object) => void;
-  onClear?: () => void;
-  size?: React.ComponentProps<typeof Search>['size'];
-  className?: string;
-}) {
-  const [query, setQuery] = useState('');
-
-  const onSubmit = useCallback(
-    (ev) => {
-      ev?.preventDefault?.();
-      onSearch?.(query, {});
-    },
-    [query]
-  );
-
-  const onClear = useCallback(() => {
-    setQuery('');
-    cOnClear?.();
-  }, [cOnClear]);
-
-  return (
-    <form
-      onSubmit={onSubmit}
-      className={classNames({ fullwidth: fluid }, className)}>
-      <Search
-        size={size}
-        input={useMemo(
-          () => (
-            <Input
-              fluid={fluid}
-              className={classNames({ secondary: transparent })}
-              placeholder={placeholder}
-              label={
-                showOptions ? (
-                  <IdentityChildren>
-                    <div>
-                      <Popup
-                        trigger={
-                          <Button
-                            basic
-                            type="button"
-                            size={size}
-                            icon={
-                              <Icon.Group>
-                                <Icon name="options" />
-                                <Icon name="search" corner />
-                              </Icon.Group>
-                            }
-                          />
-                        }
-                        hoverable
-                        on="click"
-                        hideOnScroll>
-                        options
-                      </Popup>
-                      {!!query && <Icon name="remove" link onClick={onClear} />}
-                    </div>
-                  </IdentityChildren>
-                ) : undefined
-              }
-              icon={{ name: 'search', link: true, onClick: onSubmit }}
-              tabIndex={0}
-            />
-          ),
-          [size, onClear, query, onSubmit, showOptions, placeholder]
-        )}
-        minCharacters={2}
-        onSearchChange={useCallback((ev, d) => {
-          ev.preventDefault();
-          setQuery(d.value);
-        }, [])}
-        fluid={fluid}
-        value={query}
-        defaultValue={defaultValue}
-      />
-    </form>
-  );
-}
-
 export function SimilarItemsSlider({
   type,
   stateKey,
@@ -576,21 +477,38 @@ export function SimilarItemsSlider({
   stateKey?: string;
   item: DeepPick<ServerItem, 'id'>;
 }) {
-  const { data, isLoading } = useQueryType(QueryType.SIMILAR, {
+  const [data, setData] = useState<ServerGallery[]>([]);
+
+  const { data: cmd, isLoading } = useQueryType(QueryType.SIMILAR, {
     item_id: item.id,
     item_type: type,
     fields: galleryCardDataFields,
     limit: 50,
   });
 
+  const [loading, setLoading] = useState(isLoading);
+
+  useCommand(cmd?.data, {
+    callback: (v) => {
+      setData(v[cmd.data.toString()].items as ServerGallery[]);
+      setLoading(false);
+    },
+  });
+
+  useEffect(() => {
+    if (isLoading) {
+      setLoading(true);
+    }
+  }, [isLoading]);
+
   return (
     <Slider
       autoplay
-      loading={isLoading}
+      loading={loading}
       stateKey={stateKey}
       showCount={false}
       label={t`Just like this one`}>
-      {(data?.data.items as ServerGallery[])?.map?.((i) => (
+      {data.map((i) => (
         <SliderElement key={i.id}>
           <GalleryCard size="small" data={i} />
         </SliderElement>

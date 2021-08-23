@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { Header, Table } from 'semantic-ui-react';
+import { Header, Loader, Table } from 'semantic-ui-react';
 
 import { DataContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
@@ -40,7 +40,7 @@ export function GalleryDataTable({
 
   const [showDataText, setShowDataText] = useState(false);
 
-  const { data: qData } = useQueryType(QueryType.ITEM, {
+  const { data: qData, isLoading } = useQueryType(QueryType.ITEM, {
     item_type: ItemType.Gallery,
     item_id: initialData.id,
     fields: [
@@ -80,7 +80,7 @@ export function GalleryDataTable({
 
   return (
     <DataContext.Provider value={{ key: contextKey, type: ItemType.Gallery }}>
-      <DataTable showDataText={showDataText}>
+      <DataTable showDataText={showDataText} loading={isLoading}>
         <DataTableItem>
           <NameTable dataKey="titles" dataPrimaryKey="preferred_title">
             {/* <Label
@@ -177,15 +177,18 @@ export function DataTable({
   size,
   compact,
   showDataText,
+  loading,
 }: {
   size?: React.ComponentProps<typeof Table>['size'];
   children?: React.ReactNode;
   showDataText?: boolean;
+  loading?: boolean;
   compact?: boolean;
 }) {
   return (
     <Table basic="very" size={size} coamp={compact ? 'very' : false}>
       {showDataText && <TextEditor />}
+      <Loader active={loading} />
       <Table.Body>{children}</Table.Body>
     </Table>
   );

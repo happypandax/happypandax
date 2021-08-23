@@ -1,0 +1,22 @@
+.searchline {
+    display: flex;
+    align-content: center;
+    align-items: center;
+}
+
+.searchline_icon {
+    flex-shrink: 0;
+}
+
+.searchline_content {
+    flex-grow: 1;
+}
+
+.tagsline_labels {
+    line-height: 2;
+    white-space: nowrap;
+}
+
+.tagsline_swipeslide {
+    width: unset !important;
+}

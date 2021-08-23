@@ -145,6 +145,9 @@ export function MainMenu({
   >();
 
   const fixMenu = useCallback(() => {
+    if (!ref.current) {
+      return;
+    }
     if (window.scrollY > ref.current.offsetHeight * 1.4) {
       if (isFixed !== fixed) {
         setIsFixed(fixed);

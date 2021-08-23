@@ -10,7 +10,7 @@ export default handler().get(async (req, res) => {
   ).query;
 
   return server
-    .library({
+    .similar({
       item_type: item_type as number,
       item_id: item_id as number,
       fields: fields as any,

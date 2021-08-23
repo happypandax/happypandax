@@ -1,3 +1,12 @@
 /*******************************
          Site Overrides
 *******************************/
+
+.ui.thin.divider {
+    margin: 0.5rem 0;
+}
+
+
+.ui.very.thin.divider {
+    margin: 0.25rem 0;
+}

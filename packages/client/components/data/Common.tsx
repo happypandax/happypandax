@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { Header, Icon, Label, List, Table } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import t from '../../misc/lang';
 import { FieldPath, ServerGallery, ServerTag } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
-import { DataState } from '../../state';
+import { AppState, DataState } from '../../state';
 
 export function LanguageLabel({
   children,
@@ -300,6 +300,7 @@ export function UrlList() {
 
 export function TagsTable() {
   const ctx = useContext(DataContext);
+  const properties = useRecoilValue(AppState.properties);
   const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
     DataState.data(ctx.key)
   );
@@ -309,7 +310,7 @@ export function TagsTable() {
 
   data?.tags?.forEach?.((t) => {
     // TODO: query this value from server
-    if (t?.namespace?.name === '__namespace__') {
+    if (t?.namespace?.name === properties.special_namespace) {
       freeTags.push(t.tag);
     } else {
       const l = tags[t?.namespace?.name] ?? [];

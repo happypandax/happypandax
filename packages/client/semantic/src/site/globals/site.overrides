@@ -170,6 +170,10 @@ i.medium-size {
     padding: 5px !important;
 }
 
+.medium-padding-segment {
+    padding: 10px !important;
+}
+
 .no-bottom-padding {
     padding-bottom: 0 !important;
 }
@@ -184,6 +188,22 @@ i.medium-size {
 
 .no-right-padding {
     padding-right: 0 !important;
+}
+
+.no-bottom-margin {
+    margin-bottom: 0 !important;
+}
+
+.no-top-margin {
+    margin-top: 0 !important;
+}
+
+.no-left-margin {
+    margin-left: 0 !important;
+}
+
+.no-right-margin {
+    margin-right: 0 !important;
 }
 
 .overflow-auto {
@@ -205,6 +225,23 @@ i.medium-size {
 .small-margin {
     margin: 5px;
 }
+
+.small-margin-left {
+    margin-left: 5px;
+}
+
+.small-margin-right {
+    margin-right: 5px;
+}
+
+.small-margin-top {
+    margin-top: 5px;
+}
+
+.small-margin-bottom {
+    margin-bottom: 5px;
+}
+
 
 .medium-margin {
     margin: 10px;

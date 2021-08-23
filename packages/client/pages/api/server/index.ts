@@ -31,7 +31,7 @@ async function getPixie() {
       }
     }
 
-    pixie.connect(addr);
+    await pixie.connect(addr);
   }
   return pixie;
 }

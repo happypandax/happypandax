@@ -53,6 +53,8 @@ export enum ItemType {
   Url = 12,
   // Gallery Parody
   Parody = 13,
+  // NamespaceTag
+  NamespaceTag = 14,
 }
 
 export enum ImageSize {

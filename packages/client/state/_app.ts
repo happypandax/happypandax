@@ -3,6 +3,12 @@ import StateBlock, { defineAtom } from './_base';
 import { localStorageEffect } from './_statehelpers';
 
 export default class _AppState extends StateBlock {
+  static properties = defineAtom({
+    default: {
+      special_namespace: '__namespace__',
+    },
+  });
+
   static theme = defineAtom({
     default: 'light' as 'light' | 'dark',
   });

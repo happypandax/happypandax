@@ -11,9 +11,11 @@ import { createCache } from '../misc/cache';
 import { CommandState, ItemType } from '../misc/enums';
 import {
   CommandID,
+  CommandIDKey,
   CommandProgress,
   FieldPath,
   ProfileOptions,
+  SearchItem,
   ServerGallery,
   ServerItem,
   ServerMetaTags,
@@ -185,6 +187,7 @@ export default class ServerService extends Service {
       fields?: FieldPath[];
       offset?: number;
       limit?: number;
+      metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
       profile_options?: ProfileOptions;
     },
     group?: GroupCall
@@ -204,6 +207,7 @@ export default class ServerService extends Service {
       related_type: ItemType;
       fields?: FieldPath[];
       offset?: number;
+      metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
       limit?: number;
       profile_options?: ProfileOptions;
     },
@@ -301,9 +305,25 @@ export default class ServerService extends Service {
   ) {
     const data = await this._call('get_similar', args, group);
     throw_msg_error(data);
-    return data.data as {
+    return data.data as CommandID<{
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
+    }>;
+  }
+
+  async search_items(
+    args: {
+      item_types: ItemType[];
+      search_query: string;
+      limit?: number;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_search_items', args, group);
+    throw_msg_error(data);
+    return data.data as {
+      count: number;
+      items: SearchItem[];
     };
   }
 
@@ -323,31 +343,34 @@ export default class ServerService extends Service {
   async start_command(args: { command_ids: number[] }, group?: GroupCall) {
     const data = await this._call('start_command', args, group);
     throw_msg_error(data);
-    return data.data as Record<CommandID, CommandState>;
+    return data.data as Record<CommandIDKey, CommandState>;
   }
 
   async stop_command(args: { command_ids: number[] }, group?: GroupCall) {
     const data = await this._call('stop_command', args, group);
     throw_msg_error(data);
-    return data.data as Record<CommandID, CommandState>;
+    return data.data as Record<CommandIDKey, CommandState>;
   }
 
   async command_state(args: { command_ids: number[] }, group?: GroupCall) {
     const data = await this._call('get_command_state', args, group);
     throw_msg_error(data);
-    return data.data as Record<CommandID, CommandState>;
+    return data.data as Record<CommandIDKey, CommandState>;
   }
 
-  async command_value(args: { command_ids: number[] }, group?: GroupCall) {
+  async command_value<R = AnyJson>(
+    args: { command_ids: number[] },
+    group?: GroupCall
+  ) {
     const data = await this._call('get_command_value', args, group);
     throw_msg_error(data);
-    return data.data as Record<CommandID, AnyJson>;
+    return data.data as Record<CommandIDKey, R>;
   }
 
   async command_progress(args: { command_ids: number[] }, group?: GroupCall) {
     const data = await this._call('get_command_progress', args, group);
     throw_msg_error(data);
-    return data.data as Record<CommandID, CommandProgress>;
+    return data.data as Record<CommandIDKey, CommandProgress>;
   }
 }
 

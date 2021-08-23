@@ -21,6 +21,7 @@ export enum QueryType {
   ITEM,
   RELATED_ITEMS,
   SIMILAR,
+  SEARCH_ITEMS,
   SORT_INDEXES,
   SERVER_STATUS,
 }
@@ -42,10 +43,12 @@ export function useMutationType<
   type: K,
   options?: UseMutationOptions<D, E, V, TContext>
 ): UseMutationResult<D, E, V, TContext> {
+  const key = [type.toString()];
+
   switch (type) {
     case MutatationType.LOGIN: {
       return useMutation(
-        [type.toString()],
+        key,
         (data) => {
           return axios.post('/api/login', data);
         },
@@ -55,7 +58,7 @@ export function useMutationType<
 
     case MutatationType.UPDATE_GALLERY: {
       return useMutation(
-        [type.toString()],
+        key,
         (data) => {
           return axios.put('/api/gallery', data);
         },
@@ -109,10 +112,12 @@ export function useQueryType<
       : undefined,
   };
 
+  const key = [type.toString(), variables];
+
   switch (type) {
     case QueryType.SERVER_STATUS: {
       return useQuery(
-        [type.toString()],
+        key,
         () => {
           return axios.get(urlstring('/api/status'));
         },
@@ -122,7 +127,7 @@ export function useQueryType<
 
     case QueryType.SORT_INDEXES: {
       return useQuery(
-        [type.toString()],
+        key,
         () => {
           return axios.get(urlstring('/api/sort_indexes', variables));
         },
@@ -132,7 +137,7 @@ export function useQueryType<
 
     case QueryType.ITEM: {
       return useQuery(
-        [type.toString(), variables],
+        key,
         () => {
           return axios.get(urlstring('/api/item', variables));
         },
@@ -142,7 +147,7 @@ export function useQueryType<
 
     case QueryType.ITEMS: {
       return useQuery(
-        [type.toString()],
+        key,
         () => {
           return axios.get(urlstring('/api/items', variables));
         },
@@ -152,7 +157,7 @@ export function useQueryType<
 
     case QueryType.RELATED_ITEMS: {
       return useQuery(
-        [type.toString()],
+        key,
         () => {
           return axios.get(urlstring('/api/related_items', variables));
         },
@@ -162,7 +167,7 @@ export function useQueryType<
 
     case QueryType.PAGES: {
       return useQuery(
-        [type.toString()],
+        key,
         () => {
           return axios.get(urlstring('/api/pages', variables));
         },
@@ -172,9 +177,19 @@ export function useQueryType<
 
     case QueryType.SIMILAR: {
       return useQuery(
-        [type.toString()],
+        key,
         () => {
           return axios.get(urlstring('/api/similar', variables));
+        },
+        opts
+      );
+    }
+
+    case QueryType.SEARCH_ITEMS: {
+      return useQuery(
+        key,
+        () => {
+          return axios.get(urlstring('/api/search_items', variables));
         },
         opts
       );
@@ -261,6 +276,12 @@ interface FetchSimilar<T = undefined> extends QueryAction<T> {
   };
 }
 
+interface FetchSearchItems<T = undefined> extends QueryAction<T> {
+  type: QueryType.SEARCH_ITEMS;
+  dataType: Unwrap<ReturnType<ServerService['search_items']>>;
+  variables: Parameters<ServerService['search_items']>[0];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -269,6 +290,7 @@ type QueryActions<T = undefined> =
   | FetchRelatedItems<T>
   | FetchSortIndexes<T>
   | FetchSimilar<T>
+  | FetchSearchItems<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
@@ -320,6 +342,9 @@ export class Query {
       }
       case QueryType.PAGES: {
         return axios.get<R>(urlstring('/api/pages', variables as any));
+      }
+      case QueryType.SEARCH_ITEMS: {
+        return axios.get<R>(urlstring('/api/search_items', variables as any));
       }
 
       default:

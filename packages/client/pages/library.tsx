@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import _ from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -22,11 +23,11 @@ import PageLayout, { BottomZoneItem } from '../components/layout/Page';
 import MainMenu, { MenuItem } from '../components/Menu';
 import {
   EmptySegment,
-  ItemSearch,
   PageInfoMessage,
   PageTitle,
   Visible,
 } from '../components/Misc';
+import { ItemSearch } from '../components/Search';
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
@@ -36,7 +37,7 @@ import { ServerGallery, ServerItem } from '../misc/types';
 import { urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
-import { LibraryState } from '../state';
+import { LibraryState, MiscState } from '../state';
 
 interface PageProps {
   data: Unwrap<ServerService['library']>;
@@ -135,6 +136,8 @@ function LibrarySidebar() {
   );
 }
 
+const stateKey = 'library_page';
+
 export default function Page({ data, urlQuery, itemType }: PageProps) {
   const [item, setItem] = useRecoilState(LibraryState.item);
   const [view, setView] = useRecoilState(LibraryState.view);
@@ -145,6 +148,8 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
   const [limit, setLimit] = useRecoilState(LibraryState.limit);
   const [display, setDisplay] = useRecoilState(LibraryState.display);
+
+  const setRecentQuery = useSetRecoilState(MiscState.recentSearch(stateKey));
 
   const router = useRouter();
 
@@ -210,6 +215,12 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   );
 
   const onItemKey = useCallback((item: ServerItem) => item.id, []);
+  const saveRecentQuery = useCallback(
+    _.debounce((query: string) => {
+      setRecentQuery([query]);
+    }, 5000),
+    []
+  );
 
   return (
     <PageLayout
@@ -227,8 +238,12 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
             <Menu.Menu position="left" className="fullwidth">
               <MenuItem className={classNames('fullwidth')}>
                 <ItemSearch
+                  stateKey={stateKey}
                   onSearch={(query) => {
                     setQuery(query);
+                    if (query) {
+                      saveRecentQuery(query);
+                    }
                   }}
                   onClear={() => {
                     setQuery('');

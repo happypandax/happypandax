@@ -7,33 +7,43 @@ set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
 
-
-find_package(fmt CONFIG REQUIRED)
-find_package(Catch2 CONFIG REQUIRED)
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+# —————————————————————————
+# find packages
+# —————————————————————————
 find_package(pybind11 CONFIG REQUIRED)
+find_package(cppzmq CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 message("Python/include: " ${Python_INCLUDE_DIRS} )
 message("Python/libs: " ${Python_LIBRARIES} )
 
 # —————————————————————————
+# Collect sources
+# —————————————————————————
+
+file(GLOB_RECURSE sources CONFIGURE_DEPENDS  ./src/*.h ./src/*.cpp)
+
+# —————————————————————————
 # create target for library
 # —————————————————————————
-pybind11_add_module(momo src/momo.cpp)
+pybind11_add_module(momo ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER include/momo/momo.h)
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 
-include_directories(${Python_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${Python_LIBRARIES})
+# —————————————————————————
+# link libraries
+# —————————————————————————
+target_link_libraries(${PROJECT_NAME} PRIVATE cppzmq cppzmq-static)
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 
 
 # https://github.com/microsoft/vcpkg/issues/5097
-if(VCPKG_TOOLCHAIN)
+ if(VCPKG_TOOLCHAIN)
+    message("VCPKG Libs: " ${PROJECT_NAME} PRIVATE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib;${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib )
     target_link_directories(${PROJECT_NAME} PRIVATE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib;${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib)
-endif()
+ endif()
 
 
 # target_include_directories(${PROJECT_NAME}
@@ -46,14 +56,3 @@ endif()
 
 # Suppress prefix "lib" because Python does not allow this prefix
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-
-# —————————————————————————————————————————
-# create target for test, enable testing, and register a test "RunAllTests"
-# —————————————————————————————————————————
-include(CTest)
-add_executable(run_tests tests/tests.cpp)
-target_compile_features(run_tests PUBLIC cxx_std_17)
-target_link_libraries(run_tests PRIVATE Catch2::Catch2)
-
-enable_testing()
-add_test(RunAllTests run_tests)

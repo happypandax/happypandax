@@ -1,3 +1,5 @@
+import { AnyJson } from 'happypandax-client';
+
 import {
   CommandState,
   ImageSize,
@@ -186,7 +188,13 @@ export interface ServerSortIndex {
   item_type: ItemType;
 }
 
-export type CommandID = string;
+export type SearchItem = {
+  id: number;
+  __type__: ItemType;
+  [key: string]: AnyJson;
+};
+
+export type CommandIDKey = string;
 
 export interface CommandProgress {
   title: string;
@@ -211,3 +219,5 @@ export type SortOptions = {
   by?: ItemSort;
   desc?: boolean;
 };
+
+export interface CommandID<T> extends Number {}

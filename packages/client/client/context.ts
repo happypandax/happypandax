@@ -8,3 +8,9 @@ export const DataContext = React.createContext({
   key: '',
   type: ItemType.Gallery,
 });
+
+export const SearchContext = React.createContext({
+  query: '',
+  stateKey: '',
+  ref: undefined as React.RefObject<HTMLElement>,
+});
