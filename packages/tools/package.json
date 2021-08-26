@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "ts-node --log-error -T ./index.ts"
+    "serverload": "ts-node --log-error -T ./serverload.ts"
   },
   "dependencies": {
     "happypandax-client": "^3.0.0"

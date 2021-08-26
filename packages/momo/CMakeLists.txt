@@ -12,7 +12,11 @@ include(CPack)
 # —————————————————————————
 find_package(pybind11 CONFIG REQUIRED)
 find_package(cppzmq CONFIG REQUIRED)
+find_package(Sqlpp11 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(date)
+
+include(cmake/External.cmake)             # <--
 
 message("Python/include: " ${Python_INCLUDE_DIRS} )
 message("Python/libs: " ${Python_LIBRARIES} )
@@ -35,6 +39,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 # —————————————————————————
 # link libraries
 # —————————————————————————
+target_link_libraries(${PROJECT_NAME} PRIVATE sqlpp11::sqlpp11)
 target_link_libraries(${PROJECT_NAME} PRIVATE cppzmq cppzmq-static)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json nlohmann_json::nlohmann_json)
 

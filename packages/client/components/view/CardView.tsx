@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
 import styles from './CardView.module.css';
@@ -31,11 +31,20 @@ function CardViewGrid<T>({
   scrollTop?: any;
   autoHeight?: any;
 } & CardViewProps<T>) {
-  const itemWidth = 200;
-  const rowHeight = 400;
+  const itemRef = useRef<HTMLDivElement>();
+  const [itemWidth, setItemWidth] = useState(200);
+  const [rowHeight, setRowHeight] = useState(400);
+  const [dims, setDims] = useState(false);
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
-  const rowCount = Math.ceil(items?.length ?? 0 / itemsPerRow);
+  const rowCount = Math.ceil((items?.length ?? 0) / itemsPerRow);
+
+  useEffect(() => {
+    if (itemRef.current) {
+      setItemWidth(itemRef.current.offsetWidth);
+      setRowHeight(itemRef.current.offsetHeight + 10);
+    }
+  }, [dims]);
 
   return (
     <List
@@ -57,11 +66,16 @@ function CardViewGrid<T>({
 
           for (let i = fromIndex; i < toIndex; i++) {
             cols.push(
-              <div key={onItemKey(items[i])} className={styles.item}>
+              <div
+                ref={itemRef}
+                key={onItemKey(items[i])}
+                className={styles.item}>
                 <ItemRender data={items[i]} />
               </div>
             );
           }
+
+          setDims(true);
 
           return (
             <div className={styles.row} key={key} style={style}>

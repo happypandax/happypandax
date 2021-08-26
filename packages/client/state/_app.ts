@@ -27,6 +27,6 @@ export default class _AppState extends StateBlock {
 
   static readingQueue = defineAtom({
     default: [] as number[],
-    effects_UNSTABLE: [localStorageEffect('reading_queue', true)],
+    effects_UNSTABLE: [localStorageEffect('reading_queue', { session: true })],
   });
 }

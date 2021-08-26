@@ -1,7 +1,7 @@
 {
   "name": "momo",
   "version": "0.1.0",
-  "dependencies": [ "pybind11", "python3", "cppzmq", "nlohmann-json" ],
+  "dependencies": [ "pybind11", "python3", "cppzmq", "sqlpp11", "sqlpp11-connector-sqlite3", "date", "nlohmann-json" ],
   "builtin-baseline": "9f6157af4e5b04ab3cc63150a20b1bad901a7d0b",
   "overrides": [{ "name": "python3", "version": "3.8.3#2" }]
 }

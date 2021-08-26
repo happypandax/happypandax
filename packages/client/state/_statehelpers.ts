@@ -1,8 +1,8 @@
-export const localStorageEffect = (key, session = false) => ({
+export const localStorageEffect = (key, options?: { session?: boolean }) => ({
   setSelf,
   onSet,
 }) => {
-  const storage = session ? sessionStorage : localStorage;
+  const storage = options?.session ? sessionStorage : localStorage;
 
   const savedValue = storage.getItem(key);
 

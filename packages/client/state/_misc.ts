@@ -7,7 +7,7 @@ export default class _MiscState extends StateBlock {
   static recentSearch = defineAtom(
     {
       default: [] as string[],
-      effects_UNSTABLE: [localStorageEffect('recent_search', true)],
+      effects_UNSTABLE: [localStorageEffect('recent_search')],
     },
     true
   );

@@ -1,19 +1,34 @@
-import Client, { JsonArray, JsonMap } from 'happypandax-client';
+import fs from 'fs';
+import Client, { JsonArray, JsonMap, log } from 'happypandax-client';
 import { hrtime } from 'process';
 
+log.enabled = false;
+
+const statsPath = 'measure.log';
+
+let stats = {};
+
+if (fs.existsSync(statsPath)) {
+  stats = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
+}
+
 const SERVER = {
-  port: 7008,
+  port: 7007,
   host: 'localhost',
 };
 
-function elapsedTime(start: any, note: string) {
-  var precision = 3; // 3 decimal places
-  var elapsed = hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
-  console.log(
-    hrtime(start)[0] + ' s, ' + elapsed.toFixed(precision) + ' ms - ' + note
-  ); // print message + time
+function color(txt: string, color: 'red' | 'green' | 'blue' | 'yellow') {
+  switch (color) {
+    case 'red':
+      return `\x1b[31m${txt}\x1b[0m`;
+    case 'green':
+      return `\x1b[32m${txt}\x1b[0m`;
+    case 'blue':
+      return `\x1b[34m${txt}\x1b[0m`;
+    case 'yellow':
+      return `\x1b[33m${txt}\x1b[0m`;
+  }
 }
-
 class HPX {
   client: Client;
 
@@ -27,25 +42,91 @@ class HPX {
   }
 
   async call(msg: JsonArray) {
-    const s = hrtime();
-    const r = await this.client.send(msg);
-    elapsedTime(s, JSON.stringify(msg));
+    return await this.client.send(msg);
+  }
+
+  async measure(fname: string, body: JsonMap, note, times, y = 0) {
+    const precision = 3; // 3 decimal places
+    let total = 0;
+    let avg = 0;
+    let prev_avg = stats[note] ?? 0;
+    let diff = 0;
+    for (let i = 1; i <= times; i++) {
+      const s = hrtime();
+      await this.call([{ fname, ...body }]);
+      const elapsed = hrtime(s)[1] / 1000000; // divide by a million to get nano to milli
+      total += elapsed;
+      avg = total / i;
+      diff = avg - prev_avg;
+      let d = color(
+        (diff > 0 ? '+' : '') + diff.toFixed(precision) + ' ms',
+        diff > 0 ? 'red' : 'green'
+      );
+
+      process.stdout.cursorTo(0, y);
+      process.stdout.clearLine();
+      process.stdout.write(
+        `${i} - ` +
+          color(elapsed.toFixed(precision) + ' ms', 'yellow') +
+          ' - avg ' +
+          color(avg.toFixed(precision) + ' ms', 'blue') +
+          ' - ' +
+          `(${d}) ` +
+          ' - ' +
+          note
+      ); // print message + time
+    }
+    stats[note] = avg;
   }
 
   async measureVarious(
-    functions = [['library_view', { search_query: '', view_filter: null }]] as [
-      [string, JsonMap]
-    ]
+    functions: [fname: string, body: JsonMap, note?: string][],
+    times: number
   ) {
-    for (const f of functions) {
-      console.log(`Measuring ${f[1]}...`);
-      await this.call([{ fname: f[0], ...f[1] }]);
+    process.stdout.cursorTo(0, 0);
+    process.stdout.clearScreenDown();
+    for (let i = 0; i < functions.length; i++) {
+      const f = functions[i];
+      await this.measure(f[0], f[1], `${f[0]}: ` + f?.[2], times, i);
     }
   }
 }
 
+const galleryCardDataFields = [
+  'artists.preferred_name.name',
+  'preferred_title.name',
+  'profile',
+  'number',
+  'page_count',
+  'language.code',
+  'progress.end',
+  'progress.page.number',
+  'progress.percent',
+  'metatags.*',
+];
+
 export async function main() {
   const hpx = new HPX();
   await hpx.connect(SERVER.host, SERVER.port);
-  await hpx.measureVarious();
+  await hpx.measureVarious(
+    [
+      ['library_view', { search_query: '' }, 'default view'],
+      [
+        'library_view',
+        { search_query: '', fields: galleryCardDataFields },
+        'gallerycard fields',
+      ],
+      ['library_view', { search_query: '', fields: '*' }, '1 level * fields'],
+    ],
+    100
+  );
 }
+
+main()
+  .then(() => fs.writeFileSync(statsPath, JSON.stringify(stats)))
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.log('\n');
+    console.error(e);
+    process.exit(1);
+  });

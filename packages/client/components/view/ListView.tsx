@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
 import { ItemSize } from '../../misc/types';
@@ -38,11 +38,20 @@ function ListViewList<T>({
   scrollTop?: any;
   autoHeight?: any;
 } & ListViewProps<T>) {
-  const itemWidth = 600;
-  const rowHeight = 140;
+  const itemRef = useRef<HTMLDivElement>();
+  const [itemWidth, setItemWidth] = useState(600);
+  const [rowHeight, setRowHeight] = useState(140);
+  const [dims, setDims] = useState(false);
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
-  const rowCount = Math.ceil(items.length / itemsPerRow);
+  const rowCount = Math.ceil((items.length ?? 0) / itemsPerRow);
+
+  useEffect(() => {
+    if (itemRef.current) {
+      setItemWidth(itemRef.current.offsetWidth);
+      setRowHeight(itemRef.current.offsetHeight + 10);
+    }
+  }, [dims]);
 
   return (
     <List
@@ -72,6 +81,8 @@ function ListViewList<T>({
               </div>
             );
           }
+
+          setDims(true);
 
           return (
             <div className={styles.row} key={key} style={style}>

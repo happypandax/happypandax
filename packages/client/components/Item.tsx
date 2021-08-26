@@ -24,6 +24,7 @@ import {
   Popup,
   Rating,
   Ref,
+  Segment,
 } from 'semantic-ui-react';
 
 import { LibraryContext } from '../client/context';
@@ -563,6 +564,8 @@ export function ItemCard({
       <Ref innerRef={dragRef}>
         <Card
           fluid={fluid}
+          as={Segment}
+          // stacked
           onMouseEnter={useCallback(() => setHover(true), [])}
           onMouseLeave={useCallback(() => setHover(false), [])}
           centered={centered}
