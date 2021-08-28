@@ -42,7 +42,7 @@ import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
 import { FieldPath, ServerGallery, ServerPage } from '../misc/types';
 import {
-  getPageWidth,
+  getClientWidth,
   getScreenWidth,
   update,
   urlparse,
@@ -61,7 +61,7 @@ import GalleryCard, {
 import { SimilarItemsSlider, Slider, SliderElement } from './Misc';
 
 function getOptimalImageSize() {
-  const w = getPageWidth();
+  const w = getClientWidth();
   const s = getScreenWidth();
   if (w > 2400 || s > 2400) return ImageSize.Original;
   if (w > 1600 || s > 1600) return ImageSize.x2400;

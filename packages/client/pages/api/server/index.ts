@@ -64,7 +64,7 @@ export function createImageHandler(path_type: string) {
       const pixie = await getPixie();
       try {
         const b = await pixie.image({ ...(rest as any) });
-        if (b.data) {
+        if (b.data && Buffer.isBuffer(b.data)) {
           const type = await FileType.fromBuffer(b.data);
           const s = new Readable();
           s.push(b.data);
@@ -75,6 +75,7 @@ export function createImageHandler(path_type: string) {
           res.setHeader('Content-Type', type?.mime ? type?.mime : '');
           s.pipe(res);
         } else {
+          global.app.log.w(b?.data);
           return res.status(404).end(errTxt);
         }
       } catch (err) {

@@ -77,6 +77,7 @@ class HPX {
       ); // print message + time
     }
     stats[note] = avg;
+    fs.writeFileSync(statsPath, JSON.stringify(stats));
   }
 
   async measureVarious(
@@ -105,6 +106,22 @@ const galleryCardDataFields = [
   'metatags.*',
 ];
 
+const galleryCardDataFields2 = [
+  'artists.preferred_name.name',
+  'preferred_title.name',
+  'profile',
+  'number',
+  'times_read',
+  'page_count',
+  'language.code',
+  'language.name',
+  'grouping.status.name',
+  'progress.end',
+  'progress.page.number',
+  'progress.percent',
+  'metatags.*',
+];
+
 export async function main() {
   const hpx = new HPX();
   await hpx.connect(SERVER.host, SERVER.port);
@@ -116,7 +133,22 @@ export async function main() {
         { search_query: '', fields: galleryCardDataFields },
         'gallerycard fields',
       ],
-      ['library_view', { search_query: '', fields: '*' }, '1 level * fields'],
+      [
+        'library_view',
+        { search_query: '', fields: galleryCardDataFields2 },
+        'gallerycard fields 2',
+      ],
+      ['library_view', { search_query: '', fields: ['*'] }, '1 level * fields'],
+      [
+        'library_view',
+        { search_query: '', fields: ['**'] },
+        '2 level * fields',
+      ],
+      [
+        'library_view',
+        { search_query: '', fields: ['***'] },
+        '3 level * fields',
+      ],
     ],
     100
   );

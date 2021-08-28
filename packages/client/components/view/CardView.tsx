@@ -32,8 +32,8 @@ function CardViewGrid<T>({
   autoHeight?: any;
 } & CardViewProps<T>) {
   const itemRef = useRef<HTMLDivElement>();
-  const [itemWidth, setItemWidth] = useState(200);
-  const [rowHeight, setRowHeight] = useState(400);
+  const [itemWidth, setItemWidth] = useState(250);
+  const [rowHeight, setRowHeight] = useState(420);
   const [dims, setDims] = useState(false);
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);

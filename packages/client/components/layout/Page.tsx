@@ -3,12 +3,27 @@ import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useRecoilState } from 'recoil';
-import { Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
+import { Button, Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
 
+import t from '../../misc/lang';
 import { AppState } from '../../state';
 import DrawerPortal from '../Drawer';
 import { DrawerButton, ScrollUpButton } from '../Misc';
 import MainSidebar from '../Sidebar';
+
+export function PageSettingsButton(props: React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      icon="cog"
+      primary
+      circular
+      basic
+      color="black"
+      title={t`Settings`}
+      {...props}
+    />
+  );
+}
 
 export function BottomZoneItem({
   children,
@@ -39,6 +54,9 @@ export default function PageLayout({
   menu,
   basicDrawerButton,
   bottomZoneRight,
+  bottomZoneLeft,
+  bottomZoneLeftBottom,
+  bottomZoneRightBottom,
   centered,
   bottomZone,
   children,
@@ -47,6 +65,9 @@ export default function PageLayout({
   centered?: boolean;
   dimmed?: boolean;
   menu?: React.ReactNode;
+  bottomZoneLeft?: React.ReactNode;
+  bottomZoneLeftBottom?: React.ReactNode;
+  bottomZoneRightBottom?: React.ReactNode;
   bottomZoneRight?: React.ReactNode;
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
@@ -71,11 +92,18 @@ export default function PageLayout({
           />
           <BottomZone>
             {bottomZone}
+            <BottomZoneItem x="left" y="top" className="flex">
+              {bottomZoneLeft}
+            </BottomZoneItem>
+            <BottomZoneItem x="right" y="top" className="flex">
+              {bottomZoneRight}
+            </BottomZoneItem>
             <BottomZoneItem x="left" y="bottom">
               <DrawerButton basic={basicDrawerButton} />
+              {bottomZoneLeftBottom}
             </BottomZoneItem>
-            <BottomZoneItem x="right" y="top" className="flex fullheight">
-              {bottomZoneRight}
+            <BottomZoneItem x="right" y="bottom">
+              {bottomZoneRightBottom}
               <ScrollUpButton />
             </BottomZoneItem>
           </BottomZone>

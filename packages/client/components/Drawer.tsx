@@ -22,6 +22,7 @@ import GalleryCard, {
   galleryCardDataFields,
 } from './item/Gallery';
 import { EmptySegment } from './Misc';
+import ListView from './view/ListView';
 
 export function SelectedBoard({}: {}) {
   const [items, setItems] = useState([]);
@@ -112,15 +113,11 @@ export function QueueBoard({}: {}) {
         <Dimmer active={isOver}>
           <Icon size="large" name="plus" inverted />
         </Dimmer>
-        {items.map((v) => (
-          <GalleryCard
-            draggable={false}
-            key={v.id}
-            data={v}
-            horizontal
-            size="mini"
-          />
-        ))}
+        <ListView
+          items={items}
+          itemRender={GalleryCard}
+          onItemKey={useCallback((i) => i.id, [])}
+        />
         {!items.length && <EmptySegment />}
       </Dimmer.Dimmable>
     </Ref>

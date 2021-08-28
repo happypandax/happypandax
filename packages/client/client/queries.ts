@@ -1,6 +1,11 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import {
   InitialDataFunction,
+  QueryClient,
+  QueryFunctionContext,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
+  UseInfiniteQueryResult,
   useMutation,
   UseMutationOptions,
   UseMutationResult,
@@ -13,10 +18,10 @@ import { FieldPath, ServerSortIndex } from '../misc/types';
 import { urlstring } from '../misc/utility';
 
 import type ServerService from '../services/server';
-
 export enum QueryType {
   PROFILE = 1,
   PAGES,
+  LIBRARY,
   ITEMS,
   ITEM,
   RELATED_ITEMS,
@@ -30,6 +35,15 @@ export enum MutatationType {
   LOGIN = 50,
   UPDATE_GALLERY,
 }
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime:
+        process.env.NODE_ENV === 'development' ? Infinity : 1000 * 60 * 60 * 6,
+    },
+  },
+});
 
 export function useMutationType<
   T extends MutationActions,
@@ -71,6 +85,9 @@ export function useMutationType<
   }
 }
 
+type Falsy = false | undefined;
+const isTruthy = <T>(x: T | Falsy): x is T => !!x;
+
 // If A is defined, it renders the rest of generics useless
 // see https://github.com/microsoft/TypeScript/issues/26242
 // and https://github.com/microsoft/TypeScript/issues/10571
@@ -87,116 +104,114 @@ export function useQueryType<
     { type: K }
   >['dataType'],
   D extends AxiosResponse<R> = AxiosResponse<R>,
-  E extends AxiosError<D> = AxiosError<D>
+  E extends AxiosError<D> = AxiosError<D>,
+  I extends Falsy | true = undefined
 >(
   type: K,
   variables?: V,
-  options?: Omit<UseQueryOptions<D, E>, 'initialData'> & {
+  options?: {
     initialData?: R | InitialDataFunction<R>;
-  }
-): UseQueryResult<D, E> {
+    onQueryKey?: () => any;
+    infinite?: I;
+    infinitePageParam: I extends Falsy
+      ? undefined
+      : (variables: V, context: QueryFunctionContext) => V;
+  } & (I extends Falsy
+    ? Omit<UseQueryOptions<D, E>, 'initialData'>
+    : Omit<UseInfiniteQueryOptions<D, E>, 'initialData'>)
+): I extends Falsy ? UseQueryResult<D, E> : UseInfiniteQueryResult<D, E> {
+  const iData = () => ({
+    data:
+      typeof options.initialData === 'function'
+        ? (options.initialData as InitialDataFunction<R>)()
+        : options.initialData,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config: {},
+    request: {},
+  });
+
   const opts = {
     ...options,
     initialData: options?.initialData
-      ? {
-          data:
-            typeof options.initialData === 'function'
-              ? (options.initialData as InitialDataFunction<R>)()
-              : options.initialData,
-          status: 200,
-          statusText: 'OK',
-          headers: {},
-          config: {},
-          request: {},
-        }
+      ? options.infinite
+        ? { pages: [iData()], pageParams: [] }
+        : iData()
       : undefined,
   };
 
-  const key = [type.toString(), variables];
+  const key = [options?.onQueryKey?.() ?? type.toString(), variables];
+  let endpoint = '';
 
   switch (type) {
     case QueryType.SERVER_STATUS: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/status'));
-        },
-        opts
-      );
+      endpoint = '/api/status';
+      break;
     }
 
     case QueryType.SORT_INDEXES: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/sort_indexes', variables));
-        },
-        opts
-      );
+      endpoint = '/api/sort_indexes';
+      break;
     }
 
     case QueryType.ITEM: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/item', variables));
-        },
-        opts
-      );
+      endpoint = '/api/item';
+      break;
     }
 
     case QueryType.ITEMS: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/items', variables));
-        },
-        opts
-      );
+      endpoint = '/api/items';
+      break;
+    }
+
+    case QueryType.LIBRARY: {
+      endpoint = '/api/library';
+      break;
     }
 
     case QueryType.RELATED_ITEMS: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/related_items', variables));
-        },
-        opts
-      );
+      endpoint = '/api/related_items';
+      break;
     }
 
     case QueryType.PAGES: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/pages', variables));
-        },
-        opts
-      );
+      endpoint = '/api/pages';
+      break;
     }
 
     case QueryType.SIMILAR: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/similar', variables));
-        },
-        opts
-      );
+      endpoint = '/api/similar';
+      break;
     }
 
     case QueryType.SEARCH_ITEMS: {
-      return useQuery(
-        key,
-        () => {
-          return axios.get(urlstring('/api/search_items', variables));
-        },
-        opts
-      );
+      endpoint = '/api/search_items';
+      break;
     }
 
     default:
       throw Error('Invalid query type');
+  }
+
+  if (opts.infinite) {
+    return useInfiniteQuery(
+      key,
+      (ctx) => {
+        return axios.get(
+          urlstring(endpoint, options.infinitePageParam(variables, ctx))
+        );
+      },
+      opts
+    );
+  } else {
+    return useQuery(
+      key,
+      () => {
+        return axios.get(urlstring(endpoint, variables));
+      },
+      opts
+    );
   }
 }
 
@@ -243,11 +258,19 @@ interface FetchItem<T = undefined> extends QueryAction<T> {
 
 interface FetchItems<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEMS;
-  dataType: Unwrap<ReturnType<typeof ServerService['prototype']['items']>>;
+  dataType: Unwrap<ReturnType<ServerService['items']>>;
   variables: Omit<
     Parameters<typeof ServerService['prototype']['items']>[0],
     'fields'
   > & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
+interface FetchLibrary<T = undefined> extends QueryAction<T> {
+  type: QueryType.LIBRARY;
+  dataType: Unwrap<ReturnType<ServerService['library']>>;
+  variables: Omit<Parameters<ServerService['library']>[0], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
@@ -286,6 +309,7 @@ type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
   | FetchItems<T>
+  | FetchLibrary<T>
   | FetchPages<T>
   | FetchRelatedItems<T>
   | FetchSortIndexes<T>
@@ -333,18 +357,28 @@ export class Query {
       { type: K }
     >['dataType']
   >(action: K, variables?: V, config?: Parameters<AxiosInstance['get']>[1]) {
+    const key = [action.toString(), variables];
+
     switch (action) {
       case QueryType.ITEM: {
-        return axios.get<R>(urlstring('/api/item', variables as any));
+        return queryClient.fetchQuery(key, () =>
+          axios.get<R>(urlstring('/api/item', variables as any))
+        );
       }
       case QueryType.PROFILE: {
-        return axios.get<R>(urlstring('/api/profile', variables as any));
+        return queryClient.fetchQuery(key, () =>
+          axios.get<R>(urlstring('/api/profile', variables as any))
+        );
       }
       case QueryType.PAGES: {
-        return axios.get<R>(urlstring('/api/pages', variables as any));
+        return queryClient.fetchQuery(key, () =>
+          axios.get<R>(urlstring('/api/pages', variables as any))
+        );
       }
       case QueryType.SEARCH_ITEMS: {
-        return axios.get<R>(urlstring('/api/search_items', variables as any));
+        return queryClient.fetchQuery(key, () =>
+          axios.get<R>(urlstring('/api/search_items', variables as any))
+        );
       }
 
       default:

@@ -49,6 +49,11 @@ export default class _LibraryState extends StateBlock {
     effects_UNSTABLE: [localStorageEffect('library_limit')],
   });
 
+  static infinite = defineAtom({
+    default: false,
+    effects_UNSTABLE: [localStorageEffect('library_infinite')],
+  });
+
   static sidebarVisible = defineAtom({
     default: false,
   });

@@ -3,9 +3,17 @@ import _ from 'lodash';
 import { useRouter } from 'next/router';
 import { useCallback, useMemo } from 'react';
 import { AutoSizer, WindowScroller } from 'react-virtualized';
-import { Grid, Header, Pagination, Segment, Sidebar } from 'semantic-ui-react';
+import {
+  Grid,
+  Header,
+  Pagination,
+  Segment,
+  Sidebar,
+  Visibility,
+} from 'semantic-ui-react';
 
 import t from '../../misc/lang';
+import { getClientHeight } from '../../misc/utility';
 
 export function ViewPagination({
   onPageChange,
@@ -42,6 +50,7 @@ export function ViewPagination({
               {...props}
               href={pageUrl}
               onClick={(ev) => {
+                onPageChange?.(ev, props);
                 if (pageUrl) {
                   ev.preventDefault();
                   router.push(pageUrl);
@@ -50,7 +59,7 @@ export function ViewPagination({
             />
           );
         },
-        [hrefTemplate]
+        [hrefTemplate, onPageChange]
       )}
       prevItem={useMemo(() => {
         if (!hrefTemplate) return undefined;
@@ -64,13 +73,14 @@ export function ViewPagination({
           content: '⟨',
           href,
           onClick: (ev) => {
+            onPageChange?.(ev, undefined);
             if (href) {
               ev.preventDefault();
               router.push(href);
             }
           },
         };
-      }, [hrefTemplate, activePage])}
+      }, [hrefTemplate, activePage, onPageChange])}
       firstItem={useMemo(() => {
         if (!hrefTemplate) return undefined;
 
@@ -83,13 +93,14 @@ export function ViewPagination({
           content: '«',
           href,
           onClick: (ev) => {
+            onPageChange?.(ev, undefined);
             if (href) {
               ev.preventDefault();
               router.push(href);
             }
           },
         };
-      }, [hrefTemplate, activePage])}
+      }, [hrefTemplate, activePage, onPageChange])}
       nextItem={useMemo(() => {
         if (!hrefTemplate) return undefined;
 
@@ -105,13 +116,14 @@ export function ViewPagination({
           content: '⟩',
           href,
           onClick: (ev) => {
+            onPageChange?.(ev, undefined);
             if (href) {
               ev.preventDefault();
               router.push(href);
             }
           },
         };
-      }, [hrefTemplate, activePage, totalPages])}
+      }, [hrefTemplate, activePage, totalPages, onPageChange])}
       lastItem={useMemo(() => {
         if (!hrefTemplate) return undefined;
 
@@ -124,13 +136,14 @@ export function ViewPagination({
           content: '»',
           href,
           onClick: (ev) => {
+            onPageChange?.(ev, undefined);
             if (href) {
               ev.preventDefault();
               router.push(href);
             }
           },
         };
-      }, [hrefTemplate, activePage, totalPages])}
+      }, [hrefTemplate, activePage, totalPages, onPageChange])}
       pointing
       secondary
       size="small"
@@ -220,6 +233,8 @@ export function PaginatedView({
   onPageChange,
   fluid,
   hrefTemplate,
+  infinite,
+  onLoadMore,
   ...props
 }: {
   children: React.ReactNode | React.ReactNode[];
@@ -229,6 +244,8 @@ export function PaginatedView({
   sidebarContent?: React.ReactNode | React.ReactNode[];
   pagination?: boolean;
   fluid?: boolean;
+  infinite?: boolean;
+  onLoadMore?: () => void;
   totalItemCount?: number;
   itemCount?: number;
   itemsPerPage?: number;
@@ -249,8 +266,9 @@ export function PaginatedView({
     />
   );
 
-  const fromCount = (+(activePage ?? 1) - 1) * itemsPerPage + 1;
-  const toCount = fromCount + Math.max(itemCount - 1, 0);
+  let fromCount = (+(activePage ?? 1) - 1) * itemsPerPage + 1;
+  const toCount = fromCount + itemsPerPage - 1;
+  fromCount = toCount + 1 - itemCount;
   const count = totalItemCount;
 
   const getPaginatioText = () => (
@@ -276,17 +294,32 @@ export function PaginatedView({
         {sidebarContent}
       </Sidebar>
       <Sidebar.Pusher>
-        <Grid verticalAlign="middle" padded="vertically">
+        <Grid
+          as={Segment}
+          basic
+          className="no-margins"
+          verticalAlign="middle"
+          padded="vertically">
           {pagination && getPaginatioText()}
           {pagination && (
             <Grid.Row centered className="no-bottom-padding">
               {getPagination()}
             </Grid.Row>
           )}
-          <Grid.Row
-            className={classNames({ 'no-padding-segment': !paddedChildren })}>
+          <Visibility
+            as={Grid.Row}
+            className={classNames({ 'no-padding-segment': !paddedChildren })}
+            onUpdate={useCallback(
+              (e, { calculations: { pixelsPassed, height } }) => {
+                const pixelsLeft = height - pixelsPassed - getClientHeight();
+                if (infinite && onLoadMore && pixelsLeft < 500) {
+                  onLoadMore();
+                }
+              },
+              [infinite, onLoadMore]
+            )}>
             {children}
-          </Grid.Row>
+          </Visibility>
           {bottomPagination && pagination && (
             <Grid.Row centered>{getPagination()}</Grid.Row>
           )}

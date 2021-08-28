@@ -7,6 +7,7 @@
 }
 
 .item {
+    width: 600px;
     display: inline-flex;
     flex-direction: row;
     justify-content: center;

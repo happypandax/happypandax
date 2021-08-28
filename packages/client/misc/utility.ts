@@ -151,11 +151,11 @@ export function replaceURL(
   );
 }
 
-export function getPageWidth() {
+export function getClientWidth() {
   return window.innerWidth;
 }
 
-export function getPageHeight() {
+export function getClientHeight() {
   return window.innerHeight;
 }
 

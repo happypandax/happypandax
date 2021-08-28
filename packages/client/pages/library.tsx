@@ -2,10 +2,17 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { Menu, Message } from 'semantic-ui-react';
+import {
+  Checkbox,
+  Form,
+  Menu,
+  Message,
+  Modal,
+  Select,
+} from 'semantic-ui-react';
 
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
@@ -19,7 +26,10 @@ import {
   SortOrderButton,
   ViewButtons,
 } from '../components/layout/GalleryLayout';
-import PageLayout, { BottomZoneItem } from '../components/layout/Page';
+import PageLayout, {
+  BottomZoneItem,
+  PageSettingsButton,
+} from '../components/layout/Page';
 import MainMenu, { MenuItem } from '../components/Menu';
 import {
   EmptySegment,
@@ -45,6 +55,39 @@ interface PageProps {
   urlQuery: ReturnType<typeof urlparse>;
 }
 
+function libraryArgs(
+  itemType: ItemType,
+  urlQuery: ReturnType<typeof urlparse>,
+  page?: number
+) {
+  const view = urlQuery.query?.view;
+
+  const metatags = {
+    trash: false,
+    favorite: urlQuery.query?.fav as boolean,
+    inbox:
+      ViewType.All === view
+        ? undefined
+        : ViewType.Inbox === view
+        ? true
+        : false,
+  };
+
+  return {
+    item_type: itemType,
+    metatags,
+    search_query: urlQuery.query?.q as string,
+    page: page ?? (urlQuery.query?.p as number),
+    sort_options: {
+      by: (urlQuery.query?.sort as number) ?? ItemSort.GalleryDate,
+      desc: (urlQuery.query?.desc as boolean) ?? true,
+    },
+    filter_id: urlQuery.query?.filter as number,
+    limit: urlQuery.query?.limit as number,
+    fields: galleryCardDataFields,
+  };
+}
+
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
@@ -61,32 +104,9 @@ export async function getServerSideProps(
 
   const group = server.create_group_call();
 
-  const view = urlQuery.query?.view;
-
-  const metatags = {
-    trash: false,
-    favorite: urlQuery.query?.fav as boolean,
-    inbox:
-      ViewType.All === view
-        ? undefined
-        : ViewType.Inbox === view
-        ? true
-        : false,
-  };
-
-  const data = await server.library<ServerGallery>({
-    item_type: itemType,
-    metatags,
-    search_query: urlQuery.query?.q as string,
-    page: urlQuery.query?.p as number,
-    sort_options: {
-      by: (urlQuery.query?.sort as number) ?? ItemSort.GalleryDate,
-      desc: (urlQuery.query?.desc as boolean) ?? true,
-    },
-    filter_id: urlQuery.query?.filter as number,
-    limit: urlQuery.query?.limit as number,
-    fields: galleryCardDataFields,
-  });
+  const data = await server.library<ServerGallery>(
+    libraryArgs(itemType, urlQuery)
+  );
 
   return {
     props: { data, urlQuery, itemType },
@@ -136,9 +156,159 @@ function LibrarySidebar() {
   );
 }
 
+const itemsPerPage = [
+  { key: '10', text: '10', value: 10 },
+  { key: '20', text: '20', value: 20 },
+  { key: '30', text: '30', value: 30 },
+  { key: '40', text: '40', value: 40 },
+  { key: '50', text: '50', value: 50 },
+  { key: '75', text: '75', value: 75 },
+  { key: '100', text: '100', value: 100 },
+  { key: '125', text: '125', value: 125 },
+  { key: '200', text: '200', value: 200 },
+  { key: '250', text: '250', value: 250 },
+];
+
+function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
+  const [item, setItem] = useRecoilState(LibraryState.item);
+  const [view, setView] = useRecoilState(LibraryState.view);
+  const [infinite, setInfinite] = useRecoilState(LibraryState.infinite);
+  const [limit, setLimit] = useRecoilState(LibraryState.limit);
+  const [display, setDisplay] = useRecoilState(LibraryState.display);
+
+  const displayChange = useCallback((e, { value }) => {
+    e.preventDefault();
+    setDisplay(value);
+  }, []);
+
+  return (
+    <Modal trigger={trigger} dimmer={false}>
+      <Modal.Header>{t`Settings`}</Modal.Header>
+      <Modal.Content>
+        <Form>
+          <Form.Group inline>
+            <label>{t`Display`}</label>
+            <Form.Radio
+              label={t`Card`}
+              value="card"
+              checked={display === 'card'}
+              onChange={displayChange}
+            />
+            <Form.Radio
+              label={t`List`}
+              value="list"
+              checked={display === 'list'}
+              onChange={displayChange}
+            />
+          </Form.Group>
+
+          <Form.Group inline>
+            <label>{t`Default view`}</label>
+            <Form.Radio label={t`All`} />
+            <Form.Radio label={t`Library`} />
+            <Form.Radio label={t`Inbox`} />
+          </Form.Group>
+
+          <Form.Field
+            control={Select}
+            label={t`Items per page`}
+            placeholder={t`Items per page`}
+            onChange={useCallback((ev, { value }) => {
+              ev.preventDefault();
+              setLimit(parseInt(value, 10));
+            }, [])}
+            value={limit}
+            options={itemsPerPage}
+            // width={4}
+          />
+
+          <Form.Field
+            control={Select}
+            label={t`Default item`}
+            placeholder={t`Default item`}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+            }, [])}
+            value={30}
+            defaultValue={30}
+            options={itemsPerPage}
+            // width={4}
+          />
+
+          <Form.Field
+            control={Select}
+            label={t`Default sort`}
+            placeholder={t`Default sort`}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+            }, [])}
+            value={30}
+            defaultValue={30}
+            options={itemsPerPage}
+            // width={4}
+          />
+
+          <Form.Field
+            control={Select}
+            label={t`Default sort order`}
+            placeholder={t`Default sort order`}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+            }, [])}
+            value={30}
+            defaultValue={30}
+            options={itemsPerPage}
+            // width={4}
+          />
+
+          <Form.Field
+            control={Select}
+            label={t`Default filter`}
+            placeholder={t`Default filter`}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+            }, [])}
+            value={30}
+            defaultValue={30}
+            options={itemsPerPage}
+            // width={4}
+          />
+
+          <Form.Field>
+            <label>{t`Infinite scroll`}</label>
+            <Checkbox
+              toggle
+              checked={infinite}
+              onChange={useCallback((ev, { checked }) => {
+                ev.preventDefault();
+                setInfinite(checked);
+              }, [])}
+            />
+          </Form.Field>
+
+          <Form.Field>
+            <label>{t`Open in external viewer`}</label>
+            <Checkbox
+              toggle
+              checked={false}
+              onChange={useCallback((ev, { checked }) => {
+                ev.preventDefault();
+              }, [])}
+            />
+          </Form.Field>
+        </Form>
+      </Modal.Content>
+    </Modal>
+  );
+}
+
 const stateKey = 'library_page';
 
-export default function Page({ data, urlQuery, itemType }: PageProps) {
+export default function Page({
+  data: initialData,
+  urlQuery,
+  itemType,
+}: PageProps) {
   const [item, setItem] = useRecoilState(LibraryState.item);
   const [view, setView] = useRecoilState(LibraryState.view);
   const [query, setQuery] = useRecoilState(LibraryState.query);
@@ -148,10 +318,33 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
   const [limit, setLimit] = useRecoilState(LibraryState.limit);
   const [display, setDisplay] = useRecoilState(LibraryState.display);
+  const infinite = useRecoilValue(LibraryState.infinite);
+
+  const [infiniteKey, setInfiniteKey] = useState('');
 
   const setRecentQuery = useSetRecoilState(MiscState.recentSearch(stateKey));
 
+  const libraryargs = libraryArgs(itemType, urlQuery);
+
+  const { data, fetchNextPage, isFetching } = useQueryType(
+    QueryType.LIBRARY,
+    libraryargs,
+    {
+      initialData,
+      infinite: true,
+      infinitePageParam: (variables, ctx) => ({
+        ...variables,
+        page: ctx.pageParam ?? 0,
+      }),
+      onQueryKey: () => QueryType.LIBRARY.toString() + infiniteKey,
+    }
+  );
+
+  const items = data?.pages?.flat?.().flatMap?.((i) => i.data.items);
+  const count = data?.pages?.[0]?.data?.count;
+
   const router = useRouter();
+  const routerQuery = urlparse(router.asPath);
 
   useEffectOnce(() => {
     if (urlQuery.query?.fav !== undefined) {
@@ -182,7 +375,7 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
   }, [view]);
 
   useUpdateEffect(() => {
-    router.replace(urlstring({ display }));
+    router.replace(urlstring({ display }), undefined, { shallow: true });
   }, [display]);
 
   useUpdateEffect(() => {
@@ -221,6 +414,25 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
     }, 5000),
     []
   );
+
+  const fetchNext = useCallback(() => {
+    if (!infiniteKey) {
+      setInfiniteKey(new Date().getTime().toString(36));
+    } else if (!isFetching && fetchNextPage) {
+      let p = libraryargs.page ? libraryargs.page : 1;
+      p = p + data.pages.length;
+      fetchNextPage({
+        pageParam: p,
+      });
+      router.replace(urlstring({ p }), undefined, { shallow: true });
+    }
+  }, [libraryargs, router, fetchNextPage, infiniteKey, isFetching, data]);
+
+  const onPageChange = useCallback(() => {
+    if (infinite) {
+      setInfiniteKey('');
+    }
+  }, [infinite]);
 
   return (
     <PageLayout
@@ -267,6 +479,9 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
           </BottomZoneItem>
         ) : null;
       }, [filter])}
+      bottomZoneRightBottom={useMemo(() => {
+        return <LibrarySettings trigger={<PageSettingsButton />} />;
+      }, [])}
       bottomZoneRight={useMemo(
         () => (
           <>
@@ -309,33 +524,39 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
         [favorites, filter, sort, sortDesc]
       )}>
       <PageTitle title={t`Library`} />
-      {!data.count && <EmptySegment />}
+      {!count && <EmptySegment />}
       <LibraryContext.Provider value={true}>
         <LibrarySidebar />
         {display === 'card' && (
           <CardView
             hrefTemplate={pageHrefTemplate}
-            activePage={urlQuery.query?.p}
-            items={data.items}
+            activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
+            items={items}
+            infinite={infinite}
+            onPageChange={onPageChange}
+            onLoadMore={fetchNext}
             paddedChildren
             itemRender={GalleryCard}
             itemsPerPage={limit}
             onItemKey={onItemKey}
-            totalItemCount={data.count}
-            pagination={!!data.count}
-            bottomPagination={!!data.count}></CardView>
+            totalItemCount={count}
+            pagination={!!count}
+            bottomPagination={!!count}></CardView>
         )}
         {display === 'list' && (
           <ListView
             hrefTemplate={pageHrefTemplate}
-            items={data.items}
-            activePage={urlQuery.query?.p}
+            items={items}
+            infinite={infinite}
+            onPageChange={onPageChange}
+            onLoadMore={fetchNext}
+            activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
             onItemKey={onItemKey}
             itemsPerPage={limit}
             itemRender={GalleryCard}
-            totalItemCount={data.count}
-            pagination={!!data.count}
-            bottomPagination={!!data.count}></ListView>
+            totalItemCount={count}
+            pagination={!!count}
+            bottomPagination={!!count}></ListView>
         )}
       </LibraryContext.Provider>
     </PageLayout>

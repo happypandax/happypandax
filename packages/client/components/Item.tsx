@@ -182,7 +182,13 @@ export function ItemMenuLabel({
       position="right center"
       trigger={useMemo(
         () => (
-          <Icon name="ellipsis vertical" bordered link inverted />
+          <Icon
+            name="ellipsis vertical"
+            bordered
+            link
+            inverted
+            onClick={(e) => e.preventDefault()}
+          />
         ),
         []
       )}>
@@ -279,50 +285,57 @@ export function ItemCardContent({
 
   const libraryContext = useContext(LibraryContext);
 
+  const El = itemContext.horizontal && itemContext.href ? Link : React.Fragment;
+
   return (
     <>
-      <Dimmer.Dimmable
-        as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
-        onClick={useCallback(
-          (ev) => {
-            if (!itemContext.horizontal) {
-              ev.preventDefault();
-              if (libraryContext) {
-                ev.stopPropagation();
-                setLibrarySidebarData(itemContext.detailsData);
-                setLibrarySidebarVisible(true);
-              } else {
-                setDetailsOpen(true);
-                itemContext.onDetailsOpen?.();
+      <El href={itemContext.horizontal ? itemContext.href : undefined} passHref>
+        <Dimmer.Dimmable
+          as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
+          onClick={useCallback(
+            (ev) => {
+              if (!itemContext.horizontal) {
+                ev.preventDefault();
+                if (libraryContext) {
+                  ev.stopPropagation();
+                  setLibrarySidebarData(itemContext.detailsData);
+                  setLibrarySidebarVisible(true);
+                } else {
+                  setDetailsOpen(true);
+                  itemContext.onDetailsOpen?.();
+                }
               }
-            }
-          },
-          [itemContext.horizontal, itemContext.detailsData, libraryContext]
-        )}
-        className="content">
-        {!!itemContext.Details &&
-          !itemContext.horizontal &&
-          !itemContext.disableModal && (
-            <ItemDetailsModal
-              open={detailsOpen}
-              closeIcon
-              dimmer="inverted"
-              onClose={onDetailsClose}>
-              <Details data={itemContext.detailsData} />
-            </ItemDetailsModal>
+            },
+            [itemContext.horizontal, itemContext.detailsData, libraryContext]
           )}
-        <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
-          {!!itemContext.ActionContent && <itemContext.ActionContent />}
-        </Dimmer>
-        {itemContext.horizontal && (
-          <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
-        )}
-        <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
-        {subtitle && (
-          <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>
-        )}
-        {description && <Card.Description>{description}</Card.Description>}
-      </Dimmer.Dimmable>
+          className="content">
+          {!!itemContext.Details &&
+            !itemContext.horizontal &&
+            !itemContext.disableModal && (
+              <ItemDetailsModal
+                open={detailsOpen}
+                closeIcon
+                dimmer="inverted"
+                onClose={onDetailsClose}>
+                <Details data={itemContext.detailsData} />
+              </ItemDetailsModal>
+            )}
+          <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
+            {!!itemContext.ActionContent && <itemContext.ActionContent />}
+          </Dimmer>
+          {itemContext.horizontal && (
+            <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
+          )}
+          <Card.Header className="text-ellipsis card-header">
+            {title}
+          </Card.Header>
+          {subtitle && (
+            <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>
+          )}
+          {description && <Card.Description>{description}</Card.Description>}
+          {!!children && <Card.Meta>{children}</Card.Meta>}
+        </Dimmer.Dimmable>
+      </El>
     </>
   );
 }

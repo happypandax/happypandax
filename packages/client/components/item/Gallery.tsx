@@ -55,7 +55,10 @@ export type GalleryCardData = DeepPick<
   | 'progress.page.number'
   | 'progress.percent'
   | 'page_count'
+  | 'times_read'
   | 'language.code'
+  | 'language.name'
+  | 'grouping.status.name'
 >;
 
 export const galleryCardDataFields: FieldPath<ServerGallery>[] = [
@@ -63,8 +66,11 @@ export const galleryCardDataFields: FieldPath<ServerGallery>[] = [
   'preferred_title.name',
   'profile',
   'number',
+  'times_read',
   'page_count',
   'language.code',
+  'language.name',
+  'grouping.status.name',
   'progress.end',
   'progress.page.number',
   'progress.percent',
@@ -78,7 +84,13 @@ function ReadButton({ data }: { data: { id: number } }) {
         data,
       ])}
       passHref>
-      <Button as="a" primary size="mini">
+      <Button
+        as="a"
+        primary
+        size="mini"
+        onClick={useCallback((e) => {
+          e.preventDefault();
+        }, [])}>
         <Icon className="book open" />
         {t`Read`}
       </Button>
@@ -100,7 +112,12 @@ function ContinueButton({
         [data]
       )}
       passHref>
-      <Button color="orange" size="mini">
+      <Button
+        color="orange"
+        size="mini"
+        onClick={useCallback((e) => {
+          e.preventDefault();
+        }, [])}>
         <Icon name="play" />
         {t`Continue`}
       </Button>
@@ -110,7 +127,11 @@ function ContinueButton({
 
 function SaveForLaterButton() {
   return (
-    <Button size="mini">
+    <Button
+      size="mini"
+      onClick={useCallback((e) => {
+        e.preventDefault();
+      }, [])}>
       <Icon name="bookmark outline" />
       {t`Save for later`}
     </Button>
@@ -120,15 +141,25 @@ function SaveForLaterButton() {
 function AddToQueueButton({ data }: { data: GalleryCardData }) {
   const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
 
+  const exists = readingQueue.includes(data.id);
+
   return (
     <Button
       color="red"
       size="mini"
-      onClick={useCallback(() => {
-        setReadingQueue([...readingQueue, data.id]);
-      }, [data, readingQueue])}>
-      <Icon name="plus" />
-      {t`Add to queue`}
+      onClick={useCallback(
+        (e) => {
+          e.preventDefault();
+          if (exists) {
+            setReadingQueue(readingQueue.filter((i) => i !== data.id));
+          } else {
+            setReadingQueue([...readingQueue, data.id]);
+          }
+        },
+        [data, readingQueue]
+      )}>
+      <Icon name={exists ? 'minus' : 'plus'} />
+      {t`Queue`}
     </Button>
   );
 }
@@ -224,10 +255,28 @@ export function GalleryCard({
             <ActivityLabel />
           </ItemLabel>,
           <ItemLabel x="right" y="bottom">
-            {horizontal && <StatusLabel as={TranslucentLabel} />}
-            {horizontal && <ReadCountLabel as={TranslucentLabel} />}
-            {horizontal && <LanguageLabel as={TranslucentLabel} />}
-            {horizontal && <PageCountLabel as={TranslucentLabel} />}
+            {horizontal && (
+              <StatusLabel as={TranslucentLabel}>
+                {data?.grouping?.status?.name}
+              </StatusLabel>
+            )}
+            {horizontal && (
+              <ReadCountLabel as={TranslucentLabel}>
+                {data?.times_read}
+              </ReadCountLabel>
+            )}
+            {horizontal && !!data?.language && (
+              <LanguageLabel as={TranslucentLabel}>
+                {data.language?.code
+                  ? data.language.code.toUpperCase?.()
+                  : data?.language?.name ?? ''}
+              </LanguageLabel>
+            )}
+            {horizontal && (
+              <PageCountLabel as={TranslucentLabel}>
+                {data?.page_count}
+              </PageCountLabel>
+            )}
             {!horizontal && !!data?.language?.code && (
               <TranslucentLabel>
                 {data.language.code.toUpperCase()}
@@ -251,7 +300,8 @@ export function GalleryCard({
               {!hasProgress && <ReadButton data={data} />}
               {hasProgress && <ContinueButton data={data} />}
             </ItemCardActionContentItem>
-            {!(['tiny', 'small', 'mini'] as ItemSize[]).includes(size) && (
+            {(horizontal ||
+              !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
               <ItemCardActionContentItem>
                 <AddToQueueButton data={data} />
               </ItemCardActionContentItem>
@@ -261,7 +311,7 @@ export function GalleryCard({
             </ItemCardActionContentItem>
           </ItemCardActionContent>
         ),
-        [data, size]
+        [data, size, horizontal]
       )}
       image={useCallback(
         ({ children }: { children?: React.ReactNode }) => (
@@ -273,9 +323,7 @@ export function GalleryCard({
         title={data?.preferred_title?.name ?? ''}
         subtitle={data?.artists.map((a) => (
           <span key={a.id}>{a.preferred_name.name}</span>
-        ))}>
-        <ReadCountLabel />
-      </ItemCardContent>
+        ))}></ItemCardContent>
     </ItemCard>
   );
 }

@@ -8,13 +8,14 @@ import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
 import NProgress from 'nprogress';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { QueryClient, QueryClientProvider, useIsFetching } from 'react-query';
+import { QueryClientProvider, useIsFetching } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { RecoilRoot } from 'recoil';
 
+import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';
@@ -71,19 +72,6 @@ export function AppRoot({
   children: React.ReactNode;
   pageProps?: AppPageProps['pageProps'];
 }) {
-  const queryClient = useMemo(() => {
-    return new QueryClient({
-      defaultOptions: {
-        queries: {
-          staleTime:
-            process.env.NODE_ENV === 'development'
-              ? Infinity
-              : 1000 * 60 * 60 * 6,
-        },
-      },
-    });
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <RecoilRoot
