@@ -25,6 +25,7 @@ import {
 
 import { useDocumentEvent } from '../hooks/utils';
 import t from '../misc/lang';
+import { AppState, useInitialRecoilState } from '../state/index';
 import AboutModal from './About';
 import SettingsModal from './Settings';
 
@@ -125,7 +126,8 @@ export function MainSidebar({
 }) {
   const [iconOnly, setIconOnly] = useState(true);
   const [inverted, setInverted] = useState(!fixed);
-  const [width, setWidth] = useState<'very thin' | 'thin'>(
+  const [width, setWidth] = useInitialRecoilState(
+    AppState.sidebarWidth,
     iconOnly ? 'very thin' : 'thin'
   );
   const [animation, setAnimation] = useState<'push' | 'overlay'>(

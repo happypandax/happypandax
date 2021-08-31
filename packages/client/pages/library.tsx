@@ -429,9 +429,7 @@ export default function Page({
   }, [libraryargs, router, fetchNextPage, infiniteKey, isFetching, data]);
 
   const onPageChange = useCallback(() => {
-    if (infinite) {
-      setInfiniteKey('');
-    }
+    setInfiniteKey('');
   }, [infinite]);
 
   return (

@@ -20,7 +20,7 @@ interface ListViewProps<T> {
 }
 
 function ListViewList<T>({
-  width,
+  width: initialWidth,
   height,
   items,
   size,
@@ -42,6 +42,7 @@ function ListViewList<T>({
   const [itemWidth, setItemWidth] = useState(600);
   const [rowHeight, setRowHeight] = useState(140);
   const [dims, setDims] = useState(false);
+  const [width, setWidth] = useState(initialWidth);
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil((items.length ?? 0) / itemsPerRow);
@@ -52,6 +53,12 @@ function ListViewList<T>({
       setRowHeight(itemRef.current.offsetHeight + 10);
     }
   }, [dims]);
+
+  useEffect(() => {
+    if (initialWidth) {
+      setWidth(initialWidth);
+    }
+  }, [initialWidth]);
 
   return (
     <List

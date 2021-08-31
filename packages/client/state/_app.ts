@@ -19,6 +19,10 @@ export default class _AppState extends StateBlock {
 
   static loggedIn = defineAtom({ default: false });
 
+  static sidebarWidth = defineAtom({
+    default: 'very thin' as 'very thin' | 'thin',
+  });
+
   static drawerOpen = defineAtom({ default: false });
   static drawerTab = defineAtom({
     default: DrawerTab.Queue,

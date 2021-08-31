@@ -14,7 +14,7 @@ interface CardViewProps<T> {
 }
 
 function CardViewGrid<T>({
-  width,
+  width: initialWidth,
   height,
   items,
   itemRender: ItemRender,
@@ -32,6 +32,7 @@ function CardViewGrid<T>({
   autoHeight?: any;
 } & CardViewProps<T>) {
   const itemRef = useRef<HTMLDivElement>();
+  const [width, setWidth] = useState(initialWidth);
   const [itemWidth, setItemWidth] = useState(250);
   const [rowHeight, setRowHeight] = useState(420);
   const [dims, setDims] = useState(false);
@@ -45,6 +46,12 @@ function CardViewGrid<T>({
       setRowHeight(itemRef.current.offsetHeight + 10);
     }
   }, [dims]);
+
+  useEffect(() => {
+    if (initialWidth) {
+      setWidth(initialWidth);
+    }
+  }, [initialWidth]);
 
   return (
     <List

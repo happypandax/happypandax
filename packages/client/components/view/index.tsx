@@ -1,8 +1,9 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import { useRouter } from 'next/router';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AutoSizer, WindowScroller } from 'react-virtualized';
+import { useRecoilValue } from 'recoil';
 import {
   Grid,
   Header,
@@ -14,6 +15,7 @@ import {
 
 import t from '../../misc/lang';
 import { getClientHeight } from '../../misc/utility';
+import { AppState } from '../../state';
 
 export function ViewPagination({
   onPageChange,
@@ -177,6 +179,22 @@ export function ViewAutoSizer({
   items?: any[];
   view: React.ElementType<ViewProps>;
 } & Record<string, any>) {
+  const sidebarWidth = useRecoilValue(AppState.sidebarWidth);
+  const [disableWidth, setDisableWidth] = useState(false);
+  const tid = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    const t = sidebarWidth === 'thin';
+    if (tid.current) {
+      clearTimeout(tid.current);
+    }
+    if (t) {
+      setDisableWidth(true);
+    } else {
+      tid.current = setTimeout(() => setDisableWidth(false), 500);
+    }
+  }, [sidebarWidth]);
+
   const elFunc = !disableWindowScroll
     ? useCallback(
         ({ width }) => {
@@ -215,7 +233,11 @@ export function ViewAutoSizer({
         [items, itemRender]
       );
 
-  return <AutoSizer disableHeight={!disableWindowScroll}>{elFunc}</AutoSizer>;
+  return (
+    <AutoSizer disableWidth={disableWidth} disableHeight={!disableWindowScroll}>
+      {elFunc}
+    </AutoSizer>
+  );
 }
 
 export function PaginatedView({
