@@ -27,15 +27,15 @@ import {
   Segment,
 } from 'semantic-ui-react';
 
-import { LibraryContext } from '../client/context';
-import { ItemType } from '../misc/enums';
+import { LibraryContext } from '../../client/context';
+import { ItemType } from '../../misc/enums';
 import {
   DragItemData,
   ItemSize,
   ServerItem,
   ServerItemWithProfile,
-} from '../misc/types';
-import { AppState, LibraryState } from '../state';
+} from '../../misc/types';
+import { AppState, LibraryState } from '../../state';
 import styles from './Item.module.css';
 
 const ItemContext = React.createContext({

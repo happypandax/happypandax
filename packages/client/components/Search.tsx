@@ -89,6 +89,7 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
 
                 return (
                   <Label
+                    key={ns + tag}
                     as="a"
                     className="no-bottom-margin"
                     onClick={(ev) => {
@@ -473,9 +474,10 @@ export function ItemSearch({
   size?: React.ComponentProps<typeof Search>['size'];
   className?: string;
 }) {
+  console.log(defaultValue);
   const ref = useRef<HTMLElement>();
   const refTimeoutId = useRef<NodeJS.Timeout>();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(defaultValue);
   const [resultsVisible, setResultsVisible] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -544,7 +546,6 @@ export function ItemSearch({
                 []
               )}
               tabIndex={0}
-              defaultValue={defaultValue}
               value={query}
               onChange={useCallback((ev, d) => {
                 ev.preventDefault();

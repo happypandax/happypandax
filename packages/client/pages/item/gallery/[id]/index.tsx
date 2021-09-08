@@ -1,8 +1,8 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
-import { useRouter } from 'next/dist/client/router';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Container, Grid, Icon, Label, Segment } from 'semantic-ui-react';
 
+import { QueryType, useQueryType } from '../../../../client/queries';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
@@ -29,16 +29,13 @@ import {
   ServerGallery,
   ServerGrouping,
   ServerItem,
-  ServerPage,
 } from '../../../../misc/types';
-import { urlparse, urlstring } from '../../../../misc/utility';
+import { urlparse } from '../../../../misc/utility';
 import { ServiceType } from '../../../../services/constants';
-import ServerService from '../../../../services/server';
 
 interface PageProps {
   item: GalleryHeaderData;
   sameArtist: GalleryCardData[];
-  pages: Unwrap<ServerService['library']>;
   series: GalleryCardData[];
   urlQuery: ReturnType<typeof urlparse>;
 }
@@ -61,7 +58,6 @@ export async function getServerSideProps(
   let item: PageProps['item'];
   let sameArtist: PageProps['sameArtist'] = [];
   let series: PageProps['series'] = [];
-  let pages: PageProps['pages'];
 
   if (!redirect) {
     const group = server.create_group_call();
@@ -96,23 +92,6 @@ export async function getServerSideProps(
         series = r.items?.[0]?.galleries?.filter((g) => g.id !== itemId);
       });
 
-    server
-      .library<ServerPage>(
-        {
-          item_type: ItemType.Gallery,
-          item_id: itemId,
-          related_type: ItemType.Page,
-          metatags: { trash: false },
-          page: urlQuery.query?.pp as number,
-          limit: (urlQuery.query?.pplimit as number) ?? 50,
-          fields: pageCardDataFields,
-        },
-        group
-      )
-      .then((r) => {
-        pages = r;
-      });
-
     await group.call();
 
     if (item.artists?.length) {
@@ -129,21 +108,33 @@ export async function getServerSideProps(
 
   return {
     redirect,
-    props: { item, sameArtist, series, urlQuery, pages },
+    props: { item, sameArtist, series, urlQuery },
   };
 }
 
 export default function Page(props: PageProps) {
-  const router = useRouter();
+  const [page, setPage] = useState(1);
+
+  const { data: pages, isLoading: pagesIsLoading } = useQueryType(
+    QueryType.LIBRARY,
+    {
+      item_type: ItemType.Gallery,
+      item_id: props.item.id,
+      related_type: ItemType.Page,
+      metatags: { trash: false },
+      page: page - 1,
+      limit: 50,
+      fields: pageCardDataFields,
+    }
+  );
 
   const display = 'card';
 
-  const pageHrefTemplate = useMemo(
-    () => urlstring(router.asPath, { pp: '${page}' }, { encode: false }),
-    [router.query]
-  );
-
   const onItemKey = useCallback((item: ServerItem) => item.id, []);
+  const onPageChange = useCallback((ev, n) => {
+    ev.preventDefault();
+    setPage(n);
+  }, []);
 
   return (
     <PageLayout
@@ -193,34 +184,36 @@ export default function Page(props: PageProps) {
               <Label attached="top">
                 <Icon name="clone outline" />
                 {t`Pages`}
-                <Label.Detail>{props.pages.count}</Label.Detail>
+                <Label.Detail>{pages?.data.count}</Label.Detail>
               </Label>
               {display === 'card' && (
                 <CardView
-                  hrefTemplate={pageHrefTemplate}
                   fluid
-                  activePage={props.urlQuery.query?.pp}
-                  items={props.pages.items}
+                  loading={pagesIsLoading}
+                  activePage={page}
+                  onPageChange={onPageChange}
+                  items={pages?.data.items}
                   paddedChildren
                   itemRender={PageCard}
                   itemsPerPage={30}
                   onItemKey={onItemKey}
-                  totalItemCount={props.pages.count}
-                  pagination={!!props.pages.count}
-                  bottomPagination={!!props.pages.count}></CardView>
+                  totalItemCount={pages?.data.count}
+                  pagination={!!pages?.data.count}
+                  bottomPagination={!!pages?.data.count}></CardView>
               )}
               {display === 'list' && (
                 <ListView
-                  hrefTemplate={pageHrefTemplate}
                   fluid
-                  items={props.pages.items}
-                  activePage={props.urlQuery.query?.pp}
+                  loading={pagesIsLoading}
+                  items={pages?.data.items}
+                  onPageChange={onPageChange}
+                  activePage={page}
                   onItemKey={onItemKey}
                   itemsPerPage={30}
                   itemRender={PageCard}
-                  totalItemCount={props.pages.count}
-                  pagination={!!props.pages.count}
-                  bottomPagination={!!props.pages.count}></ListView>
+                  totalItemCount={pages?.data.count}
+                  pagination={!!pages?.data.count}
+                  bottomPagination={!!pages?.data.count}></ListView>
               )}
             </Grid.Row>
           </Grid>

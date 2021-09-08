@@ -1,8 +1,6 @@
-const path = require('path');
-
 module.exports = {
-  extends: 'erb',
-  plugins: ['@emotion'],
+  extends: 'next/core-web-vitals',
+
   rules: {
     'no-continue': 'off',
     'class-methods-use-this': 'off',
@@ -11,18 +9,17 @@ module.exports = {
     'react/require-default-props': 'off',
     'max-classes-per-file': 'off',
     'react/jsx-uses-react': 'off',
+    'react/display-name': 'off',
     'react/jsx-props-no-spreading': 'off',
     'react/react-in-jsx-scope': 'off',
     // A temporary hack related to IDE not resolving correct package.json
     'import/no-extraneous-dependencies': 'off',
     'react-hooks/exhaustive-deps': [
-      'warn',
+      'off',
       {
         additionalHooks: 'useRecoilCallback',
       },
     ],
-    '@emotion/no-vanilla': 'error',
-    '@emotion/import-from-emotion': 'error',
     'no-restricted-syntax': [
       'error',
       {
@@ -50,15 +47,6 @@ module.exports = {
     createDefaultProgram: true,
   },
   settings: {
-    'import/resolver': {
-      // See https://github.com/benmosher/eslint-plugin-import/issues/1396#issuecomment-575727774 for line below
-      node: {},
-      webpack: {
-        config: require.resolve(
-          path.join(__dirname, './configs/webpack.config.eslint.js')
-        ),
-      },
-    },
     'import/parsers': {
       '@typescript-eslint/parser': ['.ts', '.tsx'],
     },

@@ -161,7 +161,7 @@ export function ArtistLabels() {
   return (
     <Label.Group color="blue">
       {data?.artists?.map?.((a) => (
-        <Label>
+        <Label key={a?.id}>
           <Icon name="user outline" /> {a?.preferred_name?.name}
         </Label>
       ))}
@@ -178,7 +178,7 @@ export function ParodyLabels() {
   return (
     <Label.Group color="violet">
       {data?.parodies?.map?.((a) => (
-        <Label>{a?.preferred_name?.name}</Label>
+        <Label key={a?.id}>{a?.preferred_name?.name}</Label>
       ))}
     </Label.Group>
   );
@@ -197,12 +197,12 @@ export function CircleLabels() {
   return (
     <Label.Group>
       {data?.circles?.map?.((c) => (
-        <Label color="teal">
+        <Label color="teal" key={c?.id}>
           <Icon name="group" /> {c.name}
         </Label>
       ))}
       {artistCircles?.map?.((c) => (
-        <Label basic color="teal" className="border-dashed">
+        <Label key={c?.id} basic color="teal" className="border-dashed">
           <Icon name="group" /> {c?.name}
         </Label>
       ))}
@@ -285,10 +285,10 @@ export function UrlList() {
   return (
     <List size="small" relaxed>
       {data?.urls?.map?.((u) => (
-        <List.Item>
+        <List.Item key={u?.id}>
           <List.Icon name="external share" />
           <List.Content>
-            <a href={u.name} target="_blank">
+            <a href={u.name} target="_blank" rel="noreferrer">
               {u.name}
             </a>
           </List.Content>

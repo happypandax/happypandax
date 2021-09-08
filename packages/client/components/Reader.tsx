@@ -613,7 +613,8 @@ function Canvas({
   const [scroller, setScroller] = useState<Scroller>();
 
   useEffect(() => {
-    ref.current.focus();
+    document.body.focus();
+    console.log(document.activeElement);
     const s = new Scroller(scrollRender.bind(undefined, refContent.current), {
       scrollingX: false,
       scrollingy: true,
@@ -916,6 +917,7 @@ function Canvas({
     { passive: false },
     [scroller, onScrollPanEnd, direction, wheelZoom, checkIfEnd]
   );
+  console.log(document?.activeElement);
 
   return (
     <div
@@ -927,7 +929,7 @@ function Canvas({
       }, [showFullscreen])}
       onClick={useCallback(
         (e) => {
-          ref.current.focus();
+          // ref.current.focus();
           // distinguish drag from click
           const delta = 5; // allow a small drag
           const diffX = Math.abs(e.pageX - refMouseDownEvent.current.pageX);

@@ -44,10 +44,10 @@ import ListView from '../components/view/ListView';
 import { ItemSort, ItemType, ViewType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerGallery, ServerItem } from '../misc/types';
-import { urlparse, urlstring } from '../misc/utility';
+import { getCookies, urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
-import { LibraryState, MiscState } from '../state';
+import { AppState, LibraryState, MiscState } from '../state';
 
 interface PageProps {
   data: Unwrap<ServerService['library']>;
@@ -56,15 +56,18 @@ interface PageProps {
 }
 
 function libraryArgs(
+  ctx: NextPageContext | undefined,
   itemType: ItemType,
   urlQuery: ReturnType<typeof urlparse>,
   page?: number
 ) {
-  const view = urlQuery.query?.view;
+  const view = urlQuery.query?.view ?? getCookies(ctx, 'library_view');
 
   const metatags = {
     trash: false,
-    favorite: urlQuery.query?.fav as boolean,
+    favorite:
+      ((urlQuery.query?.fav ?? getCookies(ctx, 'library_fav')) as boolean) ||
+      undefined,
     inbox:
       ViewType.All === view
         ? undefined
@@ -73,17 +76,31 @@ function libraryArgs(
         : false,
   };
 
+  let p =
+    page ?? ((urlQuery.query?.p ?? getCookies(ctx, 'library_page')) as number);
+
+  if (p) {
+    p--;
+  }
+
   return {
     item_type: itemType,
     metatags,
-    search_query: urlQuery.query?.q as string,
-    page: page ?? (urlQuery.query?.p as number),
+    search_query: (urlQuery.query?.q ??
+      getCookies(ctx, 'library_query')) as string,
+    page: p,
     sort_options: {
-      by: (urlQuery.query?.sort as number) ?? ItemSort.GalleryDate,
-      desc: (urlQuery.query?.desc as boolean) ?? true,
+      by:
+        ((urlQuery.query?.sort ?? getCookies(ctx, 'library_sort')) as number) ??
+        ItemSort.GalleryDate,
+      desc:
+        ((urlQuery.query?.desc ??
+          getCookies(ctx, 'library_desc')) as boolean) ?? true,
     },
-    filter_id: urlQuery.query?.filter as number,
-    limit: urlQuery.query?.limit as number,
+    filter_id: (urlQuery.query?.filter ??
+      getCookies(ctx, 'library_filter')) as number,
+    limit: (urlQuery.query?.limit ??
+      getCookies(ctx, 'library_limit')) as number,
     fields: galleryCardDataFields,
   };
 }
@@ -102,10 +119,10 @@ export async function getServerSideProps(
     itemType = ItemType.Collection;
   }
 
-  const group = server.create_group_call();
+  // const group = server.create_group_call();
 
   const data = await server.library<ServerGallery>(
-    libraryArgs(itemType, urlQuery)
+    libraryArgs(context, itemType, urlQuery)
   );
 
   return {
@@ -170,11 +187,15 @@ const itemsPerPage = [
 ];
 
 function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
+  const sameMachine = useRecoilState(AppState.sameMachine);
   const [item, setItem] = useRecoilState(LibraryState.item);
   const [view, setView] = useRecoilState(LibraryState.view);
   const [infinite, setInfinite] = useRecoilState(LibraryState.infinite);
   const [limit, setLimit] = useRecoilState(LibraryState.limit);
   const [display, setDisplay] = useRecoilState(LibraryState.display);
+  const [externalViewer, setExternalViewer] = useRecoilState(
+    AppState.externalViewer
+  );
 
   const displayChange = useCallback((e, { value }) => {
     e.preventDefault();
@@ -286,16 +307,19 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
             />
           </Form.Field>
 
-          <Form.Field>
-            <label>{t`Open in external viewer`}</label>
-            <Checkbox
-              toggle
-              checked={false}
-              onChange={useCallback((ev, { checked }) => {
-                ev.preventDefault();
-              }, [])}
-            />
-          </Form.Field>
+          {sameMachine && (
+            <Form.Field>
+              <label>{t`Open in external viewer`}</label>
+              <Checkbox
+                toggle
+                checked={externalViewer}
+                onChange={useCallback((ev, { checked }) => {
+                  ev.preventDefault();
+                  setExternalViewer(checked);
+                }, [])}
+              />
+            </Form.Field>
+          )}
         </Form>
       </Modal.Content>
     </Modal>
@@ -324,7 +348,7 @@ export default function Page({
 
   const setRecentQuery = useSetRecoilState(MiscState.recentSearch(stateKey));
 
-  const libraryargs = libraryArgs(itemType, urlQuery);
+  const libraryargs = libraryArgs(undefined, itemType, urlQuery);
 
   const { data, fetchNextPage, isFetching } = useQueryType(
     QueryType.LIBRARY,
@@ -334,7 +358,7 @@ export default function Page({
       infinite: true,
       infinitePageParam: (variables, ctx) => ({
         ...variables,
-        page: ctx.pageParam ?? 0,
+        page: (ctx.pageParam ?? 1) - 1,
       }),
       onQueryKey: () => QueryType.LIBRARY.toString() + infiniteKey,
     }
@@ -371,7 +395,7 @@ export default function Page({
   });
 
   useUpdateEffect(() => {
-    router.replace(urlstring({ view }));
+    router.replace(urlstring({ view, p: 1 }));
   }, [view]);
 
   useUpdateEffect(() => {
@@ -399,7 +423,7 @@ export default function Page({
   }, [limit]);
 
   useEffect(() => {
-    router.replace(urlstring({ q: query }));
+    router.replace(urlstring({ q: query, p: 1 }));
   }, [query]);
 
   const pageHrefTemplate = useMemo(

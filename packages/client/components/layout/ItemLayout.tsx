@@ -56,7 +56,8 @@ function ParallaxDiv({
   React.HTMLProps<HTMLDivElement>,
   'target'
 >) {
-  const targetRef = target ?? useRef(window?.document);
+  const initialRef = useRef(window?.document);
+  const targetRef = target ?? initialRef;
   const ref = useRef<HTMLDivElement>();
   const runningAnimationRef = useRef({
     running: false,

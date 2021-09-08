@@ -13,7 +13,7 @@ import {
   ItemLabel,
   ItemMenuLabel,
   ItemMenuLabelItem,
-} from '../Item';
+} from './';
 
 export type PageCardData = DeepPick<
   ServerPage,
@@ -70,19 +70,19 @@ export function PageCard({
       disableModal={disableModal}
       labels={useMemo(
         () => [
-          <ItemLabel x="left" y="top">
+          <ItemLabel key="fav" x="left" y="top">
             <FavoriteLabel />
           </ItemLabel>,
-          <ItemLabel x="right" y="top">
+          <ItemLabel key="icons" x="right" y="top">
             {!!data?.metatags?.inbox && <InboxIconLabel />}
             <ActivityLabel />
           </ItemLabel>,
-          <ItemLabel x="center" y="bottom">
+          <ItemLabel key="info" x="center" y="bottom">
             {data?.number !== undefined && (
               <PageNumberLabel>{data.number}</PageNumberLabel>
             )}
           </ItemLabel>,
-          <ItemLabel x="right" y="bottom">
+          <ItemLabel key="menu" x="right" y="bottom">
             <PageMenu />
           </ItemLabel>,
         ],

@@ -23,7 +23,7 @@ export function ViewPagination({
   totalPages,
   hrefTemplate,
 }: {
-  onPageChange?: React.ComponentProps<typeof Pagination>['onPageChange'];
+  onPageChange?: (ev, n: numbeer) => void;
   activePage?: React.ComponentProps<typeof Pagination>['activePage'];
   totalPages?: React.ComponentProps<typeof Pagination>['totalPages'];
   hrefTemplate?: string;
@@ -52,7 +52,7 @@ export function ViewPagination({
               {...props}
               href={pageUrl}
               onClick={(ev) => {
-                onPageChange?.(ev, props);
+                onPageChange?.(ev, props.value);
                 if (pageUrl) {
                   ev.preventDefault();
                   router.push(pageUrl);
@@ -66,8 +66,10 @@ export function ViewPagination({
       prevItem={useMemo(() => {
         if (!hrefTemplate) return undefined;
 
+        const prevPage = Math.max(1, parseInt(activePage as string, 10) - 1);
+
         const href = tmpl({
-          page: Math.max(1, parseInt(activePage as string, 10) - 1),
+          page: prevPage,
         });
 
         return {
@@ -75,7 +77,7 @@ export function ViewPagination({
           content: '⟨',
           href,
           onClick: (ev) => {
-            onPageChange?.(ev, undefined);
+            onPageChange?.(ev, prevPage);
             if (href) {
               ev.preventDefault();
               router.push(href);
@@ -95,7 +97,7 @@ export function ViewPagination({
           content: '«',
           href,
           onClick: (ev) => {
-            onPageChange?.(ev, undefined);
+            onPageChange?.(ev, 1);
             if (href) {
               ev.preventDefault();
               router.push(href);
@@ -106,11 +108,13 @@ export function ViewPagination({
       nextItem={useMemo(() => {
         if (!hrefTemplate) return undefined;
 
+        const nextPage = Math.min(
+          parseInt(totalPages as string, 10),
+          parseInt(activePage as string, 10) + 1
+        );
+
         const href = tmpl({
-          page: Math.min(
-            parseInt(totalPages as string, 10),
-            parseInt(activePage as string, 10) + 1
-          ),
+          page: nextPage,
         });
 
         return {
@@ -118,7 +122,7 @@ export function ViewPagination({
           content: '⟩',
           href,
           onClick: (ev) => {
-            onPageChange?.(ev, undefined);
+            onPageChange?.(ev, nextPage);
             if (href) {
               ev.preventDefault();
               router.push(href);
@@ -138,7 +142,7 @@ export function ViewPagination({
           content: '»',
           href,
           onClick: (ev) => {
-            onPageChange?.(ev, undefined);
+            onPageChange?.(ev, parseInt(totalPages as string, 10));
             if (href) {
               ev.preventDefault();
               router.push(href);
@@ -289,11 +293,14 @@ export function PaginatedView({
   );
 
   let fromCount = (+(activePage ?? 1) - 1) * itemsPerPage + 1;
-  const toCount = fromCount + itemsPerPage - 1;
-  fromCount = toCount + 1 - itemCount;
+  let toCount = Math.min(fromCount + itemsPerPage - 1, itemCount);
+
+  fromCount = itemCount ? toCount + 1 - itemCount : 0;
+  toCount = itemCount ? toCount : 0;
+
   const count = totalItemCount;
 
-  const getPaginatioText = () => (
+  const getPaginationText = () => (
     <Grid.Row centered>
       <Header>
         <Header.Subheader as="h6">
@@ -322,7 +329,7 @@ export function PaginatedView({
           className="no-margins"
           verticalAlign="middle"
           padded="vertically">
-          {pagination && getPaginatioText()}
+          {pagination && getPaginationText()}
           {pagination && (
             <Grid.Row centered className="no-bottom-padding">
               {getPagination()}
@@ -334,7 +341,13 @@ export function PaginatedView({
             onUpdate={useCallback(
               (e, { calculations: { pixelsPassed, height } }) => {
                 const pixelsLeft = height - pixelsPassed - getClientHeight();
-                if (infinite && onLoadMore && pixelsLeft < 500) {
+                if (
+                  infinite &&
+                  itemCount &&
+                  itemCount * +activePage < totalItemCount &&
+                  onLoadMore &&
+                  pixelsLeft < 500
+                ) {
                   onLoadMore();
                 }
               },
@@ -345,7 +358,7 @@ export function PaginatedView({
           {bottomPagination && pagination && (
             <Grid.Row centered>{getPagination()}</Grid.Row>
           )}
-          {bottomPagination && pagination && getPaginatioText()}
+          {bottomPagination && pagination && getPaginationText()}
         </Grid>
       </Sidebar.Pusher>
     </Sidebar.Pushable>

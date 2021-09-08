@@ -1,20 +1,18 @@
-import {
-  Segment,
-  Grid,
-  Step,
-  Divider,
-  Header,
-  Checkbox,
-  Button,
-} from 'semantic-ui-react';
-import Image from 'next/image';
-import t from '../misc/lang';
 import classNames from 'classnames';
-import { parseMarkdown } from '../misc/utility';
-import { Markdown } from './Misc';
-import { useMemo, useState } from 'react';
-import { useCallback } from 'react';
 import { useRouter } from 'next/dist/client/router';
+import { useCallback, useState } from 'react';
+import {
+  Button,
+  Checkbox,
+  Divider,
+  Grid,
+  Header,
+  Segment,
+  Step,
+} from 'semantic-ui-react';
+
+import t from '../misc/lang';
+import { Markdown } from './Misc';
 
 function StepBody({
   show,
@@ -248,10 +246,11 @@ export default function Setup() {
             <Step.Group size="tiny">
               {steps.map((s, i) => (
                 <Step
+                  key={s.title}
                   active={currentStep === i}
                   id={`step-${i}`}
                   link
-                  onClick={useCallback(() => setCurrentStep(i), [])}>
+                  onClick={() => setCurrentStep(i)}>
                   <Step.Content>
                     <Step.Title>{s.title}</Step.Title>
                   </Step.Content>
@@ -266,12 +265,13 @@ export default function Setup() {
 
         return (
           <El
+            key={v.title}
             title={v.title}
             show={currentStep === i}
-            onNext={useCallback(() => {
+            onNext={() => {
               setCurrentStep(i + 1);
               router.push({ search: `step-${i}` });
-            }, [])}
+            }}
           />
         );
       })}

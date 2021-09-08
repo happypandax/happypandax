@@ -39,6 +39,7 @@ function InfoPane() {
           <Button
             as="a"
             href="https://www.patreon.com/twiddly"
+            rel="noreferrer"
             target="_blank"
             size="small"
             color="orange">
@@ -48,6 +49,7 @@ function InfoPane() {
           <Button
             as="a"
             href="https://ko-fi.com/twiddly"
+            rel="noreferrer"
             target="_blank"
             size="small"
             color="blue">
@@ -58,6 +60,7 @@ function InfoPane() {
           <Button
             as="a"
             href="https://github.com/happypandax"
+            rel="noreferrer"
             target="_blank"
             size="small"
             floated="right">
@@ -78,7 +81,10 @@ function InfoPane() {
                   </Header>
                 </Table.Cell>
                 <Table.Cell>
-                  <a href="https://github.com/twiddli" target="_blank">
+                  <a
+                    href="https://github.com/twiddli"
+                    target="_blank"
+                    rel="noreferrer">
                     Twiddly
                   </a>
                 </Table.Cell>
@@ -91,7 +97,10 @@ function InfoPane() {
                   </Header>
                 </Table.Cell>
                 <Table.Cell>
-                  <a href="https://twitter.com/twiddly_" target="_blank">
+                  <a
+                    href="https://twitter.com/twiddly_"
+                    target="_blank"
+                    rel="noreferrer">
                     @twiddly_
                   </a>
                 </Table.Cell>
@@ -205,7 +214,7 @@ export default function AboutModal({
         {t`HappyPanda X is a cross platform manga/doujinshi manager made out of pure`}
         <Icon name="heart" color="red" size="large" />
         {t`by`}{' '}
-        <a href="https://twitter.com/twiddly_" target="_blank">
+        <a href="https://twitter.com/twiddly_" target="_blank" rel="noreferrer">
           Twiddly
         </a>
       </Segment>

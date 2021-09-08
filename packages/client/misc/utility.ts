@@ -1,6 +1,8 @@
 export { default as update } from 'immutability-helper';
+import cookie from 'cookie';
 import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
 import { JsonMap } from 'happypandax-client';
+import { NextPageContext } from 'next';
 import Router from 'next/router';
 import querystring, {
   ParsedUrl,
@@ -189,3 +191,96 @@ export const animateCSS = (
 
     node.addEventListener('animationend', handleAnimationEnd, { once: true });
   });
+
+export function setCookies(
+  ctx: NextPageContext = undefined,
+  key: string,
+  data,
+  options?: { expires?: number | Date }
+) {
+  if (typeof options?.expires === 'number') {
+    options.expires = new Date(new Date() * 1 + options.expires * 864e5);
+  }
+
+  const cookieStr = cookie.serialize(key, JSON.stringify(data), {
+    path: '/',
+    ...options,
+  });
+  if (global.app.IS_SERVER) {
+    if (ctx && ctx.res) {
+      const currentCookies = ctx.res.getHeader('Set-Cookie');
+
+      ctx.res.setHeader(
+        'Set-Cookie',
+        !currentCookies ? [cookieStr] : currentCookies.concat(cookieStr)
+      );
+
+      if (ctx && ctx.req && ctx.req.cookies) {
+        const _cookies = ctx.req.cookies;
+        data === ''
+          ? delete _cookies[key]
+          : (_cookies[key] = JSON.stringify(data));
+      }
+
+      if (ctx && ctx.req && ctx.req.headers && ctx.req.headers.cookie) {
+        const _cookies = cookie.parse(ctx.req.headers.cookie);
+
+        data === ''
+          ? delete _cookies[key]
+          : (_cookies[key] = JSON.stringify(data));
+
+        ctx.req.headers.cookie = Object.entries(_cookies).reduce(
+          (accum, item) => {
+            return accum.concat(`${item[0]}=${item[1]};`);
+          },
+          ''
+        );
+      }
+    }
+    return undefined;
+  }
+
+  document.cookie = cookieStr;
+}
+
+export function getCookies(ctx: NextPageContext | undefined, key?: string) {
+  let _cookies = {};
+
+  if (global.app.IS_SERVER) {
+    if (ctx && ctx.req && ctx.req.cookies) {
+      _cookies = ctx.req.cookies;
+    }
+
+    if (ctx && ctx.req && ctx.req.headers && ctx.req.headers.cookie) {
+      _cookies = cookie.parse(ctx.req.headers.cookie);
+    }
+  } else {
+    const documentCookies =
+      !ctx && document?.cookie ? document?.cookie.split('; ') : [];
+
+    for (let i = 0; i < documentCookies.length; i++) {
+      const cookieParts = documentCookies[i].split('=');
+
+      const _cookie = cookieParts.slice(1).join('=');
+      const name = cookieParts[0];
+
+      _cookies[name] = _cookie;
+    }
+  }
+
+  if (key) {
+    const v = _cookies[key];
+    if (v === undefined) return undefined;
+    return JSON.parse(decodeURIComponent(v));
+  } else {
+    return _cookies;
+  }
+}
+
+export function removeCookies(
+  ctx: NextPageContext = undefined,
+  key: string,
+  options?: {}
+) {
+  return setCookies(ctx, key, '', { ...options, expires: -1 });
+}

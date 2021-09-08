@@ -24,6 +24,7 @@ const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
   pageProps: {
     loggedIn: boolean;
+    sameMachine: boolean;
   };
 }
 
@@ -78,6 +79,7 @@ export function AppRoot({
         initializeState={(snapshot) => {
           if (pageProps.loggedIn) {
             snapshot.set(AppState.loggedIn, pageProps.loggedIn);
+            snapshot.set(AppState.sameMachine, pageProps.sameMachine);
           }
         }}>
         <DndProvider backend={HTML5Backend}>
@@ -127,7 +129,11 @@ MyApp.getInitialProps = async function (
   context: AppContext
 ): Promise<AppPageProps> {
   let loggedIn = false;
+  let sameMachine = false;
   if (global.app.IS_SERVER) {
+    sameMachine =
+      context.ctx.req.socket.localAddress ===
+      context.ctx.req.socket.remoteAddress;
     const server = global.app.service.get(ServiceType.Server);
     loggedIn = server.logged_in;
 
@@ -141,7 +147,7 @@ MyApp.getInitialProps = async function (
 
   const props = await App.getInitialProps(context);
 
-  return { ...props, pageProps: { ...props.pageProps, loggedIn } };
+  return { ...props, pageProps: { ...props.pageProps, loggedIn, sameMachine } };
 };
 
 export default MyApp;

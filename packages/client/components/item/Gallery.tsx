@@ -37,7 +37,7 @@ import {
   ReadLaterIconLabel,
   TranslucentLabel,
   UnreadIconLabel,
-} from '../Item';
+} from './';
 
 export type GalleryCardData = DeepPick<
   ServerGallery,
@@ -78,6 +78,8 @@ export const galleryCardDataFields: FieldPath<ServerGallery>[] = [
 ];
 
 function ReadButton({ data }: { data: { id: number } }) {
+  const externalViewer = useRecoilValue(AppState.externalViewer);
+
   return (
     <Link
       href={useMemo(() => ({ pathname: `/item/gallery/${data?.id}/page/1` }), [
@@ -89,7 +91,9 @@ function ReadButton({ data }: { data: { id: number } }) {
         primary
         size="mini"
         onClick={useCallback((e) => {
-          e.preventDefault();
+          if (externalViewer) {
+            e.preventDefault();
+          }
         }, [])}>
         <Icon className="book open" />
         {t`Read`}
@@ -236,10 +240,10 @@ export function GalleryCard({
       onDetailsOpen={onDetailsOpen}
       labels={useMemo(
         () => [
-          <ItemLabel x="left" y="top">
+          <ItemLabel key="fav" x="left" y="top">
             <FavoriteLabel />
           </ItemLabel>,
-          <ItemLabel x="right" y="top">
+          <ItemLabel key="icons" x="right" y="top">
             {readingQueue?.includes?.(data?.id) && <QueueIconLabel />}
             {!!data?.metatags?.inbox && <InboxIconLabel />}
             {!data?.metatags?.read && !hasProgress && <UnreadIconLabel />}
@@ -254,7 +258,7 @@ export function GalleryCard({
             )}
             <ActivityLabel />
           </ItemLabel>,
-          <ItemLabel x="right" y="bottom">
+          <ItemLabel key="info" x="right" y="bottom">
             {horizontal && (
               <StatusLabel as={TranslucentLabel}>
                 {data?.grouping?.status?.name}
@@ -296,10 +300,16 @@ export function GalleryCard({
       actionContent={useCallback(
         () => (
           <ItemCardActionContent>
-            <ItemCardActionContentItem>
-              {!hasProgress && <ReadButton data={data} />}
-              {hasProgress && <ContinueButton data={data} />}
-            </ItemCardActionContentItem>
+            {hasProgress && (
+              <ItemCardActionContentItem>
+                <ContinueButton data={data} />
+              </ItemCardActionContentItem>
+            )}
+            {(!hasProgress || horizontal) && (
+              <ItemCardActionContentItem>
+                <ReadButton data={data} />
+              </ItemCardActionContentItem>
+            )}
             {(horizontal ||
               !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
               <ItemCardActionContentItem>
