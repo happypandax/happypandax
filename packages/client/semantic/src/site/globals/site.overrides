@@ -98,16 +98,6 @@ i.medium-size {
     overflow: hidden;
     text-align: center;
 }
-.card-content {
-    position: relative;
-}
-.card-header {
-    font-size: 1rem !important;
-}
-
-.card-meta {
-    font-size: 1em !important;
-}
 
 .card-item {
     position: absolute !important;

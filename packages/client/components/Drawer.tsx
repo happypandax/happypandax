@@ -17,10 +17,12 @@ import { ImageSize, ItemType } from '../misc/enums';
 import t from '../misc/lang';
 import { DragItemData } from '../misc/types';
 import { AppState } from '../state';
+import { DownloadQueue } from './Download';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
+import { MetadataQueue } from './Metadata';
 import { EmptySegment } from './Misc';
 import ListView from './view/ListView';
 
@@ -108,6 +110,7 @@ export function QueueBoard({}: {}) {
         dimmed={isOver}
         loading={loading}
         as={Segment}
+        tertiary
         basic
         className="no-padding-segment">
         <Dimmer active={isOver}>
@@ -115,6 +118,7 @@ export function QueueBoard({}: {}) {
         </Dimmer>
         <ListView
           items={items}
+          className="no-margins"
           itemRender={GalleryCard}
           onItemKey={useCallback((i) => i.id, [])}
         />
@@ -171,6 +175,38 @@ export function Drawer({
               render: () => (
                 <DrawerPane>
                   <QueueBoard />
+                </DrawerPane>
+              ),
+            },
+            {
+              menuItem: {
+                key: 'metadata',
+                content: (
+                  <>
+                    {t`Metadata`} <Label color="yellow" content={0} />
+                  </>
+                ),
+                icon: 'cloud',
+              },
+              render: () => (
+                <DrawerPane>
+                  <MetadataQueue />
+                </DrawerPane>
+              ),
+            },
+            {
+              menuItem: {
+                key: 'download',
+                content: (
+                  <>
+                    {t`Download`} <Label color="yellow" content={0} />
+                  </>
+                ),
+                icon: 'download',
+              },
+              render: () => (
+                <DrawerPane>
+                  <DownloadQueue />
                 </DrawerPane>
               ),
             },

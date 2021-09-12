@@ -255,6 +255,8 @@ export enum DrawerTab {
   Queue = 0,
   Selected,
   Recent,
+  Metadata,
+  Download,
 }
 
 export enum ViewType {

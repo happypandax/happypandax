@@ -204,7 +204,7 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
 
   return (
     <Modal trigger={trigger} dimmer={false}>
-      <Modal.Header>{t`Settings`}</Modal.Header>
+      <Modal.Header>{t`Library Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
           <Form.Group inline>

@@ -11,7 +11,7 @@ type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;
 type CommandIDs<T> = CommandID<T> | number[];
 
 interface CommandOptions<T> {
-  poll?: boolean;
+  track?: boolean;
   interval?: number;
   callback?: ValueCallback<T>;
 }
@@ -54,7 +54,7 @@ export class Command<T = unknown> {
       this.setCallback(options.callback);
     }
 
-    if (options?.poll ?? true) {
+    if (options?.track ?? true) {
       this._start_poll();
     }
   }
@@ -73,6 +73,10 @@ export class Command<T = unknown> {
     } else {
       this.#callbacks.all.push(callback);
     }
+  }
+
+  stopTracking() {
+    this._end_poll();
   }
 
   _start_poll(restart = false) {
@@ -234,12 +238,31 @@ export class Command<T = unknown> {
 
 export function useCommand<T = unknown>(
   command_ids: CommandIDs<T>,
-  options: CommandOptions<T>
+  options: CommandOptions<T> & {
+    stopOnUnmount?: boolean;
+    stopOnUpdate?: boolean;
+  }
 ) {
   const [cmd, setCmd] = useState<Command<T>>();
 
+  useEffect(() => {
+    if (cmd) {
+      if (options.stopOnUnmount) {
+        cmd.stop();
+      }
+      cmd.stopTracking();
+    }
+  }, []);
+
   useEffect(
     () => {
+      if (cmd) {
+        if (options.stopOnUpdate) {
+          cmd.stop();
+        }
+        cmd.stopTracking();
+      }
+
       if (command_ids) {
         setCmd(new Command(command_ids, options));
       } else {

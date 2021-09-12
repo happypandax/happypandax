@@ -85,36 +85,6 @@ function SidebarItem({
   );
 }
 
-function DownloadSidebarItem() {
-  return (
-    <SidebarItem
-      href="/downloads"
-      icon={'download'}
-      label="23"
-      labelColor="yellow">{t`Downloads`}</SidebarItem>
-  );
-}
-
-function MetadataSidebarItem() {
-  return (
-    <SidebarItem
-      href="/metadata"
-      icon={'cloud'}
-      label="23"
-      labelColor="yellow">{t`Metadata`}</SidebarItem>
-  );
-}
-
-function TrashSidebarItem() {
-  return (
-    <SidebarItem
-      href="/trash"
-      icon={'trash'}
-      label="23"
-      labelColor="red">{t`Trash`}</SidebarItem>
-  );
-}
-
 export function MainSidebar({
   hiiden: hidden,
   fixed = true,
@@ -192,13 +162,13 @@ export function MainSidebar({
               href="/library"
               icon={'grid layout'}>{t`Library`}</SidebarItem>
             <SidebarItem
+              href="/management"
+              icon={'cubes'}>{t`Management`}</SidebarItem>
+            <SidebarItem
               href="/directory"
-              icon={'cubes'}>{t`Directory`}</SidebarItem>
-            <DownloadSidebarItem />
-            <MetadataSidebarItem />
+              icon={'folder outline'}>{t`Directory`}</SidebarItem>
           </div>
           <div className="bottom-aligned">
-            <TrashSidebarItem />
             <SettingsModal
               trigger={
                 <SidebarItem icon={'settings'}>{t`Preferences`}</SidebarItem>

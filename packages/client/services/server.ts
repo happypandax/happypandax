@@ -8,12 +8,21 @@ import Client, {
 } from 'happypandax-client';
 
 import { createCache } from '../misc/cache';
-import { CommandState, ItemType } from '../misc/enums';
+import {
+  CommandState,
+  ItemsKind,
+  ItemType,
+  LogType,
+  Priority,
+  QueueType,
+} from '../misc/enums';
 import {
   CommandID,
   CommandIDKey,
   CommandProgress,
+  DownloadItem,
   FieldPath,
+  MetadataItem,
   ProfileOptions,
   SearchItem,
   ServerGallery,
@@ -340,6 +349,92 @@ export default class ServerService extends Service {
     return data.data as ServerSortIndex[];
   }
 
+  async log(args: { log_type: LogType }, group?: GroupCall) {
+    const data = await this._call('get_log', args, group);
+    throw_msg_error(data);
+    return data.data as { log: string };
+  }
+
+  async add_items_to_metadata_queue(
+    args: {
+      items_kind: ItemsKind;
+      item_type?: ItemType;
+      options?: {};
+      priority?: Priority;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('add_items_to_metadata_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
+  async add_item_to_queue(
+    args: {
+      item_id: number;
+      item_type?: ItemType;
+      queue_type: QueueType;
+      options?: {};
+      priority?: Priority;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('add_item_to_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
+  async stop_queue(args: { queue_type: QueueType }, group?: GroupCall) {
+    const data = await this._call('stop_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
+  async start_queue(args: { queue_type: QueueType }, group?: GroupCall) {
+    const data = await this._call('start_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
+  async clear_queue(args: { queue_type: QueueType }, group?: GroupCall) {
+    const data = await this._call('clear_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
+  async queue_state<T extends QueueType>(
+    args: { queue_type: T; include_finished?: boolean },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_queue_state', args, group);
+    throw_msg_error(data);
+
+    type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
+
+    return data.data as {
+      size: number;
+      value: number;
+      percent: number;
+      active: D;
+      finished: D;
+      running: boolean;
+    };
+  }
+
+  async queue_items<T extends QueueType>(
+    args: {
+      limit?: number;
+      queue_type: T;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('get_queue_items', args, group);
+    throw_msg_error(data);
+    return data.data as T extends QueueType.Metadata
+      ? MetadataItem[]
+      : DownloadItem[];
+  }
+
   async start_command(args: { command_ids: number[] }, group?: GroupCall) {
     const data = await this._call('start_command', args, group);
     throw_msg_error(data);
@@ -379,6 +474,7 @@ function throw_msg_error(msg: ServerMsg) {
     const msgerror: ServerErrorMsg = msg.error;
     const err = Error(`${msgerror.code}: ${msgerror.msg}`);
     err.data = msg;
+    global.app.log.e(err);
     throw err;
   }
 }

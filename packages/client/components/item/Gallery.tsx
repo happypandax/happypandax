@@ -204,6 +204,9 @@ export function GalleryCard({
   size,
   data,
   fluid,
+  loading,
+  activity,
+  activityContent,
   draggable = true,
   disableModal,
   details = GalleryDataTable,
@@ -213,6 +216,9 @@ export function GalleryCard({
   size?: ItemSize;
   data: GalleryCardData;
   fluid?: boolean;
+  loading?: boolean;
+  activity?: boolean;
+  activityContent?: React.ReactNode;
   draggable?: boolean;
   disableModal?: boolean;
   details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
@@ -230,6 +236,9 @@ export function GalleryCard({
       dragData={data}
       draggable={draggable}
       centered
+      loading={loading}
+      activity={activity}
+      activityContent={activityContent}
       link
       fluid={fluid}
       horizontal={horizontal}

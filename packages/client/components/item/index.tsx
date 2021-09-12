@@ -40,6 +40,8 @@ import styles from './Item.module.css';
 
 const ItemContext = React.createContext({
   isDragging: false,
+  activity: false,
+  activityContent: undefined as React.ReactNode,
   openMenu: false,
   onMenuClose: undefined as () => void,
   size: 'medium' as ItemSize,
@@ -55,44 +57,36 @@ const ItemContext = React.createContext({
   horizontal: false,
 });
 
-export function QueueIconLabel() {
+export function IconItemLabel(props: React.ComponentProps<typeof Icon>) {
+  const itemContext = useContext(ItemContext);
+
   return (
     <Icon
-      className="book open"
-      color="red"
       bordered
       inverted
-      size="small"
       link
+      size={itemContext?.size === 'mini' ? 'tiny' : 'small'}
+      {...props}
+    />
+  );
+}
+
+export function QueueIconLabel() {
+  return (
+    <IconItemLabel
+      className="book open"
+      color="red"
       title={`This item is in your reading queue`}
     />
   );
 }
 
 export function InboxIconLabel() {
-  return (
-    <Icon
-      name="inbox"
-      bordered
-      inverted
-      size="small"
-      link
-      title={`This item is in your inbox`}
-    />
-  );
+  return <IconItemLabel name="inbox" title={`This item is in your inbox`} />;
 }
 
 export function ReadLaterIconLabel() {
-  return (
-    <Icon
-      name="bookmark"
-      bordered
-      inverted
-      size="small"
-      link
-      title={`Saved for later`}
-    />
-  );
+  return <IconItemLabel name="bookmark" title={`Saved for later`} />;
 }
 
 export function ReadingIconLabel({ percent }: { percent?: number }) {
@@ -109,13 +103,9 @@ export function ReadingIconLabel({ percent }: { percent?: number }) {
         </TranslucentLabel>
       )}
       {!percent && (
-        <Icon
+        <IconItemLabel
           name="eye"
-          bordered
-          inverted
-          size="small"
           color="orange"
-          link
           title={`This item is being read`}
         />
       )}
@@ -125,12 +115,8 @@ export function ReadingIconLabel({ percent }: { percent?: number }) {
 
 export function UnreadIconLabel() {
   return (
-    <Icon
+    <IconItemLabel
       name="eye slash outline"
-      bordered
-      inverted
-      size="small"
-      link
       title={`This item has not been read yet`}
     />
   );
@@ -147,11 +133,13 @@ export function TranslucentLabel({
   children: React.ReactNode;
   circular?: boolean;
 } & React.ComponentProps<typeof Label>) {
+  const itemContext = useContext(ItemContext);
+
   return (
     <Label
       {...props}
       basic={basic}
-      size={size}
+      size={itemContext?.size === 'mini' ? 'mini' : size}
       circular={circular}
       className={classNames('translucent-black', className)}>
       {children}
@@ -170,7 +158,7 @@ export function ItemMenuLabel({
 }: {
   children: React.ReactNode | React.ReactNode[];
 }) {
-  const { openMenu, onMenuClose } = useContext(ItemContext);
+  const { openMenu, onMenuClose, size } = useContext(ItemContext);
 
   return (
     <Popup
@@ -182,11 +170,13 @@ export function ItemMenuLabel({
       position="right center"
       trigger={useMemo(
         () => (
-          <Icon
+          <IconItemLabel
             name="ellipsis vertical"
-            bordered
-            link
-            inverted
+            size={
+              (['mini', 'tiny'] as ItemSize[]).includes(size)
+                ? 'small'
+                : undefined
+            }
             onClick={(e) => e.preventDefault()}
           />
         ),
@@ -260,6 +250,26 @@ function ItemDetailsModal(props: React.ComponentProps<typeof Modal>) {
   );
 }
 
+function ActivityDimmerContent(): any {
+  const itemContext = useContext(ItemContext);
+
+  return itemContext.activityContent ? (
+    itemContext.activityContent
+  ) : (
+    <Loader active={itemContext.activity} />
+  );
+}
+
+function ActivityDimmer() {
+  const itemContext = useContext(ItemContext);
+
+  return (
+    <Dimmer active={itemContext.activity} className="no-padding-segment">
+      <ActivityDimmerContent />
+    </Dimmer>
+  );
+}
+
 export function ItemCardContent({
   title,
   subtitle,
@@ -320,6 +330,7 @@ export function ItemCardContent({
                 <Details data={itemContext.detailsData} />
               </ItemDetailsModal>
             )}
+          {itemContext.horizontal && <ActivityDimmer />}
           <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
             {!!itemContext.ActionContent && <itemContext.ActionContent />}
           </Dimmer>
@@ -330,7 +341,9 @@ export function ItemCardContent({
             {title}
           </Card.Header>
           {subtitle && (
-            <Card.Meta className="text-ellipsis">{subtitle}</Card.Meta>
+            <Card.Meta className="text-ellipsis card-meta">
+              {subtitle}
+            </Card.Meta>
           )}
           {description && <Card.Description>{description}</Card.Description>}
           {!!children && <Card.Meta>{children}</Card.Meta>}
@@ -355,7 +368,11 @@ export function ItemCardActionContent({
 }) {
   const itemContext = useContext(ItemContext);
 
-  return <List horizontal={itemContext.horizontal}>{children}</List>;
+  return (
+    <List horizontal={itemContext.horizontal}>
+      {itemContext?.size === 'mini' ? null : children}
+    </List>
+  );
 }
 
 function SemanticNextImage({
@@ -428,6 +445,7 @@ export function ItemCardImage({
       src={imageErr ? defaultImage : imgSrc}
       // width={size?.[0]}
       // height={size?.[1]}
+      alt="item cover"
       fluid={!itemContext.horizontal}
       centered={!itemContext.horizontal}
       className={classNames({
@@ -453,9 +471,13 @@ export function ItemCardImage({
         setImageErr(true);
       }, [imgSrc])}
       dimmer={{
-        active: itemContext.hover && !itemContext.horizontal,
-        inverted: true,
-        children: (
+        active:
+          (itemContext.hover || itemContext.activity) &&
+          !itemContext.horizontal,
+        inverted: itemContext.activity ? false : true,
+        children: itemContext.activity ? (
+          <ActivityDimmerContent />
+        ) : (
           <>
             {!!itemContext.Details &&
               itemContext.horizontal &&
@@ -477,7 +499,7 @@ export function ItemCardImage({
 
 export function ItemCard({
   children,
-  size,
+  size = 'medium',
   href,
   className,
   disableModal,
@@ -488,6 +510,8 @@ export function ItemCard({
   labels,
   actionContent: ActionContent,
   loading,
+  activity,
+  activityContent,
   fluid,
   horizontal,
   image: Image,
@@ -508,6 +532,8 @@ export function ItemCard({
   disableModal?: boolean;
   onDetailsOpen?: () => void;
   loading?: boolean;
+  activity?: boolean;
+  activityContent?: React.ReactNode;
   fluid?: boolean;
   draggable?: boolean;
   horizontal?: boolean;
@@ -565,6 +591,8 @@ export function ItemCard({
         href,
         disableModal,
         openMenu,
+        activity,
+        activityContent,
         onDetailsOpen,
         Details,
         detailsData,
@@ -590,11 +618,18 @@ export function ItemCard({
                 }
               : {}
           }
-          className={classNames({
-            dragging: isDragging,
-            horizontal: horizontal,
-            [`${itemSize}-size`]: !horizontal,
-          })}
+          className={classNames(
+            {
+              dragging: isDragging,
+              horizontal: horizontal,
+              [`${itemSize}-size`]: !horizontal,
+            },
+            {
+              [`${itemSize}-size`]:
+                horizontal &&
+                (['mini', 'tiny', 'small'] as ItemSize[]).includes(itemSize),
+            }
+          )}
           onContextMenu={(e) => {
             e.preventDefault();
             setOpenMenu(true);

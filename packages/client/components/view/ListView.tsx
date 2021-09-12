@@ -106,7 +106,7 @@ function ListViewList<T>({
 export default function ListView<T>({
   itemRender,
   items,
-  size = 'tiny',
+  size = 'small',
   disableWindowScroll,
   onItemKey,
   ...props

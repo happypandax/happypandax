@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from 'axios';
 import {
   InitialDataFunction,
   QueryClient,
@@ -27,13 +32,21 @@ export enum QueryType {
   RELATED_ITEMS,
   SIMILAR,
   SEARCH_ITEMS,
+  QUEUE_ITEMS,
+  QUEUE_STATE,
   SORT_INDEXES,
   SERVER_STATUS,
+  LOG,
 }
 
 export enum MutatationType {
   LOGIN = 50,
   UPDATE_GALLERY,
+  STOP_QUEUE,
+  START_QUEUE,
+  CLEAR_QUEUE,
+  ADD_ITEM_TO_QUEUE,
+  ADD_ITEMS_TO_METADATA_QUEUE,
 }
 
 export const queryClient = new QueryClient({
@@ -59,30 +72,60 @@ export function useMutationType<
 ): UseMutationResult<D, E, V, TContext> {
   const key = [type.toString()];
 
+  let endpoint = '';
+  let method: AxiosRequestConfig['method'] = 'POST';
+
   switch (type) {
     case MutatationType.LOGIN: {
-      return useMutation(
-        key,
-        (data) => {
-          return axios.post('/api/login', data);
-        },
-        options
-      );
+      endpoint = '/api/login';
+      break;
     }
 
     case MutatationType.UPDATE_GALLERY: {
-      return useMutation(
-        key,
-        (data) => {
-          return axios.put('/api/gallery', data);
-        },
-        options
-      );
+      endpoint = '/api/gallery';
+      break;
+    }
+
+    case MutatationType.START_QUEUE: {
+      endpoint = '/api/start_queue';
+      break;
+    }
+
+    case MutatationType.STOP_QUEUE: {
+      endpoint = '/api/stop_queue';
+      break;
+    }
+
+    case MutatationType.CLEAR_QUEUE: {
+      endpoint = '/api/clear_queue';
+      break;
+    }
+
+    case MutatationType.ADD_ITEMS_TO_METADATA_QUEUE: {
+      endpoint = '/api/add_items_to_metadata_queue';
+      break;
+    }
+
+    case MutatationType.ADD_ITEM_TO_QUEUE: {
+      endpoint = '/api/add_item_to_queue';
+      break;
     }
 
     default:
-      throw Error('Invalid query type');
+      throw Error('Invalid mutation type');
   }
+
+  return useMutation(
+    key,
+    (data) => {
+      return axios.request({
+        method,
+        url: endpoint,
+        data,
+      });
+    },
+    options
+  );
 }
 
 type Falsy = false | undefined;
@@ -113,7 +156,7 @@ export function useQueryType<
     initialData?: R | InitialDataFunction<R>;
     onQueryKey?: () => any;
     infinite?: I;
-    infinitePageParam: I extends Falsy
+    infinitePageParam?: I extends Falsy
       ? undefined
       : (variables: V, context: QueryFunctionContext) => V;
   } & (I extends Falsy
@@ -187,6 +230,21 @@ export function useQueryType<
 
     case QueryType.SEARCH_ITEMS: {
       endpoint = '/api/search_items';
+      break;
+    }
+
+    case QueryType.QUEUE_ITEMS: {
+      endpoint = '/api/queue_items';
+      break;
+    }
+
+    case QueryType.QUEUE_STATE: {
+      endpoint = '/api/queue_state';
+      break;
+    }
+
+    case QueryType.LOG: {
+      endpoint = '/api/log';
       break;
     }
 
@@ -305,6 +363,23 @@ interface FetchSearchItems<T = undefined> extends QueryAction<T> {
   variables: Parameters<ServerService['search_items']>[0];
 }
 
+interface FetchQueueItems<T = undefined> extends QueryAction<T> {
+  type: QueryType.QUEUE_ITEMS;
+  dataType: Unwrap<ReturnType<ServerService['queue_items']>>;
+  variables: Parameters<ServerService['queue_items']>[0];
+}
+interface FetchQueueState<T = undefined> extends QueryAction<T> {
+  type: QueryType.QUEUE_STATE;
+  dataType: Unwrap<ReturnType<ServerService['queue_state']>>;
+  variables: Parameters<ServerService['queue_state']>[0];
+}
+
+interface FetchLog<T = undefined> extends QueryAction<T> {
+  type: QueryType.LOG;
+  dataType: Unwrap<ReturnType<ServerService['log']>>;
+  variables: Parameters<ServerService['log']>[0];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -315,6 +390,9 @@ type QueryActions<T = undefined> =
   | FetchSortIndexes<T>
   | FetchSimilar<T>
   | FetchSearchItems<T>
+  | FetchQueueItems<T>
+  | FetchQueueState<T>
+  | FetchLog<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
@@ -337,7 +415,39 @@ interface UpdateGallery extends MutationAction {
   variables: { test: string };
 }
 
-type MutationActions = LoginAction | UpdateGallery;
+interface StopQueue extends MutationAction {
+  type: MutatationType.STOP_QUEUE;
+  variables: Parameters<ServerService['stop_queue']>[0];
+}
+
+interface StartQueue extends MutationAction {
+  type: MutatationType.START_QUEUE;
+  variables: Parameters<ServerService['start_queue']>[0];
+}
+
+interface ClearQueue extends MutationAction {
+  type: MutatationType.CLEAR_QUEUE;
+  variables: Parameters<ServerService['clear_queue']>[0];
+}
+
+interface AddItemToQueue extends MutationAction {
+  type: MutatationType.ADD_ITEM_TO_QUEUE;
+  variables: Parameters<ServerService['add_item_to_queue']>[0];
+}
+
+interface AddItemsToMetadataQueue extends MutationAction {
+  type: MutatationType.ADD_ITEMS_TO_METADATA_QUEUE;
+  variables: Parameters<ServerService['add_items_to_metadata_queue']>[0];
+}
+
+type MutationActions =
+  | LoginAction
+  | UpdateGallery
+  | AddItemToQueue
+  | AddItemsToMetadataQueue
+  | StopQueue
+  | StartQueue
+  | ClearQueue;
 
 // ======================== NORMAL QUERY ====================================
 

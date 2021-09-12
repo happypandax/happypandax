@@ -221,3 +221,24 @@ export type SortOptions = {
 };
 
 export interface CommandID<T> extends Number {}
+
+export interface QueueItem {
+  item_id: number;
+  title: string;
+  subtitle: string;
+  text: string;
+  value: number;
+  percent: number;
+  active: boolean;
+  state: CommandState;
+  success: boolean;
+}
+
+export interface MetadataItem extends QueueItem {
+  item_type: ItemType;
+}
+
+export interface DownloadItem extends QueueItem {
+  url: string;
+  thumbnail_url: string;
+}

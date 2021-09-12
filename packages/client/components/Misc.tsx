@@ -28,7 +28,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 
 import { useCommand } from '../client/command';
 import { QueryType, useQueryType } from '../client/queries';
-import { ItemType } from '../misc/enums';
+import { ItemType, LogType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerGallery, ServerItem } from '../misc/types';
 import { parseMarkdown, scrollToTop } from '../misc/utility';
@@ -38,6 +38,27 @@ import GalleryCard, { galleryCardDataFields } from './item/Gallery';
 import styles from './Misc.module.css';
 
 SwiperCore.use([Navigation, Autoplay]);
+
+export function ServerLog({
+  type,
+  ...props
+}: React.ComponentProps<typeof Segment> & { type: LogType }) {
+  const { data, isLoading } = useQueryType(
+    QueryType.LOG,
+    { log_type: type },
+    { refetchInterval: 2000, keepPreviousData: true }
+  );
+
+  return (
+    <Segment
+      className="max-300-h overflow-auto"
+      loading={isLoading}
+      secondary
+      {...props}>
+      <pre>{data?.data?.log}</pre>
+    </Segment>
+  );
+}
 
 export function TextEditor({
   value,

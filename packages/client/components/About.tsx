@@ -182,6 +182,18 @@ export function AboutTab() {
               </Tab.Pane>
             ),
           },
+          {
+            menuItem: {
+              key: 'trash',
+              icon: 'trash',
+              content: t`Trash`,
+            },
+            render: () => (
+              <Tab.Pane basic className="no-padding-segment">
+                <StatsPane />
+              </Tab.Pane>
+            ),
+          },
         ],
         []
       )}
