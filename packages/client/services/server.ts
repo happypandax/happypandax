@@ -384,6 +384,19 @@ export default class ServerService extends Service {
     return data.data as boolean;
   }
 
+  async remove_item_from_queue(
+    args: {
+      item_id: number;
+      item_type?: ItemType;
+      queue_type: QueueType;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('remove_item_from_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
   async stop_queue(args: { queue_type: QueueType }, group?: GroupCall) {
     const data = await this._call('stop_queue', args, group);
     throw_msg_error(data);

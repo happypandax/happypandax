@@ -12,7 +12,6 @@ import React, {
 } from 'react';
 import Editor from 'react-simple-code-editor';
 import { useWindowScroll } from 'react-use';
-import { useRecoilState } from 'recoil';
 import {
   Button,
   Divider,
@@ -32,7 +31,7 @@ import { ItemType, LogType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerGallery, ServerItem } from '../misc/types';
 import { parseMarkdown, scrollToTop } from '../misc/utility';
-import { AppState, MiscState } from '../state';
+import { MiscState } from '../state';
 import { useInitialRecoilState } from '../state/index';
 import GalleryCard, { galleryCardDataFields } from './item/Gallery';
 import styles from './Misc.module.css';
@@ -115,23 +114,6 @@ export function ScrollUpButton() {
   return (
     <Visible visible={visible}>
       <Button onClick={scrollToTop} icon="chevron up" size="small" basic />
-    </Visible>
-  );
-}
-
-export function DrawerButton({ basic }: { basic?: boolean }) {
-  const [open, setOpen] = useRecoilState(AppState.drawerOpen);
-
-  return (
-    <Visible visible={!open}>
-      <Button
-        primary
-        circular
-        basic={basic}
-        onClick={useCallback(() => setOpen(true), [])}
-        icon="window maximize outline"
-        size="small"
-      />
     </Visible>
   );
 }

@@ -42,6 +42,7 @@ const ItemContext = React.createContext({
   isDragging: false,
   activity: false,
   activityContent: undefined as React.ReactNode,
+  hiddenAction: undefined as boolean,
   openMenu: false,
   onMenuClose: undefined as () => void,
   size: 'medium' as ItemSize,
@@ -331,7 +332,10 @@ export function ItemCardContent({
               </ItemDetailsModal>
             )}
           {itemContext.horizontal && <ActivityDimmer />}
-          <Dimmer active={itemContext.horizontal && itemContext.hover} inverted>
+          <Dimmer
+            active={itemContext.horizontal && itemContext.hover}
+            inverted
+            className="no-padding-segment">
             {!!itemContext.ActionContent && <itemContext.ActionContent />}
           </Dimmer>
           {itemContext.horizontal && (
@@ -370,7 +374,9 @@ export function ItemCardActionContent({
 
   return (
     <List horizontal={itemContext.horizontal}>
-      {itemContext?.size === 'mini' ? null : children}
+      {itemContext?.size === 'mini' && itemContext.hiddenAction !== false
+        ? null
+        : children}
     </List>
   );
 }
@@ -511,6 +517,8 @@ export function ItemCard({
   actionContent: ActionContent,
   loading,
   activity,
+  hiddenLabel,
+  hiddenAction,
   activityContent,
   fluid,
   horizontal,
@@ -531,6 +539,8 @@ export function ItemCard({
   href?: string;
   disableModal?: boolean;
   onDetailsOpen?: () => void;
+  hiddenLabel?: boolean;
+  hiddenAction?: boolean;
   loading?: boolean;
   activity?: boolean;
   activityContent?: React.ReactNode;
@@ -569,6 +579,8 @@ export function ItemCard({
 
   let itemSize = size ?? 'medium';
 
+  const labelContent = hiddenLabel ? null : labels;
+
   const imageElement = Image ? (
     horizontal ? (
       <Image />
@@ -590,6 +602,7 @@ export function ItemCard({
         hover,
         href,
         disableModal,
+        hiddenAction,
         openMenu,
         activity,
         activityContent,
@@ -597,7 +610,7 @@ export function ItemCard({
         Details,
         detailsData,
         ActionContent,
-        labels,
+        labels: labelContent,
         loading,
         horizontal,
         size: itemSize,
@@ -646,7 +659,7 @@ export function ItemCard({
                 </Link>
               )}
               {!!!href && !!imageElement && imageElement}
-              {labels}
+              {labelContent}
             </ItemCardLabels>
           )}
           {horizontal && !!imageElement && imageElement}

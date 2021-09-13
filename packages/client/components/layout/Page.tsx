@@ -7,8 +7,8 @@ import { Button, Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
 
 import t from '../../misc/lang';
 import { AppState } from '../../state';
-import DrawerPortal from '../Drawer';
-import { DrawerButton, ScrollUpButton } from '../Misc';
+import DrawerPortal, { DrawerButton } from '../Drawer';
+import { ScrollUpButton } from '../Misc';
 import MainSidebar from '../Sidebar';
 
 export function PageSettingsButton(props: React.ComponentProps<typeof Button>) {

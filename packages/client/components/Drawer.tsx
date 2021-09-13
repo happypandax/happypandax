@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { useRecoilState } from 'recoil';
 import {
+  Button,
   Dimmer,
   Icon,
   Label,
@@ -12,18 +13,18 @@ import {
   TransitionablePortal,
 } from 'semantic-ui-react';
 
-import { Query, QueryType } from '../client/queries';
-import { ImageSize, ItemType } from '../misc/enums';
+import { Query, QueryType, useQueryType } from '../client/queries';
+import { DrawerTab, ImageSize, ItemType, QueueType } from '../misc/enums';
 import t from '../misc/lang';
 import { DragItemData } from '../misc/types';
 import { AppState } from '../state';
-import { DownloadQueue } from './Download';
+import { DownloadLabel, DownloadQueue } from './Download';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import { MetadataQueue } from './Metadata';
-import { EmptySegment } from './Misc';
+import { MetadataLabel, MetadataQueue } from './Metadata';
+import { EmptySegment, Visible } from './Misc';
 import ListView from './view/ListView';
 
 export function SelectedBoard({}: {}) {
@@ -183,7 +184,7 @@ export function Drawer({
                 key: 'metadata',
                 content: (
                   <>
-                    {t`Metadata`} <Label color="yellow" content={0} />
+                    {t`Metadata`} <MetadataLabel />
                   </>
                 ),
                 icon: 'cloud',
@@ -199,7 +200,7 @@ export function Drawer({
                 key: 'download',
                 content: (
                   <>
-                    {t`Download`} <Label color="yellow" content={0} />
+                    {t`Download`} <DownloadLabel />
                   </>
                 ),
                 icon: 'download',
@@ -259,5 +260,88 @@ export default function DrawerPortal({
         <Drawer onClose={onClose} />
       </div>
     </TransitionablePortal>
+  );
+}
+
+export function DrawerButton({ basic }: { basic?: boolean }) {
+  const [drawerTab, setDrawerTab] = useRecoilState(AppState.drawerTab);
+
+  const [open, setOpen] = useRecoilState(AppState.drawerOpen);
+
+  const [metadataInterval, setMetadataInterval] = useState(10000);
+  const [downloadInterval, setDownloadInterval] = useState(10000);
+
+  const { data: metadataData } = useQueryType(
+    QueryType.QUEUE_STATE,
+    {
+      queue_type: QueueType.Metadata,
+      include_finished: false,
+    },
+    {
+      refetchInterval: metadataInterval,
+    }
+  );
+
+  const { data: downloadData } = useQueryType(
+    QueryType.QUEUE_STATE,
+    {
+      queue_type: QueueType.Download,
+      include_finished: false,
+    },
+    {
+      refetchInterval: downloadInterval,
+    }
+  );
+
+  useEffect(() => {
+    setMetadataInterval(
+      metadataData?.data?.running && metadataData?.data?.size ? 10000 : 25000
+    );
+    setDownloadInterval(
+      downloadData?.data?.running && downloadData?.data?.size ? 10000 : 25000
+    );
+  }, [metadataData, downloadData]);
+
+  const size =
+    (metadataData?.data?.size ?? 0) + (downloadData?.data?.size ?? 0);
+
+  const labelClick = useCallback(() => {
+    if (![DrawerTab.Download, DrawerTab.Metadata].includes(drawerTab)) {
+      setDrawerTab(DrawerTab.Metadata);
+      setTimeout(() => setOpen(true), 10);
+    } else {
+      setOpen(true);
+    }
+  }, []);
+
+  return (
+    <Visible visible={!open}>
+      {!!size && (
+        <Label
+          as="a"
+          circular
+          basic
+          onClick={labelClick}
+          content={size}
+          color={
+            !metadataData?.data?.running && !downloadData?.data?.running
+              ? 'red'
+              : metadataData?.data?.running && downloadData?.data?.running
+              ? 'green'
+              : 'orange'
+          }
+          size="tiny"
+          floating
+        />
+      )}
+      <Button
+        primary
+        circular
+        basic={basic}
+        onClick={useCallback(() => setOpen(true), [])}
+        icon="window maximize outline"
+        size="small"
+      />
+    </Visible>
   );
 }

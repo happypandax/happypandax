@@ -253,10 +253,10 @@ export enum ItemFit {
 
 export enum DrawerTab {
   Queue = 0,
-  Selected,
-  Recent,
   Metadata,
   Download,
+  Selected,
+  Recent,
 }
 
 export enum ViewType {

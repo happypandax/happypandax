@@ -205,8 +205,11 @@ export function GalleryCard({
   data,
   fluid,
   loading,
+  hiddenLabel,
+  hiddenAction,
   activity,
   activityContent,
+  actionContent,
   draggable = true,
   disableModal,
   details = GalleryDataTable,
@@ -216,9 +219,12 @@ export function GalleryCard({
   size?: ItemSize;
   data: GalleryCardData;
   fluid?: boolean;
+  hiddenLabel?: boolean;
+  hiddenAction?: boolean;
   loading?: boolean;
   activity?: boolean;
   activityContent?: React.ReactNode;
+  actionContent?: React.ComponentProps<typeof ItemCard>['actionContent'];
   draggable?: boolean;
   disableModal?: boolean;
   details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
@@ -229,6 +235,33 @@ export function GalleryCard({
 
   const readingQueue = useRecoilValue(AppState.readingQueue);
 
+  const actions = useCallback(
+    () => (
+      <ItemCardActionContent>
+        {hasProgress && (
+          <ItemCardActionContentItem>
+            <ContinueButton data={data} />
+          </ItemCardActionContentItem>
+        )}
+        {(!hasProgress || horizontal) && (
+          <ItemCardActionContentItem>
+            <ReadButton data={data} />
+          </ItemCardActionContentItem>
+        )}
+        {(horizontal ||
+          !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
+          <ItemCardActionContentItem>
+            <AddToQueueButton data={data} />
+          </ItemCardActionContentItem>
+        )}
+        <ItemCardActionContentItem>
+          <SaveForLaterButton />
+        </ItemCardActionContentItem>
+      </ItemCardActionContent>
+    ),
+    [data, size, horizontal]
+  );
+
   return (
     <ItemCard
       type={ItemType.Gallery}
@@ -236,6 +269,8 @@ export function GalleryCard({
       dragData={data}
       draggable={draggable}
       centered
+      hiddenLabel={hiddenLabel}
+      hiddenAction={hiddenAction}
       loading={loading}
       activity={activity}
       activityContent={activityContent}
@@ -306,32 +341,7 @@ export function GalleryCard({
         ],
         [horizontal, hasProgress, data, readingQueue]
       )}
-      actionContent={useCallback(
-        () => (
-          <ItemCardActionContent>
-            {hasProgress && (
-              <ItemCardActionContentItem>
-                <ContinueButton data={data} />
-              </ItemCardActionContentItem>
-            )}
-            {(!hasProgress || horizontal) && (
-              <ItemCardActionContentItem>
-                <ReadButton data={data} />
-              </ItemCardActionContentItem>
-            )}
-            {(horizontal ||
-              !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
-              <ItemCardActionContentItem>
-                <AddToQueueButton data={data} />
-              </ItemCardActionContentItem>
-            )}
-            <ItemCardActionContentItem>
-              <SaveForLaterButton />
-            </ItemCardActionContentItem>
-          </ItemCardActionContent>
-        ),
-        [data, size, horizontal]
-      )}
+      actionContent={actionContent ?? actions}
       image={useCallback(
         ({ children }: { children?: React.ReactNode }) => (
           <ItemCardImage src={data?.profile}>{children}</ItemCardImage>

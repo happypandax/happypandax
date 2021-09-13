@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Button,
   Card,
   Checkbox,
   Dropdown,
   Form,
   Header,
   Icon,
+  Label,
   Loader,
   Menu,
   Modal,
@@ -31,6 +33,7 @@ import {
 import t from '../misc/lang';
 import { MetadataItem } from '../misc/types';
 import GalleryCard, { galleryCardDataFields } from './item/Gallery';
+import { ItemCardActionContent, ItemCardActionContentItem } from './item/index';
 import { EmptyMessage, ServerLog } from './Misc';
 
 function MetadataSettings({ trigger }: { trigger: React.ReactNode }) {
@@ -149,6 +152,42 @@ function MetadataItemState({ item }: { item: MetadataItem }) {
         <Header.Subheader>{item.text || item.subtitle}</Header.Subheader>
       </Header.Content>
     </Header>
+  );
+}
+
+function MetadataItemActionContent({
+  item,
+  onUpdate,
+}: {
+  item: MetadataItem;
+  onUpdate?: () => any;
+}) {
+  const [removing, setRemoving] = useState(false);
+
+  const removeItem = useMutationType(MutatationType.REMOVE_ITEM_FROM_QUEUE, {
+    onMutate: () => setRemoving(false),
+    onSettled: () => {
+      onUpdate?.();
+    },
+  });
+
+  return (
+    <ItemCardActionContent>
+      <ItemCardActionContentItem>
+        <Button
+          size="tiny"
+          loading={removing}
+          color="red"
+          onClick={useCallback((e) => {
+            e.preventDefault();
+            removeItem.mutate({
+              item_id: item.item_id,
+              item_type: item.item_type,
+              queue_type: QueueType.Metadata,
+            });
+          }, [])}>{t`Remove`}</Button>
+      </ItemCardActionContentItem>
+    </ItemCardActionContent>
   );
 }
 
@@ -344,7 +383,15 @@ export function MetadataQueue() {
         <Card.Group itemsPerRow={2} doubling>
           {items?.data?.map?.((i) => (
             <GalleryCard
+              hiddenLabel
               activity={(queueItemsMap[i.id] as MetadataItem).active}
+              hiddenAction={false}
+              actionContent={() => (
+                <MetadataItemActionContent
+                  item={queueItemsMap[i.id] as MetadataItem}
+                  onUpdate={refetchQueueItems}
+                />
+              )}
               activityContent={
                 <MetadataItemState item={queueItemsMap[i.id] as MetadataItem} />
               }
@@ -357,5 +404,35 @@ export function MetadataQueue() {
         </Card.Group>
       </Segment>
     </>
+  );
+}
+
+export function MetadataLabel() {
+  const [interval, setInterval] = useState(5000);
+
+  const { data } = useQueryType(
+    QueryType.QUEUE_STATE,
+    {
+      queue_type: QueueType.Metadata,
+      include_finished: false,
+    },
+    {
+      refetchInterval: interval,
+      refetchOnMount: 'always',
+    }
+  );
+
+  useEffect(() => {
+    setInterval(data?.data?.running && data?.data?.size ? 5000 : 25000);
+  }, [data]);
+
+  const size = data?.data?.size;
+
+  return (
+    <Label
+      color={data?.data?.running ? 'green' : 'red'}
+      circular
+      content={size}
+    />
   );
 }

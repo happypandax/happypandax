@@ -46,6 +46,7 @@ export enum MutatationType {
   START_QUEUE,
   CLEAR_QUEUE,
   ADD_ITEM_TO_QUEUE,
+  REMOVE_ITEM_FROM_QUEUE,
   ADD_ITEMS_TO_METADATA_QUEUE,
 }
 
@@ -108,6 +109,11 @@ export function useMutationType<
 
     case MutatationType.ADD_ITEM_TO_QUEUE: {
       endpoint = '/api/add_item_to_queue';
+      break;
+    }
+
+    case MutatationType.REMOVE_ITEM_FROM_QUEUE: {
+      endpoint = '/api/remove_item_from_queue';
       break;
     }
 
@@ -435,6 +441,11 @@ interface AddItemToQueue extends MutationAction {
   variables: Parameters<ServerService['add_item_to_queue']>[0];
 }
 
+interface RemoveItemFromQueue extends MutationAction {
+  type: MutatationType.REMOVE_ITEM_FROM_QUEUE;
+  variables: Parameters<ServerService['remove_item_from_queue']>[0];
+}
+
 interface AddItemsToMetadataQueue extends MutationAction {
   type: MutatationType.ADD_ITEMS_TO_METADATA_QUEUE;
   variables: Parameters<ServerService['add_items_to_metadata_queue']>[0];
@@ -444,6 +455,7 @@ type MutationActions =
   | LoginAction
   | UpdateGallery
   | AddItemToQueue
+  | RemoveItemFromQueue
   | AddItemsToMetadataQueue
   | StopQueue
   | StartQueue
