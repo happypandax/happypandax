@@ -20,8 +20,10 @@ import {
   CommandID,
   CommandIDKey,
   CommandProgress,
+  DownloadHandler,
   DownloadItem,
   FieldPath,
+  MetadataHandler,
   MetadataItem,
   ProfileOptions,
   SearchItem,
@@ -355,6 +357,18 @@ export default class ServerService extends Service {
     return data.data as { log: string };
   }
 
+  async download_info(args: {}, group?: GroupCall) {
+    const data = await this._call('get_download_info', args, group);
+    throw_msg_error(data);
+    return data.data as DownloadHandler[];
+  }
+
+  async metadata_info(args: {}, group?: GroupCall) {
+    const data = await this._call('get_metadata_info', args, group);
+    throw_msg_error(data);
+    return data.data as MetadataHandler[];
+  }
+
   async add_items_to_metadata_queue(
     args: {
       items_kind: ItemsKind;
@@ -369,9 +383,23 @@ export default class ServerService extends Service {
     return data.data as boolean;
   }
 
+  async add_urls_to_download_queue(
+    args: {
+      urls: string[];
+      identifier?: string[];
+      options?: {};
+      priority?: Priority;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('add_urls_to_download_queue', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
   async add_item_to_queue(
     args: {
-      item_id: number;
+      item_id: number | number[];
       item_type?: ItemType;
       queue_type: QueueType;
       options?: {};

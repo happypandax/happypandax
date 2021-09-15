@@ -483,6 +483,10 @@ h6 {
     min-height: 200pt;
 }
 
+.min-250-h {
+    min-height: 250pt;
+}
+
 .min-300-h {
     min-height: 300pt;
 }
@@ -527,6 +531,11 @@ h6 {
 
 .max-200-h {
     max-height: 200pt;
+    overflow-y: auto;
+}
+
+.max-250-h {
+    max-height: 250pt;
     overflow-y: auto;
 }
 

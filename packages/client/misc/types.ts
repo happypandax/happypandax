@@ -5,6 +5,7 @@ import {
   ImageSize,
   ItemSort,
   ItemType,
+  Priority,
   ProgressType,
 } from './enums';
 
@@ -222,6 +223,17 @@ export type SortOptions = {
 
 export interface CommandID<T> extends Number {}
 
+interface _ItemHandler {
+  identifier: string;
+  name: string;
+  sites: string;
+  description: string;
+  priority: Priority;
+  disabled: boolean;
+}
+
+export type DownloadHandler = _ItemHandler;
+export type MetadataHandler = _ItemHandler;
 export interface QueueItem {
   item_id: number;
   title: string;

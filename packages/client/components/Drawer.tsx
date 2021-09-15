@@ -18,13 +18,13 @@ import { DrawerTab, ImageSize, ItemType, QueueType } from '../misc/enums';
 import t from '../misc/lang';
 import { DragItemData } from '../misc/types';
 import { AppState } from '../state';
-import { DownloadLabel, DownloadQueue } from './Download';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import { MetadataLabel, MetadataQueue } from './Metadata';
 import { EmptySegment, Visible } from './Misc';
+import { DownloadLabel, DownloadQueue } from './queue/Download';
+import { MetadataLabel, MetadataQueue } from './queue/Metadata';
 import ListView from './view/ListView';
 
 export function SelectedBoard({}: {}) {
@@ -137,7 +137,7 @@ export function RecentViewed() {
 
 function DrawerPane({ children }: { children: React.ReactNode }) {
   return (
-    <Tab.Pane basic className="no-padding-segment min-200-h max-200-h">
+    <Tab.Pane basic className="no-padding-segment min-250-h max-250-h">
       {children}
     </Tab.Pane>
   );

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Card,
@@ -9,7 +9,6 @@ import {
   Header,
   Icon,
   Label,
-  Loader,
   Menu,
   Modal,
   Segment,
@@ -21,7 +20,7 @@ import {
   QueryType,
   useMutationType,
   useQueryType,
-} from '../client/queries';
+} from '../../client/queries';
 import {
   CommandState,
   ImageSize,
@@ -29,12 +28,16 @@ import {
   ItemType,
   LogType,
   QueueType,
-} from '../misc/enums';
-import t from '../misc/lang';
-import { MetadataItem } from '../misc/types';
-import GalleryCard, { galleryCardDataFields } from './item/Gallery';
-import { ItemCardActionContent, ItemCardActionContentItem } from './item/index';
-import { EmptyMessage, ServerLog } from './Misc';
+} from '../../misc/enums';
+import t from '../../misc/lang';
+import { MetadataItem } from '../../misc/types';
+import GalleryCard, { galleryCardDataFields } from '../item/Gallery';
+import {
+  ItemCardActionContent,
+  ItemCardActionContentItem,
+} from '../item/index';
+import { EmptyMessage } from '../Misc';
+import { ItemQueueBase } from './';
 
 function MetadataSettings({ trigger }: { trigger: React.ReactNode }) {
   return (
@@ -193,10 +196,9 @@ function MetadataItemActionContent({
 
 export function MetadataQueue() {
   const [addLoading, setAddLoading] = useState(false);
-  const [runningLoading, setRunningLoading] = useState(false);
-  const [clearLoading, setClearLoading] = useState(false);
   const [active, setActive] = useState(true);
-  const [logVisible, setLogVisible] = useState(false);
+
+  const { data: metadataHandlers } = useQueryType(QueryType.METADATA_INFO);
 
   const refetchEvery = 5000;
 
@@ -231,24 +233,6 @@ export function MetadataQueue() {
     },
   });
 
-  const clearQueue = useMutationType(MutatationType.CLEAR_QUEUE, {
-    onMutate: () => setClearLoading(true),
-    onSettled: () => refetchQueueItems().finally(() => setClearLoading(false)),
-  });
-
-  const stopQueue = useMutationType(MutatationType.STOP_QUEUE, {
-    onMutate: () => {
-      setActive(false), setRunningLoading(true);
-    },
-    onSettled: () => setRunningLoading(false),
-  });
-  const startQueue = useMutationType(MutatationType.START_QUEUE, {
-    onMutate: () => {
-      setActive(true), setRunningLoading(true);
-    },
-    onSettled: () => setRunningLoading(false),
-  });
-
   const { data: items, isLoading } = useQueryType(
     QueryType.ITEM,
     {
@@ -260,155 +244,125 @@ export function MetadataQueue() {
     { enabled: !!queueItems?.data?.length, refetchOnMount: 'always' }
   );
 
-  useEffect(() => {
-    setActive(queueState?.data?.running);
-  }, [queueState]);
-
   const queueItemsMap = _.keyBy(queueItems?.data, 'item_id');
 
   return (
     <>
-      <Menu labeled compact text fluid>
-        <Menu.Item
-          disabled={runningLoading}
-          onClick={useCallback(() => {
-            if (active) {
-              stopQueue.mutate({ queue_type: QueueType.Metadata });
-            } else {
-              startQueue.mutate({ queue_type: QueueType.Metadata });
-            }
-          }, [active])}>
-          <Loader active={runningLoading} size="small" />
-          <Icon
-            name={active ? 'pause' : 'play'}
-            color={active ? 'green' : 'red'}
-          />{' '}
-          {active ? t`Running` : t`Paused`}
-        </Menu.Item>
-        <Menu.Item
-          disabled={clearLoading}
-          onClick={useCallback(() => {
-            clearQueue.mutate({ queue_type: QueueType.Metadata });
-          }, [])}>
-          <Loader active={clearLoading} size="small" />
-          <Icon name="remove" /> {t`Clear`}
-        </Menu.Item>
-        <Menu.Menu position="right">
-          <Menu.Item
-            onClick={useCallback(() => setLogVisible(!logVisible), [
-              logVisible,
-            ])}>
-            <Icon name={logVisible ? 'angle down' : 'angle right'} /> {t`Log`}
-          </Menu.Item>
-          <MetadataSettings
-            trigger={
-              <Menu.Item>
-                <Icon name="setting" /> {t`Options`}
-              </Menu.Item>
-            }
-          />
-          <Dropdown
-            item
-            icon="plus"
-            loading={addLoading}
-            compact
-            text={t`Add`}
-            upward={false}>
-            <Dropdown.Menu>
-              <Dropdown.Item
-                onClick={useCallback(
-                  () => addItems.mutate({ items_kind: ItemsKind.all_items }),
-                  []
-                )}
-                text={t`All galleries`}
-              />
-              <Dropdown.Item
-                onClick={useCallback(
-                  () =>
+      <ItemQueueBase
+        queue_type={QueueType.Metadata}
+        log_type={LogType.Metadata}
+        Settings={MetadataSettings}
+        refetch={refetchQueueItems}
+        running={queueState?.data?.running}
+        onActive={setActive}
+        menuItems={useMemo(
+          () => (
+            <Dropdown
+              item
+              icon="plus"
+              loading={addLoading}
+              compact
+              text={t`Add`}
+              upward={false}>
+              <Dropdown.Menu>
+                <Dropdown.Item
+                  onClick={() =>
+                    addItems.mutate({ items_kind: ItemsKind.all_items })
+                  }
+                  text={t`All galleries`}
+                />
+                <Dropdown.Item
+                  onClick={() =>
                     addItems.mutate({
                       items_kind: ItemsKind.tags_missing_items,
-                    }),
-                  []
-                )}
-                text={t`Galleries with missing tags`}
-              />
-              <Dropdown.Item
-                onClick={useCallback(
-                  () =>
-                    addItems.mutate({ items_kind: ItemsKind.library_items }),
-                  []
-                )}
-                text={t`Library: Galleries`}
-              />
-              <Dropdown.Item
-                onClick={useCallback(
-                  () =>
+                    })
+                  }
+                  text={t`Galleries with missing tags`}
+                />
+                <Dropdown.Item
+                  onClick={() =>
+                    addItems.mutate({ items_kind: ItemsKind.library_items })
+                  }
+                  text={t`Library: Galleries`}
+                />
+                <Dropdown.Item
+                  onClick={() =>
                     addItems.mutate({
                       items_kind: ItemsKind.tags_missing_library_items,
-                    }),
-                  []
-                )}
-                text={t`Library: Galleries with missing tags`}
-              />
-              <Dropdown.Item
-                onClick={useCallback(
-                  () => addItems.mutate({ items_kind: ItemsKind.inbox_items }),
-                  []
-                )}
-                text={t`Inbox: Galleries`}
-              />
-              <Dropdown.Item
-                onClick={useCallback(
-                  () =>
+                    })
+                  }
+                  text={t`Library: Galleries with missing tags`}
+                />
+                <Dropdown.Item
+                  onClick={() =>
+                    addItems.mutate({ items_kind: ItemsKind.inbox_items })
+                  }
+                  text={t`Inbox: Galleries`}
+                />
+                <Dropdown.Item
+                  onClick={() =>
                     addItems.mutate({
                       items_kind: ItemsKind.tags_missing_inbox_items,
-                    }),
-                  []
-                )}
-                text={t`Inbox: Galleries with missing tags`}
-              />
-            </Dropdown.Menu>
-          </Dropdown>
-        </Menu.Menu>
-      </Menu>
-      {logVisible && (
-        <ServerLog
-          type={LogType.Metadata}
-          className="max-100-h no-margins"
-          attached="top"
-        />
-      )}
-      <Segment tertiary loading={isLoading || addLoading}>
-        {!items?.data?.length && <EmptyMessage />}
-        <Card.Group itemsPerRow={2} doubling>
-          {items?.data?.map?.((i) => (
-            <GalleryCard
-              hiddenLabel
-              activity={(queueItemsMap[i.id] as MetadataItem).active}
-              hiddenAction={false}
-              actionContent={() => (
-                <MetadataItemActionContent
-                  item={queueItemsMap[i.id] as MetadataItem}
-                  onUpdate={refetchQueueItems}
+                    })
+                  }
+                  text={t`Inbox: Galleries with missing tags`}
                 />
-              )}
-              activityContent={
-                <MetadataItemState item={queueItemsMap[i.id] as MetadataItem} />
-              }
-              key={i.id}
-              data={i}
-              horizontal
-              size="mini"
-            />
-          ))}
-        </Card.Group>
-      </Segment>
+              </Dropdown.Menu>
+            </Dropdown>
+          ),
+          []
+        )}
+      />
+      <Header size="tiny" textAlign="center" className="no-margins sub-text">
+        {!metadataHandlers?.data?.length && t`No handlers activated`}
+        {!!metadataHandlers?.data?.length && (
+          <Label.Group>
+            {metadataHandlers?.data?.map?.((h, i) => (
+              <Label size="small" key={h.identifier}>
+                {i + 1}
+                <Label.Detail>{h.identifier}</Label.Detail>
+              </Label>
+            ))}
+          </Label.Group>
+        )}
+      </Header>
+      {!items?.data?.length && <EmptyMessage className="h-full" />}
+      {!!items?.data?.length && (
+        <Segment tertiary loading={isLoading || addLoading}>
+          <Card.Group itemsPerRow={2} doubling>
+            {items?.data?.map?.((i) => (
+              <GalleryCard
+                hiddenLabel
+                activity={(queueItemsMap[i.id] as MetadataItem).active}
+                hiddenAction={false}
+                actionContent={() => (
+                  <MetadataItemActionContent
+                    item={queueItemsMap[i.id] as MetadataItem}
+                    onUpdate={refetchQueueItems}
+                  />
+                )}
+                activityContent={
+                  <MetadataItemState
+                    item={queueItemsMap[i.id] as MetadataItem}
+                  />
+                }
+                key={i.id}
+                data={i}
+                horizontal
+                size="mini"
+              />
+            ))}
+          </Card.Group>
+        </Segment>
+      )}
     </>
   );
 }
 
 export function MetadataLabel() {
   const [interval, setInterval] = useState(5000);
+
+  // TODO: use QueryObserver?
 
   const { data } = useQueryType(
     QueryType.QUEUE_STATE,

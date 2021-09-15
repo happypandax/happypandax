@@ -116,12 +116,7 @@ function ContinueButton({
         [data]
       )}
       passHref>
-      <Button
-        color="orange"
-        size="mini"
-        onClick={useCallback((e) => {
-          e.preventDefault();
-        }, [])}>
+      <Button as="a" color="orange" size="mini">
         <Icon name="play" />
         {t`Continue`}
       </Button>

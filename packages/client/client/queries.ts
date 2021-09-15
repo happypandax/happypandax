@@ -6,6 +6,8 @@ import axios, {
 } from 'axios';
 import {
   InitialDataFunction,
+  MutationObserver,
+  MutationObserverOptions,
   QueryClient,
   QueryFunctionContext,
   useInfiniteQuery,
@@ -35,6 +37,8 @@ export enum QueryType {
   QUEUE_ITEMS,
   QUEUE_STATE,
   SORT_INDEXES,
+  DOWNLOAD_INFO,
+  METADATA_INFO,
   SERVER_STATUS,
   LOG,
 }
@@ -48,6 +52,7 @@ export enum MutatationType {
   ADD_ITEM_TO_QUEUE,
   REMOVE_ITEM_FROM_QUEUE,
   ADD_ITEMS_TO_METADATA_QUEUE,
+  ADD_URLS_TO_DOWNLOAD_QUEUE,
 }
 
 export const queryClient = new QueryClient({
@@ -104,6 +109,11 @@ export function useMutationType<
 
     case MutatationType.ADD_ITEMS_TO_METADATA_QUEUE: {
       endpoint = '/api/add_items_to_metadata_queue';
+      break;
+    }
+
+    case MutatationType.ADD_URLS_TO_DOWNLOAD_QUEUE: {
+      endpoint = '/api/add_urls_to_download_queue';
       break;
     }
 
@@ -254,6 +264,16 @@ export function useQueryType<
       break;
     }
 
+    case QueryType.DOWNLOAD_INFO: {
+      endpoint = '/api/download_info';
+      break;
+    }
+
+    case QueryType.METADATA_INFO: {
+      endpoint = '/api/metadata_info';
+      break;
+    }
+
     default:
       throw Error('Invalid query type');
   }
@@ -386,6 +406,18 @@ interface FetchLog<T = undefined> extends QueryAction<T> {
   variables: Parameters<ServerService['log']>[0];
 }
 
+interface FetchDownloadInfo<T = undefined> extends QueryAction<T> {
+  type: QueryType.DOWNLOAD_INFO;
+  dataType: Unwrap<ReturnType<ServerService['download_info']>>;
+  variables: Parameters<ServerService['download_info']>[0];
+}
+
+interface FetchMetadataInfo<T = undefined> extends QueryAction<T> {
+  type: QueryType.METADATA_INFO;
+  dataType: Unwrap<ReturnType<ServerService['metadata_info']>>;
+  variables: Parameters<ServerService['metadata_info']>[0];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -399,16 +431,19 @@ type QueryActions<T = undefined> =
   | FetchQueueItems<T>
   | FetchQueueState<T>
   | FetchLog<T>
+  | FetchDownloadInfo<T>
+  | FetchMetadataInfo<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
 
-interface MutationAction extends Action {
+interface MutationAction<T = undefined> extends Action {
   type: MutatationType;
 }
 
-interface LoginAction extends MutationAction {
+interface LoginAction<T = undefined> extends MutationAction<T> {
   type: MutatationType.LOGIN;
+  dataType: Unwrap<ReturnType<ServerService['login']>>;
   variables: {
     username: string;
     password?: string;
@@ -416,59 +451,78 @@ interface LoginAction extends MutationAction {
   };
 }
 
-interface UpdateGallery extends MutationAction {
+interface UpdateGallery<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_GALLERY;
+  dataType: Unwrap<ReturnType<ServerService['login']>>;
   variables: { test: string };
 }
 
-interface StopQueue extends MutationAction {
+interface StopQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.STOP_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['stop_queue']>>;
   variables: Parameters<ServerService['stop_queue']>[0];
 }
 
-interface StartQueue extends MutationAction {
+interface StartQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.START_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['start_queue']>>;
   variables: Parameters<ServerService['start_queue']>[0];
 }
 
-interface ClearQueue extends MutationAction {
+interface ClearQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.CLEAR_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['clear_queue']>>;
   variables: Parameters<ServerService['clear_queue']>[0];
 }
 
-interface AddItemToQueue extends MutationAction {
+interface AddItemToQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.ADD_ITEM_TO_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['add_item_to_queue']>>;
   variables: Parameters<ServerService['add_item_to_queue']>[0];
 }
 
-interface RemoveItemFromQueue extends MutationAction {
+interface RemoveItemFromQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.REMOVE_ITEM_FROM_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['remove_item_from_queue']>>;
   variables: Parameters<ServerService['remove_item_from_queue']>[0];
 }
 
-interface AddItemsToMetadataQueue extends MutationAction {
+interface AddItemsToMetadataQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.ADD_ITEMS_TO_METADATA_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['add_items_to_metadata_queue']>>;
   variables: Parameters<ServerService['add_items_to_metadata_queue']>[0];
 }
 
-type MutationActions =
-  | LoginAction
-  | UpdateGallery
-  | AddItemToQueue
-  | RemoveItemFromQueue
-  | AddItemsToMetadataQueue
-  | StopQueue
-  | StartQueue
-  | ClearQueue;
+interface AddUrlsToDownloadQueue<T = undefined> extends MutationAction<T> {
+  type: MutatationType.ADD_URLS_TO_DOWNLOAD_QUEUE;
+  dataType: Unwrap<ReturnType<ServerService['add_urls_to_download_queue']>>;
+  variables: Parameters<ServerService['add_urls_to_download_queue']>[0];
+}
+
+type MutationActions<T = undefined> =
+  | LoginAction<T>
+  | UpdateGallery<T>
+  | AddItemToQueue<T>
+  | RemoveItemFromQueue<T>
+  | AddItemsToMetadataQueue<T>
+  | AddUrlsToDownloadQueue<T>
+  | StopQueue<T>
+  | StartQueue<T>
+  | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================
 
-type Actions<T = undefined> = MutationActions | QueryActions<T>;
+type Actions<T = undefined> = MutationActions<T> | QueryActions<T>;
 
 export class Query {
+  static mutationObservers: Record<
+    string,
+    MutationObserver<any, any, any, any>
+  >;
+
   static get<
     A = undefined,
-    T extends Actions<A> = Actions<A>,
+    T extends QueryActions<A> = QueryActions<A>,
     K extends T['type'] = T['type'],
     V extends Extract<T, { type: K }>['variables'] = Extract<
       T,
@@ -504,7 +558,59 @@ export class Query {
       }
 
       default:
-        throw Error('Invalid action type');
+        throw Error('Invalid query type');
     }
+  }
+
+  static post<
+    A = undefined,
+    T extends MutationActions<A> = MutationActions<A>,
+    K extends T['type'] = T['type'],
+    V extends Extract<T, { type: K }>['variables'] = Extract<
+      T,
+      { type: K }
+    >['variables'],
+    R extends Extract<T, { type: K }>['dataType'] = Extract<
+      T,
+      { type: K }
+    >['dataType'],
+    E extends AxiosError<R> = AxiosError<R>
+  >(
+    action: K,
+    variables: V,
+    options?: Omit<
+      MutationObserverOptions<AxiosResponse<R>, E, V>,
+      'mutationFn' | 'mutationKey' | 'variables'
+    >,
+    reqConfig?: Parameters<AxiosInstance['post']>[2]
+  ) {
+    const key = JSON.stringify([action.toString(), variables]);
+    let obs: MutationObserver<AxiosResponse<R>, E, V> =
+      Query.mutationObservers[key];
+    if (!obs) {
+      let endpoint = '';
+
+      switch (action) {
+        case MutatationType.ADD_ITEM_TO_QUEUE: {
+          endpoint = '/api/item';
+          break;
+        }
+
+        default:
+          throw Error('Invalid mutation type');
+      }
+
+      const fn = (v: V) => axios.post<R>(urlstring(endpoint), v, reqConfig);
+
+      obs = new MutationObserver<AxiosResponse<R>, E, V>(queryClient, {
+        ...options,
+        mutationKey: key,
+        mutationFn: fn,
+      });
+
+      Query.mutationObservers[key] = obs;
+    }
+
+    return obs.mutate(variables);
   }
 }

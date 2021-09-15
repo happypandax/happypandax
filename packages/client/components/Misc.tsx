@@ -168,12 +168,14 @@ export function EmptySegment({
 export function EmptyMessage({
   title = t`Nothing to see here...`,
   description,
+  className,
 }: {
   title?: string;
+  className?: string;
   description?: string;
 }) {
   return (
-    <Message>
+    <Message className={className}>
       <Message.Header className="center text-center sub-text">
         {title}
       </Message.Header>
