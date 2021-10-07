@@ -27,6 +27,7 @@ import {
   MetadataItem,
   ProfileOptions,
   SearchItem,
+  SearchOptions,
   ServerGallery,
   ServerItem,
   ServerMetaTags,
@@ -291,7 +292,7 @@ export default class ServerService extends Service {
       filter_id?: number;
       sort_options?: SortOptions;
       search_query?: string;
-      search_options?: {};
+      search_options?: SearchOptions;
       profile_options?: ProfileOptions;
     },
     group?: GroupCall

@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { useRecoilState } from 'recoil';
@@ -17,6 +18,7 @@ import { Query, QueryType, useQueryType } from '../client/queries';
 import { DrawerTab, ImageSize, ItemType, QueueType } from '../misc/enums';
 import t from '../misc/lang';
 import { DragItemData } from '../misc/types';
+import { urlstring } from '../misc/utility';
 import { AppState } from '../state';
 import GalleryCard, {
   GalleryCardData,
@@ -107,19 +109,28 @@ export function QueueBoard({}: {}) {
 
   return (
     <Ref innerRef={dropRef}>
-      <Dimmer.Dimmable
-        dimmed={isOver}
-        loading={loading}
-        as={Segment}
-        tertiary
-        basic
-        className="no-padding-segment">
+      <Dimmer.Dimmable dimmed={isOver} className="no-padding-segment">
         <Dimmer active={isOver}>
           <Icon size="large" name="plus" inverted />
         </Dimmer>
+        {!!items?.length && (
+          <Segment
+            basic
+            textAlign="center"
+            className="no-padding-segment small-margins">
+            <Link
+              href={urlstring(`/item/gallery/${items?.[0].id}/page/1`)}
+              passHref>
+              <Button primary as="a">{t`Start reading`}</Button>
+            </Link>
+          </Segment>
+        )}
         <ListView
+          loading={loading}
+          basic
           items={items}
-          className="no-margins"
+          tertiary
+          className="no-margins no-padding-segment"
           itemRender={GalleryCard}
           onItemKey={useCallback((i) => i.id, [])}
         />

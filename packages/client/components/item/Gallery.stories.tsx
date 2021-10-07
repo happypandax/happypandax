@@ -1,6 +1,6 @@
-import { SelectedBoard } from './Drawer';
-import { GalleryCard } from './item/Gallery';
-import PageLayout from './layout/Page';
+import { SelectedBoard } from '../Drawer';
+import PageLayout from '../layout/Page';
+import { GalleryCard } from './Gallery';
 
 export default {
   title: 'Item/Gallery',

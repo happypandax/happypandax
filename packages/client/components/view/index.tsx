@@ -279,7 +279,7 @@ export function PaginatedView({
 } & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
   React.ComponentProps<typeof Segment>) {
   const totalPages = Math.max(
-    Math.floor(totalItemCount / Math.max(itemsPerPage, 1)),
+    Math.ceil(totalItemCount / Math.max(itemsPerPage, 1)),
     1
   );
 
@@ -293,7 +293,7 @@ export function PaginatedView({
   );
 
   let fromCount = (+(activePage ?? 1) - 1) * itemsPerPage + 1;
-  let toCount = Math.min(fromCount + itemsPerPage - 1, itemCount);
+  let toCount = fromCount + Math.min(itemsPerPage - 1, itemCount - 1);
 
   fromCount = itemCount ? toCount + 1 - itemCount : 0;
   toCount = itemCount ? toCount : 0;

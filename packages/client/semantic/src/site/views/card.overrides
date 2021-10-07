@@ -97,3 +97,15 @@
 .ui.cards > .card > .label:not(:last-child), .ui.card > .label:not(:last-child) {
   border-radius: 0;
 }
+
+.ui.card.dashed-side::before, .ui.card.dashed-side::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  border-left: 3px dashed rgba(34, 36, 38, 0.20);
+  background: rgba(0, 0, 0, 0.10);
+  width: 8px;
+  height: 100%;
+  visibility: visible;
+  z-index: -1;
+}

@@ -40,7 +40,12 @@ import { Query, QueryType, useQueryType } from '../client/queries';
 import { useBodyEvent, useRefEvent, useTabActive } from '../hooks/utils';
 import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
-import { FieldPath, ServerGallery, ServerPage } from '../misc/types';
+import {
+  FieldPath,
+  ServerCategory,
+  ServerGallery,
+  ServerPage,
+} from '../misc/types';
 import {
   getClientWidth,
   getScreenWidth,
@@ -54,6 +59,7 @@ import {
   useInitialRecoilState,
   useInitialRecoilValue,
 } from '../state';
+import CollectionCard, { CollectionCardData } from './item/Collection';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
@@ -614,7 +620,6 @@ function Canvas({
 
   useEffect(() => {
     document.body.focus();
-    console.log(document.activeElement);
     const s = new Scroller(scrollRender.bind(undefined, refContent.current), {
       scrollingX: false,
       scrollingy: true,
@@ -917,7 +922,6 @@ function Canvas({
     { passive: false },
     [scroller, onScrollPanEnd, direction, wheelZoom, checkIfEnd]
   );
-  console.log(document?.activeElement);
 
   return (
     <div
@@ -1464,12 +1468,15 @@ function ReadNext({
 }) {
   const router = useRouter();
   const isEnd = useRecoilValue(ReaderState.endReached(stateKey));
+  const readNextCountdown = useRecoilValue(
+    ReaderState.autoReadNextCountdown(stateKey)
+  );
 
   const [countDownEnabled, setCountDownEnabled] = useState<
     'queue' | 'chapter' | 'readinglist'
   >();
 
-  const [countdown, setCountdown] = useState(15);
+  const [countdown, setCountdown] = useState(readNextCountdown);
   const readingQueue = useRecoilValue(AppState.readingQueue);
 
   const { data: queueData, isLoading } = useQueryType(
@@ -1511,7 +1518,7 @@ function ReadNext({
   );
 
   useEffect(() => {
-    const t = 15;
+    const t = readNextCountdown;
     if (queueData) {
       setCountDownEnabled('queue');
       setCountdown(t);
@@ -1524,7 +1531,7 @@ function ReadNext({
     } else {
       setCountDownEnabled(undefined);
     }
-  }, [isEnd, nextChapter, nextInReadingList, queueData]);
+  }, [isEnd, nextChapter, nextInReadingList, queueData, readNextCountdown]);
 
   return (
     <Grid
@@ -1628,10 +1635,46 @@ function EndRating() {
   );
 }
 
+function CollectionOptions(props: React.ComponentProps<typeof Modal>) {
+  const { data } = useQueryType(QueryType.ITEMS, {
+    item_type: ItemType.Category,
+    fields: ['name'],
+  });
+
+  const [cats, setCats] = useRecoilState(ReaderState.collectionCategories);
+
+  return (
+    <Modal closeIcon size="small" {...props}>
+      <Modal.Header>{t`Categories`}</Modal.Header>
+      <Modal.Content>
+        <Form>
+          {data &&
+            data?.data?.items?.map((i: ServerCategory) => (
+              <Form.Field
+                key={i.id}
+                defaultChecked={cats.includes(i.name)}
+                onChange={(e, d) => {
+                  e.preventDefault();
+                  if (d.checked) {
+                    setCats([...cats, i.name]);
+                  } else {
+                    setCats(cats.filter((x) => x !== i.name));
+                  }
+                }}
+                control={Checkbox}
+                label={i.name}
+              />
+            ))}
+        </Form>
+      </Modal.Content>
+    </Modal>
+  );
+}
+
 export function EndContent({
   sameArtist = [],
   series = [],
-  readingList = [],
+  collections = [],
   item,
   stateKey,
   ...readNextProps
@@ -1639,9 +1682,10 @@ export function EndContent({
   item?: PartialExcept<ServerGallery, 'id'>;
   sameArtist?: GalleryCardData[];
   series?: GalleryCardData[];
-  readingList?: GalleryCardData[];
+  collections?: CollectionCardData[];
   stateKey?: string;
 } & React.ComponentProps<typeof ReadNext>) {
+  const collectionCategories = useRecoilValue(ReaderState.collectionCategories);
   const endReached = useRecoilValue(ReaderState.endReached(stateKey));
   const [_readingQueue, setReadingQueue] = useRecoilState(
     AppState.readingQueue
@@ -1681,11 +1725,7 @@ export function EndContent({
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <ReadNext
-            {...readNextProps}
-            stateKey={stateKey}
-            nextInReadingList={readingList?.[0]}
-          />
+          <ReadNext {...readNextProps} stateKey={stateKey} />
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
@@ -1719,14 +1759,33 @@ export function EndContent({
       <Grid.Row>
         <Grid.Column>
           <Slider
-            stateKey="reading_list"
+            stateKey="collections"
             autoplay
-            label={t`Reading list`}
+            padded
+            showCount={false}
+            label={
+              <>
+                {t`Collections`}
+                <Label.Detail>{collectionCategories.join(', ')}</Label.Detail>
+                <CollectionOptions
+                  trigger={
+                    <Button
+                      floated="right"
+                      icon="setting"
+                      size="mini"
+                      compact
+                      inverted
+                      basic
+                    />
+                  }
+                />
+              </>
+            }
             defaultShow={false}
             color="violet">
-            {readingList.map((i) => (
+            {collections.map((i) => (
               <SliderElement key={i.id}>
-                <GalleryCard size="small" data={i} />
+                <CollectionCard size="small" data={i} />
               </SliderElement>
             ))}
           </Slider>
@@ -1796,6 +1855,9 @@ export function ReaderSettings({
   );
   const [autoNavigateInterval, setAutoNavigateInterval] = useRecoilState(
     ReaderState.autoNavigateInterval(stateKey)
+  );
+  const [autoReadNextCountdown, setAutoReadNextCountdown] = useRecoilState(
+    ReaderState.autoReadNextCountdown(stateKey)
   );
   const [scaling, setScaling] = useRecoilState(ReaderState.scaling(stateKey));
   const [wheelZoom, setWheelZoom] = useRecoilState(
@@ -1868,8 +1930,20 @@ export function ReaderSettings({
             const v = parseFloat(ev.target.value);
             setAutoNavigateInterval(Math.max(3, isNaN(v) ? 12 : v));
           }, [])}>
-          <label>{t`Auto navigate interval (seconds)`}</label>
+          <label>{t`Auto navigate interval`}</label>
           <input value={autoNavigateInterval} type="number" min={0} />
+          <span className="sub-text">{t`Seconds`}</span>
+        </Form.Field>
+
+        <Form.Field
+          onChange={useCallback((ev) => {
+            ev.preventDefault();
+            const v = parseFloat(ev.target.value);
+            setAutoReadNextCountdown(Math.max(0, isNaN(v) ? 15 : v));
+          }, [])}>
+          <label>{t`Auto read next gallery countdown`}</label>
+          <input value={autoReadNextCountdown} type="number" min={0} />
+          <span className="sub-text">{t`Set to 0 to disable`}</span>
         </Form.Field>
 
         <Form.Field>

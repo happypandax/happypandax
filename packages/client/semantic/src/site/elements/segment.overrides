@@ -10,17 +10,38 @@
     width: 100%;
 }
 
-.ui.segment.slider {
-    padding-top: 2em;
+.ui.segment.swiper {
+    padding-top: 1em;
     padding-bottom: 1em;
     padding-left: 0;
     padding-right: 0;
 }
 
-.ui.segment.slider.secondary {
+.ui.segment.swiper.padded {
+    padding-top: 2em;
+}
+
+
+.ui.segment.swiper.secondary {
     padding-top: 1em;
 }
 
-.ui.segment.slider.tertiary {
+.ui.segment.swiper.tertiary {
     padding-top: 1em;
+}
+
+.ui.piled.segments::after, .ui.piled.segments::before, .ui.piled.segment::after, .ui.piled.segment::before {
+    border-width: 2px;
+}
+
+.ui.piled.segments::after, .ui.piled.card.segment::after {
+    transform: rotate(3.2deg);
+}
+
+.ui.piled.segments::before, .ui.piled.card.segment::before {
+    transform: rotate(-3.2deg);
+}
+
+.ui.piled.card.segment {
+    border: 2px solid #D8DEE2;
 }

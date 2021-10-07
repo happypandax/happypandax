@@ -4,3 +4,7 @@
     margin: auto !important;
     opacity: 0.85;
 }
+
+.slider_top_padding {
+    padding-top: 2em;
+}

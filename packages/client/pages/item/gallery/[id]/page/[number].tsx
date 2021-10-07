@@ -3,6 +3,10 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  CollectionCardData,
+  collectionCardDataFields,
+} from '../../../../../components/item/Collection';
+import {
   GalleryCardData,
   galleryCardDataFields,
 } from '../../../../../components/item/Gallery';
@@ -13,11 +17,17 @@ import { PageTitle } from '../../../../../components/Misc';
 import { ItemSort, ItemType } from '../../../../../misc/enums';
 import t from '../../../../../misc/lang';
 import {
+  ServerCollection,
   ServerGallery,
   ServerGrouping,
   ServerPage,
 } from '../../../../../misc/types';
-import { replaceURL, urlparse, urlstring } from '../../../../../misc/utility';
+import {
+  getCookies,
+  replaceURL,
+  urlparse,
+  urlstring,
+} from '../../../../../misc/utility';
 import { ServiceType } from '../../../../../services/constants';
 import ServerService, { GroupCall } from '../../../../../services/server';
 
@@ -61,7 +71,7 @@ interface PageProps {
   urlQuery: ReturnType<typeof urlparse>;
   sameArtist: GalleryCardData[];
   series: GalleryCardData[];
-  readingList: GalleryCardData[];
+  collections: CollectionCardData[];
   randomItem?: GalleryCardData;
   nextChapter?: GalleryCardData;
 }
@@ -100,13 +110,18 @@ export async function getServerSideProps(
   let item: PageProps['item'];
   let randomItem: PageProps['randomItem'];
   let nextChapter: PageProps['nextChapter'];
-  let readingList: PageProps['readingList'];
+  let collections: PageProps['collections'];
   let series: PageProps['series'];
 
   // TODO: ensure it isn't lower than local window size or the page will error out
   const remoteWindowSize = 40;
 
   if (!redirect) {
+    const collectionCategories = getCookies(
+      context,
+      'collection_categories'
+    ) as string[] | undefined;
+
     const group = new GroupCall();
 
     server
@@ -124,18 +139,26 @@ export async function getServerSideProps(
       });
 
     server
-      .library<ServerGallery>(
+      .library<ServerCollection>(
         {
-          item_type: ItemType.Gallery,
-          metatags: { trash: false, readlater: true },
-          sort_options: { by: ItemSort.GalleryDate },
+          item_type: ItemType.Collection,
+          metatags: { trash: false, inbox: false },
+          sort_options: { by: ItemSort.CollectionName },
           limit: 50,
-          fields: galleryCardDataFields,
+          search_query: collectionCategories.length
+            ? collectionCategories.reduce((p, c) => p + `category:"${c}" `, '')
+            : undefined,
+          search_options: {
+            match_exact: true,
+            match_all_terms: false,
+            case_sensitive: true,
+          },
+          fields: collectionCardDataFields,
         },
         group
       )
       .then((r) => {
-        readingList = r.items;
+        collections = r.items;
       });
 
     server
@@ -225,7 +248,7 @@ export async function getServerSideProps(
     redirect,
     props: {
       item,
-      readingList,
+      collections,
       series,
       randomItem,
       nextChapter,
@@ -276,7 +299,7 @@ export default function Page(props: PageProps) {
           stateKey={stateKey}
           item={props.item}
           series={props.series}
-          readingList={props.readingList}
+          collections={props.collections}
           nextChapter={props.nextChapter}
           random={props.randomItem}
           sameArtist={props.sameArtist}

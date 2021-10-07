@@ -172,6 +172,18 @@ export interface ServerPage extends ServerItemWithProfile {
   metatags: ServerMetaTags;
 }
 
+export interface ServerCollection
+  extends ServerItemWithProfile,
+    ServerItemWithName {
+  info: string;
+  pub_date: number;
+  category_id: number;
+  category: ServerCategory;
+  user_id: number;
+  metatags: ServerMetaTags;
+  urls: ServerUrl[];
+}
+
 export type FieldPath<T = undefined> = T extends undefined
   ?
       | DeepPickPathPlain<ServerCircle>
@@ -219,6 +231,14 @@ export type ProfileOptions = {
 export type SortOptions = {
   by?: ItemSort;
   desc?: boolean;
+};
+
+export type SearchOptions = {
+  regex?: boolean;
+  case_sensitive?: boolean;
+  match_exact?: boolean;
+  match_all_terms?: boolean;
+  children?: boolean;
 };
 
 export interface CommandID<T> extends Number {}

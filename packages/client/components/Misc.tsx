@@ -247,6 +247,7 @@ export function Slider({
   stateKey,
   infinite,
   children,
+  topPadding,
   label,
   showCount = true,
   touchStartPreventDefault = false,
@@ -260,6 +261,7 @@ export function Slider({
   stateKey?: string;
   loading?: boolean;
   infinite?: boolean;
+  topPadding?: boolean;
   showCount?: boolean;
   touchStartPreventDefault?: boolean;
   autoplay?: boolean;
@@ -281,7 +283,7 @@ export function Slider({
   }, [children]);
 
   return (
-    <Segment basic {...props} className={classNames('slider', className)}>
+    <Segment basic {...props} className={classNames('swiper', className)}>
       {!!label && (
         <Label
           color={color}
@@ -495,7 +497,10 @@ export function SimilarItemsSlider({
 
   useCommand(cmd?.data, {
     callback: (v) => {
-      setData(v[cmd.data.toString()].items as ServerGallery[]);
+      const d = v[cmd.data.toString()];
+      if (d) {
+        setData(d.items as ServerGallery[]);
+      }
       setLoading(false);
     },
   });

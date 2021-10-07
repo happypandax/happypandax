@@ -229,7 +229,9 @@ function TagResult({
 function SearchResults({
   onSelect,
   onClick,
+  itemTypes,
 }: {
+  itemTypes?: ItemType[];
   onClick?: (ev: any) => void;
   onSelect?: (text: string) => void;
 }) {
@@ -248,7 +250,7 @@ function SearchResults({
           const q = query.slice(t.startPosition, t.endPosition);
 
           Query.get(QueryType.SEARCH_ITEMS, {
-            item_types: [
+            item_types: itemTypes ?? [
               ItemType.Artist,
               ItemType.Category,
               ItemType.Circle,
@@ -257,7 +259,7 @@ function SearchResults({
               ItemType.Parody,
               ItemType.NamespaceTag,
             ],
-            search_query: q,
+            search_query: q.toString(),
             limit: 25,
           }).then((r) => {
             setData(r.data.items);
@@ -267,7 +269,7 @@ function SearchResults({
       200,
       { maxWait: 1000 }
     ),
-    []
+    [itemTypes]
   );
 
   useEffect(() => {
@@ -306,6 +308,11 @@ function SearchResults({
                 type = t`Circle`;
                 text = `circle:"${text}"`;
                 color = 'teal';
+                break;
+              }
+              case ItemType.Collection: {
+                type = '';
+                text = `"${text}"`;
                 break;
               }
               case ItemType.Grouping: {
@@ -458,6 +465,7 @@ export function ItemSearch({
   placeholder,
   defaultValue,
   onSearch,
+  itemTypes,
   stateKey,
   showOptions,
   onClear: cOnClear,
@@ -466,6 +474,7 @@ export function ItemSearch({
   fluid?: boolean;
   transparent?: boolean;
   defaultValue?: string;
+  itemTypes?: ItemType[];
   stateKey?: string;
   showOptions?: boolean;
   placeholder?: string;
@@ -474,7 +483,6 @@ export function ItemSearch({
   size?: React.ComponentProps<typeof Search>['size'];
   className?: string;
 }) {
-  console.log(defaultValue);
   const ref = useRef<HTMLElement>();
   const refTimeoutId = useRef<NodeJS.Timeout>();
   const [query, setQuery] = useState(defaultValue);
@@ -559,6 +567,7 @@ export function ItemSearch({
               visible: resultsVisible,
             })}>
             <SearchResults
+              itemTypes={itemTypes}
               onClick={useCallback((ev) => {
                 const target = ref.current.querySelector('input');
                 target.focus();
@@ -575,7 +584,6 @@ export function ItemSearch({
                       quotation: true,
                     }
                   );
-                  console.log(t.text);
                   target.value = t.text;
                   target.focus();
                   //   document.getSelection().collapse(ref.current, t.newPosition)

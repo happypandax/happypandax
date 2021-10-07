@@ -17,6 +17,9 @@ import {
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
 import { GalleryDataTable } from '../components/DataTable';
+import CollectionCard, {
+  collectionCardDataFields,
+} from '../components/item/Collection';
 import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import {
   ClearFilterButton,
@@ -57,10 +60,18 @@ interface PageProps {
 
 function libraryArgs(
   ctx: NextPageContext | undefined,
-  itemType: ItemType,
   urlQuery: ReturnType<typeof urlparse>,
   page?: number
 ) {
+  let itemType = ItemType.Gallery;
+
+  // can't trust user input
+  if (urlQuery.query?.item === ItemType.Collection) {
+    itemType = ItemType.Collection;
+  } else if (getCookies(ctx, 'library_item') === ItemType.Collection) {
+    itemType = ItemType.Collection;
+  }
+
   const view = urlQuery.query?.view ?? getCookies(ctx, 'library_view');
 
   const metatags = {
@@ -99,34 +110,13 @@ function libraryArgs(
     },
     filter_id: (urlQuery.query?.filter ??
       getCookies(ctx, 'library_filter')) as number,
-    limit: (urlQuery.query?.limit ??
-      getCookies(ctx, 'library_limit')) as number,
-    fields: galleryCardDataFields,
-  };
-}
-
-export async function getServerSideProps(
-  context: NextPageContext
-): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = global.app.service.get(ServiceType.Server);
-
-  const urlQuery = urlparse(context.resolvedUrl);
-
-  let itemType = ItemType.Gallery;
-
-  // can't trust user input
-  if (urlQuery.query?.t === ItemType.Collection) {
-    itemType = ItemType.Collection;
-  }
-
-  // const group = server.create_group_call();
-
-  const data = await server.library<ServerGallery>(
-    libraryArgs(context, itemType, urlQuery)
-  );
-
-  return {
-    props: { data, urlQuery, itemType },
+    limit:
+      ((urlQuery.query?.limit ?? getCookies(ctx, 'library_limit')) as number) ??
+      30,
+    fields:
+      itemType === ItemType.Gallery
+        ? galleryCardDataFields
+        : collectionCardDataFields,
   };
 }
 
@@ -326,6 +316,24 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
   );
 }
 
+export async function getServerSideProps(
+  context: NextPageContext
+): Promise<GetServerSidePropsResult<PageProps>> {
+  const server = global.app.service.get(ServiceType.Server);
+
+  const urlQuery = urlparse(context.resolvedUrl);
+
+  // const group = server.create_group_call();
+
+  const args = libraryArgs(context, urlQuery);
+
+  const data = await server.library<ServerGallery>(args);
+
+  return {
+    props: { data, urlQuery, itemType: args.item_type },
+  };
+}
+
 const stateKey = 'library_page';
 
 export default function Page({
@@ -348,11 +356,11 @@ export default function Page({
 
   const setRecentQuery = useSetRecoilState(MiscState.recentSearch(stateKey));
 
-  const libraryargs = libraryArgs(undefined, itemType, urlQuery);
+  const libraryargs = libraryArgs(undefined, urlQuery);
 
   const { data, fetchNextPage, isFetching } = useQueryType(
     QueryType.LIBRARY,
-    libraryargs,
+    { ...libraryargs, item: itemType },
     {
       initialData,
       infinite: true,
@@ -386,6 +394,9 @@ export default function Page({
     if (urlQuery.query?.view !== undefined) {
       setView(urlQuery.query.view as number);
     }
+    if (urlQuery.query?.item !== undefined) {
+      setItem(urlQuery.query.item as number);
+    }
     if (urlQuery.query?.limit !== undefined) {
       setLimit(urlQuery.query.limit as number);
     }
@@ -397,6 +408,10 @@ export default function Page({
   useUpdateEffect(() => {
     router.replace(urlstring({ view, p: 1 }));
   }, [view]);
+
+  useUpdateEffect(() => {
+    router.replace(urlstring({ item, p: 1 }));
+  }, [item]);
 
   useUpdateEffect(() => {
     router.replace(urlstring({ display }), undefined, { shallow: true });
@@ -473,6 +488,19 @@ export default function Page({
               <MenuItem className={classNames('fullwidth')}>
                 <ItemSearch
                   stateKey={stateKey}
+                  itemTypes={
+                    itemType === ItemType.Gallery
+                      ? [
+                          ItemType.Artist,
+                          ItemType.Category,
+                          ItemType.Circle,
+                          ItemType.Grouping,
+                          ItemType.Language,
+                          ItemType.Parody,
+                          ItemType.NamespaceTag,
+                        ]
+                      : [ItemType.Collection, ItemType.Category]
+                  }
                   onSearch={(query) => {
                     setQuery(query);
                     if (query) {
@@ -558,7 +586,9 @@ export default function Page({
             onPageChange={onPageChange}
             onLoadMore={fetchNext}
             paddedChildren
-            itemRender={GalleryCard}
+            itemRender={
+              itemType === ItemType.Gallery ? GalleryCard : CollectionCard
+            }
             itemsPerPage={limit}
             onItemKey={onItemKey}
             totalItemCount={count}
@@ -575,7 +605,9 @@ export default function Page({
             activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
             onItemKey={onItemKey}
             itemsPerPage={limit}
-            itemRender={GalleryCard}
+            itemRender={
+              itemType === ItemType.Gallery ? GalleryCard : CollectionCard
+            }
             totalItemCount={count}
             pagination={!!count}
             bottomPagination={!!count}></ListView>

@@ -2,8 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { FieldPath, ItemSize, ServerPage } from '../../misc/types';
-import { PageNumberLabel } from '../data/Common';
+import { FieldPath, ItemSize, ServerCollection } from '../../misc/types';
 import {
   ActivityLabel,
   FavoriteLabel,
@@ -14,25 +13,20 @@ import {
   ItemMenuLabel,
   ItemMenuLabelItem,
 } from './';
+import { ItemCardContent } from './index';
 
-export type PageCardData = DeepPick<
-  ServerPage,
-  | 'id'
-  | 'profile'
-  | 'gallery_id'
-  | 'number'
-  | 'metatags.inbox'
-  | 'metatags.favorite'
+export type CollectionCardData = DeepPick<
+  ServerCollection,
+  'id' | 'name' | 'profile' | 'metatags.inbox' | 'metatags.favorite'
 >;
 
-export const pageardDataFields: FieldPath<ServerPage>[] = [
+export const collectionCardDataFields: FieldPath<ServerCollection>[] = [
+  'name',
   'profile',
-  'gallery_id',
-  'number',
   'metatags.*',
 ];
 
-function PageMenu({}: { hasProgress: boolean; read: boolean }) {
+function CollectionMenu({}: { hasProgress: boolean; read: boolean }) {
   return (
     <ItemMenuLabel>
       <ItemMenuLabelItem icon="trash">{t`Delete`}</ItemMenuLabelItem>
@@ -40,7 +34,7 @@ function PageMenu({}: { hasProgress: boolean; read: boolean }) {
   );
 }
 
-export function PageCard({
+export function CollectionCard({
   size,
   data,
   fluid,
@@ -49,7 +43,7 @@ export function PageCard({
   horizontal,
 }: {
   size?: ItemSize;
-  data: PageCardData;
+  data: CollectionCardData;
   fluid?: boolean;
   draggable?: boolean;
   disableModal?: boolean;
@@ -59,9 +53,10 @@ export function PageCard({
     <ItemCard
       type={ItemType.Page}
       dragData={data}
-      href={`/item/gallery/${data?.gallery_id}/page/${data?.number}`}
+      href={`/item/collection/${data?.id}`}
       draggable={draggable}
       centered
+      className="piled"
       link
       fluid={fluid}
       horizontal={horizontal}
@@ -77,13 +72,8 @@ export function PageCard({
             {!!data?.metatags?.inbox && <InboxIconLabel />}
             <ActivityLabel />
           </ItemLabel>,
-          <ItemLabel key="info" x="center" y="bottom">
-            {data?.number !== undefined && (
-              <PageNumberLabel>{data.number}</PageNumberLabel>
-            )}
-          </ItemLabel>,
           <ItemLabel key="menu" x="right" y="bottom">
-            <PageMenu />
+            <CollectionMenu />
           </ItemLabel>,
         ],
         [horizontal, data]
@@ -93,8 +83,10 @@ export function PageCard({
           <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
         ),
         [data.profile]
-      )}></ItemCard>
+      )}>
+      <ItemCardContent title={data?.name ?? ''}></ItemCardContent>
+    </ItemCard>
   );
 }
 
-export default PageCard;
+export default CollectionCard;

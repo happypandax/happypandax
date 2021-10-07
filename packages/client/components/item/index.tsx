@@ -632,6 +632,7 @@ export function ItemCard({
               : {}
           }
           className={classNames(
+            className,
             {
               dragging: isDragging,
               horizontal: horizontal,
