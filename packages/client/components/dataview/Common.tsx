@@ -4,7 +4,12 @@ import { Header, Icon, Label, List, Table } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import t from '../../misc/lang';
-import { FieldPath, ServerGallery, ServerTag } from '../../misc/types';
+import {
+  FieldPath,
+  ServerGallery,
+  ServerItemWithName,
+  ServerTag,
+} from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { AppState, DataState } from '../../state';
 
@@ -42,6 +47,12 @@ export function PageCountLabel({
       {children}
     </Label>
   );
+}
+
+export function GalleryCountLabel({
+  ...props
+}: React.ComponentProps<typeof Label>) {
+  return <PageCountLabel title={t`Gallery count`} {...props} />;
 }
 
 export function CategoryLabel() {
@@ -223,7 +234,7 @@ export function GroupingLabel() {
   );
 }
 
-export function NameTable({
+export function NamesTable({
   children,
   dataPrimaryKey,
   dataKey,
@@ -271,6 +282,32 @@ export function NameTable({
             </Table.Cell>
           </Table.Row>
         ))}
+      </Table.Body>
+    </Table>
+  );
+}
+
+export function NameTable({ children }: { children?: React.ReactNode }) {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<
+    PartialExcept<ServerItemWithName, 'id'>
+  >(DataState.data(ctx.key));
+
+  return (
+    <Table basic="very" compact="very" verticalAlign="middle" stackable>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell colspan="2" textAlign="center">
+            {children}
+            <Label size="tiny" className="float-right">
+              {t`ID`}
+              <Label.Detail>{data?.id}</Label.Detail>
+            </Label>
+            <div>
+              <Header size="medium">{data?.name}</Header>
+            </div>
+          </Table.Cell>
+        </Table.Row>
       </Table.Body>
     </Table>
   );

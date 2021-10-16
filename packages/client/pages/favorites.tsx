@@ -8,6 +8,7 @@ import {
   FavoritePages,
   Favorites,
   SuggestedGalleries,
+  TimeCapsuleGalleries,
 } from '../components/Favorites';
 import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import PageLayout from '../components/layout/Page';
@@ -105,6 +106,7 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
       <FavoriteCollections />
       <FavoritePages />
       <SuggestedGalleries />
+      <TimeCapsuleGalleries />
     </PageLayout>
   );
 }

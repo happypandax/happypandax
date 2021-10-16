@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { FieldPath, ItemSize, ServerCollection } from '../../misc/types';
+import { GalleryCountLabel } from '../dataview/Common';
 import {
   ActivityLabel,
   FavoriteLabel,
@@ -13,16 +14,22 @@ import {
   ItemMenuLabel,
   ItemMenuLabelItem,
 } from './';
-import { ItemCardContent } from './index';
+import { ItemCardContent, TranslucentLabel } from './index';
 
 export type CollectionCardData = DeepPick<
   ServerCollection,
-  'id' | 'name' | 'profile' | 'metatags.inbox' | 'metatags.favorite'
+  | 'id'
+  | 'name'
+  | 'profile'
+  | 'gallery_count'
+  | 'metatags.inbox'
+  | 'metatags.favorite'
 >;
 
 export const collectionCardDataFields: FieldPath<ServerCollection>[] = [
   'name',
   'profile',
+  'gallery_count',
   'metatags.*',
 ];
 
@@ -51,7 +58,7 @@ export function CollectionCard({
 }) {
   return (
     <ItemCard
-      type={ItemType.Page}
+      type={ItemType.Collection}
       dragData={data}
       href={`/item/collection/${data?.id}`}
       draggable={draggable}
@@ -73,6 +80,16 @@ export function CollectionCard({
             <ActivityLabel />
           </ItemLabel>,
           <ItemLabel key="menu" x="right" y="bottom">
+            {horizontal && (
+              <GalleryCountLabel as={TranslucentLabel}>
+                {data?.gallery_count}
+              </GalleryCountLabel>
+            )}
+            {!horizontal && (
+              <TranslucentLabel circular>
+                {data?.gallery_count}
+              </TranslucentLabel>
+            )}
             <CollectionMenu />
           </ItemLabel>,
         ],

@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { Header, Loader, Table } from 'semantic-ui-react';
 
-import { DataContext } from '../client/context';
-import { QueryType, useQueryType } from '../client/queries';
-import { ItemType } from '../misc/enums';
-import t from '../misc/lang';
-import { ServerGallery } from '../misc/types';
-import { DataState } from '../state';
+import { DataContext } from '../../client/context';
+import { QueryType, useQueryType } from '../../client/queries';
+import { ItemType } from '../../misc/enums';
+import t from '../../misc/lang';
+import { ServerGallery } from '../../misc/types';
+import { DataState } from '../../state';
 import {
   ArtistLabels,
   CategoryLabel,
@@ -19,17 +18,17 @@ import {
   LanguageLabel,
   LastReadLabel,
   LastUpdatedLabel,
-  NameTable,
+  NamesTable,
   PageCountLabel,
   ParodyLabels,
   ReadCountLabel,
   StatusLabel,
   TagsTable,
   UrlList,
-} from './data/Common';
-import { TextEditor } from './Misc';
+} from './Common';
+import { DataTable, DataTableItem } from './DataTable';
 
-export function GalleryDataTable({
+export default function GalleryDataTable({
   data: initialData,
 }: {
   data: PartialExcept<ServerGallery, 'id'>;
@@ -51,6 +50,7 @@ export function GalleryDataTable({
       'grouping.name',
       'grouping.status.name',
       'number',
+      'info',
       'artists.names.name',
       'artists.circles.name',
       'artists.preferred_name.name',
@@ -82,16 +82,16 @@ export function GalleryDataTable({
     <DataContext.Provider value={{ key: contextKey, type: ItemType.Gallery }}>
       <DataTable showDataText={showDataText} loading={isLoading}>
         <DataTableItem>
-          <NameTable dataKey="titles" dataPrimaryKey="preferred_title">
+          <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
             {/* <Label
-              as="a"
-              onClick={useCallback(() => {
-                setShowDataText(true);
-              }, [])}
-              className="float-right"
-              size="tiny">
-              <Icon name="pencil" /> {t`Edit`}
-            </Label> */}
+                as="a"
+                onClick={useCallback(() => {
+                  setShowDataText(true);
+                }, [])}
+                className="float-right"
+                size="tiny">
+                <Icon name="pencil" /> {t`Edit`}
+              </Label> */}
             <GroupingNumberLabel
               className="float-left"
               circular
@@ -99,7 +99,7 @@ export function GalleryDataTable({
               color="black">
               {data?.number}
             </GroupingNumberLabel>
-          </NameTable>
+          </NamesTable>
         </DataTableItem>
         <DataTableItem textAlign="center">
           <CategoryLabel />
@@ -108,6 +108,7 @@ export function GalleryDataTable({
           <PageCountLabel>{data?.page_count}</PageCountLabel>
           <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
         </DataTableItem>
+        {data?.info && <p>{data.info}</p>}
         <DataTableItem name={t`Artist`}>
           <ArtistLabels />
         </DataTableItem>
@@ -137,59 +138,5 @@ export function GalleryDataTable({
         </DataTableItem>
       </DataTable>
     </DataContext.Provider>
-  );
-}
-
-export function DataTableItem({
-  children,
-  colSpan = true,
-  verticalAlign,
-  textAlign,
-  name,
-}: {
-  children?: React.ReactNode;
-  name?: string;
-  verticalAlign?: React.ComponentProps<typeof Table.Cell>['verticalAlign'];
-  textAlign?: React.ComponentProps<typeof Table.Cell>['textAlign'];
-  colSpan?: boolean;
-}) {
-  return (
-    <Table.Row>
-      {!!name && (
-        <Table.Cell collapsing>
-          <Header size="tiny" className="sub-text">
-            {name}
-          </Header>
-        </Table.Cell>
-      )}
-      <Table.Cell
-        colSpan={colSpan && !name ? '2' : undefined}
-        verticalAlign={verticalAlign}
-        textAlign={textAlign}>
-        {children}
-      </Table.Cell>
-    </Table.Row>
-  );
-}
-
-export function DataTable({
-  children,
-  size,
-  compact,
-  showDataText,
-  loading,
-}: {
-  size?: React.ComponentProps<typeof Table>['size'];
-  children?: React.ReactNode;
-  showDataText?: boolean;
-  loading?: boolean;
-  compact?: boolean;
-}) {
-  return (
-    <Table basic="very" size={size} coamp={compact ? 'very' : false}>
-      {showDataText && <TextEditor />}
-      <Loader active={loading} />
-      <Table.Body>{children}</Table.Body>
-    </Table>
   );
 }

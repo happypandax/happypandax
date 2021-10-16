@@ -248,6 +248,7 @@ export function Slider({
   infinite,
   children,
   topPadding,
+  fluid,
   label,
   showCount = true,
   touchStartPreventDefault = false,
@@ -259,6 +260,7 @@ export function Slider({
   show?: boolean;
   defaultShow?: boolean;
   stateKey?: string;
+  fluid?: boolean;
   loading?: boolean;
   infinite?: boolean;
   topPadding?: boolean;
@@ -283,7 +285,10 @@ export function Slider({
   }, [children]);
 
   return (
-    <Segment basic {...props} className={classNames('swiper', className)}>
+    <Segment
+      basic
+      {...props}
+      className={classNames('swiper', className, { fluid: fluid })}>
       {!!label && (
         <Label
           color={color}
@@ -479,11 +484,12 @@ export function SimilarItemsSlider({
   type,
   stateKey,
   item,
+  ...props
 }: {
   type: ItemType;
   stateKey?: string;
   item: DeepPick<ServerItem, 'id'>;
-}) {
+} & React.ComponentProps<typeof Slider>) {
   const [data, setData] = useState<ServerGallery[]>([]);
 
   const { data: cmd, isLoading } = useQueryType(QueryType.SIMILAR, {
@@ -517,7 +523,8 @@ export function SimilarItemsSlider({
       loading={loading}
       stateKey={stateKey}
       showCount={false}
-      label={t`Just like this one`}>
+      label={t`Just like this one`}
+      {...props}>
       {data.map((i) => (
         <SliderElement key={i.id}>
           <GalleryCard size="small" data={i} />

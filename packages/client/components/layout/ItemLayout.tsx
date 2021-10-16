@@ -38,11 +38,11 @@ import {
   LanguageLabel,
   LastReadLabel,
   LastUpdatedLabel,
-  NameTable,
+  NamesTable,
   ParodyLabels,
   TagsTable,
   UrlList,
-} from '../data/Common';
+} from '../dataview/Common';
 import MainMenu, { ConnectionItem, MenuItem } from '../Menu';
 import styles from './ItemLayout.module.css';
 
@@ -363,9 +363,9 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
               </Grid>
             </div>
             <Segment className="no-margins no-right-padding" basic>
-              <NameTable
+              <NamesTable
                 dataKey="titles"
-                dataPrimaryKey="preferred_title"></NameTable>
+                dataPrimaryKey="preferred_title"></NamesTable>
               <Header textAlign="center">
                 <LastReadLabel timestamp={data?.last_read} />
                 <LastUpdatedLabel timestamp={data?.last_updated} />

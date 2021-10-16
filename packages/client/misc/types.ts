@@ -21,7 +21,7 @@ export interface ServerItem {
   plugin: object;
 }
 
-interface ServerItemWithName extends ServerItem {
+export interface ServerItemWithName extends ServerItem {
   name: string;
 }
 
@@ -91,12 +91,16 @@ export interface ServerArtist extends ServerItem {
   urls: ServerUrl[];
 }
 
-export interface ServerGrouping extends ServerItemWithName {
+export interface ServerGrouping
+  extends ServerItemWithProfile,
+    ServerItemWithName {
   language: ServerLanguage;
   language_id: number;
   status_id: number;
+  info: string;
   status: ServerStatus;
   user_id: number;
+  gallery_count: number;
   galleries: any;
 }
 
@@ -178,6 +182,7 @@ export interface ServerCollection
   info: string;
   pub_date: number;
   category_id: number;
+  gallery_count: number;
   category: ServerCategory;
   user_id: number;
   metatags: ServerMetaTags;
@@ -273,4 +278,11 @@ export interface MetadataItem extends QueueItem {
 export interface DownloadItem extends QueueItem {
   url: string;
   thumbnail_url: string;
+}
+
+export interface NotificationData {
+  type: 'info' | 'warning' | 'error';
+  title: string;
+  body?: string;
+  date?: Date;
 }

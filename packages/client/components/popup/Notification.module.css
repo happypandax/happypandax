@@ -1,0 +1,28 @@
+.notification_group {
+    overflow: hidden;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.notification {
+    min-width: 300px;
+}
+
+.notification > div {
+    display: flex;
+}
+
+.notification > div > i {
+    align-self: center;
+}
+
+.notification_content {
+    flex-grow: 1;
+}
+
+.notification_close {
+    margin-left: 0;
+    position: absolute;
+    right: 0;
+    top: 0.4em;
+}

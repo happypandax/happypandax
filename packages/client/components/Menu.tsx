@@ -1,26 +1,13 @@
 import classNames from 'classnames';
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
-import { Icon, IconProps, Menu, Popup, Ref } from 'semantic-ui-react';
+import { Icon, IconProps, Menu, Ref } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
-import { QueryType, useQueryType } from '../client/queries';
-import { useDocumentEvent, useInterval } from '../hooks/utils';
+import { useDocumentEvent } from '../hooks/utils';
 import styles from './Menu.module.css';
+import { NotificationAlert, NotificationsPopup } from './popup/Notification';
 
 const MenuContext = createContext({});
-
-export function NotificationPopup({
-  context,
-}: {
-  context: React.ComponentProps<typeof Popup>['context'];
-}) {
-  const [show, setShow] = useState(false);
-  return (
-    <Popup open={show} context={context} position="bottom right">
-      notifcation
-    </Popup>
-  );
-}
 
 export function MenuItem({
   className,
@@ -57,35 +44,19 @@ export function ConnectionItem({
   position?: 'left' | 'right';
 }) {
   const ref = useRef();
-  const { error, data, refetch } = useQueryType(QueryType.SERVER_STATUS);
+  const connected = true;
 
   const [connectState, setConnectState] = useState<
     'connected' | 'connecting' | 'disconnected'
-  >(data?.data?.connected ? 'connected' : 'connecting');
+  >(connected ? 'connected' : 'connecting');
 
   useEffect(() => {
-    if (error || !data?.data?.connected) {
+    if (!connected) {
       setConnectState('disconnected');
-    } else if (data?.data?.connected) {
+    } else {
       setConnectState('connected');
     }
-  }, [error, data]);
-
-  useInterval(
-    () => {
-      if (connectState === 'connecting') {
-        return;
-      }
-
-      if (connectState !== 'connected') {
-        setConnectState('connecting');
-      }
-
-      refetch();
-    },
-    connectState === 'disconnected' ? 2000 : 10000,
-    [connectState]
-  );
+  }, [connected]);
 
   const icon = (
     <Icon
@@ -106,11 +77,8 @@ export function ConnectionItem({
 
   return (
     <>
-      <NotificationPopup context={ref} />
-      <Popup
-        content="Options"
-        on="click"
-        position="bottom right"
+      <NotificationAlert context={ref} />
+      <NotificationsPopup
         trigger={
           <Ref innerRef={ref}>
             <Menu.Item icon={icon} fitted position={position} />
@@ -185,13 +153,14 @@ export function MainMenu({
         absolutePosition ? 'pos-absolute' : 'pos-relative'
       )}>
       {children}
-      {connectionItem && <ConnectionItem />}
+      {connectionItem && isFixed && fixed && <ConnectionItem />}
+      {connectionItem && !isFixed && !fixed && <ConnectionItem />}
     </Menu>
   );
 
   return (
     <>
-      {!!isFixed && el()}
+      {!!isFixed && el(undefined)}
       <Ref innerRef={ref}>{el(isFixed)}</Ref>
     </>
   );

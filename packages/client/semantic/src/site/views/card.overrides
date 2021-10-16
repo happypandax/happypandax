@@ -109,3 +109,7 @@
   visibility: visible;
   z-index: -1;
 }
+
+.ui.stacked.segment.card.horizontal .ui.image {
+  padding-bottom: 0.4em;
+}

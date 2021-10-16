@@ -1,6 +1,7 @@
 import { ClientError } from '../misc/error';
 import { ServiceType } from './constants';
 
+import type FairyService from './fairy';
 import type PixieService from './pixie';
 import type ServerService from './server';
 export class Service {
@@ -14,6 +15,7 @@ export class Service {
 type ServiceTypeMap = {
   [ServiceType.Server]: ServerService;
   [ServiceType.Pixie]: PixieService;
+  [ServiceType.Fairy]: FairyService;
 };
 
 export class ServiceLocator {

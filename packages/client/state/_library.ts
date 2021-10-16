@@ -79,6 +79,14 @@ export default class _LibraryState extends StateBlock {
     ],
   });
 
+  static series = defineAtom({
+    default: true,
+    effects_UNSTABLE: [
+      localStorageEffect('library_series'),
+      cookieEffect('library_series'),
+    ],
+  });
+
   static infinite = defineAtom({
     default: false,
     effects_UNSTABLE: [localStorageEffect('library_infinite')],

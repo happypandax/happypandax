@@ -151,7 +151,11 @@ export default function Page(props: PageProps) {
           <Grid>
             {!!props.series?.length && (
               <Grid.Row>
-                <Slider stateKey="series_page" label={t`Series`} color="teal">
+                <Slider
+                  fluid
+                  stateKey="series_page"
+                  label={t`Series`}
+                  color="teal">
                   {props?.series?.map?.((i) => (
                     <SliderElement key={i.id}>
                       <GalleryCard size="small" data={i} />
@@ -162,6 +166,7 @@ export default function Page(props: PageProps) {
             )}
             <Grid.Row>
               <Slider
+                fluid
                 stateKey="same_artist_page"
                 label={t`From same artist`}
                 defaultShow={!!props?.sameArtist?.length}
@@ -173,8 +178,24 @@ export default function Page(props: PageProps) {
                 ))}
               </Slider>
             </Grid.Row>
+            {!!props.sameArtist?.length && (
+              <Grid.Row>
+                <Slider
+                  fluid
+                  stateKey="gallery_collection_page"
+                  label={t`Appears in ${0} collections`}
+                  color="violet">
+                  {props?.sameArtist?.map?.((i) => (
+                    <SliderElement key={i.id}>
+                      <GalleryCard size="small" data={i} />
+                    </SliderElement>
+                  ))}
+                </Slider>
+              </Grid.Row>
+            )}
             <Grid.Row>
               <SimilarItemsSlider
+                fluid
                 stateKey="similar_page"
                 item={props.item}
                 type={ItemType.Gallery}

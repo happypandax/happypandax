@@ -71,6 +71,7 @@ export default class ServerService extends Service {
     }
 
     global.app.log.d('calling', func, args);
+
     const data = await this.#client
       .send([
         {
@@ -516,7 +517,9 @@ function throw_msg_error(msg: ServerMsg) {
     const msgerror: ServerErrorMsg = msg.error;
     const err = Error(`${msgerror.code}: ${msgerror.msg}`);
     err.data = msg;
+    err.code = msgerror.code;
     global.app.log.e(err);
+
     throw err;
   }
 }

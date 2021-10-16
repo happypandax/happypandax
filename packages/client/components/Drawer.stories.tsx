@@ -1,4 +1,4 @@
-import { GalleryDataTable } from './DataTable';
+import { GalleryDataTable } from './dataview/DataTable';
 
 export default {
   title: 'Data/Table',

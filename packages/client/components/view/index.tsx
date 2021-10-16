@@ -323,12 +323,7 @@ export function PaginatedView({
         {sidebarContent}
       </Sidebar>
       <Sidebar.Pusher>
-        <Grid
-          as={Segment}
-          basic
-          className="no-margins"
-          verticalAlign="middle"
-          padded="vertically">
+        <Grid className="no-margins" verticalAlign="middle" padded="vertically">
           {pagination && getPaginationText()}
           {pagination && (
             <Grid.Row centered className="no-bottom-padding">

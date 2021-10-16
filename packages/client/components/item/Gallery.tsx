@@ -18,8 +18,8 @@ import {
   PageCountLabel,
   ReadCountLabel,
   StatusLabel,
-} from '../data/Common';
-import { GalleryDataTable } from '../DataTable';
+} from '../dataview/Common';
+import GalleryDataTable from '../dataview/GalleryDataTable';
 import {
   ActivityLabel,
   FavoriteLabel,

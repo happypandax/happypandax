@@ -7,6 +7,6 @@ export default handler().post(async (req, res) => {
   const { username, password, endpoint } = req.body;
 
   return server.login(username, password, endpoint).then(() => {
-    res.status(200).json({ status: server.logged_in });
+    return res.status(200).json({ status: server.logged_in });
   });
 });

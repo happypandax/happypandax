@@ -45,3 +45,13 @@
 .ui.piled.card.segment {
     border: 2px solid #D8DEE2;
 }
+
+.ui.stacked.segment.card {
+    padding-bottom: unset;
+}
+
+.ui.stacked.segments::before, .ui.stacked.segments::after, .ui.stacked.segment::before, .ui.stacked.segment::after {
+    border-top: 1.5px double rgba(34, 36, 38, 0.15);
+    bottom: -4px;
+    height: 8px;
+}

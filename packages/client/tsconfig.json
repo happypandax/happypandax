@@ -12,7 +12,8 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "types": []
   },
   "include": [
     "next-env.d.ts",
@@ -21,5 +22,5 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["**/node_modules", "../../node_modules", "../../node_modules/*"]
 }

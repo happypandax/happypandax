@@ -6,7 +6,9 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useDrag } from 'react-dnd';
@@ -299,61 +301,55 @@ export function ItemCardContent({
   const El = itemContext.horizontal && itemContext.href ? Link : React.Fragment;
 
   return (
-    <>
-      <El href={itemContext.horizontal ? itemContext.href : undefined} passHref>
-        <Dimmer.Dimmable
-          as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
-          onClick={useCallback(
-            (ev) => {
-              if (!itemContext.horizontal) {
-                ev.preventDefault();
-                if (libraryContext) {
-                  ev.stopPropagation();
-                  setLibrarySidebarData(itemContext.detailsData);
-                  setLibrarySidebarVisible(true);
-                } else {
-                  setDetailsOpen(true);
-                  itemContext.onDetailsOpen?.();
-                }
+    <El href={itemContext.horizontal ? itemContext.href : undefined} passHref>
+      <Dimmer.Dimmable
+        as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
+        onClick={useCallback(
+          (ev) => {
+            if (!itemContext.horizontal) {
+              ev.preventDefault();
+              if (libraryContext && itemContext.detailsData) {
+                ev.stopPropagation();
+                setLibrarySidebarData(itemContext.detailsData);
+                setLibrarySidebarVisible(true);
+              } else {
+                setDetailsOpen(true);
+                itemContext.onDetailsOpen?.();
               }
-            },
-            [itemContext.horizontal, itemContext.detailsData, libraryContext]
+            }
+          },
+          [itemContext.horizontal, itemContext.detailsData, libraryContext]
+        )}
+        className="content">
+        {!!itemContext.Details &&
+          !itemContext.horizontal &&
+          !itemContext.disableModal && (
+            <ItemDetailsModal
+              open={detailsOpen}
+              closeIcon
+              dimmer="inverted"
+              onClose={onDetailsClose}>
+              <Details data={itemContext.detailsData} />
+            </ItemDetailsModal>
           )}
-          className="content">
-          {!!itemContext.Details &&
-            !itemContext.horizontal &&
-            !itemContext.disableModal && (
-              <ItemDetailsModal
-                open={detailsOpen}
-                closeIcon
-                dimmer="inverted"
-                onClose={onDetailsClose}>
-                <Details data={itemContext.detailsData} />
-              </ItemDetailsModal>
-            )}
-          {itemContext.horizontal && <ActivityDimmer />}
-          <Dimmer
-            active={itemContext.horizontal && itemContext.hover}
-            inverted
-            className="no-padding-segment">
-            {!!itemContext.ActionContent && <itemContext.ActionContent />}
-          </Dimmer>
-          {itemContext.horizontal && (
-            <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
-          )}
-          <Card.Header className="text-ellipsis card-header">
-            {title}
-          </Card.Header>
-          {subtitle && (
-            <Card.Meta className="text-ellipsis card-meta">
-              {subtitle}
-            </Card.Meta>
-          )}
-          {description && <Card.Description>{description}</Card.Description>}
-          {!!children && <Card.Meta>{children}</Card.Meta>}
-        </Dimmer.Dimmable>
-      </El>
-    </>
+        {itemContext.horizontal && <ActivityDimmer />}
+        <Dimmer
+          active={itemContext.horizontal && itemContext.hover}
+          inverted
+          className="no-padding-segment">
+          {!!itemContext.ActionContent && <itemContext.ActionContent />}
+        </Dimmer>
+        {itemContext.horizontal && (
+          <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
+        )}
+        <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
+        {subtitle && (
+          <Card.Meta className="text-ellipsis card-meta">{subtitle}</Card.Meta>
+        )}
+        {description && <Card.Description>{description}</Card.Description>}
+        {!!children && <Card.Meta>{children}</Card.Meta>}
+      </Dimmer.Dimmable>
+    </El>
   );
 }
 
@@ -461,7 +457,7 @@ export function ItemCardImage({
         (ev) => {
           if (itemContext.horizontal) {
             ev.preventDefault();
-            if (libraryContext) {
+            if (libraryContext && itemContext.detailsData) {
               ev.stopPropagation();
               setLibrarySidebarData(itemContext.detailsData);
               setLibrarySidebarVisible(true);
@@ -503,172 +499,183 @@ export function ItemCardImage({
   );
 }
 
-export function ItemCard({
-  children,
-  size = 'medium',
-  href,
-  className,
-  disableModal,
-  draggable,
-  details: Details,
-  detailsData,
-  onDetailsOpen,
-  labels,
-  actionContent: ActionContent,
-  loading,
-  activity,
-  hiddenLabel,
-  hiddenAction,
-  activityContent,
-  fluid,
-  horizontal,
-  image: Image,
-  centered,
-  dragData,
-  link,
-  type,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  type: ItemType;
-  labels?: React.ReactNode[];
-  actionContent?: React.ElementType;
-  details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
-  detailsData?: PartialExcept<ServerItem, 'id'>;
-  image?: React.ElementType;
-  href?: string;
-  disableModal?: boolean;
-  onDetailsOpen?: () => void;
-  hiddenLabel?: boolean;
-  hiddenAction?: boolean;
-  loading?: boolean;
-  activity?: boolean;
-  activityContent?: React.ReactNode;
-  fluid?: boolean;
-  draggable?: boolean;
-  horizontal?: boolean;
-  dragData?: DragItemData['data'];
-  size?: ItemSize;
-  centered?: boolean;
-  link?: boolean;
-}) {
-  const [hover, setHover] = useState(false);
-  const [openMenu, setOpenMenu] = useState(false);
-  const itemContext = useContext(ItemContext);
-  const setDrawerOpen = useSetRecoilState(AppState.drawerOpen);
+export const ItemCard = React.forwardRef(
+  (
+    {
+      children,
+      size = 'medium',
+      href,
+      className,
+      disableModal,
+      draggable,
+      details: Details,
+      detailsData,
+      onDetailsOpen,
+      labels,
+      actionContent: ActionContent,
+      loading,
+      activity,
+      hiddenLabel,
+      hiddenAction,
+      activityContent,
+      fluid,
+      horizontal,
+      image: Image,
+      centered,
+      dragData,
+      link,
+      type,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      className?: string;
+      type: ItemType;
+      labels?: React.ReactNode[];
+      actionContent?: React.ElementType;
+      details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
+      detailsData?: PartialExcept<ServerItem, 'id'>;
+      image?: React.ElementType;
+      href?: string;
+      disableModal?: boolean;
+      onDetailsOpen?: () => void;
+      hiddenLabel?: boolean;
+      hiddenAction?: boolean;
+      loading?: boolean;
+      activity?: boolean;
+      activityContent?: React.ReactNode;
+      fluid?: boolean;
+      draggable?: boolean;
+      horizontal?: boolean;
+      dragData?: DragItemData['data'];
+      size?: ItemSize;
+      centered?: boolean;
+      link?: boolean;
+    },
+    forwardRef
+  ) => {
+    const [hover, setHover] = useState(false);
+    const [openMenu, setOpenMenu] = useState(false);
+    const itemContext = useContext(ItemContext);
+    const setDrawerOpen = useSetRecoilState(AppState.drawerOpen);
+    const ref = useRef();
 
-  const [{ isDragging }, dragRef] = useDrag(
-    () => ({
-      type: type.toString(),
-      item: {
-        data: dragData,
-      } as DragItemData,
-      canDrag: (monitor) => !!draggable,
-      collect: (monitor) => ({
-        isDragging: !!monitor.isDragging(),
+    const [{ isDragging }, dragRef] = useDrag(
+      () => ({
+        type: type.toString(),
+        item: {
+          data: dragData,
+        } as DragItemData,
+        canDrag: (monitor) => !!draggable,
+        collect: (monitor) => ({
+          isDragging: !!monitor.isDragging(),
+        }),
       }),
-    }),
-    [dragData, draggable]
-  );
+      [dragData, draggable]
+    );
 
-  useEffect(() => {
-    if (isDragging) {
-      setDrawerOpen(true);
-    }
-  }, [isDragging]);
+    useImperativeHandle(forwardRef, () => ref.current);
+    useImperativeHandle(dragRef, () => ref.current);
 
-  let itemSize = size ?? 'medium';
+    useEffect(() => {
+      if (isDragging) {
+        setDrawerOpen(true);
+      }
+    }, [isDragging]);
 
-  const labelContent = hiddenLabel ? null : labels;
+    let itemSize = size ?? 'medium';
 
-  const imageElement = Image ? (
-    horizontal ? (
-      <Image />
-    ) : (
-      <Image>{!!ActionContent && <ActionContent />}</Image>
-    )
-  ) : undefined;
+    const labelContent = hiddenLabel ? null : labels;
 
-  const onMenuClose = useCallback(() => {
-    setOpenMenu(false);
-  }, []);
+    const imageElement = Image ? (
+      horizontal ? (
+        <Image />
+      ) : (
+        <Image>{!!ActionContent && <ActionContent />}</Image>
+      )
+    ) : undefined;
 
-  return (
-    <ItemContext.Provider
-      value={{
-        ...itemContext,
-        isDragging,
-        onMenuClose,
-        hover,
-        href,
-        disableModal,
-        hiddenAction,
-        openMenu,
-        activity,
-        activityContent,
-        onDetailsOpen,
-        Details,
-        detailsData,
-        ActionContent,
-        labels: labelContent,
-        loading,
-        horizontal,
-        size: itemSize,
-      }}>
-      <Ref innerRef={dragRef}>
-        <Card
-          fluid={fluid}
-          as={Segment}
-          // stacked
-          onMouseEnter={useCallback(() => setHover(true), [])}
-          onMouseLeave={useCallback(() => setHover(false), [])}
-          centered={centered}
-          link={link ?? !!href}
-          style={
-            isDragging
-              ? {
-                  opacity: 0.5,
-                }
-              : {}
-          }
-          className={classNames(
-            className,
-            {
-              dragging: isDragging,
-              horizontal: horizontal,
-              [`${itemSize}-size`]: !horizontal,
-            },
-            {
-              [`${itemSize}-size`]:
-                horizontal &&
-                (['mini', 'tiny', 'small'] as ItemSize[]).includes(itemSize),
+    const onMenuClose = useCallback(() => {
+      setOpenMenu(false);
+    }, []);
+
+    return (
+      <ItemContext.Provider
+        value={{
+          ...itemContext,
+          isDragging,
+          onMenuClose,
+          hover,
+          href,
+          disableModal,
+          hiddenAction,
+          openMenu,
+          activity,
+          activityContent,
+          onDetailsOpen,
+          Details,
+          detailsData,
+          ActionContent,
+          labels: labelContent,
+          loading,
+          horizontal,
+          size: itemSize,
+        }}>
+        <Ref innerRef={ref}>
+          <Card
+            {...props}
+            fluid={fluid}
+            as={Segment}
+            // stacked
+            onMouseEnter={useCallback(() => setHover(true), [])}
+            onMouseLeave={useCallback(() => setHover(false), [])}
+            centered={centered}
+            link={link ?? !!href}
+            style={
+              isDragging
+                ? {
+                    opacity: 0.5,
+                  }
+                : {}
             }
-          )}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setOpenMenu(true);
-          }}>
-          {}
-          <Dimmer active={loading} inverted>
-            <Loader inverted active={loading} />
-          </Dimmer>
-          {!horizontal && (
-            <ItemCardLabels>
-              {href && (
-                <Link href={href}>
-                  <a>{imageElement}</a>
-                </Link>
-              )}
-              {!!!href && !!imageElement && imageElement}
-              {labelContent}
-            </ItemCardLabels>
-          )}
-          {horizontal && !!imageElement && imageElement}
-          {children}
-        </Card>
-      </Ref>
-    </ItemContext.Provider>
-  );
-}
+            className={classNames(
+              className,
+              {
+                dragging: isDragging,
+                horizontal: horizontal,
+                [`${itemSize}-size`]: !horizontal,
+              },
+              {
+                [`${itemSize}-size`]:
+                  horizontal &&
+                  (['mini', 'tiny', 'small'] as ItemSize[]).includes(itemSize),
+              }
+            )}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setOpenMenu(true);
+            }}>
+            {}
+            <Dimmer active={loading} inverted>
+              <Loader inverted active={loading} />
+            </Dimmer>
+            {!horizontal && (
+              <ItemCardLabels>
+                {href && (
+                  <Link href={href}>
+                    <a>{imageElement}</a>
+                  </Link>
+                )}
+                {!!!href && !!imageElement && imageElement}
+                {labelContent}
+              </ItemCardLabels>
+            )}
+            {horizontal && !!imageElement && imageElement}
+            {children}
+          </Card>
+        </Ref>
+      </ItemContext.Provider>
+    );
+  }
+);
 
 export default {};

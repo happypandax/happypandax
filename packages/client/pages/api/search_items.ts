@@ -10,7 +10,7 @@ export default handler().get(async (req, res) => {
   return server
     .search_items({
       item_types: item_types as number[],
-      search_query: search_query as string,
+      search_query: search_query?.toString?.() as string,
       limit: limit as number,
     })
     .then((r) => {

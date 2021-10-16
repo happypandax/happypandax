@@ -6,6 +6,14 @@ html, body {
     height: auto;
 }
 
+.float-right {
+    float: right;
+}
+
+.float-left {
+    float: left;
+}
+
 .overflow-x-auto {
     overflow-x: auto;
 }
@@ -185,4 +193,8 @@ html, body {
 
 .mt-neg-25 {
     margin-top: -25%;
+}
+
+.small-text {
+    font-size: 1rem;
 }

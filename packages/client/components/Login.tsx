@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import {
   Button,
   Divider,
@@ -131,9 +131,10 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
 export function LoginModal({ open }: { open?: boolean }) {
   const [loggedIn, setLoggedIn] = useRecoilState(AppState.loggedIn);
+  const connected = useRecoilValue(AppState.connected);
 
   return (
-    <Modal open={open ?? !loggedIn}>
+    <Modal open={open ?? (!loggedIn && connected)}>
       <Segment clearing>
         <div className="center-text">
           <img src="/img/hpx_logo.svg" className="hpxlogo" alt="hpxlogo" />

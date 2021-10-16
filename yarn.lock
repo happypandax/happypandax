@@ -2629,6 +2629,7 @@ __metadata:
     babel-loader: ^8.2.2
     babel-plugin-lodash: ^3.3.4
     babel-plugin-superjson-next: ^0.3.0
+    better-sse: ^0.5.0
     classnames: ^2.2.6
     colorthief: ^2.3.2
     cookie: ^0.4.1
@@ -2647,6 +2648,7 @@ __metadata:
     lodash: ^4.17.21
     next: 11.1.3-canary.7
     next-connect: ^0.10.1
+    next-session: ^4.0.2
     next-transpile-modules: ^8.0.0
     normalized-cache: ^0.0.3
     nprogress: next
@@ -2661,7 +2663,7 @@ __metadata:
     react-simple-code-editor: ^0.11.0
     react-use: ^17.2.1
     react-virtualized: ^9.22.3
-    recoil: ^0.3.1
+    recoil: ^0.4.1
     sanitize-filename: ^1.6.3
     semantic-ui-react: ^2.0.3
     storybook-addon-themes: ^6.1.0
@@ -7123,6 +7125,13 @@ __metadata:
   dependencies:
     open: ^7.0.3
   checksum: 70c70d61d77cfe8323f655a345bcc2e3b78125e4c28b87f3e267a2102d932c303bb6c3650bd41e70034d296485fd2271b5a7169af37201aef875c329df376433
+  languageName: node
+  linkType: hard
+
+"better-sse@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "better-sse@npm:0.5.0"
+  checksum: a6cbea4b228f3080f0ec1b6db3c349615206a49fe22c8bd64b7da3ef2ca9b430a7332cb733a2f3624058f0bcae6db8b33a31c6057d5fff2c117e8bd7625914b1
   languageName: node
   linkType: hard
 
@@ -16218,6 +16227,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^3.1.25":
+  version: 3.1.29
+  resolution: "nanoid@npm:3.1.29"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 7f57549427b666073d1f8bd9e22f5253ec561b8fc39203f1c827958215f5c5a74fc522956559af6add111cc6e12c2fa02943791208e12400e1903c0c8f569d6b
+  languageName: node
+  linkType: hard
+
 "nanomatch@npm:^1.2.9":
   version: 1.2.13
   resolution: "nanomatch@npm:1.2.13"
@@ -16316,6 +16334,16 @@ fsevents@^1.2.7:
   dependencies:
     trouter: ^3.1.0
   checksum: 16e55cf3fdcfff78a776f54b3accbebfc4b17d7a40a01b5fcfa8f40209f8386c91ae74e703f0653e54b87b624131055c1976211ece44e81ac15db18ef2b4435f
+  languageName: node
+  linkType: hard
+
+"next-session@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "next-session@npm:4.0.2"
+  dependencies:
+    cookie: ^0.4.1
+    nanoid: ^3.1.25
+  checksum: 92a7638c1edaa7ae22c1fc14c2c4e8536a6484804f1041c3fd944cd9e6c2299e5f0f62f72c477e9c5d6a38dedf6697212f7b8586bc3020df8c7a335435a8c26f
   languageName: node
   linkType: hard
 
@@ -18935,9 +18963,9 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"recoil@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "recoil@npm:0.3.1"
+"recoil@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "recoil@npm:0.4.1"
   dependencies:
     hamt_plus: 1.0.2
   peerDependencies:
@@ -18947,7 +18975,7 @@ fsevents@^1.2.7:
       optional: true
     react-native:
       optional: true
-  checksum: 6cc0ee6320f66e3e26bf119fd03c83455389e138ee53411c03290c6fdbcd2282248c00ab4308181983fb3258f30448e0254e52b4b04c54c7da3e697893c63596
+  checksum: 99e157d803b6423d24816f34debe5a1c9d7b8e0978e2bb6f85570b9a4e758b70a99c962196c49e9d35493c91699eee1b9b462294e05a9784b70b2420c5227e46
   languageName: node
   linkType: hard
 

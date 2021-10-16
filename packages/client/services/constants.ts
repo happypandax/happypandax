@@ -1,6 +1,7 @@
 export enum ServiceType {
   Server,
   Pixie,
+  Fairy,
 }
 
 export const THUMB_STATIC_FOLDER = process.env.HPX_THUMB_STATIC_FOLDER

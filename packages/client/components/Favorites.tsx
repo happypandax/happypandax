@@ -36,6 +36,17 @@ export function FavoriteGalleries() {
   );
 }
 
+export function TimeCapsuleGalleries() {
+  const galleries = [];
+  return (
+    <TitleSegment title={t`Rekindle Your Love`}>
+      {!galleries.length && (
+        <EmptySegment description={`You don't have any favorited galleries`} />
+      )}
+    </TitleSegment>
+  );
+}
+
 export function FavoriteCollections() {
   const collections = [];
   return (

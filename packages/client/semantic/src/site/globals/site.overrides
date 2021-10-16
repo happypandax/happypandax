@@ -463,6 +463,42 @@ h6 {
 }
 
 /*--------------
+     Minimum Width
+---------------*/
+
+.min-100-w {
+    min-width: 100pt;
+}
+
+.min-200-w {
+    min-width: 200pt;
+}
+
+.min-250-w {
+    min-width: 250pt;
+}
+
+.min-300-w {
+    min-width: 300pt;
+}
+
+.min-400-w {
+    min-width: 400pt;
+}
+
+.min-500-w {
+    min-width: 500pt;
+}
+
+.min-600-w {
+    min-width: 600pt;
+}
+
+.min-700-w {
+    min-width: 700pt;
+}
+
+/*--------------
      Minimum Height
 ---------------*/
 

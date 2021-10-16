@@ -2,27 +2,32 @@ import classNames from 'classnames';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
+import { ItemSize } from '../../misc/types';
 import styles from './CardView.module.css';
 import { PaginatedView, ViewAutoSizer } from './index';
 
-type ItemRender<T> = React.ComponentType<{ data: T }>;
+type ItemRender<T> = React.ComponentType<{ data: T; size?: ItemSize }>;
 
 interface CardViewProps<T> {
   items: T[];
   onItemKey: (T) => any;
   itemRender: ItemRender<T>;
+  size?: ItemSize;
+  dynamicRowHeight?: boolean;
 }
 
 function CardViewGrid<T>({
   width: initialWidth,
   height,
   items,
+  dynamicRowHeight,
   itemRender: ItemRender,
   isScrolling,
   onScroll,
   scrollTop,
   autoHeight,
   onItemKey,
+  size,
 }: {
   width: number;
   height: number;
@@ -42,8 +47,13 @@ function CardViewGrid<T>({
 
   useEffect(() => {
     if (itemRef.current) {
-      setItemWidth(itemRef.current.offsetWidth);
-      setRowHeight(itemRef.current.offsetHeight + 10);
+      if (dynamicRowHeight) {
+        setItemWidth(itemRef.current.children[0].offsetWidth);
+        setRowHeight(itemRef.current.children[0].offsetHeight + 15);
+      } else {
+        setItemWidth(itemRef.current.offsetWidth);
+        setRowHeight(itemRef.current.offsetHeight);
+      }
     }
   }, [dims]);
 
@@ -77,7 +87,7 @@ function CardViewGrid<T>({
                 ref={itemRef}
                 key={onItemKey(items[i])}
                 className={styles.item}>
-                <ItemRender data={items[i]} />
+                <ItemRender data={items[i]} size={size} />
               </div>
             );
           }
@@ -100,6 +110,8 @@ export default function CardView<T>({
   disableWindowScroll,
   items,
   itemRender,
+  dynamicRowHeight,
+  size,
   onItemKey,
   ...props
 }: {
@@ -110,7 +122,9 @@ export default function CardView<T>({
     <PaginatedView {...props} itemCount={items?.length}>
       <ViewAutoSizer
         items={items}
+        size={size}
         itemRender={itemRender}
+        dynamicRowHeight={dynamicRowHeight}
         onItemKey={onItemKey}
         disableWindowScroll={disableWindowScroll}
         view={CardViewGrid}

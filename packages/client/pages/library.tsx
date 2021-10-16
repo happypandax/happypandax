@@ -16,11 +16,14 @@ import {
 
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
-import { GalleryDataTable } from '../components/DataTable';
+import GalleryDataTable from '../components/dataview/GalleryDataTable';
 import CollectionCard, {
   collectionCardDataFields,
 } from '../components/item/Collection';
 import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
+import GroupingCard, {
+  groupingCardDataFields,
+} from '../components/item/Grouping';
 import {
   ClearFilterButton,
   FilterButtonInput,
@@ -63,13 +66,15 @@ function libraryArgs(
   urlQuery: ReturnType<typeof urlparse>,
   page?: number
 ) {
-  let itemType = ItemType.Gallery;
+  let itemType = ItemType.Grouping;
 
   // can't trust user input
   if (urlQuery.query?.item === ItemType.Collection) {
     itemType = ItemType.Collection;
   } else if (getCookies(ctx, 'library_item') === ItemType.Collection) {
     itemType = ItemType.Collection;
+  } else if (getCookies(ctx, 'library_series') === false) {
+    itemType = ItemType.Gallery;
   }
 
   const view = urlQuery.query?.view ?? getCookies(ctx, 'library_view');
@@ -116,7 +121,9 @@ function libraryArgs(
     fields:
       itemType === ItemType.Gallery
         ? galleryCardDataFields
-        : collectionCardDataFields,
+        : itemType === ItemType.Collection
+        ? collectionCardDataFields
+        : groupingCardDataFields,
   };
 }
 
@@ -180,6 +187,7 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
   const sameMachine = useRecoilState(AppState.sameMachine);
   const [item, setItem] = useRecoilState(LibraryState.item);
   const [view, setView] = useRecoilState(LibraryState.view);
+  const [series, setSeries] = useRecoilState(LibraryState.series);
   const [infinite, setInfinite] = useRecoilState(LibraryState.infinite);
   const [limit, setLimit] = useRecoilState(LibraryState.limit);
   const [display, setDisplay] = useRecoilState(LibraryState.display);
@@ -284,6 +292,18 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
             options={itemsPerPage}
             // width={4}
           />
+
+          <Form.Field>
+            <label>{t`Collapse gallery in series`}</label>
+            <Checkbox
+              toggle
+              checked={series}
+              onChange={useCallback((ev, { checked }) => {
+                ev.preventDefault();
+                setSeries(checked);
+              }, [])}
+            />
+          </Form.Field>
 
           <Form.Field>
             <label>{t`Infinite scroll`}</label>
@@ -471,6 +491,8 @@ export default function Page({
     setInfiniteKey('');
   }, [infinite]);
 
+  const View = display === 'card' ? CardView : ListView;
+
   return (
     <PageLayout
       menu={useMemo(
@@ -489,7 +511,7 @@ export default function Page({
                 <ItemSearch
                   stateKey={stateKey}
                   itemTypes={
-                    itemType === ItemType.Gallery
+                    [ItemType.Gallery, ItemType.Grouping].includes(itemType)
                       ? [
                           ItemType.Artist,
                           ItemType.Category,
@@ -577,41 +599,27 @@ export default function Page({
       {!count && <EmptySegment />}
       <LibraryContext.Provider value={true}>
         <LibrarySidebar />
-        {display === 'card' && (
-          <CardView
-            hrefTemplate={pageHrefTemplate}
-            activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
-            items={items}
-            infinite={infinite}
-            onPageChange={onPageChange}
-            onLoadMore={fetchNext}
-            paddedChildren
-            itemRender={
-              itemType === ItemType.Gallery ? GalleryCard : CollectionCard
-            }
-            itemsPerPage={limit}
-            onItemKey={onItemKey}
-            totalItemCount={count}
-            pagination={!!count}
-            bottomPagination={!!count}></CardView>
-        )}
-        {display === 'list' && (
-          <ListView
-            hrefTemplate={pageHrefTemplate}
-            items={items}
-            infinite={infinite}
-            onPageChange={onPageChange}
-            onLoadMore={fetchNext}
-            activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
-            onItemKey={onItemKey}
-            itemsPerPage={limit}
-            itemRender={
-              itemType === ItemType.Gallery ? GalleryCard : CollectionCard
-            }
-            totalItemCount={count}
-            pagination={!!count}
-            bottomPagination={!!count}></ListView>
-        )}
+        <View
+          hrefTemplate={pageHrefTemplate}
+          activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
+          items={items}
+          infinite={infinite}
+          onPageChange={onPageChange}
+          onLoadMore={fetchNext}
+          paddedChildren
+          itemRender={
+            itemType === ItemType.Gallery
+              ? GalleryCard
+              : itemType === ItemType.Collection
+              ? CollectionCard
+              : GroupingCard
+          }
+          itemsPerPage={limit}
+          onItemKey={onItemKey}
+          totalItemCount={count}
+          pagination={!!count}
+          bottomPagination={!!count}
+        />
       </LibraryContext.Provider>
     </PageLayout>
   );

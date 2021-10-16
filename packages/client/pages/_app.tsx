@@ -8,24 +8,89 @@ import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
 import NProgress from 'nprogress';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { QueryClientProvider, useIsFetching } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
-import { RecoilRoot } from 'recoil';
+import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
+import superjson from 'superjson';
 
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
+import { getSession } from '../misc/requests';
+import { NotificationData } from '../misc/types';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';
 
 const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
   pageProps: {
+    notifications: NotificationData[];
     loggedIn: boolean;
     sameMachine: boolean;
   };
+}
+
+function Fairy() {
+  const [notificationAlert, setNotificatioAlert] = useRecoilState(
+    AppState.notificationAlert
+  );
+  const [notifications, setNotifications] = useRecoilState(
+    AppState.notifications
+  );
+  const setLoggedIn = useSetRecoilState(AppState.loggedIn);
+  const setConnected = useSetRecoilState(AppState.connected);
+
+  const [fairy, setFairy] = useState<EventSource>();
+
+  const notificationAlertRef = useRef(notificationAlert);
+  const notificationsRef = useRef(notifications);
+
+  useEffect(() => {
+    if (!fairy) return;
+
+    const onStatus = ({ data }: any) => {
+      const d: any = superjson.parse(data);
+      setLoggedIn(d.loggedIn);
+      setConnected(d.connected);
+    };
+    fairy.addEventListener('status', onStatus);
+
+    return () => {
+      fairy.removeEventListener('status', onStatus);
+    };
+  }, [fairy]);
+
+  useEffect(() => {
+    if (!fairy) return;
+    const onNotif = ({ data }: any) => {
+      const d: NotificationData = superjson.parse(data);
+      console.debug('received notification', d);
+      setNotificatioAlert([d, ...notificationAlertRef.current]);
+      setNotifications([d, ...notificationsRef.current]);
+    };
+
+    fairy.addEventListener('notification', onNotif);
+
+    return () => {
+      fairy.removeEventListener('notification', onNotif);
+    };
+  }, [fairy]);
+
+  useEffect(() => {
+    setFairy(new EventSource('/api/server/fairy'));
+  }, []);
+
+  useEffect(() => {
+    notificationAlertRef.current = notificationAlert;
+  }, [notificationAlert]);
+
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
+  return null;
 }
 
 function Progress() {
@@ -84,6 +149,7 @@ export function AppRoot({
         }}>
         <DndProvider backend={HTML5Backend}>
           <Progress />
+          <Fairy />
           {children}
         </DndProvider>
       </RecoilRoot>
@@ -147,7 +213,18 @@ MyApp.getInitialProps = async function (
 
   const props = await App.getInitialProps(context);
 
-  return { ...props, pageProps: { ...props.pageProps, loggedIn, sameMachine } };
+  const session = await getSession(context.ctx.req, context.ctx.res);
+  const fairy = global.app.service.get(ServiceType.Fairy);
+
+  return {
+    ...props,
+    pageProps: {
+      ...props.pageProps,
+      loggedIn,
+      sameMachine,
+      notifications: fairy.get(session.id),
+    },
+  };
 };
 
 export default MyApp;

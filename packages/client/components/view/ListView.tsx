@@ -7,9 +7,9 @@ import styles from './ListView.module.css';
 
 type ItemRender<T> = React.ComponentType<{
   data: T;
-  horizontal: boolean;
-  size: ItemSize;
-  fluid: boolean;
+  horizontal?: boolean;
+  size?: ItemSize;
+  fluid?: boolean;
 }>;
 
 interface ListViewProps<T> {
@@ -17,12 +17,14 @@ interface ListViewProps<T> {
   onItemKey: (T) => any;
   itemRender: ItemRender<T>;
   size?: ItemSize;
+  dynamicRowHeight?: boolean;
 }
 
 function ListViewList<T>({
   width: initialWidth,
   height,
   items,
+  dynamicRowHeight,
   size,
   itemRender: ItemRender,
   isScrolling,
@@ -46,11 +48,16 @@ function ListViewList<T>({
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil((items.length ?? 0) / itemsPerRow);
-
   useEffect(() => {
+    console.log(dynamicRowHeight);
     if (itemRef.current) {
-      setItemWidth(itemRef.current.offsetWidth);
-      setRowHeight(itemRef.current.offsetHeight + 10);
+      if (dynamicRowHeight) {
+        setItemWidth(itemRef.current.children[0].offsetWidth);
+        setRowHeight(itemRef.current.children[0].offsetHeight + 15);
+      } else {
+        setItemWidth(itemRef.current.offsetWidth);
+        setRowHeight(itemRef.current.offsetHeight + 15);
+      }
     }
   }, [dims]);
 
@@ -81,6 +88,7 @@ function ListViewList<T>({
           for (let i = fromIndex; i < toIndex; i++) {
             cols.push(
               <div
+                ref={itemRef}
                 key={onItemKey(items[i])}
                 className={styles.item}
                 style={{ flexGrow: 1 }}>
@@ -108,6 +116,7 @@ export default function ListView<T>({
   items,
   size = 'small',
   disableWindowScroll,
+  dynamicRowHeight,
   onItemKey,
   ...props
 }: {
@@ -121,15 +130,12 @@ export default function ListView<T>({
     <PaginatedView {...props} itemCount={items?.length} paddedChildren>
       <ViewAutoSizer
         items={items}
+        size={size}
         itemRender={itemRender}
+        dynamicRowHeight={dynamicRowHeight}
         disableWindowScroll={disableWindowScroll}
         onItemKey={onItemKey}
-        view={useCallback(
-          (p: any) => (
-            <ListViewList {...p} size={size} />
-          ),
-          [size]
-        )}
+        view={ListViewList}
       />
     </PaginatedView>
   );
