@@ -2659,7 +2659,7 @@ __metadata:
     react-dnd: ^14.0.2
     react-dnd-html5-backend: ^14.0.0
     react-dom: ^17.0.1
-    react-query: ^3.18.1
+    react-query: ^3.27.0
     react-simple-code-editor: ^0.11.0
     react-use: ^17.2.1
     react-virtualized: ^9.22.3
@@ -18673,9 +18673,9 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"react-query@npm:^3.18.1":
-  version: 3.18.1
-  resolution: "react-query@npm:3.18.1"
+"react-query@npm:^3.27.0":
+  version: 3.27.0
+  resolution: "react-query@npm:3.27.0"
   dependencies:
     "@babel/runtime": ^7.5.5
     broadcast-channel: ^3.4.1
@@ -18687,7 +18687,7 @@ fsevents@^1.2.7:
       optional: true
     react-native:
       optional: true
-  checksum: 02f23dd78b78db189746ce6748f8ee4e7a5307c3e1000cad72a9624f02947daf25fd090884213503de6001e3857bb45e624c9dbc4f18025f737e5b84fa128441
+  checksum: 42f74c1115b8db308a0cffb91d08f392d1246fe2c3deb11963d771929e2c251a35e6dafeee06ff95f41a0c46d80e21b8c07576a86e13cac86f78217d6d4b9fd5
   languageName: node
   linkType: hard
 

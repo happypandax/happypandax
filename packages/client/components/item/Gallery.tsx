@@ -19,7 +19,7 @@ import {
   ReadCountLabel,
   StatusLabel,
 } from '../dataview/Common';
-import GalleryDataTable from '../dataview/GalleryDataTable';
+import GalleryDataTable from '../dataview/GalleryData';
 import {
   ActivityLabel,
   FavoriteLabel,

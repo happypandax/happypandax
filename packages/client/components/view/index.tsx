@@ -255,12 +255,12 @@ export function PaginatedView({
   itemsPerPage = 20,
   totalItemCount = 0,
   itemCount = 0,
-  activePage,
+  activePage = 1,
   onPageChange,
   fluid,
   hrefTemplate,
   infinite,
-  onLoadMore,
+  onLoadMore: loadMore,
   ...props
 }: {
   children: React.ReactNode | React.ReactNode[];
@@ -278,6 +278,11 @@ export function PaginatedView({
   bottomPagination?: boolean;
 } & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
   React.ComponentProps<typeof Segment>) {
+  const onLoadMore = useCallback(
+    loadMore ? _.throttle(loadMore, 500) : undefined,
+    [loadMore]
+  );
+
   const totalPages = Math.max(
     Math.ceil(totalItemCount / Math.max(itemsPerPage, 1)),
     1
@@ -297,6 +302,9 @@ export function PaginatedView({
 
   fromCount = itemCount ? toCount + 1 - itemCount : 0;
   toCount = itemCount ? toCount : 0;
+  if (toCount) {
+    fromCount = Math.max(1, fromCount);
+  }
 
   const count = totalItemCount;
 

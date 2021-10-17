@@ -204,6 +204,7 @@ export function setCookies(
 
   const cookieStr = cookie.serialize(key, JSON.stringify(data), {
     path: '/',
+    sameSite: 'Lax',
     ...options,
   });
   if (global.app.IS_SERVER) {
@@ -270,7 +271,7 @@ export function getCookies(ctx: NextPageContext | undefined, key?: string) {
 
   if (key) {
     const v = _cookies[key];
-    if (v === undefined) return undefined;
+    if (v === undefined || v === 'undefined') return undefined;
     return JSON.parse(decodeURIComponent(v));
   } else {
     return _cookies;

@@ -6,42 +6,27 @@ import { cookieEffect, localStorageEffect } from './_statehelpers';
 export default class _LibraryState extends StateBlock {
   static favorites = defineAtom({
     default: false,
-    effects_UNSTABLE: [
-      localStorageEffect('library_fav'),
-      cookieEffect('library_fav'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_fav')],
   });
 
   static filter = defineAtom({
     default: undefined as number,
-    effects_UNSTABLE: [
-      localStorageEffect('library_filter'),
-      cookieEffect('library_filter'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_filter')],
   });
 
   static sort = defineAtom({
     default: ItemSort.GalleryDate,
-    effects_UNSTABLE: [
-      localStorageEffect('library_sort'),
-      cookieEffect('library_sort'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_sort')],
   });
 
   static sortDesc = defineAtom({
     default: true,
-    effects_UNSTABLE: [
-      localStorageEffect('library_sort_desc'),
-      cookieEffect('library_sort_desc'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_sort_desc')],
   });
 
   static display = defineAtom({
     default: 'card' as 'list' | 'card',
-    effects_UNSTABLE: [
-      localStorageEffect('library_display'),
-      cookieEffect('library_display'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_display')],
   });
 
   static query = defineAtom({
@@ -57,34 +42,27 @@ export default class _LibraryState extends StateBlock {
 
   static view = defineAtom({
     default: ViewType.Library,
-    effects_UNSTABLE: [
-      localStorageEffect('library_view'),
-      cookieEffect('library_view'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_view')],
   });
 
   static item = defineAtom({
     default: ItemType.Gallery,
-    effects_UNSTABLE: [
-      localStorageEffect('library_item'),
-      cookieEffect('library_item'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_item')],
   });
 
   static limit = defineAtom({
     default: 30,
-    effects_UNSTABLE: [
-      localStorageEffect('library_limit'),
-      cookieEffect('library_limit'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_limit')],
+  });
+
+  static page = defineAtom({
+    default: 1,
+    effects_UNSTABLE: [cookieEffect('library_page')],
   });
 
   static series = defineAtom({
     default: true,
-    effects_UNSTABLE: [
-      localStorageEffect('library_series'),
-      cookieEffect('library_series'),
-    ],
+    effects_UNSTABLE: [cookieEffect('library_series')],
   });
 
   static infinite = defineAtom({

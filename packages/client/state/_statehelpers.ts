@@ -9,7 +9,7 @@ export const localStorageEffect = (key, options?: { session?: boolean }) => ({
   const savedValue = storage.getItem(key);
 
   if (savedValue != null) {
-    setSelf(JSON.parse(savedValue));
+    setSelf(savedValue !== 'undefined' ? JSON.parse(savedValue) : undefined);
   }
 
   onSet((newValue) => {
@@ -26,8 +26,10 @@ export const cookieEffect = (
 ) => ({ setSelf, onSet }) => {
   const savedValue = getCookies(undefined, key);
 
-  if (savedValue !== undefined && options?.noInitialValue) {
-    setSelf(savedValue);
+  if (savedValue !== undefined) {
+    if (!options?.noInitialValue) {
+      setSelf(savedValue);
+    }
   } else if (options?.removeIfNoInitialValue) {
     removeCookies(undefined, key);
   }

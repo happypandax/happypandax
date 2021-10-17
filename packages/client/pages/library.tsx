@@ -2,9 +2,15 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import {
+  useRecoilState,
+  useRecoilTransaction_UNSTABLE,
+  useRecoilValue,
+  useSetRecoilState,
+} from 'recoil';
 import {
   Checkbox,
   Form,
@@ -16,7 +22,7 @@ import {
 
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
-import GalleryDataTable from '../components/dataview/GalleryDataTable';
+import GalleryDataTable from '../components/dataview/GalleryData';
 import CollectionCard, {
   collectionCardDataFields,
 } from '../components/item/Collection';
@@ -57,8 +63,10 @@ import { AppState, LibraryState, MiscState } from '../state';
 
 interface PageProps {
   data: Unwrap<ServerService['library']>;
+  page: number;
   itemType: ItemType;
   urlQuery: ReturnType<typeof urlparse>;
+  requestTime: number;
 }
 
 function libraryArgs(
@@ -350,7 +358,13 @@ export async function getServerSideProps(
   const data = await server.library<ServerGallery>(args);
 
   return {
-    props: { data, urlQuery, itemType: args.item_type },
+    props: {
+      data,
+      urlQuery,
+      itemType: args.item_type,
+      page: args.page ? args.page + 1 : 1,
+      requestTime: Date.now(),
+    },
   };
 }
 
@@ -358,8 +372,10 @@ const stateKey = 'library_page';
 
 export default function Page({
   data: initialData,
+  page: initialPage,
   urlQuery,
   itemType,
+  requestTime,
 }: PageProps) {
   const [item, setItem] = useRecoilState(LibraryState.item);
   const [view, setView] = useRecoilState(LibraryState.view);
@@ -368,21 +384,30 @@ export default function Page({
   const [filter, setFilter] = useRecoilState(LibraryState.filter);
   const [sort, setSort] = useRecoilState(LibraryState.sort);
   const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
-  const [limit, setLimit] = useRecoilState(LibraryState.limit);
-  const [display, setDisplay] = useRecoilState(LibraryState.display);
+  const limit = useRecoilValue(LibraryState.limit);
+  const [page, setPage] = useRecoilState(LibraryState.page);
+  const display = useRecoilValue(LibraryState.display);
   const infinite = useRecoilValue(LibraryState.infinite);
 
   const [infiniteKey, setInfiniteKey] = useState('');
 
   const setRecentQuery = useSetRecoilState(MiscState.recentSearch(stateKey));
 
-  const libraryargs = libraryArgs(undefined, urlQuery);
+  const router = useRouter();
+  const routerQuery = urlparse(router.asPath);
 
-  const { data, fetchNextPage, isFetching } = useQueryType(
+  const libraryargs = libraryArgs(undefined, routerQuery);
+
+  const { data, fetchNextPage, isFetching, queryKey } = useQueryType(
     QueryType.LIBRARY,
-    { ...libraryargs, item: itemType },
     {
-      initialData,
+      ...libraryargs,
+      item: itemType,
+      page: infiniteKey ? initialPage - 1 : libraryargs.page,
+    },
+    {
+      initialData: global.app.IS_SERVER ? undefined : initialData,
+      initialDataUpdatedAt: requestTime,
       infinite: true,
       infinitePageParam: (variables, ctx) => ({
         ...variables,
@@ -395,71 +420,77 @@ export default function Page({
   const items = data?.pages?.flat?.().flatMap?.((i) => i.data.items);
   const count = data?.pages?.[0]?.data?.count;
 
-  const router = useRouter();
-  const routerQuery = urlparse(router.asPath);
-
-  useEffectOnce(() => {
+  const initialQueryState = useRecoilTransaction_UNSTABLE(({ set }) => () => {
     if (urlQuery.query?.fav !== undefined) {
-      setFavorites(urlQuery.query.fav as boolean);
+      set(LibraryState.favorites, urlQuery.query.fav as boolean);
     }
     if (urlQuery.query?.desc !== undefined) {
-      setSortDesc(urlQuery.query.desc as boolean);
+      set(LibraryState.sortDesc, urlQuery.query.desc as boolean);
     }
     if (urlQuery.query?.sort !== undefined) {
-      setSort(urlQuery.query.sort as number);
+      set(LibraryState.sort, urlQuery.query.sort as number);
     }
     if (urlQuery.query?.filter !== undefined) {
-      setFilter(urlQuery.query.filter as number);
+      set(LibraryState.filter, urlQuery.query.filter as number);
     }
     if (urlQuery.query?.view !== undefined) {
-      setView(urlQuery.query.view as number);
+      set(LibraryState.view, urlQuery.query.view as number);
     }
     if (urlQuery.query?.item !== undefined) {
-      setItem(urlQuery.query.item as number);
+      set(LibraryState.item, urlQuery.query.item as number);
     }
     if (urlQuery.query?.limit !== undefined) {
-      setLimit(urlQuery.query.limit as number);
+      set(LibraryState.limit, urlQuery.query.limit as number);
     }
     if (urlQuery.query?.display !== undefined) {
-      setDisplay(urlQuery.query.display as 'card' | 'list');
+      set(LibraryState.display, urlQuery.query.display as 'card' | 'list');
+    }
+    if (routerQuery?.query?.p ?? urlQuery.query?.p) {
+      const p = parseInt(
+        ((routerQuery?.query?.p ?? urlQuery.query?.p) as string) ?? '1',
+        10
+      );
+      set(LibraryState.page, isNaN(p) ? 1 : p);
     }
   });
 
-  useUpdateEffect(() => {
-    router.replace(urlstring({ view, p: 1 }));
-  }, [view]);
+  useEffectOnce(() => {
+    initialQueryState();
+  });
+
+  const client = useQueryClient();
 
   useUpdateEffect(() => {
-    router.replace(urlstring({ item, p: 1 }));
-  }, [item]);
+    const q = {
+      p: 1,
+      view,
+      item,
+      fav: favorites || undefined,
+      desc: sortDesc,
+      sort,
+      filter,
+      limit,
+      query,
+    };
+    setPage(1);
+    router.replace(urlstring(q)).then(() => client.resetQueries(queryKey));
+  }, [view, item, favorites, sortDesc, sort, filter, limit, query]);
 
   useUpdateEffect(() => {
     router.replace(urlstring({ display }), undefined, { shallow: true });
   }, [display]);
 
   useUpdateEffect(() => {
-    router.replace(urlstring({ fav: favorites || undefined }));
-  }, [favorites]);
-
-  useUpdateEffect(() => {
-    router.replace(urlstring({ desc: sortDesc }));
-  }, [sortDesc]);
-
-  useUpdateEffect(() => {
-    router.replace(urlstring({ sort }));
-  }, [sort]);
-
-  useUpdateEffect(() => {
-    router.replace(urlstring({ filter }));
-  }, [filter]);
-
-  useEffect(() => {
-    router.replace(urlstring({ limit }));
-  }, [limit]);
-
-  useEffect(() => {
-    router.replace(urlstring({ q: query, p: 1 }));
-  }, [query]);
+    if (routerQuery?.query?.p ?? urlQuery.query?.p) {
+      const p = parseInt(
+        ((routerQuery?.query?.p ?? urlQuery.query?.p) as string) ?? '1',
+        10
+      );
+      if (!isNaN(p)) {
+        setPage(p);
+      }
+    }
+  }, [routerQuery]);
 
   const pageHrefTemplate = useMemo(
     () => urlstring(router.asPath, { p: '${page}' }, { encode: false }),
@@ -475,15 +506,23 @@ export default function Page({
   );
 
   const fetchNext = useCallback(() => {
+    let key = infiniteKey;
     if (!infiniteKey) {
-      setInfiniteKey(new Date().getTime().toString(36));
-    } else if (!isFetching && fetchNextPage) {
+      key = new Date().getTime().toString(36);
+      setInfiniteKey(key);
+    }
+
+    if (!isFetching && fetchNextPage) {
       let p = libraryargs.page ? libraryargs.page : 1;
       p = p + data.pages.length;
       fetchNextPage({
         pageParam: p,
       });
-      router.replace(urlstring({ p }), undefined, { shallow: true });
+      setPage(p);
+      router.replace(urlstring({ p }), undefined, {
+        shallow: true,
+        scroll: false,
+      });
     }
   }, [libraryargs, router, fetchNextPage, infiniteKey, isFetching, data]);
 
@@ -558,20 +597,22 @@ export default function Page({
         () => (
           <>
             <OnlyFavoritesButton active={favorites} setActive={setFavorites} />
-            <div className="medium-margin-top">
-              <div className="pos-relative">
-                <FilterButtonInput active={filter} setActive={setFilter} />
-                <Visible visible={!!filter}>
-                  <ClearFilterButton
-                    onClick={() => {
-                      setFilter(undefined);
-                    }}
-                    className="accented_button"
-                    size="mini"
-                  />
-                </Visible>
+            {itemType !== ItemType.Collection && (
+              <div className="medium-margin-top">
+                <div className="pos-relative">
+                  <FilterButtonInput active={filter} setActive={setFilter} />
+                  <Visible visible={!!filter}>
+                    <ClearFilterButton
+                      onClick={() => {
+                        setFilter(undefined);
+                      }}
+                      className="accented_button"
+                      size="mini"
+                    />
+                  </Visible>
+                </div>
               </div>
-            </div>
+            )}
             <div className="medium-margin-top mb-auto">
               <div className="pos-relative">
                 <SortButtonInput
@@ -593,7 +634,7 @@ export default function Page({
             </div>
           </>
         ),
-        [favorites, filter, sort, sortDesc]
+        [favorites, filter, sort, sortDesc, itemType]
       )}>
       <PageTitle title={t`Library`} />
       {!count && <EmptySegment />}
@@ -601,7 +642,7 @@ export default function Page({
         <LibrarySidebar />
         <View
           hrefTemplate={pageHrefTemplate}
-          activePage={routerQuery?.query?.p ?? urlQuery.query?.p}
+          activePage={page}
           items={items}
           infinite={infinite}
           onPageChange={onPageChange}

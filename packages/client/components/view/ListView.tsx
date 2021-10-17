@@ -48,18 +48,34 @@ function ListViewList<T>({
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil((items.length ?? 0) / itemsPerRow);
-  useEffect(() => {
-    console.log(dynamicRowHeight);
+
+  const resize = useCallback(() => {
     if (itemRef.current) {
       if (dynamicRowHeight) {
+        const margin = size === 'small' ? 7 : 15;
         setItemWidth(itemRef.current.children[0].offsetWidth);
-        setRowHeight(itemRef.current.children[0].offsetHeight + 15);
+        setRowHeight(itemRef.current.children[0].offsetHeight + margin);
       } else {
         setItemWidth(itemRef.current.offsetWidth);
-        setRowHeight(itemRef.current.offsetHeight + 15);
+        setRowHeight(itemRef.current.offsetHeight);
       }
     }
-  }, [dims]);
+  }, [dynamicRowHeight]);
+
+  useEffect(() => {
+    resize();
+  }, [dims, resize]);
+
+  useEffect(() => {
+    if (dynamicRowHeight && itemRef.current) {
+      const el = itemRef.current.querySelector('img');
+      if (el) {
+        const f = resize;
+        el.addEventListener('load', f);
+        return () => el?.removeEventListener('load', f);
+      }
+    }
+  }, [dynamicRowHeight, resize, items, dims]);
 
   useEffect(() => {
     if (initialWidth) {

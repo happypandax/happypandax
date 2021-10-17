@@ -289,6 +289,7 @@ export function DrawerButton({ basic }: { basic?: boolean }) {
       include_finished: false,
     },
     {
+      enabled: process.env.NODE_ENV === 'production',
       refetchInterval: metadataInterval,
     }
   );
@@ -300,6 +301,7 @@ export function DrawerButton({ basic }: { basic?: boolean }) {
       include_finished: false,
     },
     {
+      enabled: process.env.NODE_ENV === 'production',
       refetchInterval: downloadInterval,
     }
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
+import { Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { QueryType, useQueryType } from '../../client/queries';
@@ -30,9 +31,10 @@ import { DataTable, DataTableItem } from './DataTable';
 
 export default function GalleryDataTable({
   data: initialData,
+  ...props
 }: {
   data: PartialExcept<ServerGallery, 'id'>;
-}) {
+} & React.ComponentProps<typeof DataTable>) {
   const contextKey = DataState.getKey(ItemType.Gallery, initialData);
 
   const setData = useSetRecoilState(DataState.data(contextKey));
@@ -80,7 +82,7 @@ export default function GalleryDataTable({
 
   return (
     <DataContext.Provider value={{ key: contextKey, type: ItemType.Gallery }}>
-      <DataTable showDataText={showDataText} loading={isLoading}>
+      <DataTable showDataText={showDataText} loading={isLoading} {...props}>
         <DataTableItem>
           <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
             {/* <Label
@@ -108,7 +110,14 @@ export default function GalleryDataTable({
           <PageCountLabel>{data?.page_count}</PageCountLabel>
           <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
         </DataTableItem>
-        {data?.info && <p>{data.info}</p>}
+        {data?.info && (
+          <DataTableItem>
+            <Segment tertiary className="fluid">
+              {data.info}
+            </Segment>
+          </DataTableItem>
+        )}
+
         <DataTableItem name={t`Artist`}>
           <ArtistLabels />
         </DataTableItem>

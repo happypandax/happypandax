@@ -40,15 +40,20 @@ export function DataTable({
   compact,
   showDataText,
   loading,
+  ...props
 }: {
   size?: React.ComponentProps<typeof Table>['size'];
   children?: React.ReactNode;
   showDataText?: boolean;
   loading?: boolean;
   compact?: boolean;
-}) {
+} & React.ComponentProps<typeof Table>) {
   return (
-    <Table basic="very" size={size} coamp={compact ? 'very' : false}>
+    <Table
+      basic="very"
+      size={size}
+      compact={compact ? 'very' : false}
+      {...props}>
       {showDataText && <TextEditor />}
       <Loader active={loading} />
       <Table.Body>{children}</Table.Body>

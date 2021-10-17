@@ -344,6 +344,7 @@ export default class ServerService extends Service {
     args: {
       item_type: ItemType;
       translate?: boolean;
+      children?: boolean;
       locale?: string;
     },
     group?: GroupCall

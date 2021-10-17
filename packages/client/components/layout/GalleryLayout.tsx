@@ -10,8 +10,8 @@ import {
 } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../../client/queries';
-import { ItemType, ViewType } from '../../misc/enums';
-import t from '../../misc/lang';
+import { ItemSort, ItemType, ViewType } from '../../misc/enums';
+import t, { sortIndexName } from '../../misc/lang';
 import { FieldPath, ServerFilter, ServerSortIndex } from '../../misc/types';
 import { PopupNoOverflow } from '../Misc';
 
@@ -32,8 +32,34 @@ export function SortButtonInput({
     QueryType.SORT_INDEXES,
     {
       item_type: itemType,
+      translate: false,
+      children: true,
     },
-    { initialData }
+    {
+      initialData,
+      select: (data) => {
+        data.data = data.data.filter((x) => {
+          // prefer Grouping's date
+          if (
+            x.item_type === ItemType.Grouping &&
+            x.index === ItemSort.GalleryDate
+          ) {
+            return false;
+          }
+
+          // prefer Grouping's random
+          if (
+            x.item_type === ItemType.Grouping &&
+            x.index === ItemSort.GalleryRandom
+          ) {
+            return false;
+          }
+
+          return true;
+        });
+        return data;
+      },
+    }
   );
 
   return (
@@ -59,7 +85,9 @@ export function SortButtonInput({
         <Menu secondary vertical>
           {!!data?.data &&
             data.data
-              .sort((a, b) => a.name.localeCompare(b.name))
+              .sort((a, b) =>
+                sortIndexName[a.index]?.localeCompare(sortIndexName[b.index])
+              )
               .map((v) => (
                 <Menu.Item
                   key={v.index}
@@ -67,7 +95,7 @@ export function SortButtonInput({
                   active={v.index === active}
                   icon="sort"
                   color="blue"
-                  name={v.name}
+                  name={sortIndexName[v.index]}
                   onClick={() => {
                     setActive(v.index);
                   }}
@@ -93,7 +121,7 @@ export function SortOrderButton(
       circular
       basic
       color="blue"
-      title={t`Sort order`}
+      title={props.descending ? t`Descending order` : t`Ascending order`}
       {...props}
     />
   );

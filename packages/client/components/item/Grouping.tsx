@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import { useCallback, useMemo } from 'react';
-import { Popup, Segment } from 'semantic-ui-react';
+import { Divider, Popup, Segment } from 'semantic-ui-react';
 
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
@@ -12,7 +12,7 @@ import {
   ServerGrouping,
 } from '../../misc/types';
 import { GalleryCountLabel } from '../dataview/Common';
-import GroupingDataTable from '../dataview/GroupingDataTable';
+import GroupingDataTable from '../dataview/GroupingData';
 import CardView from '../view/CardView';
 import ListView from '../view/ListView';
 import {
@@ -60,7 +60,8 @@ function GroupingContent({
 
   return (
     <Segment basic>
-      <GroupingDataTable data={data} />
+      <GroupingDataTable data={data} className="no-margins" />
+      <Divider />
       <View
         dynamicRowHeight
         className="no-padding-segment"
@@ -112,6 +113,8 @@ export function GroupingCard({
     <Popup
       on="click"
       flowing
+      as={Segment}
+      color="teal"
       wide="very"
       position="bottom left"
       className="no-padding-segment modal"

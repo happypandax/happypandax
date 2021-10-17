@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import { useRouter } from 'next/dist/client/router';
 import NextImage from 'next/image';
 import Link from 'next/link';
 import React, {
@@ -413,7 +412,6 @@ export function ItemCardImage({
   children?: React.ReactNode;
   src?: string | ServerItemWithProfile['profile'];
 }) {
-  const router = useRouter();
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
 

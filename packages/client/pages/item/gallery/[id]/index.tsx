@@ -3,6 +3,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { Container, Grid, Icon, Label, Segment } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../../../../client/queries';
+import CollectionCard, {
+  CollectionCardData,
+  collectionCardDataFields,
+} from '../../../../components/item/Collection';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
@@ -26,6 +30,7 @@ import ListView from '../../../../components/view/ListView';
 import { ImageSize, ItemType } from '../../../../misc/enums';
 import t from '../../../../misc/lang';
 import {
+  ServerCollection,
   ServerGallery,
   ServerGrouping,
   ServerItem,
@@ -36,6 +41,7 @@ import { ServiceType } from '../../../../services/constants';
 interface PageProps {
   item: GalleryHeaderData;
   sameArtist: GalleryCardData[];
+  collections: CollectionCardData[];
   series: GalleryCardData[];
   urlQuery: ReturnType<typeof urlparse>;
 }
@@ -58,6 +64,7 @@ export async function getServerSideProps(
   let item: PageProps['item'];
   let sameArtist: PageProps['sameArtist'] = [];
   let series: PageProps['series'] = [];
+  let collections: PageProps['collections'] = [];
 
   if (!redirect) {
     const group = server.create_group_call();
@@ -92,6 +99,20 @@ export async function getServerSideProps(
         series = r.items?.[0]?.galleries?.filter((g) => g.id !== itemId);
       });
 
+    server
+      .related_items<ServerCollection>(
+        {
+          item_id: itemId,
+          item_type: ItemType.Gallery,
+          related_type: ItemType.Collection,
+          fields: collectionCardDataFields,
+        },
+        group
+      )
+      .then((r) => {
+        collections = r.items;
+      });
+
     await group.call();
 
     if (item.artists?.length) {
@@ -108,11 +129,14 @@ export async function getServerSideProps(
 
   return {
     redirect,
-    props: { item, sameArtist, series, urlQuery },
+    props: { item, sameArtist, series, urlQuery, collections },
   };
 }
 
 export default function Page(props: PageProps) {
+  const display = 'card';
+  const pagesLimit = 50;
+
   const [page, setPage] = useState(1);
 
   const { data: pages, isLoading: pagesIsLoading } = useQueryType(
@@ -123,18 +147,21 @@ export default function Page(props: PageProps) {
       related_type: ItemType.Page,
       metatags: { trash: false },
       page: page - 1,
-      limit: 50,
+      limit: pagesLimit,
       fields: pageCardDataFields,
-    }
+    },
+    { keepPreviousData: true }
   );
-
-  const display = 'card';
 
   const onItemKey = useCallback((item: ServerItem) => item.id, []);
   const onPageChange = useCallback((ev, n) => {
     ev.preventDefault();
     setPage(n);
   }, []);
+
+  const View = display === 'card' ? CardView : ListView;
+
+  const collectionCount = props?.collections?.length;
 
   return (
     <PageLayout
@@ -178,16 +205,17 @@ export default function Page(props: PageProps) {
                 ))}
               </Slider>
             </Grid.Row>
-            {!!props.sameArtist?.length && (
+            {!!props.collections?.length && (
               <Grid.Row>
                 <Slider
                   fluid
                   stateKey="gallery_collection_page"
-                  label={t`Appears in ${0} collections`}
+                  showCount={false}
+                  label={t`Appears in ${collectionCount} collections`}
                   color="violet">
-                  {props?.sameArtist?.map?.((i) => (
+                  {props?.collections?.map?.((i) => (
                     <SliderElement key={i.id}>
-                      <GalleryCard size="small" data={i} />
+                      <CollectionCard size="small" data={i} />
                     </SliderElement>
                   ))}
                 </Slider>
@@ -207,35 +235,20 @@ export default function Page(props: PageProps) {
                 {t`Pages`}
                 <Label.Detail>{pages?.data.count}</Label.Detail>
               </Label>
-              {display === 'card' && (
-                <CardView
-                  fluid
-                  loading={pagesIsLoading}
-                  activePage={page}
-                  onPageChange={onPageChange}
-                  items={pages?.data.items}
-                  paddedChildren
-                  itemRender={PageCard}
-                  itemsPerPage={30}
-                  onItemKey={onItemKey}
-                  totalItemCount={pages?.data.count}
-                  pagination={!!pages?.data.count}
-                  bottomPagination={!!pages?.data.count}></CardView>
-              )}
-              {display === 'list' && (
-                <ListView
-                  fluid
-                  loading={pagesIsLoading}
-                  items={pages?.data.items}
-                  onPageChange={onPageChange}
-                  activePage={page}
-                  onItemKey={onItemKey}
-                  itemsPerPage={30}
-                  itemRender={PageCard}
-                  totalItemCount={pages?.data.count}
-                  pagination={!!pages?.data.count}
-                  bottomPagination={!!pages?.data.count}></ListView>
-              )}
+              <View
+                fluid
+                loading={pagesIsLoading}
+                activePage={page}
+                onPageChange={onPageChange}
+                items={pages?.data.items}
+                paddedChildren
+                itemRender={PageCard}
+                itemsPerPage={pagesLimit}
+                onItemKey={onItemKey}
+                totalItemCount={pages?.data.count}
+                pagination={!!pages?.data.count}
+                bottomPagination={!!pages?.data.count}
+              />
             </Grid.Row>
           </Grid>
         </Segment>

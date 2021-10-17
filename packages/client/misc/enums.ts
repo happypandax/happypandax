@@ -102,6 +102,15 @@ export enum ItemSort {
   // Gallery Circle
   GalleryCircle = 11,
 
+  // Grouping Random
+  GroupingRandom = 15,
+  // Grouping Name
+  GroupingName = 16,
+  // Grouping Date
+  GroupingDate = 17,
+  // Grouping Date
+  GroupingGalleryCount = 18,
+
   // Artist Name
   ArtistName = 20,
 

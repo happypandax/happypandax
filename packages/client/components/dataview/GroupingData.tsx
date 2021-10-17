@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
+import { Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { QueryType, useQueryType } from '../../client/queries';
@@ -16,9 +17,10 @@ import { DataTable, DataTableItem } from './DataTable';
 
 export default function GroupingDataTable({
   data: initialData,
+  ...props
 }: {
   data: PartialExcept<ServerGrouping, 'id'>;
-}) {
+} & React.ComponentProps<typeof DataTable>) {
   const contextKey = DataState.getKey(ItemType.Grouping, initialData);
 
   const setData = useSetRecoilState(DataState.data(contextKey));
@@ -39,7 +41,7 @@ export default function GroupingDataTable({
 
   return (
     <DataContext.Provider value={{ key: contextKey, type: ItemType.Grouping }}>
-      <DataTable showDataText={showDataText} loading={isLoading}>
+      <DataTable showDataText={showDataText} loading={isLoading} {...props}>
         <DataTableItem>
           <NameTable>
             {/* <Label
@@ -58,7 +60,13 @@ export default function GroupingDataTable({
           <GalleryCountLabel>{data?.gallery_count}</GalleryCountLabel>
           <DateAddedLabel timestamp={data?.timestamp} />
         </DataTableItem>
-        {data?.info && <p>{data.info}</p>}
+        {data?.info && (
+          <DataTableItem>
+            <Segment tertiary className="fluid">
+              {data.info}
+            </Segment>
+          </DataTableItem>
+        )}
       </DataTable>
     </DataContext.Provider>
   );

@@ -4,12 +4,15 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from 'axios';
+import _ from 'lodash';
 import {
   InitialDataFunction,
   MutationObserver,
   MutationObserverOptions,
+  PlaceholderDataFunction,
   QueryClient,
   QueryFunctionContext,
+  QueryKey,
   useInfiniteQuery,
   UseInfiniteQueryOptions,
   UseInfiniteQueryResult,
@@ -147,6 +150,17 @@ export function useMutationType<
 type Falsy = false | undefined;
 const isTruthy = <T>(x: T | Falsy): x is T => !!x;
 
+export function CreateInitialData<R>(d: R | InitialDataFunction<R>) {
+  return {
+    data: typeof d === 'function' ? (d as InitialDataFunction<R>)() : d,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config: {},
+    request: {},
+  };
+}
+
 // If A is defined, it renders the rest of generics useless
 // see https://github.com/microsoft/TypeScript/issues/26242
 // and https://github.com/microsoft/TypeScript/issues/10571
@@ -170,33 +184,32 @@ export function useQueryType<
   variables?: V,
   options?: {
     initialData?: R | InitialDataFunction<R>;
+    placeholderData?: R | PlaceholderDataFunction<R>;
     onQueryKey?: () => any;
     infinite?: I;
     infinitePageParam?: I extends Falsy
       ? undefined
       : (variables: V, context: QueryFunctionContext) => V;
   } & (I extends Falsy
-    ? Omit<UseQueryOptions<D, E>, 'initialData'>
-    : Omit<UseInfiniteQueryOptions<D, E>, 'initialData'>)
-): I extends Falsy ? UseQueryResult<D, E> : UseInfiniteQueryResult<D, E> {
-  const iData = () => ({
-    data:
-      typeof options.initialData === 'function'
-        ? (options.initialData as InitialDataFunction<R>)()
-        : options.initialData,
-    status: 200,
-    statusText: 'OK',
-    headers: {},
-    config: {},
-    request: {},
-  });
-
+    ? Omit<UseQueryOptions<D, E>, 'initialData' | 'placeholderData'>
+    : Omit<UseInfiniteQueryOptions<D, E>, 'initialData' | 'placeholderData'>)
+): (I extends Falsy ? UseQueryResult<D, E> : UseInfiniteQueryResult<D, E>) & {
+  queryKey: QueryKey;
+} {
   const opts = {
     ...options,
     initialData: options?.initialData
       ? options.infinite
-        ? { pages: [iData()], pageParams: [] }
-        : iData()
+        ? { pages: [CreateInitialData(options.initialData)], pageParams: [] }
+        : CreateInitialData(options.initialData)
+      : undefined,
+    placeholderData: options?.placeholderData
+      ? options.infinite
+        ? {
+            pages: [CreateInitialData(options.placeholderData)],
+            pageParams: [],
+          }
+        : CreateInitialData(options.placeholderData)
       : undefined,
   };
 
@@ -278,25 +291,29 @@ export function useQueryType<
       throw Error('Invalid query type');
   }
 
+  let r;
+
   if (opts.infinite) {
-    return useInfiniteQuery(
+    r = useInfiniteQuery(
       key,
-      (ctx) => {
+      _.throttle((ctx) => {
         return axios.get(
           urlstring(endpoint, options.infinitePageParam(variables, ctx))
         );
-      },
+      }, 100),
       opts
     );
   } else {
-    return useQuery(
+    r = useQuery(
       key,
-      () => {
+      _.throttle(() => {
         return axios.get(urlstring(endpoint, variables));
-      },
+      }, 100),
       opts
     );
   }
+
+  return { ...r, queryKey: key };
 }
 
 // ======================== ACTIONS ====================================
