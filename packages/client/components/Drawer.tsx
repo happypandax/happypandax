@@ -225,7 +225,7 @@ export function Drawer({
             {
               menuItem: {
                 key: 'selected',
-                content: t`Selected`,
+                content: t`Selection`,
                 icon: 'object ungroup outline icon',
               },
               render: () => (

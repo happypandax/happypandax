@@ -215,6 +215,7 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
   const heroImgRef = useRef<HTMLImageElement>();
   const colorThief = useMemo(() => new ColorThief(), []);
 
+  const blur = useRecoilValue(AppState.blur);
   const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
 
   const sameMachine = useRecoilValue(AppState.sameMachine);
@@ -247,7 +248,7 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
         <Container className="pos-relative">
           <ParallaxDiv>
             <img
-              className="animate__slower"
+              className={classNames('animate__slower')}
               ref={heroImgRef}
               src={data.profile.data}
             />
@@ -261,6 +262,8 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
               <Image
                 centered
                 rounded
+                className={classNames({ blur: blur })}
+                alt="cover image"
                 id={styles.cover}
                 src={data.profile.data}
                 width={data.profile.size[0]}

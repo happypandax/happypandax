@@ -2,6 +2,7 @@ export { default as update } from 'immutability-helper';
 import cookie from 'cookie';
 import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
 import { JsonMap } from 'happypandax-client';
+import _ from 'lodash';
 import { NextPageContext } from 'next';
 import Router from 'next/router';
 import querystring, {
@@ -284,4 +285,16 @@ export function removeCookies(
   options?: {}
 ) {
   return setCookies(ctx, key, '', { ...options, expires: -1 });
+}
+
+export function maskText(text: string) {
+  return text
+    .split(' ')
+    .map((s) =>
+      s
+        .split('')
+        .map((c) => _.sample(['▀', '█', '▍', '▆', '▃']))
+        .join()
+    )
+    .join(' ');
 }

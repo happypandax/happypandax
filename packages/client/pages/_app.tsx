@@ -205,7 +205,7 @@ MyApp.getInitialProps = async function (
 
     if (!loggedIn && !['/login', '/_error'].includes(context.router.pathname)) {
       return redirect({
-        location: `/login?next=${encodeURI(context.router.asPath)}`,
+        location: `/login?next=${encodeURIComponent(context.router.asPath)}`,
         ctx: context.ctx,
       }) as any;
     }

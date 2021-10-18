@@ -11,7 +11,7 @@ import React, {
   useState,
 } from 'react';
 import { useDrag } from 'react-dnd';
-import { useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   Card,
   Dimmer,
@@ -36,6 +36,7 @@ import {
   ServerItem,
   ServerItemWithProfile,
 } from '../../misc/types';
+import { maskText } from '../../misc/utility';
 import { AppState, LibraryState } from '../../state';
 import styles from './Item.module.css';
 
@@ -285,6 +286,7 @@ export function ItemCardContent({
 }) {
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const blur = useRecoilValue(AppState.blur);
 
   const setLibrarySidebarVisible = useSetRecoilState(
     LibraryState.sidebarVisible
@@ -341,11 +343,23 @@ export function ItemCardContent({
         {itemContext.horizontal && (
           <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
         )}
-        <Card.Header className="text-ellipsis card-header">{title}</Card.Header>
+        <Card.Header className="text-ellipsis card-header">
+          {blur && typeof title === 'string' ? maskText(title) : title}
+        </Card.Header>
         {subtitle && (
-          <Card.Meta className="text-ellipsis card-meta">{subtitle}</Card.Meta>
+          <Card.Meta className="text-ellipsis card-meta">
+            {blur && typeof subtitle === 'string'
+              ? maskText(subtitle)
+              : subtitle}
+          </Card.Meta>
         )}
-        {description && <Card.Description>{description}</Card.Description>}
+        {description && (
+          <Card.Description>
+            {blur && typeof description === 'string'
+              ? maskText(description)
+              : description}
+          </Card.Description>
+        )}
         {!!children && <Card.Meta>{children}</Card.Meta>}
       </Dimmer.Dimmable>
     </El>
@@ -414,6 +428,7 @@ export function ItemCardImage({
 }) {
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const blur = useRecoilValue(AppState.blur);
 
   const imgSrc = !src
     ? defaultImage
@@ -450,6 +465,7 @@ export function ItemCardImage({
       centered={!itemContext.horizontal}
       className={classNames({
         [`${itemContext.size}-size`]: itemContext.horizontal,
+        blur: blur,
       })}
       onClick={useCallback(
         (ev) => {

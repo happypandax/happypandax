@@ -66,9 +66,13 @@ function CardViewGrid<T>({
     if (dynamicRowHeight && itemRef.current) {
       const el = itemRef.current.querySelector('img');
       if (el) {
-        const f = resize;
-        el.addEventListener('load', f);
-        return () => el?.removeEventListener('load', f);
+        const f = () => setTimeout(resize, 150);
+        el.addEventListener('load', resize);
+        el.addEventListener('error', f);
+        return () => {
+          el?.removeEventListener('load', resize);
+          el?.removeEventListener('error', f);
+        };
       }
     }
   }, [dynamicRowHeight, resize, items, dims]);

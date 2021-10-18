@@ -198,3 +198,12 @@ html, body {
 .small-text {
     font-size: 1rem;
 }
+
+.blur {
+    position: relative;
+    overflow: hidden;
+}
+
+.blur img, img.blur {
+    filter: blur(30px);
+}

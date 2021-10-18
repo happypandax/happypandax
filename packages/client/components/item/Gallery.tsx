@@ -11,6 +11,7 @@ import {
   ServerGallery,
   ServerItem,
 } from '../../misc/types';
+import { maskText } from '../../misc/utility';
 import { AppState } from '../../state';
 import {
   GroupingNumberLabel,
@@ -226,6 +227,8 @@ export function GalleryCard({
   onDetailsOpen?: () => void;
   horizontal?: boolean;
 }) {
+  const blur = useRecoilValue(AppState.blur);
+
   const hasProgress = !!data?.progress && !data?.progress?.end;
 
   const readingQueue = useRecoilValue(AppState.readingQueue);
@@ -346,7 +349,9 @@ export function GalleryCard({
       <ItemCardContent
         title={data?.preferred_title?.name ?? ''}
         subtitle={data?.artists.map((a) => (
-          <span key={a.id}>{a.preferred_name.name}</span>
+          <span key={a.id}>
+            {blur ? maskText(a.preferred_name.name) : a.preferred_name.name}
+          </span>
         ))}></ItemCardContent>
     </ItemCard>
   );

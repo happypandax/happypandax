@@ -107,6 +107,14 @@ function libraryArgs(
     p--;
   }
 
+  let filter_id = (urlQuery.query?.filter ??
+    getCookies(ctx, 'library_filter')) as number;
+
+  // filters dont support collections
+  if (itemType === ItemType.Collection) {
+    filter_id = undefined;
+  }
+
   return {
     item_type: itemType,
     metatags,
@@ -121,8 +129,7 @@ function libraryArgs(
         ((urlQuery.query?.desc ??
           getCookies(ctx, 'library_desc')) as boolean) ?? true,
     },
-    filter_id: (urlQuery.query?.filter ??
-      getCookies(ctx, 'library_filter')) as number,
+    filter_id,
     limit:
       ((urlQuery.query?.limit ?? getCookies(ctx, 'library_limit')) as number) ??
       30,

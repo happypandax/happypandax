@@ -26,6 +26,11 @@ export default class _AppState extends StateBlock {
     effects_UNSTABLE: [localStorageEffect('external_viewer')],
   });
 
+  static blur = defineAtom({
+    default: true,
+    effects_UNSTABLE: [localStorageEffect('blur')],
+  });
+
   static sidebarWidth = defineAtom({
     default: 'very thin' as 'very thin' | 'thin',
   });

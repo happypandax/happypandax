@@ -19,7 +19,7 @@ export async function getServerSideProps(
 ): Promise<GetServerSidePropsResult<{}>> {
   const server = global.app.service.get(ServiceType.Server);
   const next = context.query?.next
-    ? decodeURI(context?.query?.next as string)
+    ? decodeURIComponent(context?.query?.next as string)
     : undefined;
 
   return {
@@ -72,8 +72,11 @@ export default function Page({ next }: PageProps) {
                   onSuccess={useCallback(() => {
                     setLoggedIn(true);
 
+                    console.log(next);
+
                     if (next) {
-                      router.replace(next, undefined);
+                      // router.replace doesn't work, idk why
+                      location.replace(next);
                     }
                   }, [home, next])}
                 />

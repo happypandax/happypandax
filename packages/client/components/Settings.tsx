@@ -1,11 +1,39 @@
 import classNames from 'classnames';
-import { useMemo } from 'react';
-import { Header, Icon, Modal, Segment, Tab } from 'semantic-ui-react';
+import { useCallback, useMemo } from 'react';
+import { useRecoilState } from 'recoil';
+import {
+  Checkbox,
+  Form,
+  Header,
+  Icon,
+  Modal,
+  Segment,
+  Tab,
+} from 'semantic-ui-react';
 
 import t from '../misc/lang';
+import { AppState } from '../state';
 
 function GeneralPane() {
-  return <Segment basic></Segment>;
+  const [blur, setBlur] = useRecoilState(AppState.blur);
+
+  return (
+    <Segment basic>
+      <Form>
+        <Form.Field>
+          <label>{t`Blur`}</label>
+          <Checkbox
+            toggle
+            checked={blur}
+            onChange={useCallback((ev, { checked }) => {
+              ev.preventDefault();
+              setBlur(checked);
+            }, [])}
+          />
+        </Form.Field>
+      </Form>
+    </Segment>
+  );
 }
 
 function NetworkPane() {

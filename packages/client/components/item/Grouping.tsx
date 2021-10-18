@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import { useCallback, useMemo } from 'react';
+import { useRecoilValue } from 'recoil';
 import { Divider, Popup, Segment } from 'semantic-ui-react';
 
 import { ItemType } from '../../misc/enums';
@@ -11,6 +12,8 @@ import {
   ServerGallery,
   ServerGrouping,
 } from '../../misc/types';
+import { maskText } from '../../misc/utility';
+import { AppState } from '../../state';
 import { GalleryCountLabel } from '../dataview/Common';
 import GroupingDataTable from '../dataview/GroupingData';
 import CardView from '../view/CardView';
@@ -89,6 +92,8 @@ export function GroupingCard({
   disableModal?: boolean;
   horizontal?: boolean;
 }) {
+  const blur = useRecoilValue(AppState.blur);
+
   const is_series = (data?.gallery_count ?? 0) > 1;
 
   if (!is_series && data?.galleries?.[0]) {
@@ -167,7 +172,9 @@ export function GroupingCard({
           <ItemCardContent
             title={data?.name ?? ''}
             subtitle={artists.map((a) => (
-              <span key={a.id}>{a.preferred_name.name}</span>
+              <span key={a.id}>
+                {blur ? maskText(a.preferred_name.name) : a.preferred_name.name}
+              </span>
             ))}></ItemCardContent>
         </ItemCard>
       }>
