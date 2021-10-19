@@ -8,10 +8,7 @@ import DataState from './_data';
 import LibraryState from './_library';
 import MiscState from './_misc';
 import ReaderState from './_reader';
-
-((...cls: StateBlock[]) => {
-  cls.forEach((c) => StateBlock.setup(c));
-})(AppState, LibraryState, DataState, ReaderState, MiscState);
+import SearchState from './_search';
 
 export function useInitialRecoilState<T>(
   state: RecoilState<T>,
@@ -65,4 +62,15 @@ export function useInitialRecoilValue<T>(state: RecoilState<T>, optional?: T) {
     : optionalValue[1];
 }
 
-export { AppState, LibraryState, DataState, ReaderState, MiscState };
+((...cls: StateBlock[]) => {
+  cls.forEach((c) => StateBlock.setup(c));
+})(AppState, LibraryState, DataState, ReaderState, MiscState, SearchState);
+
+export {
+  AppState,
+  LibraryState,
+  DataState,
+  ReaderState,
+  MiscState,
+  SearchState,
+};

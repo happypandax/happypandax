@@ -158,7 +158,7 @@ export default class ServerService extends Service {
     return r;
   }
 
-  async get_config(
+  async config(
     args: {
       cfg: Record<string, AnyJson>;
     },

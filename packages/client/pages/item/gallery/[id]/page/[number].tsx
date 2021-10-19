@@ -2,6 +2,7 @@ import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { ReaderContext } from '../../../../../client/context';
 import {
   CollectionCardData,
   collectionCardDataFields,
@@ -64,7 +65,7 @@ const EndContent = dynamic(
 );
 
 interface PageProps {
-  item: DeepPick<ServerGallery, 'id'>;
+  item: ServerGallery;
   startPage: number;
   data: Unwrap<ServerService['pages']>;
   title: string;
@@ -72,7 +73,8 @@ interface PageProps {
   sameArtist: GalleryCardData[];
   series: GalleryCardData[];
   collections: CollectionCardData[];
-  randomItem?: GalleryCardData;
+  randomItem?: DeepPick<ServerGallery, 'id'>;
+  randomItems?: GalleryCardData[];
   nextChapter?: GalleryCardData;
 }
 
@@ -109,6 +111,7 @@ export async function getServerSideProps(
   let title = 'Gallery';
   let item: PageProps['item'];
   let randomItem: PageProps['randomItem'];
+  let randomItems: PageProps['randomItems'];
   let nextChapter: PageProps['nextChapter'];
   let collections: PageProps['collections'];
   let series: PageProps['series'];
@@ -145,7 +148,7 @@ export async function getServerSideProps(
           metatags: { trash: false, inbox: false },
           sort_options: { by: ItemSort.CollectionName },
           limit: 50,
-          search_query: collectionCategories.length
+          search_query: collectionCategories?.length
             ? collectionCategories.reduce((p, c) => p + `category:"${c}" `, '')
             : undefined,
           search_options: {
@@ -181,12 +184,14 @@ export async function getServerSideProps(
           item_type: ItemType.Gallery,
           metatags: { trash: false },
           sort_options: { by: ItemSort.GalleryRandom },
-          limit: 1,
+          limit: 4,
+          fields: galleryCardDataFields,
         },
         group
       )
       .then((r) => {
         randomItem = r.items?.[0];
+        randomItems = r.items?.slice(1);
       });
 
     server
@@ -216,7 +221,14 @@ export async function getServerSideProps(
         {
           item_type: ItemType.Gallery,
           item_id: itemId,
-          fields: ['preferred_title.name', 'artists.id', 'grouping_id'],
+          fields: [
+            'preferred_title.name',
+            'artists.id',
+            'grouping_id',
+            'metatags.favorite',
+            'metatags.inbox',
+            'rating',
+          ],
         },
         group
       )
@@ -251,6 +263,7 @@ export async function getServerSideProps(
       collections,
       series,
       randomItem,
+      randomItems,
       nextChapter,
       sameArtist,
       data,
@@ -280,31 +293,34 @@ export default function Page(props: PageProps) {
       bottomZone={useMemo(() => {
         return (
           <BottomZoneItem x="right" y="bottom">
-            <ReaderAutoNavigateButton stateKey={stateKey} />
-            <ReaderSettingsButton stateKey={stateKey} />
+            <ReaderAutoNavigateButton />
+            <ReaderSettingsButton />
           </BottomZoneItem>
         );
-      }, [stateKey])}>
+      }, [])}>
       <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
-      <Reader
-        item={props.item}
-        pageCount={props.data.count}
-        startPage={startPage}
-        initialData={props.data.items as ServerPage[]}
-        onPage={useCallback((page: ReaderData) => {
-          setNumber(page.number);
-        }, [])}
-        stateKey={stateKey}>
-        <EndContent
-          stateKey={stateKey}
-          item={props.item}
-          series={props.series}
-          collections={props.collections}
-          nextChapter={props.nextChapter}
-          random={props.randomItem}
-          sameArtist={props.sameArtist}
-        />
-      </Reader>
+      <ReaderContext.Provider
+        value={useMemo(() => ({ item: props.item, stateKey }), [
+          props.item,
+          stateKey,
+        ])}>
+        <Reader
+          pageCount={props.data.count}
+          startPage={startPage}
+          initialData={props.data.items as ServerPage[]}
+          onPage={useCallback((page: ReaderData) => {
+            setNumber(page.number);
+          }, [])}>
+          <EndContent
+            series={props.series}
+            collections={props.collections}
+            nextChapter={props.nextChapter}
+            random={props.randomItem}
+            randomItems={props.randomItems}
+            sameArtist={props.sameArtist}
+          />
+        </Reader>
+      </ReaderContext.Provider>
     </PageLayout>
   );
 }

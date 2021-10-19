@@ -7,11 +7,13 @@ import t from '../../misc/lang';
 import {
   FieldPath,
   ServerGallery,
+  ServerGrouping,
   ServerItemWithName,
   ServerTag,
 } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { AppState, DataState } from '../../state';
+import Rating from '../Rating';
 
 export function LanguageLabel({
   children,
@@ -231,6 +233,23 @@ export function GroupingLabel() {
     <Label basic>
       <Icon className="stream" /> {data?.grouping?.name}
     </Label>
+  );
+}
+
+export function RatingLabel() {
+  const ctx = useContext(DataContext);
+  const [data, setData] = useRecoilState<
+    PartialExcept<ServerGallery | ServerGrouping, 'id'>
+  >(DataState.data(ctx.key));
+
+  return (
+    <Rating
+      icon="star"
+      size="huge"
+      color="yellow"
+      defaultRating={data?.rating}
+      maxRating={10}
+    />
   );
 }
 

@@ -22,6 +22,7 @@ import {
   NamesTable,
   PageCountLabel,
   ParodyLabels,
+  RatingLabel,
   ReadCountLabel,
   StatusLabel,
   TagsTable,
@@ -121,7 +122,9 @@ export default function GalleryDataTable({
         <DataTableItem name={t`Artist`}>
           <ArtistLabels />
         </DataTableItem>
-        <DataTableItem name={t`Rating`}>test</DataTableItem>
+        <DataTableItem name={t`Rating`}>
+          <RatingLabel />
+        </DataTableItem>
         <DataTableItem name={t`Series`}>
           <GroupingLabel />
         </DataTableItem>

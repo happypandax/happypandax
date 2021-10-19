@@ -28,7 +28,16 @@ import {
   ItemMenuLabelItem,
 } from './';
 import GalleryCard, { galleryCardDataFields } from './Gallery';
-import { ItemCardContent, TranslucentLabel } from './index';
+import {
+  AddToQueueButton,
+  InboxIconLabel,
+  ItemCardActionContent,
+  ItemCardActionContentItem,
+  ItemCardContent,
+  QueueIconLabel,
+  SaveForLaterButton,
+  TranslucentLabel,
+} from './index';
 
 export type GroupingCardData = DeepPick<
   ServerGrouping,
@@ -45,6 +54,8 @@ export const groupingCardDataFields: FieldPath<ServerGrouping>[] = [
 function GroupingMenu({}: { hasProgress: boolean; read: boolean }) {
   return (
     <ItemMenuLabel>
+      <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
+      <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="trash">{t`Delete`}</ItemMenuLabelItem>
     </ItemMenuLabel>
   );
@@ -83,18 +94,39 @@ export function GroupingCard({
   fluid,
   draggable,
   disableModal,
+  actionContent,
   horizontal,
 }: {
   size?: ItemSize;
   data: GroupingCardData;
   fluid?: boolean;
   draggable?: boolean;
+  actionContent?: React.ComponentProps<typeof ItemCard>['actionContent'];
+
   disableModal?: boolean;
   horizontal?: boolean;
 }) {
   const blur = useRecoilValue(AppState.blur);
+  const readingQueue = useRecoilValue(AppState.readingQueue);
 
   const is_series = (data?.gallery_count ?? 0) > 1;
+
+  const actions = useCallback(
+    () => (
+      <ItemCardActionContent>
+        {(horizontal ||
+          !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
+          <ItemCardActionContentItem>
+            <AddToQueueButton itemType={ItemType.Grouping} data={data} />
+          </ItemCardActionContentItem>
+        )}
+        <ItemCardActionContentItem>
+          <SaveForLaterButton itemType={ItemType.Grouping} />
+        </ItemCardActionContentItem>
+      </ItemCardActionContent>
+    ),
+    [data, size, horizontal]
+  );
 
   if (!is_series && data?.galleries?.[0]) {
     return (
@@ -138,13 +170,23 @@ export function GroupingCard({
           horizontal={horizontal}
           size={size}
           disableModal={true}
+          actionContent={actionContent ?? actions}
           labels={useMemo(
             () => [
               <ItemLabel key="fav" x="left" y="top">
-                <FavoriteLabel />
+                <FavoriteLabel
+                  defaultRating={
+                    data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
+                  }
+                />
               </ItemLabel>,
               <ItemLabel key="icons" x="right" y="top">
-                {/* {!!data?.metatags?.inbox && <InboxIconLabel />} */}
+                {data?.galleries?.every?.((g) =>
+                  readingQueue.includes(g.id)
+                ) && <QueueIconLabel />}
+                {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
+                  <InboxIconLabel />
+                )}
                 <ActivityLabel />
               </ItemLabel>,
               <ItemLabel key="menu" x="right" y="bottom">
@@ -161,7 +203,7 @@ export function GroupingCard({
                 <GroupingMenu />
               </ItemLabel>,
             ],
-            [horizontal, data]
+            [horizontal, data, readingQueue]
           )}
           image={useCallback(
             ({ children }: { children?: React.ReactNode }) => (

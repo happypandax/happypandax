@@ -3,3 +3,7 @@
     height: 1em !important;
     width: 0.4em !important;
 }
+
+.favorite_label {
+    font-size: 2.5rem !important;
+}

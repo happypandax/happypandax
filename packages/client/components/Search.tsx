@@ -8,7 +8,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useRecoilValue } from 'recoil';
+import { useDebounce } from 'react-use';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import {
   Button,
   Checkbox,
@@ -31,8 +32,12 @@ import { Query, QueryType, useQueryType } from '../client/queries';
 import { replaceTextAtPosition } from '../client/search_utils';
 import { ItemType } from '../misc/enums';
 import t from '../misc/lang';
-import { SearchItem, ServerNamespaceTag } from '../misc/types';
-import { AppState, MiscState } from '../state';
+import {
+  SearchItem,
+  SearchOptions as SearchOptionsType,
+  ServerNamespaceTag,
+} from '../misc/types';
+import { AppState, SearchState } from '../state';
 import styles from './Search.module.css';
 
 SwiperCore.use([Mousewheel]);
@@ -113,7 +118,7 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
 
 function RecentSearch({ onClick }: { onClick: (text: string) => void }) {
   const context = useContext(SearchContext);
-  const recentSearch = useRecoilValue(MiscState.recentSearch(context.stateKey));
+  const recentSearch = useRecoilValue(SearchState.recent(context.stateKey));
 
   const onItemClick = useCallback((ev, d) => {
     ev.preventDefault();
@@ -386,6 +391,32 @@ function SearchOptions({
 }: {
   size?: React.ComponentProps<typeof Button>['size'];
 }) {
+  const context = useContext(SearchContext);
+
+  const [options, setOptions] = useRecoilState(
+    SearchState.options(context.stateKey)
+  );
+
+  const [dynamic, setDynamic] = useRecoilState(
+    SearchState.dynamic(context.stateKey)
+  );
+
+  const [suggest, setSuggest] = useRecoilState(
+    SearchState.suggest(context.stateKey)
+  );
+
+  const { data } = useQueryType(QueryType.CONFIG, {
+    cfg: {
+      'search.case_sensitive': false,
+      'search.regex': false,
+      'search.match_exact': false,
+      'search.match_all_terms': false,
+      'search.children': false,
+    },
+  });
+
+  type Config = Record<'search', SearchOptionsType>;
+
   return (
     <Popup
       trigger={
@@ -409,7 +440,18 @@ function SearchOptions({
           <Checkbox
             toggle
             name="search.case"
-            defaultChecked
+            checked={
+              options.case_sensitive ??
+              (data?.data as Config)?.search?.case_sensitive
+            }
+            onChange={useCallback(
+              (e, d) =>
+                setOptions({
+                  ...options,
+                  case_sensitive: d.checked,
+                }),
+              [options]
+            )}
             label={t`Case sensitive`}
           />
         </List.Item>
@@ -417,7 +459,15 @@ function SearchOptions({
           <Checkbox
             toggle
             name="search.regex"
-            defaultChecked
+            checked={options.regex ?? (data?.data as Config)?.search?.regex}
+            onChange={useCallback(
+              (e, d) =>
+                setOptions({
+                  ...options,
+                  regex: d.checked,
+                }),
+              [options]
+            )}
             label={t`Regex`}
           />
         </List.Item>
@@ -425,7 +475,17 @@ function SearchOptions({
           <Checkbox
             toggle
             name="search.exact"
-            defaultChecked
+            checked={
+              options.match_exact ?? (data?.data as Config)?.search?.match_exact
+            }
+            onChange={useCallback(
+              (e, d) =>
+                setOptions({
+                  ...options,
+                  match_exact: d.checked,
+                }),
+              [options]
+            )}
             label={t`Match terms exactly`}
           />
         </List.Item>
@@ -433,15 +493,45 @@ function SearchOptions({
           <Checkbox
             toggle
             name="search.all"
-            defaultChecked
+            checked={
+              options.match_all_terms ??
+              (data?.data as Config)?.search?.match_all_terms
+            }
+            onChange={useCallback(
+              (e, d) =>
+                setOptions({
+                  ...options,
+                  match_all_terms: d.checked,
+                }),
+              [options]
+            )}
             label={t`Match all terms`}
           />
         </List.Item>
         <List.Item>
           <Checkbox
             toggle
+            name="search.children"
+            checked={
+              options.children ?? (data?.data as Config)?.search?.children
+            }
+            onChange={useCallback(
+              (e, d) =>
+                setOptions({
+                  ...options,
+                  children: d.checked,
+                }),
+              [options]
+            )}
+            label={t`Match on children`}
+          />
+        </List.Item>
+        <List.Item>
+          <Checkbox
+            toggle
             name="search.suggest"
-            defaultChecked
+            checked={suggest}
+            onChange={useCallback((e, d) => setSuggest(d.checked), [])}
             label={t`Show suggestions`}
           />
         </List.Item>
@@ -449,7 +539,8 @@ function SearchOptions({
           <Checkbox
             toggle
             name="search.dynamic"
-            defaultChecked
+            checked={dynamic}
+            onChange={useCallback((e, d) => setDynamic(d.checked), [])}
             label={t`Dynamic`}
           />
         </List.Item>
@@ -488,9 +579,12 @@ export function ItemSearch({
   const [query, setQuery] = useState(defaultValue);
   const [resultsVisible, setResultsVisible] = useState(false);
   const [focused, setFocused] = useState(false);
+  const options = useRecoilValue(SearchState.options(stateKey));
+  const dynamic = useRecoilValue(SearchState.dynamic(stateKey));
+  const suggest = useRecoilValue(SearchState.suggest(stateKey));
 
   const onSubmit = useCallback(
-    (ev) => {
+    (ev?) => {
       ev?.preventDefault?.();
       onSearch?.(query, {});
       setFocused(false);
@@ -517,6 +611,43 @@ export function ItemSearch({
       setFocused(false);
     }, 250);
   }, []);
+
+  const onSearchResultClick = useCallback((ev) => {
+    const target = ref.current.querySelector('input');
+    target.focus();
+  }, []);
+
+  useDebounce(
+    () => {
+      if (dynamic) {
+        onSubmit();
+      }
+    },
+    1000,
+    [dynamic, query, onSubmit]
+  );
+
+  useEffect(() => {
+    if (query) {
+      onSubmit();
+    }
+  }, [options]);
+
+  const onSearchResultSelect = useCallback(
+    (text) => {
+      const target = ref.current.querySelector('input');
+      target.focus();
+      const t = replaceTextAtPosition(query, text, target.selectionStart, {
+        quotation: true,
+      });
+      target.value = t.text;
+      target.focus();
+      //   document.getSelection().collapse(ref.current, t.newPosition)
+      target.setSelectionRange(t.newEndPosition, t.newEndPosition);
+      setQuery(t.text);
+    },
+    [query]
+  );
 
   return (
     <SearchContext.Provider
@@ -562,38 +693,18 @@ export function ItemSearch({
               }, [])}
             />
           </Ref>
-          <div
-            className={classNames('results transition', {
-              visible: resultsVisible,
-            })}>
-            <SearchResults
-              itemTypes={itemTypes}
-              onClick={useCallback((ev) => {
-                const target = ref.current.querySelector('input');
-                target.focus();
-              }, [])}
-              onSelect={useCallback(
-                (text) => {
-                  const target = ref.current.querySelector('input');
-                  target.focus();
-                  const t = replaceTextAtPosition(
-                    query,
-                    text,
-                    target.selectionStart,
-                    {
-                      quotation: true,
-                    }
-                  );
-                  target.value = t.text;
-                  target.focus();
-                  //   document.getSelection().collapse(ref.current, t.newPosition)
-                  target.setSelectionRange(t.newEndPosition, t.newEndPosition);
-                  setQuery(t.text);
-                },
-                [query]
-              )}
-            />
-          </div>
+          {suggest && (
+            <div
+              className={classNames('results transition', {
+                visible: resultsVisible,
+              })}>
+              <SearchResults
+                itemTypes={itemTypes}
+                onClick={onSearchResultClick}
+                onSelect={onSearchResultSelect}
+              />
+            </div>
+          )}
         </div>
       </form>
     </SearchContext.Provider>

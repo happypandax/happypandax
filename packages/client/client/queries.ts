@@ -43,6 +43,7 @@ export enum QueryType {
   DOWNLOAD_INFO,
   METADATA_INFO,
   SERVER_STATUS,
+  CONFIG,
   LOG,
 }
 
@@ -148,7 +149,6 @@ export function useMutationType<
 }
 
 type Falsy = false | undefined;
-const isTruthy = <T>(x: T | Falsy): x is T => !!x;
 
 export function CreateInitialData<R>(d: R | InitialDataFunction<R>) {
   return {
@@ -284,6 +284,11 @@ export function useQueryType<
 
     case QueryType.METADATA_INFO: {
       endpoint = '/api/metadata_info';
+      break;
+    }
+
+    case QueryType.CONFIG: {
+      endpoint = '/api/config';
       break;
     }
 
@@ -435,6 +440,12 @@ interface FetchMetadataInfo<T = undefined> extends QueryAction<T> {
   variables: Parameters<ServerService['metadata_info']>[0];
 }
 
+interface FetchConfig<T = undefined> extends QueryAction<T> {
+  type: QueryType.CONFIG;
+  dataType: Unwrap<ReturnType<ServerService['config']>>;
+  variables: Parameters<ServerService['config']>[0];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -450,6 +461,7 @@ type QueryActions<T = undefined> =
   | FetchLog<T>
   | FetchDownloadInfo<T>
   | FetchMetadataInfo<T>
+  | FetchConfig<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================

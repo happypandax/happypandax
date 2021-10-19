@@ -11,8 +11,9 @@ import React, {
   useState,
 } from 'react';
 import { useDrag } from 'react-dnd';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import {
+  Button,
   Card,
   Dimmer,
   Header,
@@ -23,13 +24,13 @@ import {
   Loader,
   Modal,
   Popup,
-  Rating,
   Ref,
   Segment,
 } from 'semantic-ui-react';
 
 import { LibraryContext } from '../../client/context';
 import { ItemType } from '../../misc/enums';
+import t from '../../misc/lang';
 import {
   DragItemData,
   ItemSize,
@@ -38,6 +39,9 @@ import {
 } from '../../misc/types';
 import { maskText } from '../../misc/utility';
 import { AppState, LibraryState } from '../../state';
+import Rating from '../Rating';
+import { GalleryCardData } from './Gallery';
+import { GroupingCardData } from './Grouping';
 import styles from './Item.module.css';
 
 const ItemContext = React.createContext({
@@ -59,6 +63,67 @@ const ItemContext = React.createContext({
   loading: false,
   horizontal: false,
 });
+
+export function SaveForLaterButton({ itemType }: { itemType: ItemType }) {
+  return (
+    <Button
+      size="mini"
+      onClick={useCallback((e) => {
+        e.preventDefault();
+      }, [])}>
+      <Icon name="bookmark outline" />
+      {t`Save for later`}
+    </Button>
+  );
+}
+
+export function AddToQueueButton<T extends ItemType>({
+  data,
+  itemType,
+}: {
+  data: T extends ItemType.Gallery ? GalleryCardData : GroupingCardData;
+  itemType: T;
+}) {
+  const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
+
+  const exists =
+    itemType === ItemType.Gallery
+      ? readingQueue.includes(data.id)
+      : data?.galleries?.every?.((g) => readingQueue.includes(g.id));
+
+  return (
+    <Button
+      color="red"
+      size="mini"
+      onClick={useCallback(
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          let list = readingQueue;
+
+          const d =
+            itemType === ItemType.Gallery
+              ? [data]
+              : (data?.galleries as GalleryCardData[]) ?? [];
+
+          d.forEach((g) => {
+            if (exists) {
+              list = list.filter((i) => i !== g.id);
+            } else {
+              list = [...list, g.id];
+            }
+          });
+
+          setReadingQueue(list);
+        },
+        [data, readingQueue]
+      )}>
+      <Icon name={exists ? 'minus' : 'plus'} />
+      {t`Queue`}
+    </Button>
+  );
+}
 
 export function IconItemLabel(props: React.ComponentProps<typeof Icon>) {
   const itemContext = useContext(ItemContext);
@@ -166,10 +231,21 @@ export function ItemMenuLabel({
   return (
     <Popup
       hoverable
+      onOpen={useCallback((e) => {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+      }, [])}
       on="click"
       open={openMenu ? openMenu : undefined}
       hideOnScroll
-      onClose={onMenuClose}
+      onClose={useCallback(
+        (e) => {
+          e?.preventDefault?.();
+          e?.stopPropagation?.();
+          onMenuClose?.();
+        },
+        [onMenuClose]
+      )}
       position="right center"
       trigger={useMemo(
         () => (
@@ -216,7 +292,9 @@ export function FavoriteLabel({
 }) {
   return (
     <Rating
+      className={styles.favorite_label}
       icon="heart"
+      color="red"
       onRate={onRate}
       size="massive"
       defaultRating={defaultRating}

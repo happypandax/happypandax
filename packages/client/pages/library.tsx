@@ -59,7 +59,8 @@ import { ServerGallery, ServerItem } from '../misc/types';
 import { getCookies, urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
-import { AppState, LibraryState, MiscState } from '../state';
+import { AppState, LibraryState, SearchState } from '../state';
+import _SearchState from '../state/_search';
 
 interface PageProps {
   data: Unwrap<ServerService['library']>;
@@ -68,6 +69,8 @@ interface PageProps {
   urlQuery: ReturnType<typeof urlparse>;
   requestTime: number;
 }
+
+const stateKey = 'library_page';
 
 function libraryArgs(
   ctx: NextPageContext | undefined,
@@ -100,6 +103,32 @@ function libraryArgs(
         : false,
   };
 
+  let search_options = getCookies(
+    ctx,
+    `${_SearchState.name}_options__"${stateKey}"`
+  );
+  const searchKeys = Object.keys(urlQuery.query).filter((x) =>
+    x.startsWith('s.')
+  );
+  if (searchKeys.length) {
+    searchKeys.forEach((s) => {
+      const k = s.split('.')?.[1];
+      if (
+        k &&
+        [
+          'regex',
+          'case_sensitive',
+          'match_exact',
+          'match_all_terms',
+          'children',
+        ].includes(k)
+      ) {
+        search_options = search_options ?? {};
+        search_options[k] = !!urlQuery.query[s];
+      }
+    });
+  }
+
   let p =
     page ?? ((urlQuery.query?.p ?? getCookies(ctx, 'library_page')) as number);
 
@@ -129,6 +158,7 @@ function libraryArgs(
         ((urlQuery.query?.desc ??
           getCookies(ctx, 'library_desc')) as boolean) ?? true,
     },
+    search_options,
     filter_id,
     limit:
       ((urlQuery.query?.limit ?? getCookies(ctx, 'library_limit')) as number) ??
@@ -375,8 +405,6 @@ export async function getServerSideProps(
   };
 }
 
-const stateKey = 'library_page';
-
 export default function Page({
   data: initialData,
   page: initialPage,
@@ -391,14 +419,17 @@ export default function Page({
   const [filter, setFilter] = useRecoilState(LibraryState.filter);
   const [sort, setSort] = useRecoilState(LibraryState.sort);
   const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
-  const limit = useRecoilValue(LibraryState.limit);
   const [page, setPage] = useRecoilState(LibraryState.page);
+  const limit = useRecoilValue(LibraryState.limit);
   const display = useRecoilValue(LibraryState.display);
   const infinite = useRecoilValue(LibraryState.infinite);
 
   const [infiniteKey, setInfiniteKey] = useState('');
 
-  const setRecentQuery = useSetRecoilState(MiscState.recentSearch(stateKey));
+  const [searchOptions, setSearchOptions] = useRecoilState(
+    SearchState.options(stateKey)
+  );
+  const setRecentQuery = useSetRecoilState(SearchState.recent(stateKey));
 
   const router = useRouter();
   const routerQuery = urlparse(router.asPath);
@@ -459,6 +490,13 @@ export default function Page({
       );
       set(LibraryState.page, isNaN(p) ? 1 : p);
     }
+
+    if (
+      urlQuery.query?.option !== undefined &&
+      typeof urlQuery.query.option === 'object'
+    ) {
+      set(SearchState.options(stateKey), urlQuery.query.option);
+    }
   });
 
   useEffectOnce(() => {
@@ -477,11 +515,25 @@ export default function Page({
       sort,
       filter,
       limit,
-      query,
     };
     setPage(1);
     router.replace(urlstring(q)).then(() => client.resetQueries(queryKey));
-  }, [view, item, favorites, sortDesc, sort, filter, limit, query]);
+  }, [view, item, favorites, sortDesc, sort, filter, limit]);
+
+  useUpdateEffect(() => {
+    const q = {
+      ...routerQuery?.query,
+      p: 1,
+      query,
+    };
+    setPage(1);
+    router.push(urlstring(q)).then(() => client.resetQueries(queryKey));
+  }, [query]);
+
+  useUpdateEffect(() => {
+    const q = _.mapKeys(searchOptions, (v, k) => 's.' + k);
+    router.replace(urlstring(q)).then(() => client.resetQueries(queryKey));
+  }, [searchOptions]);
 
   useUpdateEffect(() => {
     router.replace(urlstring({ display }), undefined, { shallow: true });

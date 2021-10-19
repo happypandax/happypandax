@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -29,13 +30,14 @@ import {
   Icon,
   Label,
   Modal,
-  Rating,
   Segment,
   Select,
+  Transition,
 } from 'semantic-ui-react';
 
 import Scroller from '@twiddly/scroller';
 
+import { ReaderContext } from '../client/context';
 import { Query, QueryType, useQueryType } from '../client/queries';
 import { useBodyEvent, useRefEvent, useTabActive } from '../hooks/utils';
 import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
@@ -65,6 +67,7 @@ import GalleryCard, {
   galleryCardDataFields,
 } from './item/Gallery';
 import { SimilarItemsSlider, Slider, SliderElement } from './Misc';
+import Rating from './Rating';
 
 function getOptimalImageSize() {
   const w = getClientWidth();
@@ -1036,7 +1039,6 @@ const pageFields: FieldPath<ServerPage>[] = [
 ];
 
 export default function Reader({
-  item,
   initialData,
   pageCount: initialPageCount = 0,
   windowSize: initialWindowSize = 10,
@@ -1050,11 +1052,9 @@ export default function Reader({
   wheelZoom: initialWheelZoom,
   direction: initialDirection,
   scaling: initialScaling,
-  stateKey,
   padded,
   children,
 }: {
-  item: DeepPick<ServerGallery, 'id'>;
   initialData: ReaderData[];
   pageCount?: number;
   autoNavigateInterval?: number;
@@ -1069,9 +1069,10 @@ export default function Reader({
   startPage?: number;
   wheelZoom?: boolean;
   padded?: boolean;
-  stateKey?: string;
   children?: React.ReactNode;
 }) {
+  const { item, stateKey } = useContext(ReaderContext);
+
   const scaling = useInitialRecoilValue(
     ReaderState.scaling(stateKey),
     initialScaling
@@ -1449,23 +1450,19 @@ export default function Reader({
   );
 }
 
-const gdata = (id: number, title = 'title_test', artist = 'testy') => ({
-  id,
-  preferred_title: { name: title },
-  artists: [{ preferred_name: { name: artist } }],
-});
-
 function ReadNext({
   random,
   nextChapter,
+  randomItems,
   nextInReadingList,
-  stateKey,
 }: {
   random?: DeepPick<ServerGallery, 'id'>;
+  randomItems?: GalleryCardData[];
   nextChapter?: GalleryCardData;
   nextInReadingList?: GalleryCardData;
-  stateKey?: string;
 }) {
+  const { stateKey } = useContext(ReaderContext);
+
   const router = useRouter();
   const isEnd = useRecoilValue(ReaderState.endReached(stateKey));
   const readNextCountdown = useRecoilValue(
@@ -1532,6 +1529,9 @@ function ReadNext({
       setCountDownEnabled(undefined);
     }
   }, [isEnd, nextChapter, nextInReadingList, queueData, readNextCountdown]);
+
+  const onlyRandom =
+    randomItems?.length && !queueData && !nextChapter && !nextInReadingList;
 
   return (
     <Grid
@@ -1602,35 +1602,125 @@ function ReadNext({
             </Segment>
           </Grid.Column>
         )}
+
+        {onlyRandom &&
+          randomItems.map((g) => (
+            <Grid.Column key={g.id} textAlign="center">
+              <Segment tertiary basic>
+                <GalleryCard size="medium" data={g} />
+              </Segment>
+            </Grid.Column>
+          ))}
       </Grid.Row>
     </Grid>
   );
 }
 
+function RatingIcon({
+  animation = 'shake',
+  ...props
+}: React.ComponentProps<typeof Icon> & {
+  animation?: React.ComponentProps<typeof Transition>['animation'];
+}) {
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    if (animated) {
+      setTimeout(() => setAnimated(false), 500);
+    }
+  }, [animated]);
+
+  return (
+    <Icon
+      {...props}
+      className={classNames(props.className, 'transition', {
+        [animation]: animated,
+      })}
+      onClick={useCallback(
+        (...args) => {
+          props?.onClick?.(...args);
+          setAnimated(true);
+        },
+        [props?.onClick]
+      )}
+    />
+  );
+}
+
 function EndRating() {
+  const { item } = useContext(ReaderContext);
+  const [rating, setRating] = useState(item?.rating);
+
   return (
     <Grid as={Segment} basic textAlign="center">
       <Grid.Row>
         <Grid.Column>
-          <Icon className="meh outline" size="big" />
+          <RatingIcon
+            className="meh outline"
+            animation="shake"
+            link
+            onClick={useCallback(() => setRating(rating < 2 ? 2 : 3), [rating])}
+            size="big"
+          />
         </Grid.Column>
         <Grid.Column>
-          <Icon
+          <RatingIcon
             className="meh rolling eyes outline"
+            link
+            animation="pulse"
+            onClick={useCallback(
+              () => setRating(rating < 4 ? 4 : rating < 5 ? 5 : 6),
+              [rating]
+            )}
             size="big"
             color="yellow"
           />
         </Grid.Column>
         <Grid.Column>
-          <Icon className="flushed outline" size="big" color="orange" />
+          <RatingIcon
+            link
+            animation="jiggle"
+            onClick={useCallback(() => setRating(rating < 7 ? 7 : 8), [rating])}
+            className="flushed outline"
+            size="big"
+            color="orange"
+          />
         </Grid.Column>
         <Grid.Column>
-          <Icon className="grin hearts outline" size="big" color="red" />
+          <RatingIcon
+            link
+            animation="tada"
+            onClick={useCallback(() => setRating(rating < 9 ? 9 : 10), [
+              rating,
+            ])}
+            className="grin hearts outline"
+            size="big"
+            color="red"
+          />
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
-        <Rating size="massive" icon="star" maxRating={10} />
+        <Rating
+          size="massive"
+          icon="star"
+          color="yellow"
+          rating={rating}
+          maxRating={10}
+        />
       </Grid.Row>
+      <span className="left-0 pos-absolute">
+        <Rating
+          size="massive"
+          color="red"
+          defaultRating={item?.metatags?.favorite ? 1 : 0}
+          icon="heart"
+        />
+      </span>
+      {item?.metatags?.inbox && (
+        <Button
+          primary
+          className="right-0 pos-absolute">{t`Send to library`}</Button>
+      )}
     </Grid>
   );
 }
@@ -1675,16 +1765,14 @@ export function EndContent({
   sameArtist = [],
   series = [],
   collections = [],
-  item,
-  stateKey,
   ...readNextProps
 }: {
-  item?: PartialExcept<ServerGallery, 'id'>;
   sameArtist?: GalleryCardData[];
   series?: GalleryCardData[];
   collections?: CollectionCardData[];
-  stateKey?: string;
 } & React.ComponentProps<typeof ReadNext>) {
+  const { item, stateKey } = useContext(ReaderContext);
+
   const collectionCategories = useRecoilValue(ReaderState.collectionCategories);
   const endReached = useRecoilValue(ReaderState.endReached(stateKey));
   const [_readingQueue, setReadingQueue] = useRecoilState(
@@ -1725,7 +1813,7 @@ export function EndContent({
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <ReadNext {...readNextProps} stateKey={stateKey} />
+          <ReadNext {...readNextProps} />
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
@@ -1846,9 +1934,10 @@ const directionOptions = [
 ];
 
 export function ReaderSettings({
-  stateKey,
   ...props
-}: React.ComponentProps<typeof Segment> & { stateKey?: string }) {
+}: React.ComponentProps<typeof Segment>) {
+  const { stateKey } = useContext(ReaderContext);
+
   const [fit, setFit] = useRecoilState(ReaderState.fit(stateKey));
   const [stretchFit, setStretchFit] = useRecoilState(
     ReaderState.stretchFit(stateKey)
@@ -1963,11 +2052,10 @@ export function ReaderSettings({
 }
 
 export function ReaderSettingsButton({
-  stateKey,
   ...props
-}: React.ComponentProps<typeof Button> & {
-  stateKey?: string;
-}) {
+}: React.ComponentProps<typeof Button>) {
+  const { stateKey } = useContext(ReaderContext);
+
   return (
     <Modal
       size="mini"
@@ -1984,11 +2072,10 @@ export function ReaderSettingsButton({
 }
 
 export function ReaderAutoNavigateButton({
-  stateKey,
   ...props
-}: React.ComponentProps<typeof Button> & {
-  stateKey?: string;
-}) {
+}: React.ComponentProps<typeof Button>) {
+  const { stateKey } = useContext(ReaderContext);
+
   const [autoNavigate, setAutoNavigate] = useRecoilState(
     ReaderState.autoNavigate(stateKey)
   );

@@ -207,3 +207,15 @@ html, body {
 .blur img, img.blur {
     filter: blur(30px);
 }
+
+.left-0 {
+    left: 0;
+}
+
+.right-0 {
+    right: 0;
+}
+
+.z-index-1 {
+    z-index: 1;
+}

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { Button, Icon } from 'semantic-ui-react';
 
 import { ItemType } from '../../misc/enums';
@@ -35,10 +35,10 @@ import {
   ItemMenuLabelItem,
   QueueIconLabel,
   ReadingIconLabel,
-  ReadLaterIconLabel,
   TranslucentLabel,
   UnreadIconLabel,
 } from './';
+import { AddToQueueButton, SaveForLaterButton } from './index';
 
 export type GalleryCardData = DeepPick<
   ServerGallery,
@@ -122,45 +122,6 @@ function ContinueButton({
         {t`Continue`}
       </Button>
     </Link>
-  );
-}
-
-function SaveForLaterButton() {
-  return (
-    <Button
-      size="mini"
-      onClick={useCallback((e) => {
-        e.preventDefault();
-      }, [])}>
-      <Icon name="bookmark outline" />
-      {t`Save for later`}
-    </Button>
-  );
-}
-
-function AddToQueueButton({ data }: { data: GalleryCardData }) {
-  const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
-
-  const exists = readingQueue.includes(data.id);
-
-  return (
-    <Button
-      color="red"
-      size="mini"
-      onClick={useCallback(
-        (e) => {
-          e.preventDefault();
-          if (exists) {
-            setReadingQueue(readingQueue.filter((i) => i !== data.id));
-          } else {
-            setReadingQueue([...readingQueue, data.id]);
-          }
-        },
-        [data, readingQueue]
-      )}>
-      <Icon name={exists ? 'minus' : 'plus'} />
-      {t`Queue`}
-    </Button>
   );
 }
 
@@ -249,11 +210,11 @@ export function GalleryCard({
         {(horizontal ||
           !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
           <ItemCardActionContentItem>
-            <AddToQueueButton data={data} />
+            <AddToQueueButton itemType={ItemType.Gallery} data={data} />
           </ItemCardActionContentItem>
         )}
         <ItemCardActionContentItem>
-          <SaveForLaterButton />
+          <SaveForLaterButton itemType={ItemType.Gallery} />
         </ItemCardActionContentItem>
       </ItemCardActionContent>
     ),
@@ -283,13 +244,12 @@ export function GalleryCard({
       labels={useMemo(
         () => [
           <ItemLabel key="fav" x="left" y="top">
-            <FavoriteLabel />
+            <FavoriteLabel defaultRating={data?.metatags?.favorite ? 1 : 0} />
           </ItemLabel>,
           <ItemLabel key="icons" x="right" y="top">
             {readingQueue?.includes?.(data?.id) && <QueueIconLabel />}
             {!!data?.metatags?.inbox && <InboxIconLabel />}
             {!data?.metatags?.read && !hasProgress && <UnreadIconLabel />}
-            {!!data?.metatags?.readlater && <ReadLaterIconLabel />}
             {hasProgress && (
               <ReadingIconLabel percent={data?.progress?.percent} />
             )}

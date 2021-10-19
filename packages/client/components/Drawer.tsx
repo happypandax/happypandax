@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import {
   Button,
   Dimmer,
@@ -107,6 +107,18 @@ export function QueueBoard({}: {}) {
     }
   }, [readingQueue]);
 
+  const reverse = useCallback(() => {
+    setReadingQueue(readingQueue.slice().reverse());
+    setItems(items.slice().reverse());
+  }, [readingQueue, items]);
+
+  const clear = useCallback(() => {
+    setReadingQueue([]);
+    setItems([]);
+  }, []);
+
+  const ritems = items.slice().reverse();
+
   return (
     <Ref innerRef={dropRef}>
       <Dimmer.Dimmable dimmed={isOver} className="no-padding-segment">
@@ -117,18 +129,24 @@ export function QueueBoard({}: {}) {
           <Segment
             basic
             textAlign="center"
-            className="no-padding-segment small-margins">
+            className="small-padding-segment small-margins">
             <Link
-              href={urlstring(`/item/gallery/${items?.[0].id}/page/1`)}
+              href={urlstring(`/item/gallery/${ritems?.[0].id}/page/1`)}
               passHref>
               <Button primary as="a">{t`Start reading`}</Button>
             </Link>
+            <Button
+              floated="left"
+              onClick={reverse}
+              icon={{ name: 'exchange', rotated: 'counterclockwise' }}
+            />
+            <Button floated="right" onClick={clear} icon="remove" />
           </Segment>
         )}
         <ListView
           loading={loading}
           basic
-          items={items}
+          items={ritems}
           tertiary
           className="no-margins no-padding-segment"
           itemRender={GalleryCard}
@@ -164,6 +182,7 @@ export function Drawer({
   onClose?: () => void;
 }) {
   const [drawerTab, setDrawerTab] = useRecoilState(AppState.drawerTab);
+  const readingQueue = useRecoilValue(AppState.readingQueue);
 
   return (
     <Segment id={id} className={classNames('no-padding-segment', className)}>
@@ -181,7 +200,12 @@ export function Drawer({
             {
               menuItem: {
                 key: 'queue',
-                content: t`Queue`,
+                content: (
+                  <>
+                    {t`Queue`}{' '}
+                    <Label basic color="red" content={readingQueue.length} />
+                  </>
+                ),
                 icon: 'book open',
               },
               render: () => (
@@ -248,7 +272,7 @@ export function Drawer({
               ),
             },
           ],
-          []
+          [readingQueue]
         )}
       />
       <Label as="a" attached="top right" onClick={onClose}>
