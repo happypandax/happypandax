@@ -649,6 +649,18 @@ export function ItemSearch({
     [query]
   );
 
+  const optionsEl = useMemo(
+    () => (
+      <>
+        <div>
+          <SearchOptions size={size} />
+          {!!query && <Icon name="remove" link onClick={onClear} />}
+        </div>
+      </>
+    ),
+    [query, onClear]
+  );
+
   return (
     <SearchContext.Provider
       value={useMemo(() => ({ query, stateKey, ref }), [query])}>
@@ -663,23 +675,7 @@ export function ItemSearch({
               onBlur={onBlur}
               className={classNames({ secondary: transparent })}
               placeholder={placeholder}
-              label={
-                showOptions
-                  ? useMemo(
-                      () => (
-                        <>
-                          <div>
-                            <SearchOptions size={size} />
-                            {!!query && (
-                              <Icon name="remove" link onClick={onClear} />
-                            )}
-                          </div>
-                        </>
-                      ),
-                      [query, onClear]
-                    )
-                  : undefined
-              }
+              label={showOptions ? optionsEl : undefined}
               icon={useMemo(
                 () => ({ name: 'search', link: true, onClick: onSubmit }),
                 []

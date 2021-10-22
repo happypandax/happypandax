@@ -1,5 +1,8 @@
 {
-  "presets": [["next/babel", { "class-properties": { "loose": true } }]],
+  "assumptions": {
+    "setPublicClassFields": true
+  },
+  "presets": [["next/babel", {}]],
   "plugins": [
     ["lodash", {}],
     ["@babel/plugin-proposal-decorators", { "legacy": true }],

@@ -19,6 +19,7 @@ import {
   Image,
   Label,
   Menu,
+  Rating,
   Segment,
 } from 'semantic-ui-react';
 
@@ -40,6 +41,7 @@ import {
   LastUpdatedLabel,
   NamesTable,
   ParodyLabels,
+  RatingLabel,
   TagsTable,
   UrlList,
 } from '../dataview/Common';
@@ -343,7 +345,9 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
                 </Grid.Row>
                 <Grid.Row>
                   <LabelFields>
-                    <LabelField label={t`Rating`}>test</LabelField>
+                    <LabelField label={t`Rating`}>
+                      <RatingLabel size="massive" />
+                    </LabelField>
                     <LabelField label={t`Artist`}>
                       <ArtistLabels />
                     </LabelField>
@@ -412,7 +416,14 @@ export function ItemMenu({
 
   return (
     <MainMenu absolutePosition size="mini" connectionItem={false}>
-      <MenuItem icon="heart" color="red"></MenuItem>
+      <MenuItem
+        as={Rating}
+        icon="heart"
+        size="massive"
+        color="red"
+        defaultRating={data?.metatags?.favorite}
+        maxRating={1}
+      />
       {children}
       <Menu.Menu position="right">
         {readingQueue?.includes?.(data?.id) && (

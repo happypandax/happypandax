@@ -236,7 +236,11 @@ export function GroupingLabel() {
   );
 }
 
-export function RatingLabel() {
+export function RatingLabel({
+  size = 'huge',
+}: {
+  size?: React.ComponentProps<typeof Rating>;
+}) {
   const ctx = useContext(DataContext);
   const [data, setData] = useRecoilState<
     PartialExcept<ServerGallery | ServerGrouping, 'id'>
@@ -245,7 +249,7 @@ export function RatingLabel() {
   return (
     <Rating
       icon="star"
-      size="huge"
+      size={size}
       color="yellow"
       defaultRating={data?.rating}
       maxRating={10}

@@ -111,6 +111,8 @@ export function GroupingCard({
 
   const is_series = (data?.gallery_count ?? 0) > 1;
 
+  const is_gallery = !is_series && data?.galleries?.[0];
+
   const actions = useCallback(
     () => (
       <ItemCardActionContent>
@@ -128,7 +130,52 @@ export function GroupingCard({
     [data, size, horizontal]
   );
 
-  if (!is_series && data?.galleries?.[0]) {
+  const labels = useMemo(
+    () =>
+      is_gallery
+        ? []
+        : [
+            <ItemLabel key="fav" x="left" y="top">
+              <FavoriteLabel
+                defaultRating={
+                  data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
+                }
+              />
+            </ItemLabel>,
+            <ItemLabel key="icons" x="right" y="top">
+              {data?.galleries?.every?.((g) => readingQueue.includes(g.id)) && (
+                <QueueIconLabel />
+              )}
+              {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
+                <InboxIconLabel />
+              )}
+              <ActivityLabel />
+            </ItemLabel>,
+            <ItemLabel key="menu" x="right" y="bottom">
+              {horizontal && (
+                <GalleryCountLabel as={TranslucentLabel}>
+                  {data?.gallery_count}
+                </GalleryCountLabel>
+              )}
+              {!horizontal && (
+                <TranslucentLabel circular>
+                  {data?.gallery_count}
+                </TranslucentLabel>
+              )}
+              <GroupingMenu />
+            </ItemLabel>,
+          ],
+    [horizontal, data, readingQueue]
+  );
+
+  const image = useCallback(
+    ({ children }: { children?: React.ReactNode }) => (
+      <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
+    ),
+    [data.profile]
+  );
+
+  if (is_gallery) {
     return (
       <GalleryCard
         size={size}
@@ -171,46 +218,8 @@ export function GroupingCard({
           size={size}
           disableModal={true}
           actionContent={actionContent ?? actions}
-          labels={useMemo(
-            () => [
-              <ItemLabel key="fav" x="left" y="top">
-                <FavoriteLabel
-                  defaultRating={
-                    data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
-                  }
-                />
-              </ItemLabel>,
-              <ItemLabel key="icons" x="right" y="top">
-                {data?.galleries?.every?.((g) =>
-                  readingQueue.includes(g.id)
-                ) && <QueueIconLabel />}
-                {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
-                  <InboxIconLabel />
-                )}
-                <ActivityLabel />
-              </ItemLabel>,
-              <ItemLabel key="menu" x="right" y="bottom">
-                {horizontal && (
-                  <GalleryCountLabel as={TranslucentLabel}>
-                    {data?.gallery_count}
-                  </GalleryCountLabel>
-                )}
-                {!horizontal && (
-                  <TranslucentLabel circular>
-                    {data?.gallery_count}
-                  </TranslucentLabel>
-                )}
-                <GroupingMenu />
-              </ItemLabel>,
-            ],
-            [horizontal, data, readingQueue]
-          )}
-          image={useCallback(
-            ({ children }: { children?: React.ReactNode }) => (
-              <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
-            ),
-            [data.profile]
-          )}>
+          labels={labels}
+          image={image}>
           <ItemCardContent
             title={data?.name ?? ''}
             subtitle={artists.map((a) => (

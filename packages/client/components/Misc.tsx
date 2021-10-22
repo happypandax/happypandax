@@ -284,6 +284,67 @@ export function Slider({
     }
   }, [children]);
 
+  const onLabelClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (initialShow === undefined) {
+        setOpen(!open);
+      }
+    },
+    [open]
+  );
+
+  const onSwiper = useCallback((s) => {
+    swiper.current = s;
+  }, []);
+
+  const onAutoplay = useMemo(
+    () =>
+      autoplay
+        ? {
+            delay: 10000,
+            pauseOnMouseEnter: true,
+            disableOnInteraction: false,
+            stopOnLastSlide: false,
+          }
+        : undefined,
+    [autoplay]
+  );
+
+  const navigation = useMemo(
+    () => ({
+      nextEl: '.slide-next-right',
+      prevEl: '.slide-next-left',
+    }),
+    []
+  );
+
+  const breakpoints = useMemo(
+    () => ({
+      460: {
+        slidesPerView: 2,
+        slidesPerGroup: 2,
+      },
+      675: {
+        slidesPerView: 3,
+        slidesPerGroup: 3,
+      },
+      980: {
+        slidesPerView: 4,
+        slidesPerGroup: 3,
+      },
+      1200: {
+        slidesPerView: 5,
+        slidesPerGroup: 3,
+      },
+      1800: {
+        slidesPerView: 6,
+        slidesPerGroup: 3,
+      },
+    }),
+    []
+  );
+
   return (
     <Segment
       basic
@@ -294,15 +355,7 @@ export function Slider({
           color={color}
           attached="top"
           as={initialShow === false ? undefined : 'a'}
-          onClick={useCallback(
-            (e) => {
-              e.preventDefault();
-              if (initialShow === undefined) {
-                setOpen(!open);
-              }
-            },
-            [open]
-          )}>
+          onClick={onLabelClick}>
           <Icon name={open ? 'caret down' : 'caret right'} />
           {label}
           {showCount && <Label.Detail>{items.length}</Label.Detail>}
@@ -312,57 +365,14 @@ export function Slider({
         {!items.length && <EmptySegment />}
         {items && (
           <Swiper
-            onSwiper={useCallback((s) => {
-              swiper.current = s;
-            }, [])}
-            autoplay={useMemo(
-              () =>
-                autoplay
-                  ? {
-                      delay: 10000,
-                      pauseOnMouseEnter: true,
-                      disableOnInteraction: false,
-                      stopOnLastSlide: false,
-                    }
-                  : undefined,
-              [autoplay]
-            )}
+            onSwiper={onSwiper}
+            autoplay={onAutoplay}
             loop={infinite}
             slidesPerView={3}
             watchOverflow
             touchStartPreventDefault={touchStartPreventDefault}
-            navigation={useMemo(
-              () => ({
-                nextEl: '.slide-next-right',
-                prevEl: '.slide-next-left',
-              }),
-              []
-            )}
-            breakpoints={useMemo(
-              () => ({
-                460: {
-                  slidesPerView: 2,
-                  slidesPerGroup: 2,
-                },
-                675: {
-                  slidesPerView: 3,
-                  slidesPerGroup: 3,
-                },
-                980: {
-                  slidesPerView: 4,
-                  slidesPerGroup: 3,
-                },
-                1200: {
-                  slidesPerView: 5,
-                  slidesPerGroup: 3,
-                },
-                1800: {
-                  slidesPerView: 6,
-                  slidesPerGroup: 3,
-                },
-              }),
-              []
-            )}>
+            navigation={navigation}
+            breakpoints={breakpoints}>
             {children}
             <SliderNav direction="left" />
             <SliderNav direction="right" />
@@ -395,11 +405,13 @@ export function LabelAccordion({
   detail?: React.ReactNode;
 } & React.ComponentProps<typeof Segment>) {
   const [show, setShow] = stateKey
-    ? useInitialRecoilState(
+    ? // eslint-disable-next-line react-hooks/rules-of-hooks
+      useInitialRecoilState(
         MiscState.labelAccordionOpen(stateKey),
         initialShow ?? defaultShow
       )
-    : useState(initialShow ?? defaultShow);
+    : // eslint-disable-next-line react-hooks/rules-of-hooks
+      useState(initialShow ?? defaultShow);
 
   return (
     <Segment

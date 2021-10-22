@@ -74,6 +74,7 @@ export function Notifications() {
       {!notifications.length && <EmptySegment />}
       {notifications.map((d) => (
         <Notification
+          key={d.date?.getTime?.()}
           type={d.type}
           title={d.title}
           description={d.body}
@@ -123,6 +124,7 @@ export function NotificationAlert({
       className="no-padding-segment">
       {notificationAlert.map((d) => (
         <Notification
+          key={d?.date?.getTime()}
           onClose={() => {
             setNotificationAlert(
               notificationAlert.filter(

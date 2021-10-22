@@ -1,6 +1,8 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from 'semantic-ui-react';
 
 import { ReaderContext } from '../../../../../client/context';
 import {
@@ -290,6 +292,20 @@ export default function Page(props: PageProps) {
   return (
     <PageLayout
       basicDrawerButton
+      bottomZoneLeftBottom={useMemo(
+        () => (
+          <Link href={`/item/gallery/${props.item.id}`} passHref>
+            <Button
+              as="a"
+              icon={{ name: 'level up alternate', flipped: 'horizontally' }}
+              circular
+              color="blue"
+              basic
+            />
+          </Link>
+        ),
+        [props.item]
+      )}
       bottomZone={useMemo(() => {
         return (
           <BottomZoneItem x="right" y="bottom">

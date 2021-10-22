@@ -245,6 +245,11 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
     setDisplay(value);
   }, []);
 
+  const externalViewerChange = useCallback((ev, { checked }) => {
+    ev.preventDefault();
+    setExternalViewer(checked);
+  }, []);
+
   return (
     <Modal trigger={trigger} dimmer={false}>
       <Modal.Header>{t`Library Settings`}</Modal.Header>
@@ -368,10 +373,7 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
               <Checkbox
                 toggle
                 checked={externalViewer}
-                onChange={useCallback((ev, { checked }) => {
-                  ev.preventDefault();
-                  setExternalViewer(checked);
-                }, [])}
+                onChange={externalViewerChange}
               />
             </Form.Field>
           )}
@@ -455,8 +457,12 @@ export default function Page({
     }
   );
 
-  const items = data?.pages?.flat?.().flatMap?.((i) => i.data.items);
-  const count = data?.pages?.[0]?.data?.count;
+  const items = infiniteKey
+    ? data?.pages?.flat?.().flatMap?.((i) => i.data.items)
+    : initialData.items;
+  const count = infiniteKey
+    ? data?.pages?.[0]?.data?.count
+    : initialData?.count;
 
   const initialQueryState = useRecoilTransaction_UNSTABLE(({ set }) => () => {
     if (urlQuery.query?.fav !== undefined) {
@@ -515,10 +521,12 @@ export default function Page({
       sort,
       filter,
       limit,
+      ..._.mapKeys(searchOptions, (v, k) => 's.' + k),
     };
     setPage(1);
+    setInfiniteKey('');
     router.replace(urlstring(q)).then(() => client.resetQueries(queryKey));
-  }, [view, item, favorites, sortDesc, sort, filter, limit]);
+  }, [view, item, favorites, sortDesc, sort, filter, limit, searchOptions]);
 
   useUpdateEffect(() => {
     const q = {
@@ -527,13 +535,9 @@ export default function Page({
       query,
     };
     setPage(1);
+    setInfiniteKey('');
     router.push(urlstring(q)).then(() => client.resetQueries(queryKey));
   }, [query]);
-
-  useUpdateEffect(() => {
-    const q = _.mapKeys(searchOptions, (v, k) => 's.' + k);
-    router.replace(urlstring(q)).then(() => client.resetQueries(queryKey));
-  }, [searchOptions]);
 
   useUpdateEffect(() => {
     router.replace(urlstring({ display }), undefined, { shallow: true });
@@ -587,7 +591,7 @@ export default function Page({
 
   const onPageChange = useCallback(() => {
     setInfiniteKey('');
-  }, [infinite]);
+  }, []);
 
   const View = display === 'card' ? CardView : ListView;
 

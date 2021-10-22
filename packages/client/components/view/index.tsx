@@ -199,44 +199,45 @@ export function ViewAutoSizer({
     }
   }, [sidebarWidth]);
 
-  const elFunc = !disableWindowScroll
-    ? useCallback(
-        ({ width }) => {
-          return (
-            <WindowScroller>
-              {({ height, isScrolling, onChildScroll, scrollTop }) => (
-                <View
-                  items={items}
-                  itemRender={itemRender}
-                  height={height}
-                  width={width}
-                  isScrolling={isScrolling}
-                  onScroll={onChildScroll}
-                  scrollTop={scrollTop}
-                  autoHeight
-                  {...viewProps}
-                />
-              )}
-            </WindowScroller>
-          );
-        },
-        [items, itemRender]
-      )
-    : useCallback(
-        ({ height, width }) => {
-          return (
+  const winFunc = useCallback(
+    ({ width }) => {
+      return (
+        <WindowScroller>
+          {({ height, isScrolling, onChildScroll, scrollTop }) => (
             <View
               items={items}
               itemRender={itemRender}
               height={height}
               width={width}
+              isScrolling={isScrolling}
+              onScroll={onChildScroll}
+              scrollTop={scrollTop}
+              autoHeight
               {...viewProps}
             />
-          );
-        },
-        [items, itemRender]
+          )}
+        </WindowScroller>
       );
+    },
+    [items, itemRender]
+  );
 
+  const func = useCallback(
+    ({ height, width }) => {
+      return (
+        <View
+          items={items}
+          itemRender={itemRender}
+          height={height}
+          width={width}
+          {...viewProps}
+        />
+      );
+    },
+    [items, itemRender]
+  );
+
+  const elFunc = !disableWindowScroll ? winFunc : func;
   return (
     <AutoSizer disableWidth={disableWidth} disableHeight={!disableWindowScroll}>
       {elFunc}

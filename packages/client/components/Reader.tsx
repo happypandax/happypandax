@@ -1114,6 +1114,8 @@ export default function Reader({
     startPage
   );
 
+  const [countLabelVisible, setCountLabelVisible] = useState(false);
+
   const [pageFocus, setPageFocus] = useState(0);
   const [pages, setPages] = useState(initialData ?? []);
 
@@ -1176,6 +1178,12 @@ export default function Reader({
   }, [data, initialData]);
 
   //
+
+  useEffect(() => {
+    setCountLabelVisible(true);
+    const t = setTimeout(() => setCountLabelVisible(false), 4000);
+    return () => clearTimeout(t);
+  }, [pageNumber, pageCount]);
 
   useEffect(() => {
     if (pages.length && pageWindow.length) {
@@ -1417,11 +1425,15 @@ export default function Reader({
         autoNavigateInterval={autoNavigateInterval}
         label={useMemo(
           () => (
-            <Label size="big" className="translucent-black">
-              {pageNumber}/{pageCount}
-            </Label>
+            <>
+              {countLabelVisible && (
+                <Label size="big" className="translucent-black">
+                  {pageNumber}/{pageCount}
+                </Label>
+              )}
+            </>
           ),
-          [pageNumber, pageCount]
+          [pageNumber, pageCount, countLabelVisible]
         )}
         focusChild={pageFocus}
         onFocusChild={onFocusChild}
@@ -1716,11 +1728,12 @@ function EndRating() {
           icon="heart"
         />
       </span>
-      {item?.metatags?.inbox && (
-        <Button
-          primary
-          className="right-0 pos-absolute">{t`Send to library`}</Button>
-      )}
+      <div className="right-0 pos-absolute">
+        <Link href={`/item/gallery/${item.id}`} passHref>
+          <Button as="a" icon={{ name: 'level up alternate' }} basic />
+        </Link>
+        {item?.metatags?.inbox && <Button primary>{t`Send to library`}</Button>}
+      </div>
     </Grid>
   );
 }
