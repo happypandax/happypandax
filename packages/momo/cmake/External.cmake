@@ -2,39 +2,21 @@ include(FindGit)
 find_package(Git)
 
 if (NOT Git_FOUND)
-	message(FATAL_ERROR "Git not found!")
+    message(FATAL_ERROR "Git not found!")
 endif ()
 
-include (ExternalProject)
+include (FetchContent)
 
-set (SQLPP_POSTGRESQL "SQLPP11_POSTGRESQL")
-ExternalProject_Add (
-	${SQLPP_POSTGRESQL}
-	
-	PREFIX            ${SQLPP_POSTGRESQL}
-	GIT_REPOSITORY https://github.com/dgel/sqlpp11-connector-postgresql
-	GIT_TAG        add_pic_static_lib
-	GIT_SHALLOW    ON
-	
-	BUILD_ALWAYS      OFF
-	SOURCE_DIR        ./build/ext/${SQLPP_POSTGRESQL}
-	INSTALL_DIR       ${CMAKE_CURRENT_BINARY_DIR}/ext/${SQLPP_POSTGRESQL}
+set (Sqlpp11_PostgeSQL "Sqlpp11_PostgeSQL")
 
-	CMAKE_CACHE_ARGS
-			-DBUILD_SHARED_LIBS:BOOL=ON
-			-DENABLE_STATIC_RUNTIME:BOOL=OFF
-			-DBUILD_EXAMPLES:BOOL=ON
-			-DSqlpp11_DIR:PATH=${Sqlpp11_DIR}
-			-Ddate_DIR:PATH=${date_DIR}
-			-DCMAKE_TOOLCHAIN_FILE:PATH=${CMAKE_TOOLCHAIN_FILE}
-			-DVCPKG_MANIFEST_INSTALL:BOOL=ON
-			-DVCPKG_TARGET_TRIPLET:PATH=${VCPKG_TARGET_TRIPLET}
-			-DVCPKG_MANIFEST_DIR:PATH=${VCPKG_MANIFEST_DIR}
-			-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-			-DCMAKE_MAKE_PROGRAM:PATH=${CMAKE_MAKE_PROGRAM}
-
-	BUILD_COMMAND     ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+FetchContent_Declare(${Sqlpp11_PostgeSQL}
+    GIT_REPOSITORY https://github.com/dgel/sqlpp11-connector-postgresql
+    GIT_TAG add_pic_static_lib
+    GIT_SHALLOW    ON
+    SOURCE_DIR        ./build/ext/${Sqlpp11_PostgeSQL}
+    INSTALL_DIR       ${CMAKE_CURRENT_BINARY_DIR}/ext/${Sqlpp11_PostgeSQL}
 )
+FetchContent_MakeAvailable(${Sqlpp11_PostgeSQL})
 
-message("Added external library: " ${SQLPP_POSTGRESQL})
+message("Added external library: " ${Sqlpp11_PostgeSQL})
 
