@@ -48,13 +48,7 @@ import {
   ServerGallery,
   ServerPage,
 } from '../misc/types';
-import {
-  getClientWidth,
-  getScreenWidth,
-  update,
-  urlparse,
-  urlstring,
-} from '../misc/utility';
+import { getClientWidth, update, urlparse, urlstring } from '../misc/utility';
 import {
   AppState,
   ReaderState,
@@ -71,10 +65,9 @@ import Rating from './Rating';
 
 function getOptimalImageSize() {
   const w = getClientWidth();
-  const s = getScreenWidth();
-  if (w > 2400 || s > 2400) return ImageSize.Original;
-  if (w > 1600 || s > 1600) return ImageSize.x2400;
-  else if (w > 1280 || s > 1600) return ImageSize.x1600;
+  if (w > 2400) return ImageSize.Original;
+  if (w > 1600) return ImageSize.x2400;
+  else if (w > 1280) return ImageSize.x1600;
   else if (w > 980) return ImageSize.x1280;
   else if (w > 768) return ImageSize.x960;
   else return ImageSize.x768;
@@ -187,6 +180,12 @@ function CanvasImage({
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [scroller, setScroller] = useState<Scroller>();
   const [itemFit, setItemFit] = useState<ItemFit>();
+  const [dimensions, setDimensions] = useState({
+    clientWidth: 0,
+    clientHeight: 0,
+    contentWidth: 0,
+    contentHeight: 0,
+  });
 
   const itemContained = useCallback(
     ({ left, top, zoom }, checkLeft = true, checkTop = true) => {
@@ -218,21 +217,26 @@ function CanvasImage({
   );
 
   useIsomorphicLayoutEffect(() => {
-    const { offsetHeight, offsetWidth } = refContent.current;
     if (fit === ItemFit.Contain) {
+      const { offsetHeight, offsetWidth } = refContent.current;
       if (offsetWidth >= offsetHeight) {
         setItemFit(ItemFit.Width);
       } else {
         setItemFit(ItemFit.Height);
       }
     } else if (fit === ItemFit.Auto) {
-      if (offsetHeight > offsetWidth) {
-        setItemFit(ItemFit.Width);
-      } else if (offsetWidth > offsetHeight) {
-        setItemFit(ItemFit.Height);
-      } else {
-        setItemFit(undefined);
-      }
+      const setAutoFit = () => {
+        const { offsetHeight, offsetWidth } = refContent.current;
+        if (offsetHeight > offsetWidth) {
+          setItemFit(ItemFit.Width);
+        } else if (offsetWidth > offsetHeight) {
+          setItemFit(ItemFit.Height);
+        } else {
+          setItemFit(undefined);
+        }
+      };
+      refContent.current.addEventListener('load', setAutoFit);
+      return () => refContent.current.removeEventListener('load', setAutoFit);
     } else {
       setItemFit(fit);
     }
@@ -273,7 +277,7 @@ function CanvasImage({
       //   : 0;
     }
 
-    // console.log([left, top, offsetLeft, offsetTop, zoom]);
+    // console.log('scrolling', [left, top, offsetLeft, offsetTop, zoom]);
 
     // console.log([left - offsetLeft, top - offsetTop, zoom]);
     scrollRender(refContent.current, left - offsetLeft, top - offsetTop, zoom);
@@ -293,6 +297,7 @@ function CanvasImage({
     });
 
     setScroller(s);
+    setDimensions(s.getDimensions());
   }, [onPublish]);
 
   // lock scrolling in direction where item is fully contained
@@ -308,7 +313,7 @@ function CanvasImage({
     } else {
       scroller.options.scrollingY = true;
     }
-  }, [zoomLevel, scroller]);
+  }, [zoomLevel, scroller, dimensions]);
 
   const resetZoom = useCallback(
     (e: React.MouseEvent<HTMLElement> = undefined) => {
@@ -335,15 +340,25 @@ function CanvasImage({
   useIsomorphicLayoutEffect(() => {
     if (!scroller) return;
 
-    const container = ref.current;
-    const content = refContent.current;
     scroller.setPosition(0, 0);
-    scroller.setDimensions(
-      container.clientWidth,
-      container.clientHeight,
-      content.offsetWidth * 1.02,
-      content.offsetHeight * 1.02
-    );
+    const setDims = () => {
+      const container = ref.current;
+      const content = refContent.current;
+      scroller.setDimensions(
+        container.clientWidth,
+        container.clientHeight,
+        content.offsetWidth * 1.01,
+        content.offsetHeight * 1.01
+      );
+      setDimensions(scroller.getDimensions());
+    };
+    if (refContent.current.complete) {
+      setDims();
+    }
+    refContent.current.addEventListener('load', setDims);
+    return () => {
+      refContent.current.removeEventListener('load', setDims);
+    };
   }, [scroller, refWidth, refHeight, itemFit]);
 
   // check whether item panning should be possible
@@ -396,7 +411,7 @@ function CanvasImage({
   const onScrollPanEnd = useCallback(
     _.debounce((e: WheelEvent) => {
       refIsScrollPanning.current = false;
-    }, 250),
+    }, 150),
     [scroller]
   );
 
@@ -475,7 +490,7 @@ function CanvasImage({
           e.preventDefault();
           e.stopPropagation();
 
-          // sroll in the reading direction (this will always scroll in y-axis since we're assuming height > width for manga)
+          // scroll in the reading direction (this will always scroll in y-axis since we're assuming height > width for manga)
           // can be improved to take into account reading direction, item fit and aspect ratio
           switch (direction) {
             case ReadingDirection.LeftToRight:
@@ -506,7 +521,7 @@ function CanvasImage({
         }
       }
     },
-    { passive: false },
+    { passive: true },
     [scroller, wheelZoom]
   );
 
@@ -681,7 +696,7 @@ function Canvas({
       scroller.doTouchStart(e.touches, e.timeStamp);
       e.preventDefault();
     },
-    { passive: false },
+    { passive: true },
     [scroller],
     () => !!window.ontouchstart
   );
@@ -709,7 +724,7 @@ function Canvas({
   const onScrollPanEnd = useCallback(
     _.debounce((e: WheelEvent) => {
       refIsScrollPanning.current = false;
-    }, 250),
+    }, 150),
     [scroller]
   );
 
@@ -861,6 +876,7 @@ function Canvas({
     autoNavigateInterval,
   ]);
 
+  // scroll with wheel when zoom is disabled
   useRefEvent(
     ref,
     'wheel',
@@ -922,7 +938,7 @@ function Canvas({
 
       onScrollPanEnd(e);
     },
-    { passive: false },
+    { passive: true },
     [scroller, onScrollPanEnd, direction, wheelZoom, checkIfEnd]
   );
 
@@ -1194,7 +1210,6 @@ export default function Reader({
 
   useEffect(() => {
     if (pageNumber > pageCount) {
-      console.log([pageNumber, pageCount, pageFocus]);
       setPageNumber(1);
     }
   }, [pageCount]);
@@ -2078,7 +2093,7 @@ export function ReaderSettingsButton({
         <Icon name="setting" /> {t`Reader Settings`}
       </Modal.Header>
       <Modal.Content>
-        <ReaderSettings stateKey={stateKey} className="no-padding-segment" />
+        <ReaderSettings className="no-padding-segment" />
       </Modal.Content>
     </Modal>
   );

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { CommandState } from '../misc/enums';
 import { CommandID, CommandIDKey } from '../misc/types';
@@ -243,31 +243,45 @@ export function useCommand<T = unknown>(
     stopOnUpdate?: boolean;
   }
 ) {
+  const optionsRef = useRef<{
+    stopOnUnmount?: boolean;
+    stopOnUpdate?: boolean;
+  }>(options);
+  const cmdRef = useRef<Command<T> | undefined>();
   const [cmd, setCmd] = useState<Command<T>>();
 
   useEffect(() => {
-    if (cmd) {
-      if (options.stopOnUnmount) {
-        cmd.stop();
+    optionsRef.current = options;
+  }, [options]);
+
+  useEffect(() => {
+    return () => {
+      if (cmdRef.current) {
+        if (optionsRef.current?.stopOnUnmount !== false) {
+          cmdRef.current.stop();
+        }
+        cmdRef.current.stopTracking();
       }
-      cmd.stopTracking();
-    }
+    };
   }, []);
 
   useEffect(
     () => {
       if (cmd) {
-        if (options.stopOnUpdate) {
+        if (optionsRef.current?.stopOnUpdate) {
           cmd.stop();
         }
         cmd.stopTracking();
       }
 
+      let c;
       if (command_ids) {
-        setCmd(new Command(command_ids, options));
+        c = new Command(command_ids, options);
       } else {
-        setCmd(undefined);
+        c = undefined;
       }
+      cmdRef.current = c;
+      setCmd(c);
     },
     typeof command_ids === 'number' ? [command_ids] : (command_ids as number[])
   );

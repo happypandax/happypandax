@@ -2607,7 +2607,7 @@ __metadata:
     "@storybook/manager-webpack5": ^6.3.1
     "@storybook/react": ^6.3.1
     "@ts-stack/markdown": ^1.4.0
-    "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66"
+    "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=08d289ff7ce0d817240769936f7db4dfba9ba2b6"
     "@types/classnames": ^2.2.3
     "@types/jest": ^27.0.1
     "@types/lodash": ^4.14.108
@@ -4905,10 +4905,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@twiddly/scroller@https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66":
-  version: 1.1.0
-  resolution: "@twiddly/scroller@https://github.com/twiddli/scroller.git#commit=d2ed782826ab9ade3ed7250207efbe520ec1ca66"
-  checksum: d820a59160e398ec65f53b8044ef1cdef17e9333e48eb3d315a361c156f9e22e4157668fba37685a9bc824e3d6bb31ca0c6df7a3b3b4af47df2911ad57e0a263
+"@twiddly/scroller@https://github.com/twiddli/scroller.git#commit=08d289ff7ce0d817240769936f7db4dfba9ba2b6":
+  version: 1.1.1
+  resolution: "@twiddly/scroller@https://github.com/twiddli/scroller.git#commit=08d289ff7ce0d817240769936f7db4dfba9ba2b6"
+  checksum: 560134bb45e20db69d896683ae3c5c675c32d624c1a471cd19998c74180fcddbd3aeafcccfcf37f4225fa949cbfce4467b10cfe8fde10a107f12b2bdb58be7d2
   languageName: node
   linkType: hard
 

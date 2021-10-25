@@ -290,36 +290,36 @@ export default function Page(props: PageProps) {
   const stateKey = 'page';
 
   return (
-    <PageLayout
-      basicDrawerButton
-      bottomZoneLeftBottom={useMemo(
-        () => (
-          <Link href={`/item/gallery/${props.item.id}`} passHref>
-            <Button
-              as="a"
-              icon={{ name: 'level up alternate', flipped: 'horizontally' }}
-              circular
-              color="blue"
-              basic
-            />
-          </Link>
-        ),
-        [props.item]
-      )}
-      bottomZone={useMemo(() => {
-        return (
-          <BottomZoneItem x="right" y="bottom">
-            <ReaderAutoNavigateButton />
-            <ReaderSettingsButton />
-          </BottomZoneItem>
-        );
-      }, [])}>
-      <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
-      <ReaderContext.Provider
-        value={useMemo(() => ({ item: props.item, stateKey }), [
-          props.item,
-          stateKey,
-        ])}>
+    <ReaderContext.Provider
+      value={useMemo(() => ({ item: props.item, stateKey }), [
+        props.item,
+        stateKey,
+      ])}>
+      <PageLayout
+        basicDrawerButton
+        bottomZoneLeftBottom={useMemo(
+          () => (
+            <Link href={`/item/gallery/${props.item.id}`} passHref>
+              <Button
+                as="a"
+                icon={{ name: 'level up alternate', flipped: 'horizontally' }}
+                circular
+                color="blue"
+                basic
+              />
+            </Link>
+          ),
+          [props.item]
+        )}
+        bottomZone={useMemo(() => {
+          return (
+            <BottomZoneItem x="right" y="bottom">
+              <ReaderAutoNavigateButton />
+              <ReaderSettingsButton />
+            </BottomZoneItem>
+          );
+        }, [])}>
+        <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
         <Reader
           pageCount={props.data.count}
           startPage={startPage}
@@ -336,7 +336,7 @@ export default function Page(props: PageProps) {
             sameArtist={props.sameArtist}
           />
         </Reader>
-      </ReaderContext.Provider>
-    </PageLayout>
+      </PageLayout>
+    </ReaderContext.Provider>
   );
 }
