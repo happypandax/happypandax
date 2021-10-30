@@ -35,7 +35,6 @@ import {
   ItemCardActionContentItem,
   ItemCardContent,
   QueueIconLabel,
-  SaveForLaterButton,
   TranslucentLabel,
 } from './index';
 
@@ -122,9 +121,6 @@ export function GroupingCard({
             <AddToQueueButton itemType={ItemType.Grouping} data={data} />
           </ItemCardActionContentItem>
         )}
-        <ItemCardActionContentItem>
-          <SaveForLaterButton itemType={ItemType.Grouping} />
-        </ItemCardActionContentItem>
       </ItemCardActionContent>
     ),
     [data, size, horizontal]

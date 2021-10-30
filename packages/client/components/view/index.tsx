@@ -7,6 +7,7 @@ import { useRecoilValue } from 'recoil';
 import {
   Grid,
   Header,
+  Loader,
   Pagination,
   Segment,
   Sidebar,
@@ -23,7 +24,7 @@ export function ViewPagination({
   totalPages,
   hrefTemplate,
 }: {
-  onPageChange?: (ev, n: numbeer) => void;
+  onPageChange?: (ev, n: number) => void;
   activePage?: React.ComponentProps<typeof Pagination>['activePage'];
   totalPages?: React.ComponentProps<typeof Pagination>['totalPages'];
   hrefTemplate?: string;
@@ -37,7 +38,6 @@ export function ViewPagination({
     <Pagination
       totalPages={totalPages ?? 1}
       activePage={activePage}
-      onPageChange={onPageChange}
       pageItem={useCallback(
         (Item, props, test) => {
           const pageUrl = hrefTemplate
@@ -93,7 +93,7 @@ export function ViewPagination({
         });
 
         return {
-          'aria-label': t`First  item`,
+          'aria-label': t`First item`,
           content: '«',
           href,
           onClick: (ev) => {
@@ -259,6 +259,7 @@ export function PaginatedView({
   activePage = 1,
   onPageChange,
   fluid,
+  loading,
   hrefTemplate,
   infinite,
   onLoadMore: loadMore,
@@ -273,14 +274,21 @@ export function PaginatedView({
   fluid?: boolean;
   infinite?: boolean;
   onLoadMore?: () => void;
+  loading?: boolean;
   totalItemCount?: number;
   itemCount?: number;
   itemsPerPage?: number;
   bottomPagination?: boolean;
 } & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
   React.ComponentProps<typeof Segment>) {
+  const [canLoadMore, setCanLoadMore] = useState(false);
   const onLoadMore = useCallback(
-    loadMore ? _.throttle(loadMore, 500) : undefined,
+    loadMore
+      ? _.throttle(() => {
+          loadMore();
+          setCanLoadMore(false);
+        }, 500)
+      : undefined,
     [loadMore]
   );
 
@@ -319,6 +327,10 @@ export function PaginatedView({
     </Grid.Row>
   );
 
+  useEffect(() => {
+    setCanLoadMore(true);
+  }, [itemCount, activePage]);
+
   return (
     <Sidebar.Pushable
       as={Segment}
@@ -346,6 +358,7 @@ export function PaginatedView({
               (e, { calculations: { pixelsPassed, height } }) => {
                 const pixelsLeft = height - pixelsPassed - getClientHeight();
                 if (
+                  canLoadMore &&
                   infinite &&
                   itemCount &&
                   itemCount * +activePage < totalItemCount &&
@@ -355,10 +368,15 @@ export function PaginatedView({
                   onLoadMore();
                 }
               },
-              [infinite, onLoadMore]
+              [infinite, canLoadMore, onLoadMore]
             )}>
             {children}
           </Visibility>
+          {loading && (
+            <Grid.Row>
+              <Loader active={loading} />
+            </Grid.Row>
+          )}
           {bottomPagination && pagination && (
             <Grid.Row centered>{getPagination()}</Grid.Row>
           )}

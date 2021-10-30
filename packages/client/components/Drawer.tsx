@@ -206,7 +206,7 @@ export function Drawer({
                     <Label basic color="red" content={readingQueue.length} />
                   </>
                 ),
-                icon: 'book open',
+                icon: 'bookmark',
               },
               render: () => (
                 <DrawerPane>

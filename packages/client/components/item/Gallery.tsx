@@ -38,7 +38,7 @@ import {
   TranslucentLabel,
   UnreadIconLabel,
 } from './';
-import { AddToQueueButton, SaveForLaterButton } from './index';
+import { AddToQueueButton } from './index';
 
 export type GalleryCardData = DeepPick<
   ServerGallery,
@@ -50,7 +50,6 @@ export type GalleryCardData = DeepPick<
   | 'number'
   | 'metatags.favorite'
   | 'metatags.read'
-  | 'metatags.readlater'
   | 'metatags.inbox'
   | 'progress.end'
   | 'progress.page.number'
@@ -213,9 +212,6 @@ export function GalleryCard({
             <AddToQueueButton itemType={ItemType.Gallery} data={data} />
           </ItemCardActionContentItem>
         )}
-        <ItemCardActionContentItem>
-          <SaveForLaterButton itemType={ItemType.Gallery} />
-        </ItemCardActionContentItem>
       </ItemCardActionContent>
     ),
     [data, size, horizontal]

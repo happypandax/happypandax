@@ -33,8 +33,11 @@ export default class PixieService extends Service {
   }
 
   async connect(endpoint?: string) {
-    this.#socket.connect(endpoint ?? this.endpoint);
-    this.#connected = true;
+    if (!this.connected) {
+      global.app.log.i('Connecting pixie to ', endpoint);
+      this.#socket.connect(endpoint ?? this.endpoint);
+      this.#connected = true;
+    }
   }
 
   async image({
@@ -74,7 +77,9 @@ export default class PixieService extends Service {
   }
 
   async communicate(msg: unknown) {
-    await this.#queue.add(() => this.#socket.send(this.#encoder.encode(msg)));
+    await this.#queue.add(async () => {
+      await this.#socket.send(this.#encoder.encode(msg));
+    });
     const [r] = await this.#socket.receive();
     const d: any = this.#decoder.decode(r);
     if (d?.error) {

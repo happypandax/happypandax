@@ -57,7 +57,18 @@ export default class _LibraryState extends StateBlock {
 
   static page = defineAtom({
     default: 1,
-    effects_UNSTABLE: [cookieEffect('library_page')],
+    effects_UNSTABLE: [
+      ({ setSelf, onSet }) => {
+        onSet((newValue) => {
+          if (isNaN(newValue)) {
+            setSelf(1);
+          } else {
+            setSelf(newValue);
+          }
+        });
+      },
+      cookieEffect('library_page'),
+    ],
   });
 
   static series = defineAtom({

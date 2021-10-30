@@ -76,7 +76,6 @@ export interface ServerNamespaceTag extends ServerItem {
 export interface ServerMetaTags extends ServerItem {
   favorite: boolean;
   inbox: boolean;
-  readlater: boolean;
   trash: boolean;
   follow: boolean;
   read: boolean;

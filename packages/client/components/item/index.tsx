@@ -18,7 +18,7 @@ import {
   Dimmer,
   Header,
   Icon,
-  Image,
+  Image as ImageComponent,
   Label,
   List,
   Loader,
@@ -64,19 +64,6 @@ const ItemContext = React.createContext({
   horizontal: false,
 });
 
-export function SaveForLaterButton({ itemType }: { itemType: ItemType }) {
-  return (
-    <Button
-      size="mini"
-      onClick={useCallback((e) => {
-        e.preventDefault();
-      }, [])}>
-      <Icon name="bookmark outline" />
-      {t`Save for later`}
-    </Button>
-  );
-}
-
 export function AddToQueueButton<T extends ItemType>({
   data,
   itemType,
@@ -119,7 +106,7 @@ export function AddToQueueButton<T extends ItemType>({
         },
         [data, readingQueue]
       )}>
-      <Icon name={exists ? 'minus' : 'plus'} />
+      <Icon name={exists ? 'bookmark' : 'bookmark outline'} />
       {t`Queue`}
     </Button>
   );
@@ -142,7 +129,7 @@ export function IconItemLabel(props: React.ComponentProps<typeof Icon>) {
 export function QueueIconLabel() {
   return (
     <IconItemLabel
-      className="book open"
+      className="bookmark"
       color="red"
       title={`This item is in your reading queue`}
     />
@@ -496,6 +483,8 @@ function SemanticNextImage({
 }
 
 const defaultImage = '/img/default.png';
+const errorImage = '/img/error-image.png';
+const noImage = '/img/no-image.png';
 
 export function ItemCardImage({
   children,
@@ -507,14 +496,29 @@ export function ItemCardImage({
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const blur = useRecoilValue(AppState.blur);
+  const [loaded, setLoaded] = useState(src ? false : true);
+  const imgSrc = useMemo(() => {
+    const s = !src
+      ? noImage
+      : typeof src === 'string'
+      ? src
+      : src.data
+      ? src.data
+      : noImage;
 
-  const imgSrc = !src
-    ? defaultImage
-    : typeof src === 'string'
-    ? src
-    : src.data
-    ? src.data
-    : defaultImage;
+    if (loaded) {
+      return s;
+    }
+
+    const img = new Image();
+    img.src = s;
+    if (img.complete) {
+      return s;
+    }
+    img.addEventListener('load', () => setLoaded(true));
+
+    return defaultImage;
+  }, [src, loaded]);
 
   const [imageErr, setImageErr] = useState(false);
 
@@ -533,9 +537,9 @@ export function ItemCardImage({
   // const size = src && typeof src !== 'string' ? src.size : undefined;
 
   return (
-    <Image
+    <ImageComponent
       // as={!src || typeof src === 'string' ? 'img' : SemanticNextImage}
-      src={imageErr ? defaultImage : imgSrc}
+      src={imageErr ? errorImage : imgSrc}
       // width={size?.[0]}
       // height={size?.[1]}
       alt="item cover"
@@ -587,7 +591,7 @@ export function ItemCardImage({
             {children}
           </>
         ),
-      }}></Image>
+      }}></ImageComponent>
   );
 }
 

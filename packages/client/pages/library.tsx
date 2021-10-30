@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import {
@@ -129,8 +129,20 @@ function libraryArgs(
     });
   }
 
-  let p =
-    page ?? ((urlQuery.query?.p ?? getCookies(ctx, 'library_page')) as number);
+  let p = page ?? 1;
+  if (!page) {
+    if (
+      urlQuery.query?.p &&
+      !isNaN(parseInt(urlQuery.query?.p as string, 10))
+    ) {
+      p = parseInt(urlQuery.query?.p as string, 10);
+    } else {
+      const c_p = getCookies(ctx, 'library_page');
+      if (c_p) {
+        p = c_p;
+      }
+    }
+  }
 
   if (p) {
     p--;
@@ -426,8 +438,6 @@ export default function Page({
   const display = useRecoilValue(LibraryState.display);
   const infinite = useRecoilValue(LibraryState.infinite);
 
-  const [infiniteKey, setInfiniteKey] = useState('');
-
   const [searchOptions, setSearchOptions] = useRecoilState(
     SearchState.options(stateKey)
   );
@@ -438,12 +448,19 @@ export default function Page({
 
   const libraryargs = libraryArgs(undefined, routerQuery);
 
+  const [infiniteKey, setInfiniteKey] = useState('');
+  const [infinitePage, setInfinitePage] = useState(page);
+
   const { data, fetchNextPage, isFetching, queryKey } = useQueryType(
     QueryType.LIBRARY,
     {
       ...libraryargs,
       item: itemType,
-      page: infiniteKey ? initialPage - 1 : libraryargs.page,
+      page: infiniteKey
+        ? initialPage - 1
+        : libraryargs.page
+        ? libraryargs.page
+        : page,
     },
     {
       initialData: global.app.IS_SERVER ? undefined : initialData,
@@ -576,8 +593,7 @@ export default function Page({
     }
 
     if (!isFetching && fetchNextPage) {
-      let p = libraryargs.page ? libraryargs.page : 1;
-      p = p + data.pages.length;
+      let p = infinitePage + data.pages.length;
       fetchNextPage({
         pageParam: p,
       });
@@ -587,10 +603,15 @@ export default function Page({
         scroll: false,
       });
     }
-  }, [libraryargs, router, fetchNextPage, infiniteKey, isFetching, data]);
+  }, [router, infinitePage, fetchNextPage, infiniteKey, isFetching, data]);
 
-  const onPageChange = useCallback(() => {
+  useEffect(() => {
+    setInfinitePage(page);
+  }, [infiniteKey]);
+
+  const onPageChange = useCallback((ev, n) => {
     setInfiniteKey('');
+    setInfinitePage(n);
   }, []);
 
   const View = display === 'card' ? CardView : ListView;
@@ -708,6 +729,7 @@ export default function Page({
           activePage={page}
           items={items}
           infinite={infinite}
+          loading={isFetching}
           onPageChange={onPageChange}
           onLoadMore={fetchNext}
           paddedChildren

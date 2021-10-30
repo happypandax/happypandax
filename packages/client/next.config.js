@@ -6,6 +6,7 @@ module.exports = (phase, { defaultConfig }) => {
   const config = {
     ...defaultConfig,
     poweredByHeader: false,
+    swcMinify: true,
     typescript: {
       ignoreBuildErrors: true,
     },

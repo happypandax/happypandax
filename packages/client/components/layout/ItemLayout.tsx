@@ -133,7 +133,6 @@ export type GalleryHeaderData = DeepPick<
   | 'number'
   | 'metatags.favorite'
   | 'metatags.read'
-  | 'metatags.readlater'
   | 'metatags.inbox'
   | 'progress.end'
   | 'progress.page.number'
@@ -312,16 +311,6 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
                       </Button>
                     </Link>
                     <Button.Or text={t`Or`} />
-                    {!data?.metatags?.readlater && (
-                      <Button>
-                        <Icon name="bookmark outline" /> {t`Save for later`}
-                      </Button>
-                    )}
-                    {data?.metatags?.readlater && (
-                      <Button positive>
-                        <Icon name="bookmark" /> {t`Saved for later`}
-                      </Button>
-                    )}
                     <Button
                       color="red"
                       basic={!inReadingQueue}
@@ -334,13 +323,16 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
                           setReadingQueue([...readingQueue, data?.id]);
                         }
                       }, [readingQueue, data?.id, inReadingQueue])}
-                      icon="open book"
                       title={
                         inReadingQueue
                           ? t`Remove from reading queue`
                           : t`Add to reading queue`
-                      }
-                    />
+                      }>
+                      <Icon
+                        name={inReadingQueue ? 'bookmark' : 'bookmark outline'}
+                      />{' '}
+                      {t`Queue`}
+                    </Button>
                   </Button.Group>
                 </Grid.Row>
                 <Grid.Row>
@@ -404,11 +396,7 @@ export function ItemMenu({
 }: {
   data: DeepPick<
     ServerGallery,
-    | 'id'
-    | 'metatags.favorite'
-    | 'metatags.read'
-    | 'metatags.inbox'
-    | 'metatags.readlater'
+    'id' | 'metatags.favorite' | 'metatags.read' | 'metatags.inbox'
   >;
   children?: React.ReactNode;
 }) {
@@ -429,7 +417,7 @@ export function ItemMenu({
         {readingQueue?.includes?.(data?.id) && (
           <MenuItem
             icon={{
-              className: 'book open',
+              className: 'bookmark',
               color: 'red',
               bordered: true,
               inverted: true,
@@ -440,11 +428,6 @@ export function ItemMenu({
           <MenuItem
             icon={{ name: 'inbox', bordered: true, inverted: true }}
             title={`This item is in your inbox`}></MenuItem>
-        )}
-        {data?.metatags?.readlater && (
-          <MenuItem
-            icon={{ name: 'bookmark', bordered: true, inverted: true }}
-            title={`Saved for later`}></MenuItem>
         )}
         {!data?.metatags?.read && (
           <MenuItem
