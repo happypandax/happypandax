@@ -351,6 +351,7 @@ export function PaginatedView({
               {getPagination()}
             </Grid.Row>
           )}
+
           <Visibility
             as={Grid.Row}
             className={classNames({ 'no-padding-segment': !paddedChildren })}

@@ -3,7 +3,7 @@ import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { Icon, IconProps, Menu, Ref } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
-import { useDocumentEvent } from '../hooks/utils';
+import { useDocumentEvent } from '../client/hooks/utils';
 import styles from './Menu.module.css';
 import { NotificationAlert, NotificationsPopup } from './popup/Notification';
 
@@ -92,6 +92,9 @@ export function ConnectionItem({
 export function MainMenu({
   hidden,
   borderless,
+  secondary,
+  pointing,
+  tabular,
   fixed,
   size = 'tiny',
   absolutePosition,
@@ -101,6 +104,9 @@ export function MainMenu({
   hidden?: boolean;
   size?: React.ComponentProps<typeof Menu>['size'];
   borderless?: boolean;
+  secondary?: boolean;
+  tabular?: boolean;
+  pointing?: boolean;
   absolutePosition?: boolean;
   fixed?: React.ComponentProps<typeof Menu>['fixed'] | boolean;
   connectionItem?: boolean;
@@ -146,7 +152,9 @@ export function MainMenu({
       fluid
       borderless={borderless}
       fixed={fixed === true ? 'top' : fixed ?? undefined}
-      secondary={!fixed}
+      secondary={secondary ?? !fixed}
+      pointing={pointing}
+      tabular={tabular}
       className={classNames(
         'main-menu',
         'pusher no-margins standard-z-index',

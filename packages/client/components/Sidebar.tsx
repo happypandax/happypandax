@@ -23,7 +23,7 @@ import {
   SemanticICONS,
 } from 'semantic-ui-react/dist/commonjs/generic';
 
-import { useDocumentEvent } from '../hooks/utils';
+import { useDocumentEvent } from '../client/hooks/utils';
 import t from '../misc/lang';
 import { AppState, useInitialRecoilState } from '../state/index';
 import AboutModal from './About';
@@ -162,11 +162,11 @@ export function MainSidebar({
               href="/library"
               icon={'grid layout'}>{t`Library`}</SidebarItem>
             <SidebarItem
-              href="/management"
-              icon={'cubes'}>{t`Management`}</SidebarItem>
-            <SidebarItem
               href="/directory"
               icon={'folder outline'}>{t`Directory`}</SidebarItem>
+            <SidebarItem
+              href="/management"
+              icon={'cubes'}>{t`Management`}</SidebarItem>
           </div>
           <div className="bottom-aligned">
             <SettingsModal

@@ -213,6 +213,26 @@ export default class ServerService extends Service {
     };
   }
 
+  async search_items<R = undefined>(
+    args: {
+      item_type: ItemType;
+      fields?: FieldPath[];
+      offset?: number;
+      limit?: number;
+      search_query?: string;
+      search_options?: SearchOptions;
+      sort_options?: SortOptions;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('search_items', args, group);
+    throw_msg_error(data);
+    return data.data as {
+      count: number;
+      items: R extends undefined ? JsonMap[] : R[];
+    };
+  }
+
   async related_items<R = undefined>(
     args: {
       item_type: ItemType;
@@ -324,7 +344,7 @@ export default class ServerService extends Service {
     }>;
   }
 
-  async search_items(
+  async search_labels(
     args: {
       item_types: ItemType[];
       search_query: string;
@@ -332,7 +352,7 @@ export default class ServerService extends Service {
     },
     group?: GroupCall
   ) {
-    const data = await this._call('get_search_items', args, group);
+    const data = await this._call('get_search_labels', args, group);
     throw_msg_error(data);
     return data.data as {
       count: number;

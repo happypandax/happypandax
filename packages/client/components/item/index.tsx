@@ -29,6 +29,7 @@ import {
 } from 'semantic-ui-react';
 
 import { LibraryContext } from '../../client/context';
+import { useImage } from '../../client/hooks/item';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import {
@@ -482,13 +483,9 @@ function SemanticNextImage({
   );
 }
 
-const defaultImage = '/img/default.png';
-const errorImage = '/img/error-image.png';
-const noImage = '/img/no-image.png';
-
 export function ItemCardImage({
   children,
-  src,
+  src: initialSrc,
 }: {
   children?: React.ReactNode;
   src?: string | ServerItemWithProfile['profile'];
@@ -496,31 +493,7 @@ export function ItemCardImage({
   const itemContext = useContext(ItemContext);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const blur = useRecoilValue(AppState.blur);
-  const [loaded, setLoaded] = useState(src ? false : true);
-  const imgSrc = useMemo(() => {
-    const s = !src
-      ? noImage
-      : typeof src === 'string'
-      ? src
-      : src.data
-      ? src.data
-      : noImage;
-
-    if (loaded) {
-      return s;
-    }
-
-    const img = new Image();
-    img.src = s;
-    if (img.complete) {
-      return s;
-    }
-    img.addEventListener('load', () => setLoaded(true));
-
-    return defaultImage;
-  }, [src, loaded]);
-
-  const [imageErr, setImageErr] = useState(false);
+  const { src } = useImage(initialSrc);
 
   const Details = itemContext.Details;
 
@@ -539,7 +512,7 @@ export function ItemCardImage({
   return (
     <ImageComponent
       // as={!src || typeof src === 'string' ? 'img' : SemanticNextImage}
-      src={imageErr ? errorImage : imgSrc}
+      src={src}
       // width={size?.[0]}
       // height={size?.[1]}
       alt="item cover"
@@ -565,9 +538,6 @@ export function ItemCardImage({
         },
         [itemContext.horizontal, itemContext.detailsData, libraryContext]
       )}
-      onError={useCallback(() => {
-        setImageErr(true);
-      }, [imgSrc])}
       dimmer={{
         active:
           (itemContext.hover || itemContext.activity) &&

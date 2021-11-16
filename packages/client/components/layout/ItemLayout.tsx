@@ -24,7 +24,8 @@ import {
 } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
-import { useRefEvent } from '../../hooks/utils';
+import { useImage } from '../../client/hooks/item';
+import { useRefEvent } from '../../client/hooks/utils';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { FieldPath, ServerGallery } from '../../misc/types';
@@ -222,6 +223,8 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
   const sameMachine = useRecoilValue(AppState.sameMachine);
   const setData = useSetRecoilState(DataState.data(contextKey));
 
+  const { src } = useImage(data?.profile);
+
   useEffect(() => {
     setData(data as PartialExcept<ServerGallery, 'id'>);
     animateCSS(heroImgRef.current, styles.fadeInDownImage, false);
@@ -249,6 +252,7 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
         <Container className="pos-relative">
           <ParallaxDiv>
             <img
+              alt="header image"
               className={classNames('animate__slower')}
               ref={heroImgRef}
               src={data.profile.data}
@@ -266,8 +270,9 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
                 className={classNames({ blur: blur })}
                 alt="cover image"
                 id={styles.cover}
-                src={data.profile.data}
-                width={data.profile.size[0]}
+                src={src}
+                width={data?.profile?.size?.[0]}
+                height={data?.profile?.size?.[1]}
               />
               <Divider hidden />
               <Divider fitted horizontal>

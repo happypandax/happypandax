@@ -37,7 +37,7 @@ import {
   SearchOptions as SearchOptionsType,
   ServerNamespaceTag,
 } from '../misc/types';
-import { AppState, SearchState } from '../state';
+import { AppState, SearchState, useInitialRecoilValue } from '../state';
 import styles from './Search.module.css';
 
 SwiperCore.use([Mousewheel]);
@@ -254,7 +254,7 @@ function SearchResults({
 
           const q = query.slice(t.startPosition, t.endPosition);
 
-          Query.get(QueryType.SEARCH_ITEMS, {
+          Query.get(QueryType.SEARCH_LABELS, {
             item_types: itemTypes ?? [
               ItemType.Artist,
               ItemType.Category,
@@ -556,6 +556,8 @@ export function ItemSearch({
   placeholder,
   defaultValue,
   onSearch,
+  showSuggestion,
+  dynamic: initialDynamic,
   itemTypes,
   stateKey,
   showOptions,
@@ -567,6 +569,8 @@ export function ItemSearch({
   defaultValue?: string;
   itemTypes?: ItemType[];
   stateKey?: string;
+  dynamic?: boolean;
+  showSuggestion?: boolean;
   showOptions?: boolean;
   placeholder?: string;
   onSearch?: (query: string, options: object) => void;
@@ -580,8 +584,14 @@ export function ItemSearch({
   const [resultsVisible, setResultsVisible] = useState(false);
   const [focused, setFocused] = useState(false);
   const options = useRecoilValue(SearchState.options(stateKey));
-  const dynamic = useRecoilValue(SearchState.dynamic(stateKey));
-  const suggest = useRecoilValue(SearchState.suggest(stateKey));
+  const dynamic = useInitialRecoilValue(
+    SearchState.dynamic(stateKey),
+    initialDynamic
+  );
+  const suggest = useInitialRecoilValue(
+    SearchState.suggest(stateKey),
+    showSuggestion
+  );
 
   const onSubmit = useCallback(
     (ev?) => {

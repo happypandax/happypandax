@@ -35,8 +35,9 @@ export enum QueryType {
   ITEMS,
   ITEM,
   RELATED_ITEMS,
-  SIMILAR,
   SEARCH_ITEMS,
+  SIMILAR,
+  SEARCH_LABELS,
   QUEUE_ITEMS,
   QUEUE_STATE,
   SORT_INDEXES,
@@ -257,7 +258,7 @@ export function useQueryType<
       break;
     }
 
-    case QueryType.SEARCH_ITEMS: {
+    case QueryType.SEARCH_LABELS: {
       endpoint = '/api/search_items';
       break;
     }
@@ -365,10 +366,15 @@ interface FetchItem<T = undefined> extends QueryAction<T> {
 interface FetchItems<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEMS;
   dataType: Unwrap<ReturnType<ServerService['items']>>;
-  variables: Omit<
-    Parameters<typeof ServerService['prototype']['items']>[0],
-    'fields'
-  > & {
+  variables: Omit<Parameters<ServerService['items']>[0], 'fields'> & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
+interface FetchSearchItems<T = undefined> extends QueryAction<T> {
+  type: QueryType.ITEMS;
+  dataType: Unwrap<ReturnType<ServerService['search_items']>>;
+  variables: Omit<Parameters<ServerService['search_items']>[0], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
@@ -405,10 +411,10 @@ interface FetchSimilar<T = undefined> extends QueryAction<T> {
   };
 }
 
-interface FetchSearchItems<T = undefined> extends QueryAction<T> {
-  type: QueryType.SEARCH_ITEMS;
-  dataType: Unwrap<ReturnType<ServerService['search_items']>>;
-  variables: Parameters<ServerService['search_items']>[0];
+interface FetchSearchLabels<T = undefined> extends QueryAction<T> {
+  type: QueryType.SEARCH_LABELS;
+  dataType: Unwrap<ReturnType<ServerService['search_labels']>>;
+  variables: Parameters<ServerService['search_labels']>[0];
 }
 
 interface FetchQueueItems<T = undefined> extends QueryAction<T> {
@@ -452,6 +458,7 @@ type QueryActions<T = undefined> =
   | FetchItems<T>
   | FetchLibrary<T>
   | FetchPages<T>
+  | FetchSearchLabels<T>
   | FetchRelatedItems<T>
   | FetchSortIndexes<T>
   | FetchSimilar<T>
@@ -578,6 +585,11 @@ export class Query {
       case QueryType.PAGES: {
         return queryClient.fetchQuery(key, () =>
           axios.get<R>(urlstring('/api/pages', variables as any))
+        );
+      }
+      case QueryType.SEARCH_LABELS: {
+        return queryClient.fetchQuery(key, () =>
+          axios.get<R>(urlstring('/api/search_labels', variables as any))
         );
       }
       case QueryType.SEARCH_ITEMS: {

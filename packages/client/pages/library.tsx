@@ -62,14 +62,6 @@ import ServerService from '../services/server';
 import { AppState, LibraryState, SearchState } from '../state';
 import _SearchState from '../state/_search';
 
-interface PageProps {
-  data: Unwrap<ServerService['library']>;
-  page: number;
-  itemType: ItemType;
-  urlQuery: ReturnType<typeof urlparse>;
-  requestTime: number;
-}
-
 const stateKey = 'library_page';
 
 function libraryArgs(
@@ -156,31 +148,36 @@ function libraryArgs(
     filter_id = undefined;
   }
 
+  const limit =
+    ((urlQuery.query?.limit ?? getCookies(ctx, 'library_limit')) as number) ??
+    30;
+
   return {
-    item_type: itemType,
-    metatags,
-    search_query: (urlQuery.query?.q ??
-      getCookies(ctx, 'library_query')) as string,
-    page: p,
-    sort_options: {
-      by:
-        ((urlQuery.query?.sort ?? getCookies(ctx, 'library_sort')) as number) ??
-        ItemSort.GalleryDate,
-      desc:
-        ((urlQuery.query?.desc ??
-          getCookies(ctx, 'library_desc')) as boolean) ?? true,
+    errorLimit: p * limit > 10000, // there is a limit of 10000 or the request will fail
+    args: {
+      item_type: itemType,
+      metatags,
+      search_query: (urlQuery.query?.q ??
+        getCookies(ctx, 'library_query')) as string,
+      page: p,
+      sort_options: {
+        by:
+          ((urlQuery.query?.sort ??
+            getCookies(ctx, 'library_sort')) as number) ?? ItemSort.GalleryDate,
+        desc:
+          ((urlQuery.query?.desc ??
+            getCookies(ctx, 'library_desc')) as boolean) ?? true,
+      },
+      search_options,
+      filter_id,
+      limit,
+      fields:
+        itemType === ItemType.Gallery
+          ? galleryCardDataFields
+          : itemType === ItemType.Collection
+          ? collectionCardDataFields
+          : groupingCardDataFields,
     },
-    search_options,
-    filter_id,
-    limit:
-      ((urlQuery.query?.limit ?? getCookies(ctx, 'library_limit')) as number) ??
-      30,
-    fields:
-      itemType === ItemType.Gallery
-        ? galleryCardDataFields
-        : itemType === ItemType.Collection
-        ? collectionCardDataFields
-        : groupingCardDataFields,
   };
 }
 
@@ -395,6 +392,15 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
   );
 }
 
+interface PageProps {
+  data: Unwrap<ServerService['library']>;
+  page: number;
+  itemType: ItemType;
+  urlQuery: ReturnType<typeof urlparse>;
+  requestTime: number;
+  errorLimit: boolean;
+}
+
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
@@ -404,9 +410,11 @@ export async function getServerSideProps(
 
   // const group = server.create_group_call();
 
-  const args = libraryArgs(context, urlQuery);
+  const { errorLimit, args } = libraryArgs(context, urlQuery);
 
-  const data = await server.library<ServerGallery>(args);
+  const data = errorLimit
+    ? { count: 0, items: [] }
+    : await server.library<ServerGallery>(args);
 
   return {
     props: {
@@ -415,6 +423,7 @@ export async function getServerSideProps(
       itemType: args.item_type,
       page: args.page ? args.page + 1 : 1,
       requestTime: Date.now(),
+      errorLimit,
     },
   };
 }
@@ -422,6 +431,7 @@ export async function getServerSideProps(
 export default function Page({
   data: initialData,
   page: initialPage,
+  errorLimit: initialErrorLimit,
   urlQuery,
   itemType,
   requestTime,
@@ -446,10 +456,12 @@ export default function Page({
   const router = useRouter();
   const routerQuery = urlparse(router.asPath);
 
-  const libraryargs = libraryArgs(undefined, routerQuery);
+  const { errorLimit, args: libraryargs } = libraryArgs(undefined, routerQuery);
 
   const [infiniteKey, setInfiniteKey] = useState('');
   const [infinitePage, setInfinitePage] = useState(page);
+
+  const errorLimited = errorLimit || initialErrorLimit;
 
   const { data, fetchNextPage, isFetching, queryKey } = useQueryType(
     QueryType.LIBRARY,
@@ -463,6 +475,7 @@ export default function Page({
         : page,
     },
     {
+      enabled: !errorLimited,
       initialData: global.app.IS_SERVER ? undefined : initialData,
       initialDataUpdatedAt: requestTime,
       infinite: true,
@@ -721,31 +734,46 @@ export default function Page({
         [favorites, filter, sort, sortDesc, itemType]
       )}>
       <PageTitle title={t`Library`} />
-      {!count && <EmptySegment />}
+      {!count && !errorLimited && <EmptySegment />}
+      {errorLimited && (
+        <EmptySegment
+          title={
+            <div>
+              <p>
+                {t`Momo wasn't able to fetch page ${page} fast enough!`}
+                <br />
+                {t`Please refine your search query to retrieve results.`}
+              </p>
+            </div>
+          }
+        />
+      )}
       <LibraryContext.Provider value={true}>
         <LibrarySidebar />
-        <View
-          hrefTemplate={pageHrefTemplate}
-          activePage={page}
-          items={items}
-          infinite={infinite}
-          loading={isFetching}
-          onPageChange={onPageChange}
-          onLoadMore={fetchNext}
-          paddedChildren
-          itemRender={
-            itemType === ItemType.Gallery
-              ? GalleryCard
-              : itemType === ItemType.Collection
-              ? CollectionCard
-              : GroupingCard
-          }
-          itemsPerPage={limit}
-          onItemKey={onItemKey}
-          totalItemCount={count}
-          pagination={!!count}
-          bottomPagination={!!count}
-        />
+        {!errorLimited && (
+          <View
+            hrefTemplate={pageHrefTemplate}
+            activePage={page}
+            items={items}
+            infinite={infinite}
+            loading={isFetching}
+            onPageChange={onPageChange}
+            onLoadMore={fetchNext}
+            paddedChildren
+            itemRender={
+              itemType === ItemType.Gallery
+                ? GalleryCard
+                : itemType === ItemType.Collection
+                ? CollectionCard
+                : GroupingCard
+            }
+            itemsPerPage={limit}
+            onItemKey={onItemKey}
+            totalItemCount={count}
+            pagination={!!count || errorLimited}
+            bottomPagination={!!count}
+          />
+        )}
       </LibraryContext.Provider>
     </PageLayout>
   );

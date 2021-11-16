@@ -151,8 +151,8 @@ export function EmptySegment({
   title = t`Nothing to see here...`,
   description,
 }: {
-  title?: string;
-  description?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
 }) {
   return (
     <Segment placeholder disabled className="!min-0-h w-full h-full">
@@ -171,8 +171,8 @@ export function EmptyMessage({
   className,
 }: {
   title?: string;
-  className?: string;
-  description?: string;
+  className?: React.ReactNode;
+  description?: React.ReactNode;
 }) {
   return (
     <Message className={className}>
@@ -426,10 +426,10 @@ export function LabelAccordion({
           (e) => {
             e.preventDefault();
             if (initialShow === undefined) {
-              setShow(!open);
+              setShow(!show);
             }
           },
-          [open]
+          [show]
         )}>
         <Icon name={show ? 'caret down' : 'caret right'} />
         {label}

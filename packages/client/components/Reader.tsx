@@ -38,8 +38,8 @@ import {
 import Scroller from '@twiddly/scroller';
 
 import { ReaderContext } from '../client/context';
+import { useBodyEvent, useRefEvent, useTabActive } from '../client/hooks/utils';
 import { Query, QueryType, useQueryType } from '../client/queries';
-import { useBodyEvent, useRefEvent, useTabActive } from '../hooks/utils';
 import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
 import {
