@@ -1,10 +1,11 @@
 import { NextPageContext } from 'next';
 import { useRouter } from 'next/router';
-import { useCallback } from 'react';
-import { Button, Card, Icon, Segment, Statistic } from 'semantic-ui-react';
+import { useCallback, useMemo } from 'react';
+import { Button, Grid, Icon, Segment, Statistic } from 'semantic-ui-react';
 
 import FilterCard, { filterCardDataFields } from '../../components/item/Filter';
 import { ItemSearch } from '../../components/Search';
+import { PaginatedView } from '../../components/view/index';
 import { ItemSort, ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { ServerFilter } from '../../misc/types';
@@ -15,34 +16,49 @@ import DirectoryPage from './';
 
 interface PageProps {
   data: Unwrap<ServerService['items']>;
+  page: number;
 }
+
+const limit = 100;
 
 export async function getServerSideProps(context: NextPageContext) {
   const server = global.app.service.get(ServiceType.Server);
 
   const urlQuery = urlparse(context.resolvedUrl);
 
+  let page = 1;
+  if (urlQuery.query?.p && !isNaN(parseInt(urlQuery.query?.p as string, 10))) {
+    page = parseInt(urlQuery.query?.p as string, 10);
+  }
+
   const data = await server.search_items<ServerFilter>({
     item_type: ItemType.Filter,
-    search_query: urlQuery.query?.q as string,
+    search_query: urlQuery.query?.q?.toString() as string,
     fields: filterCardDataFields,
+    limit,
+    offset: (page - 1) * limit,
     sort_options: {
       by: ItemSort.FilterName,
     },
   });
 
-  console.log(data);
-
   return {
     props: {
       data,
+      page,
     },
   };
 }
-export default function Page({ data }: PageProps) {
+
+export default function Page({ page, data }: PageProps) {
   const router = useRouter();
 
   const urlQuery = urlparse(router.asPath);
+
+  const pageHrefTemplate = useMemo(
+    () => urlstring(router.asPath, { p: '${page}' }, { encode: false }),
+    [router.query]
+  );
 
   return (
     <DirectoryPage>
@@ -53,7 +69,7 @@ export default function Page({ data }: PageProps) {
         <Button size="small" floated="right" compact>
           <Icon name="refresh" /> {t`Update`}
         </Button>
-        <Statistic horizontal color="blue">
+        <Statistic horizontal color="grey">
           <Statistic.Value>{data.count}</Statistic.Value>
           <Statistic.Label>{t`Filters`}</Statistic.Label>
         </Statistic>
@@ -61,6 +77,7 @@ export default function Page({ data }: PageProps) {
           stateKey="filters"
           defaultValue={urlQuery.query?.q as string}
           fluid
+          debounce={200}
           onSearch={useCallback(
             (q) => {
               router.push(urlstring({ q: q }));
@@ -73,11 +90,23 @@ export default function Page({ data }: PageProps) {
           size="tiny"
         />
       </Segment>
-      <Card.Group doubling centered stackable>
-        {data.items.map((i: ServerFilter) => (
-          <FilterCard key={i.id} data={i} />
-        ))}
-      </Card.Group>
+      <PaginatedView
+        itemCount={data.items.length}
+        itemsPerPage={limit}
+        size="tiny"
+        activePage={page}
+        hrefTemplate={pageHrefTemplate}
+        pagination={limit < data.count}
+        bottomPagination
+        totalItemCount={data.count}>
+        <Grid doubling centered stackable columns="3">
+          {data.items.map((i: ServerFilter) => (
+            <Grid.Column key={i.id}>
+              <FilterCard data={i} centered fluid />
+            </Grid.Column>
+          ))}
+        </Grid>
+      </PaginatedView>
     </DirectoryPage>
   );
 }

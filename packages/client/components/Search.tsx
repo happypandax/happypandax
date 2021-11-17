@@ -554,6 +554,7 @@ export function ItemSearch({
   fluid,
   transparent = true,
   placeholder,
+  debounce = 1000,
   defaultValue,
   onSearch,
   showSuggestion,
@@ -566,6 +567,7 @@ export function ItemSearch({
 }: {
   fluid?: boolean;
   transparent?: boolean;
+  debounce?: number;
   defaultValue?: string;
   itemTypes?: ItemType[];
   stateKey?: string;
@@ -633,7 +635,7 @@ export function ItemSearch({
         onSubmit();
       }
     },
-    1000,
+    debounce,
     [dynamic, query, onSubmit]
   );
 
@@ -684,7 +686,7 @@ export function ItemSearch({
               onFocus={onFocus}
               onBlur={onBlur}
               className={classNames({ secondary: transparent })}
-              placeholder={placeholder}
+              placeholder={placeholder ?? t`Search`}
               label={showOptions ? optionsEl : undefined}
               icon={useMemo(
                 () => ({ name: 'search', link: true, onClick: onSubmit }),

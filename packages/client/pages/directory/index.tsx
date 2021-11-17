@@ -34,20 +34,20 @@ export default function DirectoryPage({ children }: PageProps) {
             <Link href="/directory/filter" passHref>
               <MenuItem link active={path === 'filter'}>{t`Filters`}</MenuItem>
             </Link>
+            <Link href="/directory/artist" passHref>
+              <MenuItem active={path === 'artist'}>{t`Artists`}</MenuItem>
+            </Link>
             <Link href="/directory/tag" passHref>
               <MenuItem link active={path === 'tag'}>{t`Tags`}</MenuItem>
             </Link>
-            <Link href="/directory/artist" passHref>
-              <MenuItem active={path === 'artist'}>{t`Artists`}</MenuItem>
+            <Link href="/directory/parody" passHref>
+              <MenuItem active={path === 'parody'}>{t`Parodies`}</MenuItem>
             </Link>
             <Link href="/directory/circle" passHref>
               <MenuItem active={path === 'circle'}>{t`Circles`}</MenuItem>
             </Link>
             <Link href="/directory/category" passHref>
               <MenuItem active={path === 'category'}>{t`Categories`}</MenuItem>
-            </Link>
-            <Link href="/directory/parody" passHref>
-              <MenuItem active={path === 'parody'}>{t`Parodies`}</MenuItem>
             </Link>
             <Link href="/directory/language" passHref>
               <MenuItem active={path === 'language'}>{t`Languages`}</MenuItem>

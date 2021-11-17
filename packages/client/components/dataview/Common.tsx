@@ -88,7 +88,7 @@ export function PageNumberLabel({
   ...props
 }: React.ComponentProps<typeof Label>) {
   return (
-    <Label title={t`Page number`} color="black" basic {...props}>
+    <Label title={t`Page number`} color="black" {...props}>
       {children}
     </Label>
   );

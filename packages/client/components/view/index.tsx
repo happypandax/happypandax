@@ -247,9 +247,6 @@ export function ViewAutoSizer({
 
 export function PaginatedView({
   children,
-  sidebarVisible,
-  sidebarAnimation = 'push',
-  sidebarContent,
   pagination,
   paddedChildren,
   bottomPagination,
@@ -267,9 +264,6 @@ export function PaginatedView({
 }: {
   children: React.ReactNode | React.ReactNode[];
   paddedChildren?: boolean;
-  sidebarAnimation?: React.ComponentProps<typeof Sidebar>['animation'];
-  sidebarVisible?: boolean;
-  sidebarContent?: React.ReactNode | React.ReactNode[];
   pagination?: boolean;
   fluid?: boolean;
   infinite?: boolean;
@@ -332,58 +326,73 @@ export function PaginatedView({
   }, [itemCount, activePage]);
 
   return (
-    <Sidebar.Pushable
-      as={Segment}
+    <Segment
       basic
       {...props}
       className={classNames('no-padding-segment', { fluid }, props.className)}>
+      <Grid className="no-margins" verticalAlign="middle" padded="vertically">
+        {pagination && getPaginationText()}
+        {pagination && (
+          <Grid.Row centered className="no-bottom-padding">
+            {getPagination()}
+          </Grid.Row>
+        )}
+
+        <Visibility
+          as={Grid.Row}
+          className={classNames({ 'no-padding-segment': !paddedChildren })}
+          onUpdate={useCallback(
+            (e, { calculations: { pixelsPassed, height } }) => {
+              const pixelsLeft = height - pixelsPassed - getClientHeight();
+              if (
+                canLoadMore &&
+                infinite &&
+                itemCount &&
+                itemCount * +activePage < totalItemCount &&
+                onLoadMore &&
+                pixelsLeft < 500
+              ) {
+                onLoadMore();
+              }
+            },
+            [infinite, canLoadMore, onLoadMore]
+          )}>
+          {children}
+        </Visibility>
+        {loading && (
+          <Grid.Row>
+            <Loader active={loading} />
+          </Grid.Row>
+        )}
+        {bottomPagination && pagination && (
+          <Grid.Row centered>{getPagination()}</Grid.Row>
+        )}
+        {bottomPagination && pagination && getPaginationText()}
+      </Grid>
+    </Segment>
+  );
+}
+
+export function SidebarPaginatedView({
+  children,
+  sidebarVisible,
+  sidebarAnimation = 'push',
+  sidebarContent,
+  ...props
+}: {
+  sidebarAnimation?: React.ComponentProps<typeof Sidebar>['animation'];
+  sidebarVisible?: boolean;
+  sidebarContent?: React.ReactNode | React.ReactNode[];
+} & React.ComponentProps<typeof PaginatedView>) {
+  return (
+    <PaginatedView as={Sidebar.Pushable} {...props}>
       <Sidebar
         visible={sidebarVisible}
         animation={sidebarAnimation}
         direction="top">
         {sidebarContent}
       </Sidebar>
-      <Sidebar.Pusher>
-        <Grid className="no-margins" verticalAlign="middle" padded="vertically">
-          {pagination && getPaginationText()}
-          {pagination && (
-            <Grid.Row centered className="no-bottom-padding">
-              {getPagination()}
-            </Grid.Row>
-          )}
-
-          <Visibility
-            as={Grid.Row}
-            className={classNames({ 'no-padding-segment': !paddedChildren })}
-            onUpdate={useCallback(
-              (e, { calculations: { pixelsPassed, height } }) => {
-                const pixelsLeft = height - pixelsPassed - getClientHeight();
-                if (
-                  canLoadMore &&
-                  infinite &&
-                  itemCount &&
-                  itemCount * +activePage < totalItemCount &&
-                  onLoadMore &&
-                  pixelsLeft < 500
-                ) {
-                  onLoadMore();
-                }
-              },
-              [infinite, canLoadMore, onLoadMore]
-            )}>
-            {children}
-          </Visibility>
-          {loading && (
-            <Grid.Row>
-              <Loader active={loading} />
-            </Grid.Row>
-          )}
-          {bottomPagination && pagination && (
-            <Grid.Row centered>{getPagination()}</Grid.Row>
-          )}
-          {bottomPagination && pagination && getPaginationText()}
-        </Grid>
-      </Sidebar.Pusher>
-    </Sidebar.Pushable>
+      <Sidebar.Pusher>{{ children }}</Sidebar.Pusher>
+    </PaginatedView>
   );
 }

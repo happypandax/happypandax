@@ -6,7 +6,6 @@
   "plugins": [
     ["lodash", {}],
     ["@babel/plugin-proposal-decorators", { "legacy": true }],
-    "@vjpr/babel-plugin-parameter-decorator",
-    "superjson-next"
+    "@vjpr/babel-plugin-parameter-decorator"
   ]
 }

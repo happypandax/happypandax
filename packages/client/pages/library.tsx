@@ -157,7 +157,7 @@ function libraryArgs(
     args: {
       item_type: itemType,
       metatags,
-      search_query: (urlQuery.query?.q ??
+      search_query: (urlQuery.query?.q?.toString() ??
         getCookies(ctx, 'library_query')) as string,
       page: p,
       sort_options: {
@@ -353,7 +353,7 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
           />
 
           <Form.Field>
-            <label>{t`Collapse gallery in series`}</label>
+            <label>{t`Collapse galleries in series`}</label>
             <Checkbox
               toggle
               checked={series}
@@ -490,6 +490,7 @@ export default function Page({
   const items = infiniteKey
     ? data?.pages?.flat?.().flatMap?.((i) => i.data.items)
     : initialData.items;
+
   const count = infiniteKey
     ? data?.pages?.[0]?.data?.count
     : initialData?.count;
@@ -562,7 +563,7 @@ export default function Page({
     const q = {
       ...routerQuery?.query,
       p: 1,
-      query,
+      q: query,
     };
     setPage(1);
     setInfiniteKey('');

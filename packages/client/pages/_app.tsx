@@ -14,7 +14,6 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { QueryClientProvider, useIsFetching } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
-import superjson from 'superjson';
 
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
@@ -51,7 +50,7 @@ function Fairy() {
     if (!fairy) return;
 
     const onStatus = ({ data }: any) => {
-      const d: any = superjson.parse(data);
+      const d: any = JSON.parse(data);
       setLoggedIn(d.loggedIn);
       setConnected(d.connected);
     };
@@ -65,7 +64,10 @@ function Fairy() {
   useEffect(() => {
     if (!fairy) return;
     const onNotif = ({ data }: any) => {
-      const d: NotificationData = superjson.parse(data);
+      const d: NotificationData = JSON.parse(data);
+      if (d.date) {
+        d.date = new Date(d.date);
+      }
       console.debug('received notification', d);
       setNotificatioAlert([d, ...notificationAlertRef.current]);
       setNotifications([d, ...notificationsRef.current]);

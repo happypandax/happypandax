@@ -7,3 +7,11 @@
 .favorite_label {
     font-size: 2.5rem !important;
 }
+
+.parody_card_label > img {
+    margin: 0 !important;
+}
+
+.parody_card_label > .content > .header {
+    font-size: 1.2em !important;
+}
