@@ -25,7 +25,10 @@ export default function FilterCard({
   ...props
 }: { data: FilterCardData } & React.ComponentProps<typeof Card>) {
   return (
-    <Card {...props} className={classNames('horizontal', props.className)}>
+    <Card
+      color="black"
+      {...props}
+      className={classNames('horizontal', 'default-card', props.className)}>
       <Card.Content>
         <Card.Header>
           {data.name}

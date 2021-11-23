@@ -44,7 +44,7 @@ export interface ServerItemWithProfile extends ServerItem {
   };
 }
 
-export interface ServerParody extends ServerItem {
+export interface ServerParody extends ServerItem, ServerItemWithProfile {
   names: (ServerItemWithNameLanguageAlias & { parody_id: number })[];
   preferred_name: ServerItemWithNameLanguageAlias & { parody_id: number };
 }
@@ -71,6 +71,7 @@ export interface ServerTag extends ServerItemWithName {}
 export interface ServerNamespaceTag extends ServerItem {
   namespace: ServerNamespace;
   tag: ServerTag;
+  metatags: ServerMetaTags;
 }
 
 export interface ServerMetaTags extends ServerItem {
@@ -80,7 +81,7 @@ export interface ServerMetaTags extends ServerItem {
   follow: boolean;
   read: boolean;
 }
-export interface ServerArtist extends ServerItem {
+export interface ServerArtist extends ServerItem, ServerItemWithProfile {
   names: (ServerItemWithNameLanguageAlias & { artist_id: number })[];
   preferred_name: ServerItemWithNameLanguageAlias & { artist_id: number };
   circles: ServerCircle[];

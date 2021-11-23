@@ -1,7 +1,14 @@
 import { NextPageContext } from 'next';
 import { useRouter } from 'next/router';
 import { useCallback, useMemo } from 'react';
-import { Button, Grid, Icon, Segment, Statistic } from 'semantic-ui-react';
+import {
+  Button,
+  Container,
+  Grid,
+  Icon,
+  Segment,
+  Statistic,
+} from 'semantic-ui-react';
 
 import FilterCard, { filterCardDataFields } from '../../components/item/Filter';
 import { ItemSearch } from '../../components/Search';
@@ -62,7 +69,7 @@ export default function Page({ page, data }: PageProps) {
 
   return (
     <DirectoryPage>
-      <Segment clearing basic>
+      <Container centered clearing as={Segment} basic>
         <Button size="small" floated="right" color="green" compact>
           <Icon name="plus" /> {t`New`}
         </Button>
@@ -80,7 +87,7 @@ export default function Page({ page, data }: PageProps) {
           debounce={200}
           onSearch={useCallback(
             (q) => {
-              router.push(urlstring({ q: q }));
+              router.push(urlstring({ q: q, p: 1 }));
             },
             [router]
           )}
@@ -89,7 +96,7 @@ export default function Page({ page, data }: PageProps) {
           dynamic
           size="tiny"
         />
-      </Segment>
+      </Container>
       <PaginatedView
         itemCount={data.items.length}
         itemsPerPage={limit}

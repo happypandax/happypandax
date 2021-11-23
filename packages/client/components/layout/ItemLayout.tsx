@@ -33,6 +33,7 @@ import { animateCSS, urlstring } from '../../misc/utility';
 import { AppState, DataState } from '../../state';
 import {
   ArtistLabels,
+  CategoryLabel,
   CircleLabels,
   DateAddedLabel,
   DatePublishedLabel,
@@ -43,6 +44,7 @@ import {
   NamesTable,
   ParodyLabels,
   RatingLabel,
+  StatusLabel,
   TagsTable,
   UrlList,
 } from '../dataview/Common';
@@ -141,6 +143,9 @@ export type GalleryHeaderData = DeepPick<
   | 'language.code'
   | 'language.name'
   | 'last_read'
+  | 'times_read'
+  | 'page_count'
+  | 'grouping.status.name'
   | 'last_updated'
   | 'timestamp'
 >;
@@ -163,6 +168,7 @@ export const galleryHeaderDataFields: FieldPath<ServerGallery>[] = [
   'category.name',
   'urls.name',
   'times_read',
+  'page_count',
   'circles.name',
   'profile',
   'number',
@@ -313,6 +319,7 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
                       passHref>
                       <Button as="a" primary>
                         <Icon className="book open" /> {t`Read`}
+                        {!!data?.times_read && `「${data?.times_read}」`}
                       </Button>
                     </Link>
                     <Button.Or text={t`Or`} />
@@ -352,11 +359,11 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
                     <LabelField label={t`Circle`}>
                       <CircleLabels />
                     </LabelField>
-                    <LabelField label={t`Parody`}>
-                      <ParodyLabels />
-                    </LabelField>
                     <LabelField label={t`Language`}>
                       <LanguageLabel>{data?.language?.name}</LanguageLabel>
+                    </LabelField>
+                    <LabelField label={t`Category`}>
+                      <CategoryLabel />
                     </LabelField>
 
                     <LabelField label={t`Published`}>
@@ -379,6 +386,10 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
               <LabelFields>
                 <LabelField label={t`Series`} padded={false}>
                   <GroupingLabel />
+                  <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
+                </LabelField>
+                <LabelField label={t`Parody`} padded={false}>
+                  <ParodyLabels />
                 </LabelField>
                 <LabelField label={t`Tags`} padded={false}>
                   <TagsTable />

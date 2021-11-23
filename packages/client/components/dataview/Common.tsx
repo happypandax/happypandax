@@ -57,15 +57,15 @@ export function GalleryCountLabel({
   return <PageCountLabel title={t`Gallery count`} {...props} />;
 }
 
-export function CategoryLabel() {
+export function CategoryLabel(props: React.ComponentProps<typeof Label>) {
   const ctx = useContext(DataContext);
   const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
     DataState.data(ctx.key)
   );
 
   return (
-    <Label title={t`Category`} color="black" basic>
-      <Icon name="folder outline" />
+    <Label {...props} title={t`Category`} color="black" basic>
+      <Icon name="folder" />
       {data?.category?.name}
     </Label>
   );

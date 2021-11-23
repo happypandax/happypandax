@@ -1,7 +1,7 @@
 import { NextPageContext } from 'next';
 import { useRouter } from 'next/router';
 import { useCallback, useMemo } from 'react';
-import { Grid, Segment, Statistic } from 'semantic-ui-react';
+import { Container, Grid, Segment, Statistic } from 'semantic-ui-react';
 
 import ParodyCardLabel, {
   parodyCardLabelDataFields,
@@ -64,7 +64,7 @@ export default function Page({ page, data }: PageProps) {
 
   return (
     <DirectoryPage>
-      <Segment clearing basic>
+      <Container as={Segment} centered clearing basic>
         <Statistic horizontal color="grey">
           <Statistic.Value>{data.count}</Statistic.Value>
           <Statistic.Label>{t`Parodies`}</Statistic.Label>
@@ -76,7 +76,7 @@ export default function Page({ page, data }: PageProps) {
           debounce={200}
           onSearch={useCallback(
             (q) => {
-              router.push(urlstring({ q: q }));
+              router.push(urlstring({ q: q, p: 1 }));
             },
             [router]
           )}
@@ -85,7 +85,7 @@ export default function Page({ page, data }: PageProps) {
           dynamic
           size="tiny"
         />
-      </Segment>
+      </Container>
       <PaginatedView
         itemCount={data.items.length}
         itemsPerPage={limit}

@@ -103,41 +103,50 @@ export enum ItemSort {
   GalleryCircle = 11,
 
   // Grouping Random
-  GroupingRandom = 15,
+  GroupingRandom = 50,
   // Grouping Name
-  GroupingName = 16,
+  GroupingName = 51,
   // Grouping Date
-  GroupingDate = 17,
+  GroupingDate = 52,
   // Grouping Date
-  GroupingGalleryCount = 18,
+  GroupingGalleryCount = 53,
 
   // Artist Name
-  ArtistName = 20,
+  ArtistName = 100,
 
   // Namespace
-  NamespaceTagNamespace = 30,
+  NamespaceTagNamespace = 150,
   // Tag
-  NamespaceTagTag = 31,
+  NamespaceTagTag = 151,
 
   // Tag
-  FilterName = 35,
+  FilterName = 200,
 
   // Circle Name
-  CircleName = 40,
+  CircleName = 250,
 
   // Parody Name
-  ParodyName = 45,
+  ParodyName = 300,
+
+  // Category Name
+  CategoryName = 350,
+
+  // Status Name
+  StatusName = 400,
+
+  // Language Name
+  LanguageName = 450,
 
   // Collection Random
-  CollectionRandom = 50,
+  CollectionRandom = 500,
   // Collection Name
-  CollectionName = 51,
+  CollectionName = 501,
   // Collection Date Added
-  CollectionDate = 52,
+  CollectionDate = 502,
   // Collection Date Published
-  CollectionPublished = 53,
+  CollectionPublished = 503,
   // Collection Gallery Count
-  CollectionGalleryCount = 54,
+  CollectionGalleryCount = 504,
 }
 
 export enum ProgressType {

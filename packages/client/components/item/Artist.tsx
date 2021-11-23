@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import Link from 'next/link';
-import { Card, Image, Label, Segment } from 'semantic-ui-react';
+import { Card, Icon, Image, Label, Segment } from 'semantic-ui-react';
 
 import t from '../../misc/lang';
 import { FieldPath, ServerArtist } from '../../misc/types';
@@ -14,6 +14,8 @@ export type ArtistCardLabelData = DeepPick<
   | 'preferred_name.name'
   | 'metatags.favorite'
   | 'metatags.follow'
+  | 'circles.[].id'
+  | 'circles.[].name'
 >;
 
 export const artistCardLabelDataFields: FieldPath<ServerArtist>[] = [
@@ -21,6 +23,8 @@ export const artistCardLabelDataFields: FieldPath<ServerArtist>[] = [
   'preferred_name.name',
   'metatags.favorite',
   'metatags.follow',
+  'circles.id',
+  'circles.name',
 ];
 
 export default function ArtistCardLabel({
@@ -33,8 +37,9 @@ export default function ArtistCardLabel({
     <Card
       {...props}
       as={Segment}
+      size="tiny"
       color="blue"
-      className={classNames(props.className)}>
+      className={classNames('default-card', props.className)}>
       <Card.Content>
         <Image
           floated="left"
@@ -65,6 +70,15 @@ export default function ArtistCardLabel({
             defaultRating={data?.metatags?.favorite ? 1 : 0}
           />
         </Card.Header>
+        <Card.Meta>
+          <Label.Group size="small">
+            {data?.circles?.map?.((c) => (
+              <Label color="teal" key={c?.id}>
+                <Icon name="group" /> {c.name}
+              </Label>
+            ))}
+          </Label.Group>
+        </Card.Meta>
         <Card.Meta>{data.info || t`No description`}</Card.Meta>
         <Card.Meta className="clearfix">
           <Link

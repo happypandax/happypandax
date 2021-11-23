@@ -27,7 +27,6 @@ export default function DirectoryPage({ children }: PageProps) {
 
   return (
     <PageLayout
-      centered
       menu={useMemo(
         () => (
           <MainMenu secondary={false} size="small" tabular>
