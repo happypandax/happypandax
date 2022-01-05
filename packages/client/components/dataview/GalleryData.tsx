@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { Segment } from 'semantic-ui-react';
+import { Label, Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { QueryType, useQueryType } from '../../client/queries';
@@ -107,9 +107,9 @@ export default function GalleryDataTable({
         <DataTableItem textAlign="center">
           <CategoryLabel />
           <LanguageLabel>{data?.language?.name}</LanguageLabel>
+          <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
           <ReadCountLabel>{data?.times_read}</ReadCountLabel>
           <PageCountLabel>{data?.page_count}</PageCountLabel>
-          <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
         </DataTableItem>
         {data?.info && (
           <DataTableItem>
@@ -144,9 +144,11 @@ export default function GalleryDataTable({
           <UrlList />
         </DataTableItem>
         <DataTableItem textAlign="center">
-          <LastReadLabel timestamp={data?.last_read} />
-          <LastUpdatedLabel timestamp={data?.last_updated} />
-          <DateAddedLabel timestamp={data?.timestamp} />
+          <Label.Group>
+            <LastReadLabel timestamp={data?.last_read} />
+            <LastUpdatedLabel timestamp={data?.last_updated} />
+            <DateAddedLabel timestamp={data?.timestamp} />
+          </Label.Group>
         </DataTableItem>
       </DataTable>
     </DataContext.Provider>

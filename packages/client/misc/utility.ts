@@ -298,3 +298,13 @@ export function maskText(text: string) {
     )
     .join(' ');
 }
+
+export function JSONSafe<T extends Record<any, any>>(obj: T) {
+  const o = { ...obj };
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v === undefined) {
+      delete o[k];
+    }
+  });
+  return o;
+}

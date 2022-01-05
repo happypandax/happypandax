@@ -531,6 +531,12 @@ export default class ServerService extends Service {
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandProgress>;
   }
+
+  async page_read_event(args: { item_id: number }, group?: GroupCall) {
+    const data = await this._call('page_read_event', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
 }
 
 function throw_msg_error(msg: ServerMsg) {

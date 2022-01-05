@@ -385,8 +385,10 @@ export function GalleryItemHeader({ data }: { data: GalleryHeaderData }) {
               <Divider hidden className="small" />
               <LabelFields>
                 <LabelField label={t`Series`} padded={false}>
-                  <GroupingLabel />
-                  <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
+                  <Label.Group>
+                    <GroupingLabel />
+                    <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
+                  </Label.Group>
                 </LabelField>
                 <LabelField label={t`Parody`} padded={false}>
                   <ParodyLabels />

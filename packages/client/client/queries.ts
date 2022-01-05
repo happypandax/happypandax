@@ -58,6 +58,7 @@ export enum MutatationType {
   REMOVE_ITEM_FROM_QUEUE,
   ADD_ITEMS_TO_METADATA_QUEUE,
   ADD_URLS_TO_DOWNLOAD_QUEUE,
+  PAGE_READ_EVENT,
 }
 
 export const queryClient = new QueryClient({
@@ -129,6 +130,11 @@ export function useMutationType<
 
     case MutatationType.REMOVE_ITEM_FROM_QUEUE: {
       endpoint = '/api/remove_item_from_queue';
+      break;
+    }
+
+    case MutatationType.PAGE_READ_EVENT: {
+      endpoint = '/api/page_read_event';
       break;
     }
 
@@ -535,6 +541,12 @@ interface AddUrlsToDownloadQueue<T = undefined> extends MutationAction<T> {
   variables: Parameters<ServerService['add_urls_to_download_queue']>[0];
 }
 
+interface PageReadEvent<T = undefined> extends MutationAction<T> {
+  type: MutatationType.PAGE_READ_EVENT;
+  dataType: Unwrap<ReturnType<ServerService['page_read_event']>>;
+  variables: Parameters<ServerService['page_read_event']>[0];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateGallery<T>
@@ -542,6 +554,7 @@ type MutationActions<T = undefined> =
   | RemoveItemFromQueue<T>
   | AddItemsToMetadataQueue<T>
   | AddUrlsToDownloadQueue<T>
+  | PageReadEvent<T>
   | StopQueue<T>
   | StartQueue<T>
   | ClearQueue<T>;

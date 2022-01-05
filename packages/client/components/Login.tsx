@@ -32,11 +32,21 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       onSuccess?.();
     },
     onError: (err) => {
-      console.log(err);
-      setError(err.message + ': ' + err.response.data);
-    },
-    onSettled: () => {
       setLoading(false);
+      if (err.response.status) {
+        switch (err.response.status) {
+          case 500:
+            setError(
+              t`Failed to connect to server` +
+                ` (${endpoint.host}:${endpoint.port})`
+            );
+            break;
+          default:
+            setError(err.message + ': ' + err.response.data);
+        }
+      } else {
+        setError(err.message + ': ' + err.response.data);
+      }
     },
   });
 

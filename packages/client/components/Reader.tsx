@@ -39,7 +39,13 @@ import Scroller from '@twiddly/scroller';
 
 import { ReaderContext } from '../client/context';
 import { useBodyEvent, useRefEvent, useTabActive } from '../client/hooks/utils';
-import { Query, QueryType, useQueryType } from '../client/queries';
+import {
+  MutatationType,
+  Query,
+  QueryType,
+  useMutationType,
+  useQueryType,
+} from '../client/queries';
 import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
 import {
@@ -1087,6 +1093,10 @@ export default function Reader({
   padded?: boolean;
   children?: React.ReactNode;
 }) {
+  const { mutate: pageReadEvent } = useMutationType(
+    MutatationType.PAGE_READ_EVENT
+  );
+
   const { item, stateKey } = useContext(ReaderContext);
 
   const scaling = useInitialRecoilValue(
@@ -1172,6 +1182,17 @@ export default function Reader({
       Math.max(40, initialRemoteWindowSize ?? Math.ceil(windowSize * 2))
     );
   }, [initialRemoteWindowSize]);
+
+  // page change
+
+  useEffect(() => {
+    const lastpage = pages?.[pageWindow?.[pageFocus]];
+    if (lastpage) {
+      return () => {
+        pageReadEvent({ item_id: lastpage.id });
+      };
+    }
+  }, [pages?.[pageWindow?.[pageFocus]]]);
 
   //
 

@@ -36,25 +36,23 @@ export default function TagCardLabel({
       className={classNames('default-card', props.className)}>
       <Card.Content>
         <Card.Header>
-          <Label size="mini" className="right">
-            {t`ID`}
-            <Label.Detail>{data.id}</Label.Detail>
-          </Label>
-          <Rating
-            icon="thumbtack"
-            size="big"
-            title={t`Follow status`}
-            color="blue"
-            className="right"
-            defaultRating={data.metatags.follow ? 1 : 0}
-          />
           <Rating
             icon="heart"
             size="big"
             color="red"
-            className="right"
             defaultRating={data.metatags.favorite ? 1 : 0}
           />
+          {/* <Rating
+            icon="thumbtack"
+            size="big"
+            title={t`Follow status`}
+            color="blue"
+            defaultRating={data.metatags.follow ? 1 : 0}
+          /> */}
+          <Label size="mini" className="right">
+            {t`ID`}
+            <Label.Detail>{data.id}</Label.Detail>
+          </Label>
           {data.namespace.name !== appProps.special_namespace && (
             <span className="sub-text">{data.namespace.name}:</span>
           )}{' '}

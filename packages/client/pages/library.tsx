@@ -628,6 +628,16 @@ export default function Page({
     setInfinitePage(n);
   }, []);
 
+  const onItemChange = useRecoilTransaction_UNSTABLE(({ set }) => (i) => {
+    set(LibraryState.item, i);
+    set(LibraryState.page, 1);
+  });
+
+  const onViewChange = useRecoilTransaction_UNSTABLE(({ set }) => (i) => {
+    set(LibraryState.view, i);
+    set(LibraryState.page, 1);
+  });
+
   const View = display === 'card' ? CardView : ListView;
 
   return (
@@ -638,9 +648,9 @@ export default function Page({
             <MenuItem className={classNames('no-right-padding')}>
               <ViewButtons
                 view={view}
-                onView={setView}
+                onView={onViewChange}
                 item={item}
-                onItem={setItem}
+                onItem={onItemChange}
               />
             </MenuItem>
             <Menu.Menu position="left" className="fullwidth">

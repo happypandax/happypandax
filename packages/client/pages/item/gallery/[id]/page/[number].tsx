@@ -27,6 +27,7 @@ import {
 } from '../../../../../misc/types';
 import {
   getCookies,
+  JSONSafe,
   replaceURL,
   urlparse,
   urlstring,
@@ -260,7 +261,7 @@ export async function getServerSideProps(
 
   return {
     redirect,
-    props: {
+    props: JSONSafe({
       item,
       collections,
       series,
@@ -272,7 +273,7 @@ export async function getServerSideProps(
       startPage,
       urlQuery,
       title,
-    },
+    }),
   };
 }
 
