@@ -16,8 +16,8 @@ import {
   GalleryHeaderData,
   galleryHeaderDataFields,
   GalleryItemHeader,
-  ItemMenu,
-} from '../../../../components/layout/ItemLayout';
+} from '../../../../components/layout/GalleryLayout';
+import { ItemMenu } from '../../../../components/layout/ItemLayout';
 import PageLayout from '../../../../components/layout/Page';
 import {
   PageTitle,
@@ -167,7 +167,7 @@ export default function Page(props: PageProps) {
     <PageLayout
       menu={useMemo(
         () => (
-          <ItemMenu data={props.item}></ItemMenu>
+          <ItemMenu data={props.item} type={ItemType.Gallery}></ItemMenu>
         ),
         [props.item]
       )}>

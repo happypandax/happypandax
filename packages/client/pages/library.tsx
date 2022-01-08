@@ -463,7 +463,7 @@ export default function Page({
 
   const errorLimited = errorLimit || initialErrorLimit;
 
-  const { data, fetchNextPage, isFetching, queryKey } = useQueryType(
+  const { data, fetchNextPage, isFetching, queryKey, remove } = useQueryType(
     QueryType.LIBRARY,
     {
       ...libraryargs,
@@ -556,7 +556,7 @@ export default function Page({
     };
     setPage(1);
     setInfiniteKey('');
-    router.replace(urlstring(q)).then(() => client.resetQueries(queryKey));
+    router.replace(urlstring(q)); // .then(() => client.resetQueries(queryKey));
   }, [view, item, favorites, sortDesc, sort, filter, limit, searchOptions]);
 
   useUpdateEffect(() => {
@@ -567,7 +567,7 @@ export default function Page({
     };
     setPage(1);
     setInfiniteKey('');
-    router.push(urlstring(q)).then(() => client.resetQueries(queryKey));
+    router.push(urlstring(q)); // .then(() => client.resetQueries(queryKey));
   }, [query]);
 
   useUpdateEffect(() => {

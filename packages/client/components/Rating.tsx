@@ -132,7 +132,7 @@ export default function Rating({
           aria-setsize={maxRating}
           index={i}
           icon={icon}
-          key={i}
+          key={`${rating}-${i}`}
           onClick={onClick}
           onMouseEnter={onMouseEnter}
           selected={selectedIndex >= i && isSelecting}

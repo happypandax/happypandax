@@ -54,6 +54,14 @@ declare global {
 
   export type PartialExcept<T, K extends keyof T> = Pick<T, K> & Partial<T>;
 
+  export type RecursivePartial<T> = {
+    [P in keyof T]?: T[P] extends (infer U)[]
+      ? RecursivePartial<U>[]
+      : T[P] extends object
+      ? RecursivePartial<T[P]>
+      : T[P];
+  };
+
   export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
   export type Replace<

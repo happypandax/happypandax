@@ -14,13 +14,12 @@ import {
 } from '../../misc/types';
 import { maskText } from '../../misc/utility';
 import { AppState } from '../../state';
-import { GalleryCountLabel } from '../dataview/Common';
+import { FavoriteLabel, GalleryCountLabel } from '../dataview/Common';
 import GroupingDataTable from '../dataview/GroupingData';
 import CardView from '../view/CardView';
 import ListView from '../view/ListView';
 import {
   ActivityLabel,
-  FavoriteLabel,
   ItemCard,
   ItemCardImage,
   ItemLabel,

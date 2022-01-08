@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
 import { ItemSize } from '../../misc/types';
-import { PaginatedView, ViewAutoSizer } from './';
+import { PaginatedView, ViewAutoSizer, ViewBase } from './';
 import styles from './ListView.module.css';
 
 type ItemRender<T> = React.ComponentType<{
@@ -138,25 +138,29 @@ export default function ListView<T>({
   disableWindowScroll,
   dynamicRowHeight,
   onItemKey,
+  arrayContext,
   ...props
 }: {
   disableWindowScroll?: boolean;
 } & ListViewProps<T> &
+  React.ComponentProps<typeof ViewBase> &
   Omit<
     React.ComponentProps<typeof PaginatedView>,
     'children' | 'itemCount' | 'paddedChildren'
   >) {
   return (
-    <PaginatedView {...props} itemCount={items?.length} paddedChildren>
-      <ViewAutoSizer
-        items={items}
-        size={size}
-        itemRender={itemRender}
-        dynamicRowHeight={dynamicRowHeight}
-        disableWindowScroll={disableWindowScroll}
-        onItemKey={onItemKey}
-        view={ListViewList}
-      />
-    </PaginatedView>
+    <ViewBase arrayContext={arrayContext} items={items}>
+      <PaginatedView {...props} itemCount={items?.length} paddedChildren>
+        <ViewAutoSizer
+          items={items}
+          size={size}
+          itemRender={itemRender}
+          dynamicRowHeight={dynamicRowHeight}
+          disableWindowScroll={disableWindowScroll}
+          onItemKey={onItemKey}
+          view={ListViewList}
+        />
+      </PaginatedView>
+    </ViewBase>
   );
 }

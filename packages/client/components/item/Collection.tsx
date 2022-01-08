@@ -3,10 +3,9 @@ import { useCallback, useMemo } from 'react';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { FieldPath, ItemSize, ServerCollection } from '../../misc/types';
-import { GalleryCountLabel } from '../dataview/Common';
+import { FavoriteLabel, GalleryCountLabel } from '../dataview/Common';
 import {
   ActivityLabel,
-  FavoriteLabel,
   InboxIconLabel,
   ItemCard,
   ItemCardImage,

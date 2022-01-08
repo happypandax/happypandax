@@ -3,10 +3,9 @@ import { useCallback, useMemo } from 'react';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { FieldPath, ItemSize, ServerPage } from '../../misc/types';
-import { PageNumberLabel } from '../dataview/Common';
+import { FavoriteLabel, PageNumberLabel } from '../dataview/Common';
 import {
   ActivityLabel,
-  FavoriteLabel,
   InboxIconLabel,
   ItemCard,
   ItemCardImage,

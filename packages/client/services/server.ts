@@ -180,6 +180,32 @@ export default class ServerService extends Service {
     return data.data as AnyJson;
   }
 
+  async update_item<R = undefined>(
+    args: {
+      item_type: ItemType;
+      item: Record<string, AnyJson>;
+      options?: JsonMap;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('update_item', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
+  async update_metatags<R = undefined>(
+    args: {
+      item_type: ItemType;
+      item_id: number | number[];
+      metatags: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('update_metatags', args, group);
+    throw_msg_error(data);
+    return data.data as boolean | number;
+  }
+
   async item<R = undefined>(
     args: {
       item_type: ItemType;

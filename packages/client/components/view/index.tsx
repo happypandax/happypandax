@@ -14,6 +14,7 @@ import {
   Visibility,
 } from 'semantic-ui-react';
 
+import { ArrayContext, ArrayContextT } from '../../client/context';
 import t from '../../misc/lang';
 import { getClientHeight } from '../../misc/utility';
 import { AppState } from '../../state';
@@ -395,4 +396,23 @@ export function SidebarPaginatedView({
       <Sidebar.Pusher>{{ children }}</Sidebar.Pusher>
     </PaginatedView>
   );
+}
+
+export function ViewBase<T>({
+  children,
+  arrayContext,
+}: {
+  arrayContext?: ArrayContextT;
+  children: React.ReactNode;
+}) {
+  const el = <>{children}</>;
+
+  if (arrayContext) {
+    return (
+      <ArrayContext.Provider value={arrayContext}>
+        {children}
+      </ArrayContext.Provider>
+    );
+  }
+  return el;
 }

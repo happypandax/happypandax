@@ -81,6 +81,11 @@ export interface ServerMetaTags extends ServerItem {
   follow: boolean;
   read: boolean;
 }
+
+export interface ServerItemWithMetatags extends ServerItem {
+  metatags: ServerMetaTags;
+}
+
 export interface ServerArtist extends ServerItem, ServerItemWithProfile {
   names: (ServerItemWithNameLanguageAlias & { artist_id: number })[];
   preferred_name: ServerItemWithNameLanguageAlias & { artist_id: number };

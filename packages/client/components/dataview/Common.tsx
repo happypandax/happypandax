@@ -1,19 +1,23 @@
+import classNames from 'classnames';
 import React, { useCallback, useContext, useState } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { Header, Icon, Label, List, Table } from 'semantic-ui-react';
 
+import { ItemActions } from '../../client/actions/item';
 import { DataContext } from '../../client/context';
+import { useUpdateDataState } from '../../client/hooks/item';
 import t from '../../misc/lang';
 import {
   FieldPath,
   ServerGallery,
-  ServerGrouping,
   ServerItemWithName,
+  ServerMetaTags,
   ServerTag,
 } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { AppState, DataState } from '../../state';
 import Rating from '../Rating';
+import styles from './Common.module.css';
 
 export function LanguageLabel({
   children,
@@ -57,11 +61,13 @@ export function GalleryCountLabel({
   return <PageCountLabel title={t`Gallery count`} {...props} />;
 }
 
-export function CategoryLabel(props: React.ComponentProps<typeof Label>) {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+export function CategoryLabel({
+  data: initialData,
+  ...props
+}: React.ComponentProps<typeof Label> & {
+  data?: DeepPick<ServerGallery, 'id' | 'category.name'>;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   return (
     <Label {...props} title={t`Category`} color="black" basic>
@@ -150,12 +156,12 @@ export function LastUpdatedLabel({
 
 export function DatePublishedLabel({
   children,
+  data: initialData,
   ...props
-}: React.ComponentProps<typeof Label>) {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+}: React.ComponentProps<typeof Label> & {
+  data?: DeepPick<ServerGallery, 'id' | 'pub_date'>;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   const date = dateFromTimestamp(data?.pub_date, {
     relative: false,
@@ -165,11 +171,15 @@ export function DatePublishedLabel({
   return <Header size="tiny">{date ? date : t`Unknown`}</Header>;
 }
 
-export function ArtistLabels() {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+export function ArtistLabels({
+  data: initialData,
+}: {
+  data?: DeepPick<
+    ServerGallery,
+    'id' | 'artists.[].preferred_name.name' | 'artists.[].id'
+  >;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   return (
     <Label.Group color="blue">
@@ -182,11 +192,15 @@ export function ArtistLabels() {
   );
 }
 
-export function ParodyLabels() {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+export function ParodyLabels({
+  data: initialData,
+}: {
+  data?: DeepPick<
+    ServerGallery,
+    'id' | 'parodies.[].preferred_name.name' | 'parodies.[].id'
+  >;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   return (
     <Label.Group color="violet">
@@ -197,11 +211,12 @@ export function ParodyLabels() {
   );
 }
 
-export function CircleLabels() {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+export function CircleLabels({
+  data: initialData,
+}: {
+  data?: DeepPick<ServerGallery, 'id' | 'artists' | 'circles'>;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   const artistCircles = data?.artists
     ?.flatMap?.((a) => a?.circles?.map?.((c) => c))
@@ -223,11 +238,12 @@ export function CircleLabels() {
   );
 }
 
-export function GroupingLabel() {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+export function GroupingLabel({
+  data: initialData,
+}: {
+  data?: DeepPick<ServerGallery, 'id' | 'grouping.name'>;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   return (
     <Label basic>
@@ -236,40 +252,109 @@ export function GroupingLabel() {
   );
 }
 
+export function FavoriteLabel({
+  onRate,
+  className,
+  ...props
+}: MakeOptional<React.ComponentProps<typeof Rating>, 'icon'>) {
+  const { data, setData, context } = useUpdateDataState<{
+    id: number;
+    metatags: PartialExcept<ServerMetaTags, 'favorite'>;
+  }>();
+
+  // console.log(context.key, data);
+
+  const onFav = useCallback(
+    (e, d) => {
+      if (context.editing) {
+        throw Error('not implemented');
+      } else {
+        ItemActions.updateMetatags(
+          [data],
+          {
+            item_type: context.type,
+            item_id: data.id,
+            metatags: { favorite: d.rating!! },
+          },
+          (d, mutated) => {
+            if (mutated) {
+              setData(d[0]);
+            }
+          }
+        ).catch((err) => console.error(err));
+      }
+    },
+    [context.type, data]
+  );
+
+  return (
+    <Rating
+      className={classNames(styles.favorite_label, className)}
+      icon="heart"
+      color="red"
+      onRate={onRate ?? onFav}
+      size="massive"
+      rating={data?.metatags?.favorite ? 1 : undefined}
+      {...props}
+    />
+  );
+}
+
 export function RatingLabel({
   size = 'huge',
+  defaultRating,
 }: {
+  defaultRating?: number;
   size?: React.ComponentProps<typeof Rating>;
 }) {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<
-    PartialExcept<ServerGallery | ServerGrouping, 'id'>
-  >(DataState.data(ctx.key));
+  const { data, setData, context } = useUpdateDataState<{
+    id: number;
+    rating: number;
+  }>();
 
   return (
     <Rating
       icon="star"
       size={size}
       color="yellow"
-      defaultRating={data?.rating}
+      onRate={useCallback(
+        (e, d) => {
+          if (context.editing) {
+            throw Error('not implemented');
+          } else {
+            ItemActions.updateItem(
+              data.id,
+              data,
+              { item_type: context.type, item: { rating: d.rating } },
+              (d, mutated) => {
+                if (mutated) {
+                  setData(d);
+                }
+              }
+            ).catch((err) => console.error(err));
+          }
+        },
+        [context.type, data]
+      )}
+      rating={data?.rating}
+      defaultRating={defaultRating}
       maxRating={10}
     />
   );
 }
 
 export function NamesTable({
+  data: initialData,
   children,
   dataPrimaryKey,
   dataKey,
 }: {
+  data?: PartialExcept<ServerGallery, 'id'>;
   dataKey: FieldPath;
   dataPrimaryKey: FieldPath;
   children?: React.ReactNode;
 }) {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+  const { data } = useUpdateDataState(initialData);
 
   const names =
     dataPrimaryKey && data?.[dataPrimaryKey]

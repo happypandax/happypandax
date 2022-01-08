@@ -1,8 +1,11 @@
 import Link from 'next/link';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRecoilValue } from 'recoil';
-import { Button, Icon } from 'semantic-ui-react';
+import { Button, Icon, Label, Popup } from 'semantic-ui-react';
 
+import { ItemActions } from '../../client/actions/item';
+import { useLibraryContext } from '../../client/context';
+import { useSetupDataState, useUpdateDataState } from '../../client/hooks/item';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import {
@@ -10,20 +13,22 @@ import {
   ItemSize,
   ServerGallery,
   ServerItem,
+  ServerItemWithMetatags,
 } from '../../misc/types';
 import { maskText } from '../../misc/utility';
 import { AppState } from '../../state';
 import {
+  FavoriteLabel,
   GroupingNumberLabel,
   LanguageLabel,
   PageCountLabel,
+  RatingLabel,
   ReadCountLabel,
   StatusLabel,
 } from '../dataview/Common';
 import GalleryDataTable from '../dataview/GalleryData';
 import {
   ActivityLabel,
-  FavoriteLabel,
   InboxIconLabel,
   ItemCard,
   ItemCardActionContent,
@@ -48,6 +53,7 @@ export type GalleryCardData = DeepPick<
   | 'artists.[].preferred_name.name'
   | 'profile'
   | 'number'
+  | 'rating'
   | 'metatags.favorite'
   | 'metatags.read'
   | 'metatags.inbox'
@@ -68,6 +74,7 @@ export const galleryCardDataFields: FieldPath<ServerGallery>[] = [
   'number',
   'times_read',
   'page_count',
+  'rating',
   'language.code',
   'language.name',
   'grouping.status.name',
@@ -77,7 +84,10 @@ export const galleryCardDataFields: FieldPath<ServerGallery>[] = [
   'metatags.*',
 ];
 
-function ReadButton({ data }: { data: { id: number } }) {
+export function ReadButton({
+  data,
+  ...props
+}: React.ComponentProps<typeof Button> & { data: { id: number } }) {
   const externalViewer = useRecoilValue(AppState.externalViewer);
 
   return (
@@ -94,7 +104,8 @@ function ReadButton({ data }: { data: { id: number } }) {
           if (externalViewer) {
             e.preventDefault();
           }
-        }, [])}>
+        }, [])}
+        {...props}>
         <Icon className="book open" />
         {t`Read`}
       </Button>
@@ -102,9 +113,10 @@ function ReadButton({ data }: { data: { id: number } }) {
   );
 }
 
-function ContinueButton({
+export function ContinueButton({
   data,
-}: {
+  ...props
+}: React.ComponentProps<typeof Button> & {
   data: DeepPick<GalleryCardData, 'id' | 'progress.page.number'>;
 }) {
   return (
@@ -116,11 +128,50 @@ function ContinueButton({
         [data]
       )}
       passHref>
-      <Button as="a" color="orange" size="mini">
+      <Button as="a" color="orange" size="mini" {...props}>
         <Icon name="play" />
         {t`Continue`}
       </Button>
     </Link>
+  );
+}
+
+export function SendToLibraryButton({
+  data,
+  type,
+  ...props
+}: React.ComponentProps<typeof Button> & {
+  data: DeepPick<ServerItemWithMetatags, 'id'>;
+  type: ItemType;
+}) {
+  const { key, setData } = useUpdateDataState();
+  const [sent, setSent] = useState(false);
+
+  const onClick = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      // optimistic update
+      setSent(true);
+
+      ItemActions.updateMetatags([data], {
+        item_type: type,
+        item_id: data.id,
+        metatags: { inbox: false },
+      }).catch((err) => {
+        setSent(false);
+
+        console.error(err);
+      });
+    },
+    [data]
+  );
+
+  return (
+    <Button size="mini" basic={sent} onClick={onClick} {...props}>
+      <Icon name={sent ? 'check' : 'grid layout'} />
+      {sent ? t`Sent` : t`Send to Library`}
+    </Button>
   );
 }
 
@@ -136,7 +187,7 @@ function GalleryMenu({
       {!hasProgress && (
         <>
           <ItemMenuLabelItem icon="book open">{t`Read`}</ItemMenuLabelItem>
-          <ItemMenuLabelItem icon="book open">{t`Read in New Tab`}</ItemMenuLabelItem>
+          <ItemMenuLabelItem icon="book open">{t`Read in new tab`}</ItemMenuLabelItem>
         </>
       )}
       {hasProgress && (
@@ -158,7 +209,7 @@ function GalleryMenu({
 
 export function GalleryCard({
   size,
-  data,
+  data: initialData,
   fluid,
   loading,
   hiddenLabel,
@@ -187,6 +238,14 @@ export function GalleryCard({
   onDetailsOpen?: () => void;
   horizontal?: boolean;
 }) {
+  const { data, dataContext } = useSetupDataState({
+    initialData,
+    itemType: ItemType.Gallery,
+    key: '_gallery',
+  });
+
+  const isLibraryCtx = useLibraryContext();
+
   const blur = useRecoilValue(AppState.blur);
 
   const hasProgress = !!data?.progress && !data?.progress?.end;
@@ -212,14 +271,20 @@ export function GalleryCard({
             <AddToQueueButton itemType={ItemType.Gallery} data={data} />
           </ItemCardActionContentItem>
         )}
+        {isLibraryCtx && data?.metatags?.inbox && (
+          <ItemCardActionContentItem>
+            <SendToLibraryButton data={data} />
+          </ItemCardActionContentItem>
+        )}
       </ItemCardActionContent>
     ),
-    [data, size, horizontal]
+    [data, size, horizontal, isLibraryCtx]
   );
 
   return (
     <ItemCard
       type={ItemType.Gallery}
+      dataContext={dataContext}
       href={`/item/gallery/${data.id}`}
       dragData={data}
       draggable={draggable}
@@ -290,6 +355,18 @@ export function GalleryCard({
             <GalleryMenu
               hasProgress={hasProgress}
               read={data?.metatags?.read}
+            />
+          </ItemLabel>,
+          <ItemLabel key="rating" x="left" y="bottom">
+            <Popup
+              content={<RatingLabel defaultRating={data?.rating} />}
+              on="click"
+              hideOnScroll
+              trigger={
+                <Label color="orange" size="large" basic circular>
+                  {data?.rating}
+                </Label>
+              }
             />
           </ItemLabel>,
         ],

@@ -4,7 +4,7 @@ import { List } from 'react-virtualized';
 
 import { ItemSize } from '../../misc/types';
 import styles from './CardView.module.css';
-import { PaginatedView, ViewAutoSizer } from './index';
+import { PaginatedView, ViewAutoSizer, ViewBase } from './index';
 
 type ItemRender<T> = React.ComponentType<{ data: T; size?: ItemSize }>;
 
@@ -133,22 +133,26 @@ export default function CardView<T>({
   dynamicRowHeight,
   size,
   onItemKey,
+  arrayContext,
   ...props
 }: {
   disableWindowScroll?: boolean;
 } & CardViewProps<T> &
+  React.ComponentProps<typeof ViewBase> &
   Omit<React.ComponentProps<typeof PaginatedView>, 'children' | 'itemCount'>) {
   return (
-    <PaginatedView {...props} itemCount={items?.length}>
-      <ViewAutoSizer
-        items={items}
-        size={size}
-        itemRender={itemRender}
-        dynamicRowHeight={dynamicRowHeight}
-        onItemKey={onItemKey}
-        disableWindowScroll={disableWindowScroll}
-        view={CardViewGrid}
-      />
-    </PaginatedView>
+    <ViewBase arrayContext={arrayContext} items={items}>
+      <PaginatedView {...props} itemCount={items?.length}>
+        <ViewAutoSizer
+          items={items}
+          size={size}
+          itemRender={itemRender}
+          dynamicRowHeight={dynamicRowHeight}
+          onItemKey={onItemKey}
+          disableWindowScroll={disableWindowScroll}
+          view={CardViewGrid}
+        />
+      </PaginatedView>
+    </ViewBase>
   );
 }

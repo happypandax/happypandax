@@ -199,7 +199,6 @@ function mainMenuProps() {
       r.height = el.offsetHeight;
     }
   }
-  console.log(r);
   return r;
 }
 

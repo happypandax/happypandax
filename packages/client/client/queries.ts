@@ -50,7 +50,8 @@ export enum QueryType {
 
 export enum MutatationType {
   LOGIN = 50,
-  UPDATE_GALLERY,
+  UPDATE_ITEM,
+  UPDATE_METATAGS,
   STOP_QUEUE,
   START_QUEUE,
   CLEAR_QUEUE,
@@ -93,8 +94,13 @@ export function useMutationType<
       break;
     }
 
-    case MutatationType.UPDATE_GALLERY: {
-      endpoint = '/api/gallery';
+    case MutatationType.UPDATE_ITEM: {
+      endpoint = '/api/item';
+      break;
+    }
+
+    case MutatationType.UPDATE_METATAGS: {
+      endpoint = '/api/metatags';
       break;
     }
 
@@ -493,10 +499,16 @@ interface LoginAction<T = undefined> extends MutationAction<T> {
   };
 }
 
-interface UpdateGallery<T = undefined> extends MutationAction<T> {
-  type: MutatationType.UPDATE_GALLERY;
-  dataType: Unwrap<ReturnType<ServerService['login']>>;
-  variables: { test: string };
+interface UpdateItem<T = undefined> extends MutationAction<T> {
+  type: MutatationType.UPDATE_ITEM;
+  dataType: Unwrap<ReturnType<ServerService['update_item']>>;
+  variables: Parameters<ServerService['update_item']>[0];
+}
+
+interface UpdateMetatags<T = undefined> extends MutationAction<T> {
+  type: MutatationType.UPDATE_METATAGS;
+  dataType: Unwrap<ReturnType<ServerService['update_metatags']>>;
+  variables: Parameters<ServerService['update_metatags']>[0];
 }
 
 interface StopQueue<T = undefined> extends MutationAction<T> {
@@ -549,7 +561,8 @@ interface PageReadEvent<T = undefined> extends MutationAction<T> {
 
 type MutationActions<T = undefined> =
   | LoginAction<T>
-  | UpdateGallery<T>
+  | UpdateItem<T>
+  | UpdateMetatags<T>
   | AddItemToQueue<T>
   | RemoveItemFromQueue<T>
   | AddItemsToMetadataQueue<T>
@@ -567,7 +580,7 @@ export class Query {
   static mutationObservers: Record<
     string,
     MutationObserver<any, any, any, any>
-  >;
+  > = {};
 
   static get<
     A = undefined,
@@ -645,8 +658,12 @@ export class Query {
       let endpoint = '';
 
       switch (action) {
-        case MutatationType.ADD_ITEM_TO_QUEUE: {
+        case MutatationType.UPDATE_ITEM: {
           endpoint = '/api/item';
+          break;
+        }
+        case MutatationType.UPDATE_METATAGS: {
+          endpoint = '/api/metatags';
           break;
         }
 
@@ -657,7 +674,6 @@ export class Query {
       const fn = (v: V) => axios.post<R>(urlstring(endpoint), v, reqConfig);
 
       obs = new MutationObserver<AxiosResponse<R>, E, V>(queryClient, {
-        ...options,
         mutationKey: key,
         mutationFn: fn,
       });
@@ -665,6 +681,6 @@ export class Query {
       Query.mutationObservers[key] = obs;
     }
 
-    return obs.mutate(variables);
+    return obs.mutate(variables, options);
   }
 }

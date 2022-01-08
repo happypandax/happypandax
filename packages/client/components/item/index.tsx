@@ -28,7 +28,12 @@ import {
   Segment,
 } from 'semantic-ui-react';
 
-import { LibraryContext } from '../../client/context';
+import {
+  DataContext,
+  DataContextT,
+  ItemContext,
+  LibraryContext,
+} from '../../client/context';
 import { useImage } from '../../client/hooks/item';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
@@ -40,30 +45,9 @@ import {
 } from '../../misc/types';
 import { maskText } from '../../misc/utility';
 import { AppState, LibraryState } from '../../state';
-import Rating from '../Rating';
 import { GalleryCardData } from './Gallery';
 import { GroupingCardData } from './Grouping';
 import styles from './Item.module.css';
-
-const ItemContext = React.createContext({
-  isDragging: false,
-  activity: false,
-  activityContent: undefined as React.ReactNode,
-  hiddenAction: undefined as boolean,
-  openMenu: false,
-  onMenuClose: undefined as () => void,
-  size: 'medium' as ItemSize,
-  ActionContent: undefined as React.ElementType,
-  Details: undefined as React.ElementType,
-  detailsData: undefined as PartialExcept<ServerItem, 'id'>,
-  labels: [] as React.ReactNode[],
-  href: '',
-  disableModal: false,
-  onDetailsOpen: undefined as () => void,
-  hover: false,
-  loading: false,
-  horizontal: false,
-});
 
 export function AddToQueueButton<T extends ItemType>({
   data,
@@ -267,26 +251,6 @@ export function ItemLabel({
 }) {
   return (
     <div className={classNames('card-item above-dimmer', x, y)}>{children}</div>
-  );
-}
-
-// https://github.com/Semantic-Org/Semantic-UI-React/issues/3950
-export function FavoriteLabel({
-  onRate,
-  defaultRating,
-}: {
-  onRate?: React.ComponentProps<typeof Rating>['onRate'];
-  defaultRating?: React.ComponentProps<typeof Rating>['defaultRating'];
-}) {
-  return (
-    <Rating
-      className={styles.favorite_label}
-      icon="heart"
-      color="red"
-      onRate={onRate}
-      size="massive"
-      defaultRating={defaultRating}
-    />
   );
 }
 
@@ -591,12 +555,13 @@ export const ItemCard = React.forwardRef(
       dragData,
       link,
       type,
+      dataContext,
       ...props
     }: {
       children?: React.ReactNode;
       className?: string;
       type: ItemType;
-      labels?: React.ReactNode[];
+      labels?: React.ReactNode;
       actionContent?: React.ElementType;
       details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
       detailsData?: PartialExcept<ServerItem, 'id'>;
@@ -616,6 +581,7 @@ export const ItemCard = React.forwardRef(
       size?: ItemSize;
       centered?: boolean;
       link?: boolean;
+      dataContext?: DataContextT;
     },
     forwardRef
   ) => {
@@ -664,7 +630,7 @@ export const ItemCard = React.forwardRef(
       setOpenMenu(false);
     }, []);
 
-    return (
+    const el = (
       <ItemContext.Provider
         value={{
           ...itemContext,
@@ -741,6 +707,14 @@ export const ItemCard = React.forwardRef(
         </Ref>
       </ItemContext.Provider>
     );
+
+    if (dataContext) {
+      return (
+        <DataContext.Provider value={dataContext}>{el}</DataContext.Provider>
+      );
+    }
+
+    return el;
   }
 );
 

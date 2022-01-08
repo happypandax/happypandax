@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
+import { useState } from 'react';
 import { Label, Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
+import { useSetupDataState } from '../../client/hooks/item';
 import { QueryType, useQueryType } from '../../client/queries';
 import { ItemType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { ServerGallery } from '../../misc/types';
-import { DataState } from '../../state';
 import {
   ArtistLabels,
   CategoryLabel,
@@ -36,10 +35,6 @@ export default function GalleryDataTable({
 }: {
   data: PartialExcept<ServerGallery, 'id'>;
 } & React.ComponentProps<typeof DataTable>) {
-  const contextKey = DataState.getKey(ItemType.Gallery, initialData);
-
-  const setData = useSetRecoilState(DataState.data(contextKey));
-
   const [showDataText, setShowDataText] = useState(false);
 
   const { data: qData, isLoading } = useQueryType(QueryType.ITEM, {
@@ -75,14 +70,14 @@ export default function GalleryDataTable({
     ],
   });
 
-  const data = qData?.data ?? initialData;
-
-  useEffect(() => {
-    setData(data as PartialExcept<ServerGallery, 'id'>);
-  }, [data]);
+  const { data, dataContext } = useSetupDataState({
+    initialData:
+      (qData?.data as PartialExcept<ServerGallery, 'id'>) ?? initialData,
+    itemType: ItemType.Gallery,
+  });
 
   return (
-    <DataContext.Provider value={{ key: contextKey, type: ItemType.Gallery }}>
+    <DataContext.Provider value={dataContext}>
       <DataTable showDataText={showDataText} loading={isLoading} {...props}>
         <DataTableItem>
           <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
@@ -123,7 +118,7 @@ export default function GalleryDataTable({
           <ArtistLabels />
         </DataTableItem>
         <DataTableItem name={t`Rating`}>
-          <RatingLabel />
+          <RatingLabel defaultRating={data?.rating} />
         </DataTableItem>
         <DataTableItem name={t`Series`}>
           <GroupingLabel />

@@ -1,7 +1,7 @@
-export { default as update } from 'immutability-helper';
 import cookie from 'cookie';
 import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
 import { JsonMap } from 'happypandax-client';
+import imupdate, { CustomCommands, extend, Spec } from 'immutability-helper';
 import _ from 'lodash';
 import { NextPageContext } from 'next';
 import Router from 'next/router';
@@ -25,6 +25,37 @@ Marked.setOptions({
   smartLists: true,
   smartypants: false,
 });
+
+extend(
+  '$insert',
+  function (value: [index: number, value: any], original: any[]) {
+    // invariant(Array.isArray(value),
+    // () => `Expected $insert target to be an array; got ${value}`,)
+    return imupdate(original, { $splice: [[value[0], 0, value[1]]] });
+  }
+);
+
+extend('$removeIndex', function (value: number, original: any[]) {
+  // invariant(Array.isArray(value),
+  // () => `Expected $insert target to be an array; got ${value}`,)
+  return imupdate(original, { $splice: [[value, 1]] });
+});
+
+interface UpdateCommands<T> {
+  $insert: T extends Array<infer U> | ReadonlyArray<infer U>
+    ? [index: number, value: any]
+    : never;
+  $removeIndex: T extends Array<infer U> | ReadonlyArray<infer U>
+    ? number
+    : never;
+}
+
+export function update<T>(
+  object: T,
+  spec: Spec<T, CustomCommands<UpdateCommands<T>>>
+) {
+  return imupdate(object, spec);
+}
 
 export function parseMarkdown(txt: string) {
   return Marked.parse(txt);
