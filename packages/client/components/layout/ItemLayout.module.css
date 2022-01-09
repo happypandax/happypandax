@@ -28,6 +28,7 @@
 #cover {
     margin-top: -13rem;
     min-width: min-content;
+    box-shadow: 1px -5px 14px -6px rgba(0,0,0,0.75);
 }
 
 

@@ -1,4 +1,5 @@
 import { ImageSize, ItemFit, ReadingDirection } from '../misc/enums';
+import { ReaderData } from '../misc/types';
 import StateBlock, { defineAtom } from './_base';
 import { cookieEffect, localStorageEffect } from './_statehelpers';
 
@@ -10,6 +11,8 @@ export default class _ReaderState extends StateBlock {
     },
     true
   );
+
+  static page = defineAtom({ default: undefined as ReaderData }, true);
 
   static pageNumber = defineAtom({ default: 1 }, true);
 
@@ -79,4 +82,11 @@ export default class _ReaderState extends StateBlock {
       cookieEffect('collection_categories'),
     ],
   });
+
+  static pageInfoOpen = defineAtom(
+    {
+      default: false,
+    },
+    true
+  );
 }

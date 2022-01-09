@@ -515,7 +515,7 @@ export function SimilarItemsSlider({
 
   useCommand(cmd?.data, {
     callback: (v) => {
-      const d = v[cmd.data.toString()];
+      const d = v[cmd.data];
       if (d) {
         setData(d.items as ServerGallery[]);
       }

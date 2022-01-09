@@ -273,7 +273,7 @@ export function GalleryCard({
         )}
         {isLibraryCtx && data?.metatags?.inbox && (
           <ItemCardActionContentItem>
-            <SendToLibraryButton data={data} />
+            <SendToLibraryButton type={ItemType.Gallery} data={data} />
           </ItemCardActionContentItem>
         )}
       </ItemCardActionContent>
@@ -305,7 +305,14 @@ export function GalleryCard({
       labels={useMemo(
         () => [
           <ItemLabel key="fav" x="left" y="top">
-            <FavoriteLabel defaultRating={data?.metatags?.favorite ? 1 : 0} />
+            <FavoriteLabel
+              size={
+                (['large', 'medium'] as ItemSize[]).includes(size)
+                  ? 'gigantic'
+                  : 'massive'
+              }
+              defaultRating={data?.metatags?.favorite ? 1 : 0}
+            />
           </ItemLabel>,
           <ItemLabel key="icons" x="right" y="top">
             {readingQueue?.includes?.(data?.id) && <QueueIconLabel />}
@@ -370,7 +377,7 @@ export function GalleryCard({
             />
           </ItemLabel>,
         ],
-        [horizontal, hasProgress, data, readingQueue]
+        [horizontal, size, hasProgress, data, readingQueue]
       )}
       actionContent={actionContent ?? actions}
       image={useCallback(

@@ -23,7 +23,9 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   Button,
   Checkbox,
+  Container,
   Dimmer,
+  Divider,
   Form,
   Grid,
   Header,
@@ -32,12 +34,15 @@ import {
   Modal,
   Segment,
   Select,
+  Table,
   Transition,
+  TransitionablePortal,
 } from 'semantic-ui-react';
 
 import Scroller from '@twiddly/scroller';
 
-import { ReaderContext } from '../client/context';
+import { DataContext, ReaderContext } from '../client/context';
+import { useSetupDataState } from '../client/hooks/item';
 import { useBodyEvent, useRefEvent, useTabActive } from '../client/hooks/utils';
 import {
   MutatationType,
@@ -50,6 +55,7 @@ import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
 import t from '../misc/lang';
 import {
   FieldPath,
+  ReaderData,
   ServerCategory,
   ServerGallery,
   ServerPage,
@@ -61,6 +67,7 @@ import {
   useInitialRecoilState,
   useInitialRecoilValue,
 } from '../state';
+import { FavoriteLabel, TagsTable } from './dataview/Common';
 import CollectionCard, { CollectionCardData } from './item/Collection';
 import GalleryCard, {
   GalleryCardData,
@@ -1035,21 +1042,6 @@ function Canvas({
   );
 }
 
-export type ReaderData = Optional<
-  DeepPick<
-    ServerPage,
-    | 'id'
-    | 'name'
-    | 'number'
-    | 'metatags.favorite'
-    | 'metatags.inbox'
-    | 'metatags.trash'
-    | 'profile'
-    | 'path'
-  >,
-  'profile'
->;
-
 const pageFields: FieldPath<ServerPage>[] = [
   'id',
   'name',
@@ -1140,6 +1132,8 @@ export default function Reader({
     startPage
   );
 
+  const setPage = useSetRecoilState(ReaderState.page(stateKey));
+
   const [countLabelVisible, setCountLabelVisible] = useState(false);
 
   const [pageFocus, setPageFocus] = useState(0);
@@ -1225,7 +1219,9 @@ export default function Reader({
   useEffect(() => {
     if (pages.length && pageWindow.length) {
       // there should be no issue with the page being wrong here
-      onPage?.(pages[pageWindow[pageFocus]]);
+      const p = pages[pageWindow[pageFocus]];
+      setPage(p);
+      onPage?.(p);
     }
   }, [pageNumber]);
 
@@ -2160,5 +2156,121 @@ export function ReaderAutoNavigateButton({
         setAutoNavigate(!autoNavigate);
       }, [autoNavigate])}
     />
+  );
+}
+
+type PageInfoData = ReaderData & {};
+
+export function PageInfo({
+  onClose,
+  item,
+  container,
+}: {
+  item: GalleryCardData;
+  container?: boolean;
+  onClose?: () => void;
+}) {
+  const { stateKey } = useContext(ReaderContext);
+  const page = useRecoilValue(ReaderState.page(stateKey));
+  const { data: initialData } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_type: ItemType.Page,
+      item_id: page?.id,
+      fields: [
+        'tags',
+        'path',
+        'name',
+        'number',
+        'metatags.favorite',
+        'metatags.inbox',
+        'metatags.trash',
+      ],
+    },
+    { placeholderData: page, enabled: !!page }
+  );
+
+  const { data: initalGalleryData } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_type: ItemType.Gallery,
+      item_id: item?.id,
+      fields: ['tags.tag.name', 'tags.namespace.name'],
+    },
+    {
+      placeholderData: undefined as DeepPick<ServerGallery, 'id' | 'tags'>,
+      enabled: !!item?.id,
+    }
+  );
+
+  const { data, dataContext } = useSetupDataState<PageInfoData>({
+    initialData: initialData?.data,
+    itemType: ItemType.Page,
+  });
+
+  const { dataContext: galleryDataContext } = useSetupDataState({
+    initialData: initalGalleryData?.data,
+    itemType: ItemType.Gallery,
+    key: 'pageinfo',
+  });
+
+  return (
+    <DataContext.Provider value={dataContext}>
+      <Segment as={container ? Container : undefined}>
+        <Label as="a" attached="top right" onClick={onClose}>
+          <Icon name="close" fitted />
+        </Label>
+        <Divider horizontal>
+          <Label className="left" circular>
+            {page?.number}
+          </Label>
+        </Divider>
+        <GalleryCard fluid data={item} size="tiny" horizontal />
+        <Table basic="very">
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell singleLine textAlign="center" colSpan={2}>
+                {t`Like this page?`}
+                <FavoriteLabel />
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell collapsing>{t`Page tags`}:</Table.Cell>
+              <Table.Cell>
+                <TagsTable />
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell collapsing>{t`Parent tags`}:</Table.Cell>
+              <Table.Cell>
+                <DataContext.Provider value={galleryDataContext}>
+                  <TagsTable />
+                </DataContext.Provider>
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell collapsing>{t`Path`}:</Table.Cell>
+              <Table.Cell>{data?.path}</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table>
+      </Segment>
+    </DataContext.Provider>
+  );
+}
+
+export function PageInfoPortal({
+  open,
+  onClose,
+  ...props
+}: {
+  open?: boolean;
+} & React.ComponentProps<typeof PageInfo>) {
+  return (
+    <TransitionablePortal open={open} onClose={onClose}>
+      <div id="drawer">
+        <PageInfo {...props} onClose={onClose} />
+      </div>
+    </TransitionablePortal>
   );
 }

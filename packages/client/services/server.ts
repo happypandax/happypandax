@@ -525,26 +525,26 @@ export default class ServerService extends Service {
       : DownloadItem[];
   }
 
-  async start_command(args: { command_ids: number[] }, group?: GroupCall) {
+  async start_command(args: { command_ids: string[] }, group?: GroupCall) {
     const data = await this._call('start_command', args, group);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
-  async stop_command(args: { command_ids: number[] }, group?: GroupCall) {
+  async stop_command(args: { command_ids: string[] }, group?: GroupCall) {
     const data = await this._call('stop_command', args, group);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
-  async command_state(args: { command_ids: number[] }, group?: GroupCall) {
+  async command_state(args: { command_ids: string[] }, group?: GroupCall) {
     const data = await this._call('get_command_state', args, group);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
   async command_value<R = AnyJson>(
-    args: { command_ids: number[] },
+    args: { command_ids: string[] },
     group?: GroupCall
   ) {
     const data = await this._call('get_command_value', args, group);
@@ -552,7 +552,7 @@ export default class ServerService extends Service {
     return data.data as Record<CommandIDKey, R>;
   }
 
-  async command_progress(args: { command_ids: number[] }, group?: GroupCall) {
+  async command_progress(args: { command_ids: string[] }, group?: GroupCall) {
     const data = await this._call('get_command_progress', args, group);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandProgress>;

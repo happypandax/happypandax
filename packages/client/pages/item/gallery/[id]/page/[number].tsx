@@ -2,7 +2,8 @@ import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from 'semantic-ui-react';
+import { useRecoilState } from 'recoil';
+import { Button, Icon } from 'semantic-ui-react';
 
 import { ReaderContext } from '../../../../../client/context';
 import {
@@ -20,6 +21,7 @@ import { PageTitle } from '../../../../../components/Misc';
 import { ItemSort, ItemType } from '../../../../../misc/enums';
 import t from '../../../../../misc/lang';
 import {
+  ReaderData,
   ServerCollection,
   ServerGallery,
   ServerGrouping,
@@ -34,8 +36,8 @@ import {
 } from '../../../../../misc/utility';
 import { ServiceType } from '../../../../../services/constants';
 import ServerService, { GroupCall } from '../../../../../services/server';
+import { ReaderState } from '../../../../../state';
 
-import type { ReaderData } from '../../../../../components/Reader';
 const Reader = dynamic(() => import('../../../../../components/Reader'), {
   ssr: false,
 });
@@ -67,8 +69,16 @@ const EndContent = dynamic(
   }
 );
 
+const PageInfoPortal = dynamic(
+  () =>
+    import('../../../../../components/Reader').then((m) => m.PageInfoPortal),
+  {
+    ssr: false,
+  }
+);
+
 interface PageProps {
-  item: ServerGallery;
+  item: GalleryCardData;
   startPage: number;
   data: Unwrap<ServerService['pages']>;
   title: string;
@@ -220,18 +230,12 @@ export async function getServerSideProps(
       });
 
     server
-      .item<ServerGallery>(
+      .item<GalleryCardData>(
         {
           item_type: ItemType.Gallery,
           item_id: itemId,
-          fields: [
-            'preferred_title.name',
-            'artists.id',
-            'grouping_id',
-            'metatags.favorite',
-            'metatags.inbox',
-            'rating',
-          ],
+
+          fields: galleryCardDataFields.concat(['artists.id', 'grouping_id']),
         },
         group
       )
@@ -241,7 +245,7 @@ export async function getServerSideProps(
 
     await group.call();
 
-    const it = item as ServerGallery;
+    const it = item as GalleryCardData;
 
     if (it.preferred_title) {
       title = it.preferred_title.name;
@@ -278,6 +282,7 @@ export async function getServerSideProps(
 }
 
 export default function Page(props: PageProps) {
+  const stateKey = 'page';
   const startPage = Math.min(props.startPage, props.data.count);
   const [number, setNumber] = useState(startPage);
 
@@ -288,7 +293,9 @@ export default function Page(props: PageProps) {
     );
   }, [number]);
 
-  const stateKey = 'page';
+  const [infoOpen, setInfoOpen] = useRecoilState(
+    ReaderState.pageInfoOpen(stateKey)
+  );
 
   return (
     <ReaderContext.Provider
@@ -314,10 +321,17 @@ export default function Page(props: PageProps) {
         )}
         bottomZone={useMemo(() => {
           return (
-            <BottomZoneItem x="right" y="bottom">
-              <ReaderAutoNavigateButton />
-              <ReaderSettingsButton />
-            </BottomZoneItem>
+            <>
+              <BottomZoneItem x="right" y="bottom">
+                <ReaderAutoNavigateButton />
+                <ReaderSettingsButton />
+              </BottomZoneItem>
+              <BottomZoneItem x="center" y="bottom">
+                <Button basic onClick={() => setInfoOpen(true)}>
+                  <Icon name="info circle" /> {t`Info`}
+                </Button>
+              </BottomZoneItem>
+            </>
           );
         }, [])}>
         <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
@@ -337,6 +351,12 @@ export default function Page(props: PageProps) {
             sameArtist={props.sameArtist}
           />
         </Reader>
+        <PageInfoPortal
+          container
+          item={props.item}
+          open={infoOpen}
+          onClose={useCallback(() => setInfoOpen(false), [])}
+        />
       </PageLayout>
     </ReaderContext.Provider>
   );

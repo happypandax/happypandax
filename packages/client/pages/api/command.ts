@@ -14,22 +14,22 @@ export default handler().all(async (req, res) => {
   switch (m) {
     case 'GET':
       p = server.command_value({
-        command_ids: command_ids as number[],
+        command_ids: command_ids as string[],
       });
       break;
     case 'POST':
       p = server.start_command({
-        command_ids: command_ids as number[],
+        command_ids: command_ids as string[],
       });
       break;
     case 'DELETE':
       p = server.stop_command({
-        command_ids: command_ids as number[],
+        command_ids: command_ids as string[],
       });
       break;
     default:
       p = server.command_state({
-        command_ids: command_ids as number[],
+        command_ids: command_ids as string[],
       });
       break;
   }

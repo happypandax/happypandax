@@ -105,6 +105,8 @@ html, body {
 #bottom_zone > div > .item.center {
     right: 0;
     left: 0;
+    justify-content: center;
+    display: flex;
 }
 
 

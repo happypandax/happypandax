@@ -8,7 +8,7 @@ import ServerService from '../services/server';
 
 type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;
 
-type CommandIDs<T> = CommandID<T> | number[];
+type CommandIDs<T> = CommandID<T> | string[];
 
 interface CommandOptions<T> {
   track?: boolean;
@@ -18,7 +18,7 @@ interface CommandOptions<T> {
 
 export class Command<T = unknown> {
   interval: number;
-  command_ids: number[];
+  command_ids: string[];
   scalar: boolean;
   #callbacks: {
     any: ValueCallback[];
@@ -33,15 +33,15 @@ export class Command<T = unknown> {
     this.#state = {};
     this.#resolved_ids = {};
 
-    if (typeof command_ids === 'number') {
+    if (typeof command_ids === 'string') {
       this.command_ids = command_ids ? [command_ids] : [];
       this.scalar = true;
     } else {
       this.scalar = false;
-      this.command_ids = command_ids ? (command_ids as number[]) : [];
+      this.command_ids = command_ids ? (command_ids as string[]) : [];
     }
 
-    this.command_ids.forEach((v) => (this.#state[v.toString()] = undefined));
+    this.command_ids.forEach((v) => (this.#state[v] = undefined));
 
     this.#callbacks = {
       any: [],
@@ -59,9 +59,9 @@ export class Command<T = unknown> {
     }
   }
 
-  add(id: number, options?: { poll?: boolean }) {
+  add(id: string, options?: { poll?: boolean }) {
     this.command_ids.push(id);
-    this.#state[id.toString()] = undefined;
+    this.#state[id] = undefined;
     if (options?.poll ?? true) {
       this._start_poll();
     }
@@ -119,7 +119,7 @@ export class Command<T = unknown> {
             CommandState.finished,
             CommandState.failed,
             CommandState.stopped,
-          ].includes(this.#state[i.toString()])
+          ].includes(this.#state[i])
         ) {
           return i;
         }
@@ -130,9 +130,9 @@ export class Command<T = unknown> {
   _commands_finished_successfully(unresolved = true) {
     return this.command_ids
       .map((i) => {
-        if ([CommandState.finished].includes(this.#state[i.toString()])) {
+        if ([CommandState.finished].includes(this.#state[i])) {
           if (unresolved) {
-            if (!Object.keys(this.#resolved_ids).includes(i.toString())) {
+            if (!Object.keys(this.#resolved_ids).includes(i)) {
               return i;
             }
           } else {
@@ -166,19 +166,18 @@ export class Command<T = unknown> {
 
   _return(
     data: Record<CommandIDKey, any>,
-    command_ids: number[] | number = undefined
+    command_ids: string[] | string = undefined
   ) {
     if (command_ids) {
-      const s = typeof command_ids == 'number' ? true : undefined;
-      return s ? data[command_ids.toString()] : data;
+      return typeof command_ids == 'string' ? data[command_ids] : data;
     } else {
-      return this.scalar ? data[this.command_ids[0].toString()] : data;
+      return this.scalar ? data[this.command_ids[0]] : data;
     }
   }
 
-  _command_ids_param(command_ids: number[] | number = undefined) {
+  _command_ids_param(command_ids: string[] | string = undefined) {
     if (command_ids) {
-      const r = typeof command_ids === 'number' ? [command_ids] : command_ids;
+      const r = typeof command_ids === 'string' ? [command_ids] : command_ids;
       r.forEach((i) => {
         if (!this.command_ids.includes(i))
           throw Error('command ids not part of this Command instance');
@@ -187,7 +186,7 @@ export class Command<T = unknown> {
     }
   }
 
-  async state(command_ids: number[] = undefined) {
+  async state(command_ids: string[] = undefined) {
     const r = await axios.patch<
       Unwrap<ReturnType<ServerService['command_state']>>
     >(
@@ -201,7 +200,7 @@ export class Command<T = unknown> {
     return this._return(r.data, command_ids);
   }
 
-  async start(command_ids: number[] = undefined) {
+  async start(command_ids: string[] = undefined) {
     const r = await axios.post<
       Unwrap<ReturnType<ServerService['start_command']>>
     >(
@@ -212,7 +211,7 @@ export class Command<T = unknown> {
     return this._return(r.data, command_ids);
   }
 
-  async stop(command_ids: number[] = undefined) {
+  async stop(command_ids: string[] = undefined) {
     const r = await axios.delete<
       Unwrap<ReturnType<ServerService['stop_command']>>
     >(
@@ -224,7 +223,7 @@ export class Command<T = unknown> {
     return this._return(r.data, command_ids);
   }
 
-  async value(command_ids: number[] = undefined) {
+  async value(command_ids: string[] = undefined) {
     const r = await axios.get<
       Unwrap<ReturnType<ServerService['command_value']>>
     >(
@@ -283,7 +282,7 @@ export function useCommand<T = unknown>(
       cmdRef.current = c;
       setCmd(c);
     },
-    typeof command_ids === 'number' ? [command_ids] : (command_ids as number[])
+    typeof command_ids === 'string' ? [command_ids] : (command_ids as string[])
   );
 
   return cmd;

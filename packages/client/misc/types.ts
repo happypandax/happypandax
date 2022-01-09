@@ -251,7 +251,7 @@ export type SearchOptions = {
   children?: boolean;
 };
 
-export interface CommandID<T> extends Number {}
+export interface CommandID<T> extends String {}
 
 interface _ItemHandler {
   identifier: string;
@@ -291,3 +291,18 @@ export interface NotificationData {
   body?: string;
   date?: Date;
 }
+
+export type ReaderData = Optional<
+  DeepPick<
+    ServerPage,
+    | 'id'
+    | 'name'
+    | 'number'
+    | 'metatags.favorite'
+    | 'metatags.inbox'
+    | 'metatags.trash'
+    | 'profile'
+    | 'path'
+  >,
+  'profile'
+>;

@@ -255,8 +255,11 @@ export function GroupingLabel({
 export function FavoriteLabel({
   onRate,
   className,
+  size = 'massive',
   ...props
-}: MakeOptional<React.ComponentProps<typeof Rating>, 'icon'>) {
+}: Omit<MakeOptional<React.ComponentProps<typeof Rating>, 'icon'>, 'size'> & {
+  size?: React.ComponentProps<typeof Rating>['size'] | 'gigantic';
+}) {
   const { data, setData, context } = useUpdateDataState<{
     id: number;
     metatags: PartialExcept<ServerMetaTags, 'favorite'>;
@@ -289,11 +292,14 @@ export function FavoriteLabel({
 
   return (
     <Rating
-      className={classNames(styles.favorite_label, className)}
+      className={classNames(
+        { [styles.favorite_label]: size === 'gigantic' },
+        className
+      )}
       icon="heart"
       color="red"
       onRate={onRate ?? onFav}
-      size="massive"
+      size={size === 'gigantic' ? 'massive' : size}
       rating={data?.metatags?.favorite ? 1 : undefined}
       {...props}
     />
