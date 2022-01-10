@@ -150,8 +150,10 @@ export function TitleSegment({
 export function EmptySegment({
   title = t`Nothing to see here...`,
   description,
+  children,
 }: {
   title?: React.ReactNode;
+  children?: React.ReactNode;
   description?: React.ReactNode;
 }) {
   return (
@@ -161,6 +163,7 @@ export function EmptySegment({
         {title}
         <Header.Subheader>{description}</Header.Subheader>
       </Header>
+      {children}
     </Segment>
   );
 }

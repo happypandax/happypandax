@@ -341,6 +341,7 @@ export function PaginatedView({
 
         <Visibility
           as={Grid.Row}
+          fireOnMount={false}
           className={classNames({ 'no-padding-segment': !paddedChildren })}
           onUpdate={useCallback(
             (e, { calculations: { pixelsPassed, height } }) => {

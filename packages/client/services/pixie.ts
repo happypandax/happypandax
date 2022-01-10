@@ -54,17 +54,12 @@ export default class PixieService extends Service {
       data: Buffer | null;
     };
     if (i && it && s) {
-      let command_id = parseInt(cid);
-      if (isNaN(command_id)) {
-        command_id = 0;
-      }
-
       r = await this.communicate({
         name: 'image_generate',
         id: i,
         item_type: it,
         size: s,
-        command_id,
+        command_id: cid ?? null,
       });
     } else if (l1 && l2 && l3) {
       r = await this.communicate({

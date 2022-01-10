@@ -32,9 +32,13 @@ export const collectionCardDataFields: FieldPath<ServerCollection>[] = [
   'metatags.*',
 ];
 
-function CollectionMenu({}: { hasProgress: boolean; read: boolean }) {
+export function CollectionMenu({
+  trigger,
+}: {
+  trigger?: React.ComponentProps<typeof ItemMenuLabel>['trigger'];
+}) {
   return (
-    <ItemMenuLabel>
+    <ItemMenuLabel trigger={trigger}>
       <ItemMenuLabelItem icon="trash">{t`Delete`}</ItemMenuLabelItem>
     </ItemMenuLabel>
   );

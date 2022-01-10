@@ -1,21 +1,23 @@
 import classNames from 'classnames';
-import React, { useCallback, useContext, useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { Header, Icon, Label, List, Table } from 'semantic-ui-react';
+import React, { useCallback, useState } from 'react';
+import { useRecoilValue } from 'recoil';
+import { Header, Icon, Label, List, Segment, Table } from 'semantic-ui-react';
 
 import { ItemActions } from '../../client/actions/item';
-import { DataContext } from '../../client/context';
 import { useUpdateDataState } from '../../client/hooks/item';
 import t from '../../misc/lang';
 import {
   FieldPath,
+  ServerCollection,
   ServerGallery,
+  ServerItemTaggable,
   ServerItemWithName,
+  ServerItemWithUrls,
   ServerMetaTags,
   ServerTag,
 } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
-import { AppState, DataState } from '../../state';
+import { AppState } from '../../state';
 import Rating from '../Rating';
 import styles from './Common.module.css';
 
@@ -401,11 +403,14 @@ export function NamesTable({
   );
 }
 
-export function NameTable({ children }: { children?: React.ReactNode }) {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<
-    PartialExcept<ServerItemWithName, 'id'>
-  >(DataState.data(ctx.key));
+export function NameTable({
+  children,
+  data: initialData,
+}: {
+  children?: React.ReactNode;
+  data?: PartialExcept<ServerItemWithName, 'id'>;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   return (
     <Table basic="very" compact="very" verticalAlign="middle" stackable>
@@ -427,11 +432,12 @@ export function NameTable({ children }: { children?: React.ReactNode }) {
   );
 }
 
-export function UrlList() {
-  const ctx = useContext(DataContext);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+export function UrlList({
+  data: initialData,
+}: {
+  data?: PartialExcept<ServerItemWithUrls, 'id'>;
+}) {
+  const { data } = useUpdateDataState(initialData);
 
   return (
     <List size="small" relaxed>
@@ -449,12 +455,14 @@ export function UrlList() {
   );
 }
 
-export function TagsTable() {
-  const ctx = useContext(DataContext);
+export function TagsTable({
+  data: initialData,
+}: {
+  data?: PartialExcept<ServerItemTaggable, 'id'>;
+}) {
   const properties = useRecoilValue(AppState.properties);
-  const [data, setData] = useRecoilState<PartialExcept<ServerGallery, 'id'>>(
-    DataState.data(ctx.key)
-  );
+
+  const { data } = useUpdateDataState(initialData);
 
   const freeTags: ServerTag[] = [];
   const tags = {} as Record<string, ServerTag[]>;
@@ -508,5 +516,23 @@ export function TagsTable() {
           ))}
       </Table.Body>
     </Table>
+  );
+}
+
+export function InfoSegment({
+  data: initialData,
+  className,
+  fluid,
+  ...props
+}: {
+  fluid?: boolean;
+  data?: PartialExcept<ServerGallery | ServerCollection, 'id'>;
+} & React.ComponentProps<typeof Segment>) {
+  const { data } = useUpdateDataState(initialData);
+
+  return (
+    <Segment tertiary {...props} className={classNames({ fluid }, className)}>
+      {data?.info}
+    </Segment>
   );
 }

@@ -80,7 +80,8 @@ export function useSetupDataState<T extends PartialExcept<ServerItem, 'id'>>({
 }
 
 export function useUpdateDataState<T extends Partial<ServerItem>>(
-  defaultData?: T
+  defaultData?: T,
+  props?: {}
 ) {
   const ctx = useDataContext();
 

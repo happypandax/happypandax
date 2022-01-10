@@ -39,6 +39,7 @@ import {
   DatePublishedLabel,
   FavoriteLabel,
   GroupingLabel,
+  InfoSegment,
   LanguageLabel,
   LastReadLabel,
   LastUpdatedLabel,
@@ -49,7 +50,7 @@ import {
   TagsTable,
   UrlList,
 } from '../dataview/Common';
-import { ContinueButton } from '../item/Gallery';
+import { ContinueButton, GalleryMenu } from '../item/Gallery';
 import { PopupNoOverflow } from '../Misc';
 import { ItemHeaderParallax, LabelField, LabelFields } from './ItemLayout';
 import styles from './ItemLayout.module.css';
@@ -281,10 +282,12 @@ export function ViewButtons({
   item,
   onView,
   onItem,
+  hideItems,
   view,
 }: {
   size?: React.ComponentProps<typeof ButtonGroup>['size'];
   view: ViewType;
+  hideItems?: boolean;
   onView: (view: ViewType) => void;
   item: ItemType;
   onItem: (item: ItemType) => void;
@@ -319,6 +322,14 @@ export function ViewButtons({
     []
   );
 
+  const onCollection = useCallback(() => {
+    onItem?.(ItemType.Collection);
+  }, []);
+
+  const onGallery = useCallback(() => {
+    onItem?.(ItemType.Gallery);
+  }, []);
+
   return (
     <ButtonGroup toggle basic size={size}>
       <Dropdown
@@ -334,18 +345,18 @@ export function ViewButtons({
         options={options}
         button
       />
-      <Button
-        primary
-        basic={item === ItemType.Collection}
-        onClick={useCallback(() => {
-          onItem?.(ItemType.Collection);
-        }, [])}>{t`Collection`}</Button>
-      <Button
-        primary
-        basic={item === ItemType.Gallery}
-        onClick={useCallback(() => {
-          onItem?.(ItemType.Gallery);
-        }, [])}>{t`Gallery`}</Button>
+      {!hideItems && (
+        <>
+          <Button
+            primary
+            basic={item === ItemType.Collection}
+            onClick={onCollection}>{t`Collection`}</Button>
+          <Button
+            primary
+            basic={item === ItemType.Gallery}
+            onClick={onGallery}>{t`Gallery`}</Button>
+        </>
+      )}
     </ButtonGroup>
   );
 }
@@ -359,6 +370,7 @@ export type GalleryHeaderData = DeepPick<
   | 'profile'
   | 'number'
   | 'rating'
+  | 'info'
   | 'metatags.favorite'
   | 'metatags.read'
   | 'metatags.inbox'
@@ -393,6 +405,7 @@ export const galleryHeaderDataFields: FieldPath<ServerGallery>[] = [
   'category.name',
   'urls.name',
   'times_read',
+  'info',
   'page_count',
   'circles.name',
   'profile',
@@ -422,7 +435,7 @@ export function GalleryItemHeader({
   const { data, dataContext } = useSetupDataState({
     initialData,
     itemType: ItemType.Gallery,
-    key: '_header',
+    key: 'header',
   });
 
   const { src } = useImage(data?.profile);
@@ -442,7 +455,7 @@ export function GalleryItemHeader({
                 <Image
                   centered
                   rounded
-                  className={classNames({ blur: blur })}
+                  className={classNames({ blur: blur }, styles.cover_hero)}
                   alt="cover image"
                   id={styles.cover}
                   src={src}
@@ -548,7 +561,20 @@ export function GalleryItemHeader({
                 <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
                   <FavoriteLabel
                     defaultRating={data?.metatags?.favorite ? 1 : 0}
+                    size="gigantic"
                     className="float-left"
+                  />
+                  <GalleryMenu
+                    hasProgress={hasProgress}
+                    read={data?.metatags?.read}
+                    trigger={
+                      <Icon
+                        link
+                        size="large"
+                        className="float-right"
+                        name="ellipsis vertical"
+                      />
+                    }
                   />
                 </NamesTable>
                 <Header textAlign="center">
@@ -556,6 +582,7 @@ export function GalleryItemHeader({
                   <LastUpdatedLabel timestamp={data?.last_updated} />
                   <DateAddedLabel timestamp={data?.timestamp} />
                 </Header>
+                {data?.info && <InfoSegment fluid />}
                 <Divider hidden className="small" />
                 <LabelFields>
                   <LabelField label={t`Series`} padded={false}>

@@ -25,7 +25,11 @@ export interface ServerItemWithName extends ServerItem {
   name: string;
 }
 
-interface ServerItemTaggable extends ServerItem {
+export interface ServerItemWithUrls extends ServerItem {
+  urls: ServerUrl[];
+}
+
+export interface ServerItemTaggable extends ServerItem {
   taggable_id: number;
   tags: ServerNamespaceTag[];
 }
@@ -42,6 +46,10 @@ export interface ServerItemWithProfile extends ServerItem {
     size: [number, number];
     command_id: number | null;
   };
+}
+
+export interface ServerItemWithMetatags extends ServerItem {
+  metatags: ServerMetaTags;
 }
 
 export interface ServerParody extends ServerItem, ServerItemWithProfile {
@@ -68,10 +76,9 @@ export interface ServerNamespace extends ServerItemWithName {}
 
 export interface ServerTag extends ServerItemWithName {}
 
-export interface ServerNamespaceTag extends ServerItem {
+export interface ServerNamespaceTag extends ServerItemWithMetatags {
   namespace: ServerNamespace;
   tag: ServerTag;
-  metatags: ServerMetaTags;
 }
 
 export interface ServerMetaTags extends ServerItem {
@@ -82,17 +89,14 @@ export interface ServerMetaTags extends ServerItem {
   read: boolean;
 }
 
-export interface ServerItemWithMetatags extends ServerItem {
-  metatags: ServerMetaTags;
-}
-
-export interface ServerArtist extends ServerItem, ServerItemWithProfile {
+export interface ServerArtist
+  extends ServerItemWithMetatags,
+    ServerItemWithProfile {
   names: (ServerItemWithNameLanguageAlias & { artist_id: number })[];
   preferred_name: ServerItemWithNameLanguageAlias & { artist_id: number };
   circles: ServerCircle[];
   info: string;
   user_id: number;
-  metatags: ServerMetaTags;
   urls: ServerUrl[];
 }
 
@@ -132,6 +136,8 @@ export interface ServerGalleryProgress extends ServerItem {
 export interface ServerGallery
   extends ServerItem,
     ServerItemWithProfile,
+    ServerItemWithUrls,
+    ServerItemWithMetatags,
     ServerItemTaggable {
   titles: ServerGalleryTitle[];
   artists: ServerArtist[];
@@ -151,9 +157,7 @@ export interface ServerGallery
   grouping_id: number;
   grouping: ServerGrouping;
   user_id: number;
-  metatags: ServerMetaTags;
   progress: ServerGalleryProgress;
-  urls: ServerUrl[];
   preferred_title: ServerGalleryTitle;
   times_read: number;
   rating: number;
@@ -170,7 +174,9 @@ export interface ServerFilter extends ServerItem {
   user_id: number;
 }
 
-export interface ServerPage extends ServerItemWithProfile {
+export interface ServerPage
+  extends ServerItemWithMetatags,
+    ServerItemWithProfile {
   number: number;
   name: string;
   path: string;
@@ -178,20 +184,20 @@ export interface ServerPage extends ServerItemWithProfile {
   gallery_id: number;
   in_archive: boolean;
   user_id: number;
-  metatags: ServerMetaTags;
 }
 
 export interface ServerCollection
   extends ServerItemWithProfile,
+    ServerItemWithUrls,
+    ServerItemWithMetatags,
     ServerItemWithName {
   info: string;
   pub_date: number;
   category_id: number;
   gallery_count: number;
+  last_updated: number;
   category: ServerCategory;
   user_id: number;
-  metatags: ServerMetaTags;
-  urls: ServerUrl[];
 }
 
 export type FieldPath<T = undefined> = T extends undefined

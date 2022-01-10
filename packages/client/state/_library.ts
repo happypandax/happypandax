@@ -4,72 +4,96 @@ import StateBlock, { defineAtom } from './_base';
 import { cookieEffect, localStorageEffect } from './_statehelpers';
 
 export default class _LibraryState extends StateBlock {
-  static favorites = defineAtom({
-    default: false,
-    effects_UNSTABLE: [cookieEffect('library_fav')],
-  });
+  static favorites = defineAtom(
+    {
+      default: false,
+      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+    },
+    true
+  );
 
-  static filter = defineAtom({
-    default: undefined as number,
-    effects_UNSTABLE: [cookieEffect('library_filter')],
-  });
+  static filter = defineAtom(
+    {
+      default: undefined as number,
+      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+    },
+    true
+  );
 
-  static sort = defineAtom({
-    default: ItemSort.GalleryDate,
-    effects_UNSTABLE: [cookieEffect('library_sort')],
-  });
+  static sort = defineAtom(
+    {
+      default: ItemSort.GalleryDate,
+      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+    },
+    true
+  );
 
-  static sortDesc = defineAtom({
-    default: true,
-    effects_UNSTABLE: [cookieEffect('library_sort_desc')],
-  });
+  static sortDesc = defineAtom(
+    {
+      default: true,
+      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+    },
+    true
+  );
 
   static display = defineAtom({
     default: 'card' as 'list' | 'card',
     effects_UNSTABLE: [cookieEffect('library_display')],
   });
 
-  static query = defineAtom({
-    default: '',
-    effects_UNSTABLE: [
-      localStorageEffect('library_query', { session: true }),
-      cookieEffect('library_query', {
-        noInitialValue: true,
-        removeIfNoInitialValue: true,
-      }),
-    ],
-  });
+  static query = defineAtom(
+    {
+      default: '',
+      effects_UNSTABLE: [
+        localStorageEffect((n) => n.key, { session: true }),
+        cookieEffect((n) => n.key, {
+          noInitialValue: true,
+          removeIfNoInitialValue: true,
+        }),
+      ],
+    },
+    true
+  );
 
-  static view = defineAtom({
-    default: ViewType.Library,
-    effects_UNSTABLE: [cookieEffect('library_view')],
-  });
+  static view = defineAtom(
+    {
+      default: ViewType.Library,
+      effects_UNSTABLE: [cookieEffect('library_view')],
+    },
+    true
+  );
 
-  static item = defineAtom({
-    default: ItemType.Gallery,
-    effects_UNSTABLE: [cookieEffect('library_item')],
-  });
+  static item = defineAtom(
+    {
+      default: ItemType.Gallery,
+      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+    },
+    true
+  );
 
   static limit = defineAtom({
     default: 30,
     effects_UNSTABLE: [cookieEffect('library_limit')],
   });
 
-  static page = defineAtom({
-    default: 1,
-    effects_UNSTABLE: [
-      ({ setSelf, onSet }) => {
-        onSet((newValue) => {
-          if (isNaN(newValue)) {
-            setSelf(1);
-          } else {
-            setSelf(newValue);
-          }
-        });
-      },
-      cookieEffect('library_page'),
-    ],
-  });
+  static page = defineAtom(
+    {
+      default: 1,
+      effects_UNSTABLE: [
+        ({ setSelf, onSet }) => {
+          onSet((newValue) => {
+            if (isNaN(newValue)) {
+              setSelf(1);
+            } else {
+              setSelf(newValue);
+            }
+          });
+        },
+        cookieEffect((n) => n.key),
+      ],
+    },
+    true
+  );
 
   static series = defineAtom({
     default: true,

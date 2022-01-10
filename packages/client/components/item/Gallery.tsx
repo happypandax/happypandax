@@ -175,15 +175,17 @@ export function SendToLibraryButton({
   );
 }
 
-function GalleryMenu({
+export function GalleryMenu({
   hasProgress,
   read,
+  trigger,
 }: {
   hasProgress: boolean;
   read: boolean;
+  trigger?: React.ComponentProps<typeof ItemMenuLabel>['trigger'];
 }) {
   return (
-    <ItemMenuLabel>
+    <ItemMenuLabel trigger={trigger}>
       {!hasProgress && (
         <>
           <ItemMenuLabelItem icon="book open">{t`Read`}</ItemMenuLabelItem>
@@ -307,7 +309,7 @@ export function GalleryCard({
           <ItemLabel key="fav" x="left" y="top">
             <FavoriteLabel
               size={
-                (['large', 'medium'] as ItemSize[]).includes(size)
+                (['large', 'medium'] as ItemSize[]).includes(size) || !size
                   ? 'gigantic'
                   : 'massive'
               }

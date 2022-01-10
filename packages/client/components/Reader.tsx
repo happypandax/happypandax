@@ -2250,7 +2250,9 @@ export function PageInfo({
             </Table.Row>
             <Table.Row>
               <Table.Cell collapsing>{t`Path`}:</Table.Cell>
-              <Table.Cell>{data?.path}</Table.Cell>
+              <Table.Cell>
+                <Label basic>{data?.path}</Label>
+              </Table.Cell>
             </Table.Row>
           </Table.Body>
         </Table>

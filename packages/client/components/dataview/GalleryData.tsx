@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Label, Segment } from 'semantic-ui-react';
+import { Label } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
@@ -15,6 +15,7 @@ import {
   DatePublishedLabel,
   GroupingLabel,
   GroupingNumberLabel,
+  InfoSegment,
   LanguageLabel,
   LastReadLabel,
   LastUpdatedLabel,
@@ -108,9 +109,7 @@ export default function GalleryDataTable({
         </DataTableItem>
         {data?.info && (
           <DataTableItem>
-            <Segment tertiary className="fluid">
-              {data.info}
-            </Segment>
+            <InfoSegment fluid />
           </DataTableItem>
         )}
 

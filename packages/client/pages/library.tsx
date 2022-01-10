@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import {
@@ -12,11 +12,14 @@ import {
   useSetRecoilState,
 } from 'recoil';
 import {
+  Button,
   Checkbox,
   Form,
+  Header,
   Menu,
   Message,
   Modal,
+  Segment,
   Select,
 } from 'semantic-ui-react';
 
@@ -59,34 +62,67 @@ import { ServerGallery, ServerItem } from '../misc/types';
 import { getCookies, urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
-import { AppState, LibraryState, SearchState } from '../state';
-import _SearchState from '../state/_search';
+import { AppState, getStateKey, LibraryState, SearchState } from '../state';
 
-const stateKey = 'library_page';
+const StateKey = 'library_page';
 
-function libraryArgs(
-  ctx: NextPageContext | undefined,
-  urlQuery: ReturnType<typeof urlparse>,
-  page?: number
-) {
-  let itemType = ItemType.Grouping;
+export function cookieKey(k: string) {
+  return k;
+}
 
-  // can't trust user input
-  if (urlQuery.query?.item === ItemType.Collection) {
-    itemType = ItemType.Collection;
-  } else if (getCookies(ctx, 'library_item') === ItemType.Collection) {
-    itemType = ItemType.Collection;
-  } else if (getCookies(ctx, 'library_series') === false) {
-    itemType = ItemType.Gallery;
+export function libraryArgs({
+  ctx,
+  stateKey: defaultStateKey,
+  cookieKey: defaultCookieKey,
+  urlQuery,
+  page,
+  itemType: defaultItemType,
+  relatedType,
+  itemId,
+}: {
+  ctx?: NextPageContext;
+  urlQuery: ReturnType<typeof urlparse>;
+  page?: number;
+  itemType?: ItemType;
+  relatedType?: ItemType;
+  itemId?: number;
+  stateKey?: string;
+  cookieKey?(k: string): string;
+}) {
+  let itemType = relatedType ?? defaultItemType;
+
+  const stateKey = defaultStateKey ?? StateKey;
+
+  if (!itemType) {
+    // can't trust user input
+    if (urlQuery.query?.item === ItemType.Collection) {
+      itemType = ItemType.Collection;
+    } else if (
+      getCookies(ctx, getStateKey(LibraryState.item, stateKey)) ===
+      ItemType.Collection
+    ) {
+      itemType = ItemType.Collection;
+    } else if (
+      getCookies(ctx, getStateKey(LibraryState.series, stateKey)) === true
+    ) {
+      itemType = ItemType.Grouping;
+    } else {
+      itemType = ItemType.Gallery;
+    }
   }
 
-  const view = urlQuery.query?.view ?? getCookies(ctx, 'library_view');
+  const view =
+    urlQuery.query?.view ??
+    getCookies(ctx, getStateKey(LibraryState.view, stateKey));
 
   const metatags = {
     trash: false,
     favorite:
-      ((urlQuery.query?.fav ?? getCookies(ctx, 'library_fav')) as boolean) ||
-      undefined,
+      ((urlQuery.query?.fav ??
+        getCookies(
+          ctx,
+          getStateKey(LibraryState.favorites, stateKey)
+        )) as boolean) || undefined,
     inbox:
       ViewType.All === view
         ? undefined
@@ -97,7 +133,7 @@ function libraryArgs(
 
   let search_options = getCookies(
     ctx,
-    `${_SearchState.name}_options__"${stateKey}"`
+    getStateKey(SearchState.options, stateKey)
   );
   const searchKeys = Object.keys(urlQuery.query).filter((x) =>
     x.startsWith('s.')
@@ -129,7 +165,7 @@ function libraryArgs(
     ) {
       p = parseInt(urlQuery.query?.p as string, 10);
     } else {
-      const c_p = getCookies(ctx, 'library_page');
+      const c_p = getCookies(ctx, getStateKey(LibraryState.page, stateKey));
       if (c_p) {
         p = c_p;
       }
@@ -141,7 +177,7 @@ function libraryArgs(
   }
 
   let filter_id = (urlQuery.query?.filter ??
-    getCookies(ctx, 'library_filter')) as number;
+    getCookies(ctx, getStateKey(LibraryState.filter, stateKey))) as number;
 
   // filters dont support collections
   if (itemType === ItemType.Collection) {
@@ -149,24 +185,33 @@ function libraryArgs(
   }
 
   const limit =
-    ((urlQuery.query?.limit ?? getCookies(ctx, 'library_limit')) as number) ??
+    ((urlQuery.query?.limit ??
+      getCookies(ctx, getStateKey(LibraryState.limit, stateKey))) as number) ??
     30;
 
   return {
     errorLimit: p * limit > 10000, // there is a limit of 10000 or the request will fail
     args: {
-      item_type: itemType,
+      related_type: relatedType,
+      item_id: itemId,
+      item_type: defaultItemType ?? itemType,
       metatags,
       search_query: (urlQuery.query?.q?.toString() ??
-        getCookies(ctx, 'library_query')) as string,
+        getCookies(ctx, getStateKey(LibraryState.query, stateKey))) as string,
       page: p,
       sort_options: {
         by:
           ((urlQuery.query?.sort ??
-            getCookies(ctx, 'library_sort')) as number) ?? ItemSort.GalleryDate,
+            getCookies(
+              ctx,
+              getStateKey(LibraryState.sort, stateKey)
+            )) as number) ?? ItemSort.GalleryDate,
         desc:
           ((urlQuery.query?.desc ??
-            getCookies(ctx, 'library_desc')) as boolean) ?? true,
+            getCookies(
+              ctx,
+              getStateKey(LibraryState.sortDesc, stateKey)
+            )) as boolean) ?? true,
       },
       search_options,
       filter_id,
@@ -177,18 +222,24 @@ function libraryArgs(
           : itemType === ItemType.Collection
           ? collectionCardDataFields
           : groupingCardDataFields,
-    },
+    } as Parameters<ServerService['library']>[0],
   };
 }
 
-function FilterPageMessage({ filterId }: { filterId: number }) {
+function FilterPageMessage({
+  filterId,
+  stateKey,
+}: {
+  filterId: number;
+  stateKey: string;
+}) {
   const { data, isLoading } = useQueryType(QueryType.ITEM, {
     item_type: ItemType.Filter,
     item_id: filterId,
     fields: ['name', 'info', 'filter'],
   });
 
-  const setFilter = useSetRecoilState(LibraryState.filter);
+  const setFilter = useSetRecoilState(LibraryState.filter(stateKey));
 
   return (
     <PageInfoMessage
@@ -237,10 +288,16 @@ const itemsPerPage = [
   { key: '250', text: '250', value: 250 },
 ];
 
-function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
+function LibrarySettings({
+  trigger,
+  stateKey,
+}: {
+  trigger: React.ReactNode;
+  stateKey: string;
+}) {
   const sameMachine = useRecoilState(AppState.sameMachine);
-  const [item, setItem] = useRecoilState(LibraryState.item);
-  const [view, setView] = useRecoilState(LibraryState.view);
+  const [item, setItem] = useRecoilState(LibraryState.item(stateKey));
+  const [view, setView] = useRecoilState(LibraryState.view(stateKey));
   const [series, setSeries] = useRecoilState(LibraryState.series);
   const [infinite, setInfinite] = useRecoilState(LibraryState.infinite);
   const [limit, setLimit] = useRecoilState(LibraryState.limit);
@@ -392,7 +449,7 @@ function LibrarySettings({ trigger }: { trigger: React.ReactNode }) {
   );
 }
 
-interface PageProps {
+export interface PageProps {
   data: Unwrap<ServerService['library']>;
   page: number;
   itemType: ItemType;
@@ -402,26 +459,26 @@ interface PageProps {
 }
 
 export async function getServerSideProps(
-  context: NextPageContext
+  context: NextPageContext,
+  args?: ReturnType<typeof libraryArgs>
 ): Promise<GetServerSidePropsResult<PageProps>> {
   const server = global.app.service.get(ServiceType.Server);
 
   const urlQuery = urlparse(context.resolvedUrl);
 
-  // const group = server.create_group_call();
-
-  const { errorLimit, args } = libraryArgs(context, urlQuery);
+  const { errorLimit, args: largs } =
+    args ?? libraryArgs({ ctx: context, urlQuery });
 
   const data = errorLimit
     ? { count: 0, items: [] }
-    : await server.library<ServerGallery>(args);
+    : await server.library<ServerGallery>(largs);
 
   return {
     props: {
       data,
       urlQuery,
-      itemType: args.item_type,
-      page: args.page ? args.page + 1 : 1,
+      itemType: largs.item_type,
+      page: largs.page ? largs.page + 1 : 1,
       requestTime: Date.now(),
       errorLimit,
     },
@@ -435,15 +492,30 @@ export default function Page({
   urlQuery,
   itemType,
   requestTime,
-}: PageProps) {
-  const [item, setItem] = useRecoilState(LibraryState.item);
-  const [view, setView] = useRecoilState(LibraryState.view);
-  const [query, setQuery] = useRecoilState(LibraryState.query);
-  const [favorites, setFavorites] = useRecoilState(LibraryState.favorites);
-  const [filter, setFilter] = useRecoilState(LibraryState.filter);
-  const [sort, setSort] = useRecoilState(LibraryState.sort);
-  const [sortDesc, setSortDesc] = useRecoilState(LibraryState.sortDesc);
-  const [page, setPage] = useRecoilState(LibraryState.page);
+  libraryArgs: defaultLibraryArgs,
+  hideViewItems,
+  stateKey: defaultStateKey,
+  children,
+}: PageProps & {
+  hideViewItems?: boolean;
+  stateKey?: string;
+  children?: React.ReactNode;
+  libraryArgs?: Partial<Parameters<typeof libraryArgs>[0]>;
+}) {
+  const stateKey = defaultStateKey ?? StateKey;
+
+  const [item, setItem] = useRecoilState(LibraryState.item(stateKey));
+  const [view, setView] = useRecoilState(LibraryState.view(stateKey));
+  const [query, setQuery] = useRecoilState(LibraryState.query(stateKey));
+  const [favorites, setFavorites] = useRecoilState(
+    LibraryState.favorites(stateKey)
+  );
+  const [filter, setFilter] = useRecoilState(LibraryState.filter(stateKey));
+  const [sort, setSort] = useRecoilState(LibraryState.sort(stateKey));
+  const [sortDesc, setSortDesc] = useRecoilState(
+    LibraryState.sortDesc(stateKey)
+  );
+  const [page, setPage] = useRecoilState(LibraryState.page(stateKey));
   const limit = useRecoilValue(LibraryState.limit);
   const display = useRecoilValue(LibraryState.display);
   const infinite = useRecoilValue(LibraryState.infinite);
@@ -456,10 +528,20 @@ export default function Page({
   const router = useRouter();
   const routerQuery = urlparse(router.asPath);
 
-  const { errorLimit, args: libraryargs } = libraryArgs(undefined, routerQuery);
+  const { errorLimit, args: libraryargs } = libraryArgs({
+    urlQuery: routerQuery,
+    ...defaultLibraryArgs,
+  });
 
   const [infiniteKey, setInfiniteKey] = useState('');
-  const [infinitePage, setInfinitePage] = useState(page);
+
+  const activePage = infiniteKey
+    ? page
+    : libraryargs.page !== undefined
+    ? libraryargs.page + 1
+    : page;
+
+  console.log(infiniteKey, initialPage, libraryargs.page, page, activePage);
 
   const errorLimited = errorLimit || initialErrorLimit;
 
@@ -468,11 +550,7 @@ export default function Page({
     {
       ...libraryargs,
       item: itemType,
-      page: infiniteKey
-        ? initialPage - 1
-        : libraryargs.page
-        ? libraryargs.page
-        : page,
+      page: infiniteKey ? initialPage - 1 : activePage - 1,
     },
     {
       enabled: !errorLimited,
@@ -497,22 +575,22 @@ export default function Page({
 
   const initialQueryState = useRecoilTransaction_UNSTABLE(({ set }) => () => {
     if (urlQuery.query?.fav !== undefined) {
-      set(LibraryState.favorites, urlQuery.query.fav as boolean);
+      set(LibraryState.favorites(stateKey), urlQuery.query.fav as boolean);
     }
     if (urlQuery.query?.desc !== undefined) {
-      set(LibraryState.sortDesc, urlQuery.query.desc as boolean);
+      set(LibraryState.sortDesc(stateKey), urlQuery.query.desc as boolean);
     }
     if (urlQuery.query?.sort !== undefined) {
-      set(LibraryState.sort, urlQuery.query.sort as number);
+      set(LibraryState.sort(stateKey), urlQuery.query.sort as number);
     }
     if (urlQuery.query?.filter !== undefined) {
-      set(LibraryState.filter, urlQuery.query.filter as number);
+      set(LibraryState.filter(stateKey), urlQuery.query.filter as number);
     }
     if (urlQuery.query?.view !== undefined) {
-      set(LibraryState.view, urlQuery.query.view as number);
+      set(LibraryState.view(stateKey), urlQuery.query.view as number);
     }
     if (urlQuery.query?.item !== undefined) {
-      set(LibraryState.item, urlQuery.query.item as number);
+      set(LibraryState.item(stateKey), urlQuery.query.item as number);
     }
     if (urlQuery.query?.limit !== undefined) {
       set(LibraryState.limit, urlQuery.query.limit as number);
@@ -525,7 +603,7 @@ export default function Page({
         ((routerQuery?.query?.p ?? urlQuery.query?.p) as string) ?? '1',
         10
       );
-      set(LibraryState.page, isNaN(p) ? 1 : p);
+      set(LibraryState.page(stateKey), isNaN(p) ? 1 : p);
     }
 
     if (
@@ -554,9 +632,11 @@ export default function Page({
       limit,
       ..._.mapKeys(searchOptions, (v, k) => 's.' + k),
     };
-    setPage(1);
-    setInfiniteKey('');
-    router.replace(urlstring(q)); // .then(() => client.resetQueries(queryKey));
+    router.replace(urlstring(q)).then(() => {
+      setPage(1);
+      setInfiniteKey('');
+    });
+    // .then(() => client.resetQueries(queryKey));
   }, [view, item, favorites, sortDesc, sort, filter, limit, searchOptions]);
 
   useUpdateEffect(() => {
@@ -567,7 +647,12 @@ export default function Page({
     };
     setPage(1);
     setInfiniteKey('');
-    router.push(urlstring(q)); // .then(() => client.resetQueries(queryKey));
+    router.push(urlstring(q)).then(() => {
+      setPage(1);
+      setInfiniteKey('');
+    });
+
+    // .then(() => client.resetQueries(queryKey));
   }, [query]);
 
   useUpdateEffect(() => {
@@ -607,7 +692,8 @@ export default function Page({
     }
 
     if (!isFetching && fetchNextPage) {
-      let p = infinitePage + data.pages.length;
+      let p = initialPage + data.pages.length;
+      console.log(p);
       fetchNextPage({
         pageParam: p,
       });
@@ -617,26 +703,26 @@ export default function Page({
         scroll: false,
       });
     }
-  }, [router, infinitePage, fetchNextPage, infiniteKey, isFetching, data]);
-
-  useEffect(() => {
-    setInfinitePage(page);
-  }, [infiniteKey]);
+  }, [router, initialPage, fetchNextPage, infiniteKey, isFetching, data]);
 
   const onPageChange = useCallback((ev, n) => {
     setInfiniteKey('');
-    setInfinitePage(n);
+    setPage(n);
   }, []);
 
   const onItemChange = useRecoilTransaction_UNSTABLE(({ set }) => (i) => {
-    set(LibraryState.item, i);
-    set(LibraryState.page, 1);
+    set(LibraryState.item(stateKey), i);
+    set(LibraryState.page(stateKey), 1);
   });
 
   const onViewChange = useRecoilTransaction_UNSTABLE(({ set }) => (i) => {
-    set(LibraryState.view, i);
-    set(LibraryState.page, 1);
+    set(LibraryState.view(stateKey), i);
+    set(LibraryState.page(stateKey), 1);
   });
+
+  const goBack = useCallback(() => {
+    router.back();
+  }, [router]);
 
   const View = display === 'card' ? CardView : ListView;
 
@@ -649,6 +735,7 @@ export default function Page({
               <ViewButtons
                 view={view}
                 onView={onViewChange}
+                hideItems={hideViewItems}
                 item={item}
                 onItem={onItemChange}
               />
@@ -689,18 +776,23 @@ export default function Page({
             </Menu.Menu>
           </MainMenu>
         ),
-        [view, item, itemType, query, urlQuery.query?.q]
+        [view, item, itemType, query, urlQuery.query?.q, hideViewItems]
       )}
       bottomZone={useMemo(() => {
         return filter ? (
           <BottomZoneItem x="center" y="bottom">
-            <FilterPageMessage filterId={filter} />
+            <FilterPageMessage stateKey={stateKey} filterId={filter} />
           </BottomZoneItem>
         ) : null;
-      }, [filter])}
+      }, [filter, stateKey])}
       bottomZoneRightBottom={useMemo(() => {
-        return <LibrarySettings trigger={<PageSettingsButton />} />;
-      }, [])}
+        return (
+          <LibrarySettings
+            stateKey={stateKey}
+            trigger={<PageSettingsButton />}
+          />
+        );
+      }, [stateKey])}
       bottomZoneRight={useMemo(
         () => (
           <>
@@ -745,26 +837,30 @@ export default function Page({
         [favorites, filter, sort, sortDesc, itemType]
       )}>
       <PageTitle title={t`Library`} />
+      {children}
       {!count && !errorLimited && <EmptySegment />}
       {errorLimited && (
         <EmptySegment
           title={
             <div>
               <p>
-                {t`Momo wasn't able to fetch page ${page} fast enough!`}
+                {t`Momo wasn't able to fetch page ${activePage} fast enough!`}
                 <br />
                 {t`Please refine your search query to retrieve results.`}
               </p>
             </div>
-          }
-        />
+          }>
+          <Segment basic textAlign="center">
+            <Button color="red" onClick={goBack}>{t`Go back`}</Button>
+          </Segment>
+        </EmptySegment>
       )}
       <LibraryContext.Provider value={true}>
         <LibrarySidebar />
         {!errorLimited && (
           <View
             hrefTemplate={pageHrefTemplate}
-            activePage={page}
+            activePage={activePage}
             items={items}
             infinite={infinite}
             loading={isFetching}

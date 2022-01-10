@@ -140,7 +140,7 @@ export function ItemMenu({
   const { data, dataContext } = useSetupDataState({
     initialData,
     itemType: type,
-    key: '_header',
+    key: 'header',
   });
 
   return (

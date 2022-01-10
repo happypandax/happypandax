@@ -28,10 +28,12 @@ export default class StateBlock {
   static setup(cls: StateBlock) {
     Object.keys(cls).forEach((k) => {
       const opts = { ...cls[k], family: undefined };
+      const key = opts.key ?? `${cls.name}_` + k;
       if (cls[k].family) {
-        cls[k] = atomFamily({ ...opts, key: opts.key ?? `${cls.name}_` + k });
+        cls[k] = atomFamily({ ...opts, key });
+        cls[k].key = key;
       } else {
-        cls[k] = atom({ ...opts, key: opts.key ?? `${cls.name}_` + k });
+        cls[k] = atom({ ...opts, key });
       }
     });
   }

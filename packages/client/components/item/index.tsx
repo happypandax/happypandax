@@ -195,8 +195,10 @@ export function ItemMenuLabelItem({
 
 export function ItemMenuLabel({
   children,
+  trigger,
 }: {
   children: React.ReactNode | React.ReactNode[];
+  trigger?: React.ComponentProps<typeof Popup>['trigger'];
 }) {
   const { openMenu, onMenuClose, size } = useContext(ItemContext);
 
@@ -220,18 +222,21 @@ export function ItemMenuLabel({
       )}
       position="right center"
       trigger={useMemo(
-        () => (
-          <IconItemLabel
-            name="ellipsis vertical"
-            size={
-              (['mini', 'tiny'] as ItemSize[]).includes(size)
-                ? 'small'
-                : undefined
-            }
-            onClick={(e) => e.preventDefault()}
-          />
-        ),
-        []
+        () =>
+          trigger ? (
+            trigger
+          ) : (
+            <IconItemLabel
+              name="ellipsis vertical"
+              size={
+                (['mini', 'tiny'] as ItemSize[]).includes(size)
+                  ? 'small'
+                  : undefined
+              }
+              onClick={(e) => e.preventDefault()}
+            />
+          ),
+        [trigger]
       )}>
       <List selection relaxed>
         {children}
