@@ -5,10 +5,10 @@ import { EmptySegment, TitleSegment } from './Misc';
 
 // TODO; these should use metalists
 
-export function SuggestedGalleries() {
+export function Suggestions() {
   const galleries = [];
   return (
-    <TitleSegment title={t`You may also love these`}>
+    <TitleSegment title={t`Check these out out`}>
       <Divider horizontal>
         <Header>{t`Galleries`}</Header>
       </Divider>
@@ -68,6 +68,24 @@ export function FavoritePages() {
       {!pages.length && (
         <EmptySegment description={`You don't have any favorited pages`} />
       )}
+    </TitleSegment>
+  );
+}
+
+export function FavoriteArtistsMore() {
+  const galleries = [];
+  return (
+    <TitleSegment title={t`More from artists you love`}>
+      {!galleries.length && <EmptySegment />}
+    </TitleSegment>
+  );
+}
+
+export function FavoriteTagsMore() {
+  const galleries = [];
+  return (
+    <TitleSegment title={t`More from tags you love`}>
+      {!galleries.length && <EmptySegment />}
     </TitleSegment>
   );
 }

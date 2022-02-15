@@ -308,6 +308,61 @@ export function FavoriteLabel({
   );
 }
 
+export function FolllowLabel({
+  onRate,
+  className,
+  size = 'big',
+  ...props
+}: Omit<MakeOptional<React.ComponentProps<typeof Rating>, 'icon'>, 'size'> & {
+  size?: React.ComponentProps<typeof Rating>['size'] | 'gigantic';
+}) {
+  const { data, setData, context } = useUpdateDataState<{
+    id: number;
+    metatags: PartialExcept<ServerMetaTags, 'follow'>;
+  }>();
+
+  // console.log(context.key, data);
+
+  const onFav = useCallback(
+    (e, d) => {
+      if (context.editing) {
+        throw Error('not implemented');
+      } else {
+        ItemActions.updateMetatags(
+          [data],
+          {
+            item_type: context.type,
+            item_id: data.id,
+            metatags: { follow: d.rating!! },
+          },
+          (d, mutated) => {
+            if (mutated) {
+              setData(d[0]);
+            }
+          }
+        ).catch((err) => console.error(err));
+      }
+    },
+    [context.type, data]
+  );
+
+  return (
+    <Rating
+      className={classNames(
+        { [styles.favorite_label]: size === 'gigantic' },
+        className
+      )}
+      icon="thumbtack"
+      title={t`Follow status`}
+      color="blue"
+      onRate={onRate ?? onFav}
+      size={size === 'gigantic' ? 'massive' : size}
+      rating={data?.metatags?.follow ? 1 : undefined}
+      {...props}
+    />
+  );
+}
+
 export function RatingLabel({
   size = 'huge',
   defaultRating,

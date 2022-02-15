@@ -306,6 +306,10 @@ function LibrarySettings({
     AppState.externalViewer
   );
 
+  const router = useRouter();
+
+  const [reload, setReload] = useState(false);
+
   const displayChange = useCallback((e, { value }) => {
     e.preventDefault();
     setDisplay(value);
@@ -317,7 +321,14 @@ function LibrarySettings({
   }, []);
 
   return (
-    <Modal trigger={trigger} dimmer={false}>
+    <Modal
+      trigger={trigger}
+      dimmer={false}
+      onClose={useCallback(() => {
+        if (reload) {
+          router.reload();
+        }
+      }, [reload, router])}>
       <Modal.Header>{t`Library Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
@@ -417,6 +428,7 @@ function LibrarySettings({
               onChange={useCallback((ev, { checked }) => {
                 ev.preventDefault();
                 setSeries(checked);
+                setReload(true);
               }, [])}
             />
           </Form.Field>

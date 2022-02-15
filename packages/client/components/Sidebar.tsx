@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import {
   createContext,
   useCallback,
@@ -25,6 +26,7 @@ import {
 
 import { useDocumentEvent } from '../client/hooks/utils';
 import t from '../misc/lang';
+import { urlparse } from '../misc/utility';
 import { AppState, useInitialRecoilState } from '../state/index';
 import AboutModal from './About';
 import SettingsModal from './Settings';
@@ -37,6 +39,7 @@ function SidebarItem({
   href,
   className,
   children,
+  active,
   label,
   labelColor,
   onClick,
@@ -46,16 +49,22 @@ function SidebarItem({
   icon?: SemanticICONS | IconProps;
   className?: string;
   label?: string;
+  active?: boolean;
   labelColor?: SemanticCOLORS;
   onClick?: React.ComponentProps<typeof Menu.Item>['onClick'];
   children?: React.ReactNode;
 }) {
   const context = useContext(SidebarContext);
 
+  const router = useRouter();
+
+  const urlquery = urlparse(router.asPath);
+
   const menuItem = (
     <Menu.Item
       as={href ? 'a' : undefined}
       onClick={onClick}
+      active={active ?? (href ? urlquery.url.startsWith(href) : undefined)}
       className={classNames(className)}>
       {!!icon && (
         <Icon
@@ -146,6 +155,7 @@ export function MainSidebar({
           <div className="top-aligned">
             <SidebarItem
               href="/"
+              active={false}
               icon={{ className: 'hpx-standard huge left' }}
               className="center-text small-padding-segment no-left-padding no-right-padding"></SidebarItem>
             <SidebarItem

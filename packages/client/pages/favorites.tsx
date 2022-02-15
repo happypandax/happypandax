@@ -3,11 +3,13 @@ import Router, { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  FavoriteArtistsMore,
   FavoriteCollections,
   FavoriteGalleries,
   FavoritePages,
   Favorites,
-  SuggestedGalleries,
+  FavoriteTagsMore,
+  Suggestions,
   TimeCapsuleGalleries,
 } from '../components/Favorites';
 import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
@@ -102,10 +104,12 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
       )}>
       <PageTitle title={t`Favorites`} />
       <Favorites />
+      <Suggestions />
+      <FavoriteArtistsMore />
+      <FavoriteTagsMore />
       <FavoriteGalleries />
       <FavoriteCollections />
       <FavoritePages />
-      <SuggestedGalleries />
       <TimeCapsuleGalleries />
     </PageLayout>
   );

@@ -7,7 +7,7 @@ export default class _LibraryState extends StateBlock {
   static favorites = defineAtom(
     {
       default: false,
-      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+      effects_UNSTABLE: [cookieEffect()],
     },
     true
   );
@@ -15,7 +15,7 @@ export default class _LibraryState extends StateBlock {
   static filter = defineAtom(
     {
       default: undefined as number,
-      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+      effects_UNSTABLE: [cookieEffect()],
     },
     true
   );
@@ -23,7 +23,7 @@ export default class _LibraryState extends StateBlock {
   static sort = defineAtom(
     {
       default: ItemSort.GalleryDate,
-      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+      effects_UNSTABLE: [cookieEffect()],
     },
     true
   );
@@ -31,14 +31,14 @@ export default class _LibraryState extends StateBlock {
   static sortDesc = defineAtom(
     {
       default: true,
-      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+      effects_UNSTABLE: [cookieEffect()],
     },
     true
   );
 
   static display = defineAtom({
     default: 'card' as 'list' | 'card',
-    effects_UNSTABLE: [cookieEffect('library_display')],
+    effects_UNSTABLE: [cookieEffect()],
   });
 
   static query = defineAtom(
@@ -58,7 +58,7 @@ export default class _LibraryState extends StateBlock {
   static view = defineAtom(
     {
       default: ViewType.Library,
-      effects_UNSTABLE: [cookieEffect('library_view')],
+      effects_UNSTABLE: [cookieEffect()],
     },
     true
   );
@@ -66,14 +66,14 @@ export default class _LibraryState extends StateBlock {
   static item = defineAtom(
     {
       default: ItemType.Gallery,
-      effects_UNSTABLE: [cookieEffect((n) => n.key)],
+      effects_UNSTABLE: [cookieEffect()],
     },
     true
   );
 
   static limit = defineAtom({
     default: 30,
-    effects_UNSTABLE: [cookieEffect('library_limit')],
+    effects_UNSTABLE: [cookieEffect()],
   });
 
   static page = defineAtom(
@@ -89,7 +89,7 @@ export default class _LibraryState extends StateBlock {
             }
           });
         },
-        cookieEffect((n) => n.key),
+        cookieEffect(),
       ],
     },
     true
@@ -97,12 +97,12 @@ export default class _LibraryState extends StateBlock {
 
   static series = defineAtom({
     default: true,
-    effects_UNSTABLE: [cookieEffect('library_series')],
+    effects_UNSTABLE: [cookieEffect()],
   });
 
   static infinite = defineAtom({
     default: false,
-    effects_UNSTABLE: [localStorageEffect('library_infinite')],
+    effects_UNSTABLE: [localStorageEffect()],
   });
 
   static sidebarVisible = defineAtom({

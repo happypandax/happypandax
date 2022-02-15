@@ -67,8 +67,8 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
           'small-padding-segment no-margins'
         )}>
         <Icon
-          name="star"
-          color="yellow"
+          name="heart"
+          color="red"
           bordered
           size="small"
           circular
