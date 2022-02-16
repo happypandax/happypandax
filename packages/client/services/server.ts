@@ -161,6 +161,7 @@ export default class ServerService extends Service {
   async config(
     args: {
       cfg: Record<string, AnyJson>;
+      flatten?: boolean;
     },
     group?: GroupCall
   ) {

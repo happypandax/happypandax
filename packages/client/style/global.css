@@ -6,6 +6,10 @@ html, body {
     height: auto;
 }
 
+.muted {
+    color: rgba(0,0,0,.4);
+}
+
 .float-right {
     float: right;
 }

@@ -339,3 +339,7 @@ export function JSONSafe<T extends Record<any, any>>(obj: T) {
   });
   return o;
 }
+
+export function defined(value) {
+  return value !== undefined;
+}

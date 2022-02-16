@@ -372,7 +372,7 @@ h6 {
     font-size: 1.0rem;
 }
 
-.tiny-text, .sub-text {
+.tiny-text, .sub-text{
     color: rgba(0,0,0,.4) !important;
 }
 

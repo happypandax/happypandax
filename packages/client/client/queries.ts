@@ -52,6 +52,7 @@ export enum MutatationType {
   LOGIN = 50,
   UPDATE_ITEM,
   UPDATE_METATAGS,
+  UPDATE_CONFIG,
   STOP_QUEUE,
   START_QUEUE,
   CLEAR_QUEUE,
@@ -101,6 +102,11 @@ export function useMutationType<
 
     case MutatationType.UPDATE_METATAGS: {
       endpoint = '/api/metatags';
+      break;
+    }
+
+    case MutatationType.UPDATE_CONFIG: {
+      endpoint = '/api/config';
       break;
     }
 
@@ -511,6 +517,12 @@ interface UpdateMetatags<T = undefined> extends MutationAction<T> {
   variables: Parameters<ServerService['update_metatags']>[0];
 }
 
+interface UpdateConfig<T = undefined> extends MutationAction<T> {
+  type: MutatationType.UPDATE_CONFIG;
+  dataType: Unwrap<ReturnType<ServerService['set_config']>>;
+  variables: Parameters<ServerService['set_config']>[0];
+}
+
 interface StopQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.STOP_QUEUE;
   dataType: Unwrap<ReturnType<ServerService['stop_queue']>>;
@@ -563,6 +575,7 @@ type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
   | UpdateMetatags<T>
+  | UpdateConfig<T>
   | AddItemToQueue<T>
   | RemoveItemFromQueue<T>
   | AddItemsToMetadataQueue<T>
