@@ -5,6 +5,7 @@ import {
   ImageSize,
   ItemSort,
   ItemType,
+  PluginState,
   Priority,
   ProgressType,
 } from './enums';
@@ -312,3 +313,18 @@ export type ReaderData = Optional<
   >,
   'profile'
 >;
+
+export type Version = [number, number, number];
+export interface PluginData {
+  id: number;
+  name: string;
+  shortname: string;
+  version: Version;
+  author: string;
+  description: string;
+  website: string;
+  state: PluginState;
+  status: string;
+  site: string;
+  update_version: Version;
+}

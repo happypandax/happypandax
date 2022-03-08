@@ -13,6 +13,7 @@ import {
   ItemsKind,
   ItemType,
   LogType,
+  PluginState,
   Priority,
   QueueType,
 } from '../misc/enums';
@@ -25,6 +26,7 @@ import {
   FieldPath,
   MetadataHandler,
   MetadataItem,
+  PluginData,
   ProfileOptions,
   SearchItem,
   SearchOptions,
@@ -34,6 +36,7 @@ import {
   ServerPage,
   ServerSortIndex,
   SortOptions,
+  Version,
 } from '../misc/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
@@ -557,6 +560,58 @@ export default class ServerService extends Service {
     const data = await this._call('get_command_progress', args, group);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandProgress>;
+  }
+
+  async list_plugins(args: { state?: PluginState }, group?: GroupCall) {
+    const data = await this._call('list_plugins', args, group);
+    throw_msg_error(data);
+    return data.data as PluginData[];
+  }
+
+  async plugin(args: { plugin_id: string }, group?: GroupCall) {
+    const data = await this._call('get_plugin', args, group);
+    throw_msg_error(data);
+    return data.data as PluginData;
+  }
+
+  async install_plugin(args: { plugin_id: string }, group?: GroupCall) {
+    const data = await this._call('install_plugin', args, group);
+    throw_msg_error(data);
+    return data.data as PluginState;
+  }
+
+  async disable_plugin(args: { plugin_id: string }, group?: GroupCall) {
+    const data = await this._call('disable_plugin', args, group);
+    throw_msg_error(data);
+    return data.data as PluginState;
+  }
+
+  async remove_plugin(args: { plugin_id: string }, group?: GroupCall) {
+    const data = await this._call('remove_plugin', args, group);
+    throw_msg_error(data);
+    return data.data as PluginState;
+  }
+
+  async check_plugin_update(
+    args: { plugin_ids?: string[]; force?: boolean; push?: boolean },
+    group?: GroupCall
+  ) {
+    const data = await this._call('check_plugin_update', args, group);
+    throw_msg_error(data);
+    return data.data as CommandID<{
+      plugin_id: string;
+      url: string;
+      version: Version;
+    }>;
+  }
+
+  async update_plugin(
+    args: { plugin_ids?: string[]; force?: boolean; push?: boolean },
+    group?: GroupCall
+  ) {
+    const data = await this._call('update_plugin', args, group);
+    throw_msg_error(data);
+    return data.data as CommandID<string[]>;
   }
 
   async page_read_event(args: { item_id: number }, group?: GroupCall) {

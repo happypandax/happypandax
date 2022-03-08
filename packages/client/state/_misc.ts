@@ -11,4 +11,8 @@ export default class _MiscState extends StateBlock {
     },
     true
   );
+
+  static touchedConfig = defineAtom({
+    default: [] as string[],
+  });
 }

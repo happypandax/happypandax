@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useRecoilState } from 'recoil';
 
 import { update } from '../../misc/utility';
+import { MiscState } from '../../state';
 import {
   MutatationType,
   QueryType,
@@ -12,6 +14,7 @@ export function useConfig<T extends Record<string, any> = Record<string, any>>(
   cfg?: T
 ): [Partial<T>, (cfg: Partial<T>) => void] {
   const [value, setValue] = useState<Partial<T>>(cfg ?? {});
+  const [touched, setTouched] = useRecoilState(MiscState.touchedConfig);
 
   const { data, remove } = useQueryType(QueryType.CONFIG, {
     cfg: cfg ?? {},
@@ -30,6 +33,8 @@ export function useConfig<T extends Record<string, any> = Record<string, any>>(
     (cfg: Partial<T>) => {
       setValue(update(value, { $merge: cfg }));
 
+      setTouched([...new Set([...touched, ...Object.keys(cfg)])]);
+
       mutate(
         { cfg },
         {
@@ -44,7 +49,7 @@ export function useConfig<T extends Record<string, any> = Record<string, any>>(
         }
       );
     },
-    [value]
+    [value, touched]
   );
 
   return [value, setConfig];
