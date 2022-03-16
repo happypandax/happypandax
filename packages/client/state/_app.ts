@@ -35,7 +35,20 @@ export default class _AppState extends StateBlock {
     default: 'very thin' as 'very thin' | 'thin',
   });
 
-  static drawerOpen = defineAtom({ default: false });
+  static drawerSticky = defineAtom({ default: false });
+  static drawerExpanded = defineAtom({ default: false });
+  static drawerOpen = defineAtom({
+    default: false,
+    effects_UNSTABLE: [
+      ({ setSelf, onSet, getLoadable }) => {
+        onSet((newValue) => {
+          if (!getLoadable(_AppState.drawerSticky).getValue()) {
+            setSelf(newValue);
+          }
+        });
+      },
+    ],
+  });
   static drawerTab = defineAtom({
     default: DrawerTab.Queue,
     effects_UNSTABLE: [localStorageEffect('drawing_tab')],

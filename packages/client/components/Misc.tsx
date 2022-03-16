@@ -18,12 +18,28 @@ import {
   Header,
   Icon,
   Label,
+  List,
   Message,
   Popup,
   Segment,
 } from 'semantic-ui-react';
 import SwiperCore, { Autoplay, Navigation } from 'swiper/core';
 import { Swiper, SwiperSlide } from 'swiper/react';
+
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 import { useCommand } from '../client/command';
 import { QueryType, useQueryType } from '../client/queries';
@@ -37,6 +53,102 @@ import GalleryCard, { galleryCardDataFields } from './item/Gallery';
 import styles from './Misc.module.css';
 
 SwiperCore.use([Navigation, Autoplay]);
+
+export function SortableItemItem<T extends { id: string }>({
+  item,
+  children,
+  as: El = List.Item,
+  ...props
+}: {
+  item: T;
+  children?: React.ReactNode;
+  as?: React.ElementType;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: item.id });
+
+  delete attributes.role;
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <El
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      item={item}
+      {...props}>
+      {children}
+    </El>
+  );
+}
+
+class DragItemPointerSensor extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: (event) => {
+        if (!event.nativeEvent.target?.dataset?.dragItem) {
+          return false;
+        }
+
+        return true;
+      },
+    },
+  ];
+}
+
+export function SortableList<T extends { id: string }, P extends { item: T }>({
+  element: Element,
+  items,
+  onlyOnDragItem,
+  onItemsChange,
+}: {
+  element: React.ComponentType<P>;
+  items: T[];
+  onlyOnDragItem?: boolean;
+  onItemsChange: (items: T[]) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(onlyOnDragItem ? DragItemPointerSensor : PointerSensor)
+  );
+
+  const handleDragEnd = useCallback(
+    (event) => {
+      const { active, over } = event;
+
+      if (active.id !== over.id) {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const r = arrayMove(items, oldIndex, newIndex);
+        onItemsChange?.(r);
+      }
+    },
+    [onItemsChange]
+  );
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}>
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {items.map((i) => (
+          <Element key={i.id} item={i} />
+        ))}
+      </SortableContext>
+    </DndContext>
+  );
+}
 
 export function ServerLog({
   type,
@@ -60,12 +172,16 @@ export function ServerLog({
 }
 
 export function TextEditor({
-  value,
   onChange,
+  value,
+  ...props
 }: {
   value?: string;
   onChange?: (value: string) => void;
-}) {
+} & Omit<
+  React.ComponentProps<typeof Editor>,
+  'ref' | 'onValueChange' | 'onChange' | 'highlight' | 'value'
+>) {
   return (
     <Editor
       value={value}
@@ -78,7 +194,57 @@ export function TextEditor({
         minHeight: '8em',
       }}
       placeholder="</ Text here ...>"
+      {...props}
     />
+  );
+}
+
+export function JSONTextEditor({
+  value,
+  defaultValue,
+  onChange: initialOnChange,
+}: {
+  value?: object;
+  defaultValue?: object;
+  onChange?: (value: object) => void;
+} & Omit<
+  React.ComponentProps<typeof TextEditor>,
+  'value' | 'onChange' | 'defaultValue'
+>) {
+  const [error, setError] = useState('');
+  const [textValue, setTextValue] = useState<string>(
+    value ? JSON.stringify(value) : undefined
+  );
+
+  const onChange = useCallback(
+    (v: string) => {
+      try {
+        const o = JSON.parse(v.trim());
+        initialOnChange?.(o);
+        setError('');
+      } catch (e) {
+        setError(e.message);
+      }
+      if (textValue !== undefined) {
+        setTextValue(v);
+      }
+    },
+    [initialOnChange]
+  );
+
+  return (
+    <div>
+      <TextEditor
+        value={textValue}
+        defaultValue={defaultValue ? JSON.stringify(defaultValue) : undefined}
+        onChange={onChange}
+      />
+      {!!error && (
+        <Message negative>
+          <p>{error}</p>
+        </Message>
+      )}
+    </div>
   );
 }
 

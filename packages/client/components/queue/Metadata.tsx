@@ -3,18 +3,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Card,
-  Checkbox,
+  Container,
+  Divider,
   Dropdown,
   Form,
   Header,
   Icon,
   Label,
+  List,
   Menu,
   Modal,
   Segment,
-  Select,
 } from 'semantic-ui-react';
 
+import { useConfig } from '../../client/hooks/settings';
 import {
   MutatationType,
   QueryType,
@@ -30,104 +32,152 @@ import {
   QueueType,
 } from '../../misc/enums';
 import t from '../../misc/lang';
-import { MetadataItem } from '../../misc/types';
+import { MetadataHandler, MetadataItem } from '../../misc/types';
 import GalleryCard, { galleryCardDataFields } from '../item/Gallery';
 import {
   ItemCardActionContent,
   ItemCardActionContentItem,
 } from '../item/index';
-import { EmptyMessage } from '../Misc';
+import { EmptyMessage, SortableList } from '../Misc';
+import { OptionField } from '../Settings';
 import { ItemQueueBase } from './';
+import { HandlerSortableItem } from './index';
 
-function MetadataSettings({ trigger }: { trigger: React.ReactNode }) {
+function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
+  const [cfg, setConfig] = useConfig({
+    'metadata.size': undefined as number,
+    'metadata.use_applied_urls': undefined as boolean,
+    'metadata.continue_fetching': undefined as boolean,
+    'metadata.only_if_never_fetched': undefined as boolean,
+    'metadata.stop_after_first': undefined as boolean,
+    'metadata.choose_first_candidate': undefined as boolean,
+    'metadata.disabled': undefined as string[],
+    'metadata.priority': undefined as string[],
+    'metadata.attributes': undefined as string,
+    'metadata.overwrites': undefined as string,
+  });
+
+  const { data: metadataHandlers } = useQueryType(QueryType.METADATA_INFO);
+
+  const optionChange = useCallback(
+    function f<T extends typeof cfg, K extends keyof T>(key: K, value: T[K]) {
+      setConfig({ [key]: value });
+    },
+    [setConfig]
+  );
+
+  const [handlers, setHandlers] = useState<
+    { id: string; handler: MetadataHandler; type: string }[]
+  >([]);
+
+  useEffect(() => {
+    if (metadataHandlers?.data) {
+      setHandlers(
+        metadataHandlers.data.map((h) => ({
+          id: h.identifier,
+          handler: h,
+          type: 'metadata',
+        }))
+      );
+    }
+  }, [metadataHandlers]);
+
+  useEffect(() => {
+    optionChange(
+      'metadata.priority',
+      handlers.map((h) => h.id)
+    );
+  }, [handlers]);
+
   return (
-    <Modal trigger={trigger} dimmer={false}>
+    <Modal dimmer={false} {...props}>
       <Modal.Header>{t`Metadata Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
-          <Form.Group inline>
-            <label>{t`Display`}</label>
-            <Form.Radio label={t`Card`} value="card" />
-            <Form.Radio label={t`List`} value="list" />
-          </Form.Group>
-
-          <Form.Group inline>
-            <label>{t`Default view`}</label>
-            <Form.Radio label={t`All`} />
-            <Form.Radio label={t`Library`} />
-            <Form.Radio label={t`Inbox`} />
-          </Form.Group>
-
-          <Form.Field
-            control={Select}
-            label={t`Items per page`}
-            placeholder={t`Items per page`}
-            onChange={useCallback((ev, { value }) => {
-              ev.preventDefault();
-              setLimit(parseInt(value, 10));
-            }, [])}
-            // width={4}
+          <OptionField
+            label={t`Amount of metadata tasks allowed to run concurrently`}
+            cfg={cfg}
+            nskey="metadata.size"
+            type="number"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default item`}
-            placeholder={t`Default item`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Lookup metadata from an item's applied URLs`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.use_applied_urls"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default sort`}
-            placeholder={t`Default sort`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Continue metadata lookup if none is found from an item's applied URLs`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.continue_fetching"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default sort order`}
-            placeholder={t`Default sort order`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Only fetch metadata for items that has not been fetched before`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.only_if_never_fetched"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default filter`}
-            placeholder={t`Default filter`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Stop metadata lookup after first found`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.stop_after_first"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field>
-            <label>{t`Infinite scroll`}</label>
-            <Checkbox
-              toggle
-              onChange={useCallback((ev, { checked }) => {
-                ev.preventDefault();
-                setInfinite(checked);
-              }, [])}
-            />
-          </Form.Field>
+          <OptionField
+            label={t`Choose first metadata candidate when multiple are found (for each metadata handler)`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.choose_first_candidate"
+            type="boolean"
+            optionChange={optionChange}
+          />
+          <OptionField
+            label={t`Specify which attributes should be written to an item`}
+            help={t`Set attribute:true to 'turn on' the attribute or attribute:false to 'turn off'.
+              Set __all__:true to 'turn on' all attributes not specified or __all__:false to 'turn them off'`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.attributes"
+            type="json"
+            optionChange={optionChange}
+          />
+          <OptionField
+            label={t`Specify how attributes should be written to an item`}
+            help={t`Set attribute:true to overwrite the attribute or attribute:false to only update if applicable.
+              Set __all__:true to overwrite all attributes not specified or __all__:false to only update them`}
+            cfg={cfg}
+            isolation="user"
+            nskey="metadata.overwrites"
+            type="json"
+            optionChange={optionChange}
+          />
         </Form>
+        <Divider />
+        <Container textAlign="center" className="sub-text">
+          {t`Drag item to change priority`}
+        </Container>
+        <List relaxed="very" ordered>
+          <SortableList
+            element={HandlerSortableItem}
+            onItemsChange={setHandlers}
+            onlyOnDragItem
+            items={handlers.sort(
+              (a, b) =>
+                cfg['metadata.priority'].indexOf(a.id) -
+                cfg['metadata.priority'].indexOf(b.id)
+            )}
+          />
+        </List>
       </Modal.Content>
     </Modal>
   );

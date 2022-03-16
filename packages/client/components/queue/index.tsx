@@ -1,10 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Icon, Loader, Menu } from 'semantic-ui-react';
+import { forwardRef, useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { useSetRecoilState } from 'recoil';
+import { Icon, Label, List, Loader, Menu, Ref } from 'semantic-ui-react';
 
-import { MutatationType, useMutationType } from '../../client/queries';
+import { useSetting } from '../../client/hooks/settings';
+import {
+  getQueryTypeKey,
+  MutatationType,
+  QueryType,
+  useMutationType,
+} from '../../client/queries';
 import { LogType, QueueType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { ServerLog } from '../Misc';
+import { DownloadHandler, MetadataHandler } from '../../misc/types';
+import { AppState } from '../../state';
+import { ServerLog, SortableItemItem } from '../Misc';
 
 export function ItemQueueBase({
   Settings,
@@ -27,6 +37,9 @@ export function ItemQueueBase({
   const [clearLoading, setClearLoading] = useState(false);
   const [active, setActive] = useState(true);
   const [logVisible, setLogVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+
+  const setDrawerSticky = useSetRecoilState(AppState.drawerSticky);
 
   const clearQueue = useMutationType(MutatationType.CLEAR_QUEUE, {
     onMutate: () => setClearLoading(true),
@@ -51,11 +64,29 @@ export function ItemQueueBase({
   }, [running]);
 
   useEffect(() => {
+    const sticky = settingsVisible;
+    if (!sticky) {
+      setTimeout(() => {
+        setDrawerSticky(settingsVisible);
+      }, 500);
+    } else {
+      setDrawerSticky(settingsVisible);
+    }
+  }, [settingsVisible]);
+
+  useEffect(() => {
     onActive?.(active);
   }, [active]);
 
   return (
     <>
+      {!!Settings && (
+        <Settings
+          open={settingsVisible}
+          closeIcon
+          onClose={() => setSettingsVisible(false)}
+        />
+      )}
       <Menu labeled compact text fluid>
         <Menu.Item
           disabled={runningLoading}
@@ -88,13 +119,12 @@ export function ItemQueueBase({
             ])}>
             <Icon name={logVisible ? 'angle down' : 'angle right'} /> {t`Log`}
           </Menu.Item>
-          <Settings
-            trigger={
-              <Menu.Item>
-                <Icon name="setting" /> {t`Options`}
-              </Menu.Item>
-            }
-          />
+          <Menu.Item
+            onClick={useCallback(() => setSettingsVisible(!settingsVisible), [
+              settingsVisible,
+            ])}>
+            <Icon name="setting" /> {t`Options`}
+          </Menu.Item>
           {menuItems}
         </Menu.Menu>
       </Menu>
@@ -107,4 +137,79 @@ export function ItemQueueBase({
       )}
     </>
   );
+}
+
+export const HandlerItem = forwardRef(function HandlerItem(
+  {
+    item,
+    type,
+    ...props
+  }: {
+    item: { id: string; handler: MetadataHandler | DownloadHandler };
+    type: 'metadata' | 'download';
+  },
+  ref
+) {
+  const [value, setValue] = useSetting<string[]>(
+    type === 'metadata' ? 'metadata.disabled' : 'download.disabled',
+    []
+  );
+  const qclient = useQueryClient();
+
+  const disabled = value.includes(item.id);
+  return (
+    <Ref innerRef={ref}>
+      <List.Item
+        {...props}
+        style={{ ...props?.style, display: 'flex', alignItems: 'center' }}>
+        <Icon link name="border none" data-drag-item="true" />
+
+        <List.Content>
+          <List.Header>
+            {disabled && <Icon fitted name="ban" color="red" />}
+            <Label basic>
+              {t`Identifier`}
+              <Label.Detail>{item?.id}</Label.Detail>
+            </Label>
+            {item?.handler?.name}
+            {item?.handler?.sites && (
+              <span className="right sub-text">
+                {t`Sites`}: {item?.handler?.sites.join(', ')}
+              </span>
+            )}
+          </List.Header>
+          <List.Description>
+            {item?.handler?.description}
+            <Label.Group className="right">
+              <Label
+                as="a"
+                basic
+                color={disabled ? 'green' : 'red'}
+                onClick={useCallback(() => {
+                  let v = value.filter((v) => v !== item.id);
+                  if (!disabled) {
+                    v = [...v, item.id];
+                  }
+                  setValue(v);
+                  qclient.invalidateQueries(
+                    getQueryTypeKey(QueryType.METADATA_INFO)
+                  );
+                  qclient.invalidateQueries(
+                    getQueryTypeKey(QueryType.DOWNLOAD_INFO)
+                  );
+                }, [value, disabled])}>
+                {disabled ? t`Enable` : t`Disable`}
+              </Label>
+            </Label.Group>
+          </List.Description>
+        </List.Content>
+      </List.Item>
+    </Ref>
+  );
+});
+
+export function HandlerSortableItem(
+  props: React.ComponentProps<typeof HandlerItem>
+) {
+  return <SortableItemItem as={HandlerItem} {...props} />;
 }

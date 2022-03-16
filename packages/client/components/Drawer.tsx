@@ -165,8 +165,15 @@ export function RecentViewed() {
 }
 
 function DrawerPane({ children }: { children: React.ReactNode }) {
+  const drawerExpanded = useRecoilValue(AppState.drawerExpanded);
+
   return (
-    <Tab.Pane basic className="no-padding-segment min-250-h max-250-h">
+    <Tab.Pane
+      basic
+      className={classNames('no-padding-segment', {
+        ['min-250-h max-250-h']: !drawerExpanded,
+        ['min-400-h max-400-h']: drawerExpanded,
+      })}>
       {children}
     </Tab.Pane>
   );
@@ -182,6 +189,9 @@ export function Drawer({
   onClose?: () => void;
 }) {
   const [drawerTab, setDrawerTab] = useRecoilState(AppState.drawerTab);
+  const [drawerExpanded, setDrawerExpanded] = useRecoilState(
+    AppState.drawerExpanded
+  );
   const readingQueue = useRecoilValue(AppState.readingQueue);
 
   return (
@@ -275,6 +285,15 @@ export function Drawer({
           [readingQueue]
         )}
       />
+      <Label
+        as="a"
+        attached="top right"
+        style={{ right: '3em' }}
+        onClick={useCallback(() => {
+          setDrawerExpanded(!drawerExpanded);
+        }, [drawerExpanded])}>
+        <Icon name={drawerExpanded ? 'triangle down' : 'triangle up'} fitted />
+      </Label>
       <Label as="a" attached="top right" onClick={onClose}>
         <Icon name="close" fitted />
       </Label>
@@ -282,15 +301,16 @@ export function Drawer({
   );
 }
 
-export default function DrawerPortal({
-  open,
-  onClose,
-}: {
-  open?: boolean;
-  onClose?: () => void;
-}) {
+export default function DrawerPortal() {
+  const [drawerOpen, setDrawerOpen] = useRecoilState(AppState.drawerOpen);
+  const drawerSticky = useRecoilValue(AppState.drawerSticky);
+  const onClose = useCallback(() => setDrawerOpen(false), []);
   return (
-    <TransitionablePortal open={open} onClose={onClose}>
+    <TransitionablePortal
+      closeOnDocumentClick={!drawerSticky}
+      closeOnEscape={!drawerSticky}
+      open={drawerOpen}
+      onClose={onClose}>
       <div id="drawer">
         <Drawer onClose={onClose} />
       </div>

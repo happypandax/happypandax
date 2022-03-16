@@ -2369,6 +2369,55 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dnd-kit/accessibility@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@dnd-kit/accessibility@npm:3.0.0"
+  dependencies:
+    tslib: ^2.0.0
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: e7e2ed8b114929350bb922be7204499fb04847d9e78a546d64a0a8b169e3585711745832b336a5b7972bf0fa423ee3a5c8229b52e79702d2778a4c103e37e7ec
+  languageName: node
+  linkType: hard
+
+"@dnd-kit/core@npm:^5.0.3":
+  version: 5.0.3
+  resolution: "@dnd-kit/core@npm:5.0.3"
+  dependencies:
+    "@dnd-kit/accessibility": ^3.0.0
+    "@dnd-kit/utilities": ^3.1.0
+    tslib: ^2.0.0
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 3924469759543d41b957b9947751b1e62b475773da945129c4f2877c206bfbfa67e70512e2e277b3c34c8befa36654d471965c4fab535598106842edefd58b57
+  languageName: node
+  linkType: hard
+
+"@dnd-kit/sortable@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "@dnd-kit/sortable@npm:6.0.1"
+  dependencies:
+    "@dnd-kit/utilities": ^3.1.0
+    tslib: ^2.0.0
+  peerDependencies:
+    "@dnd-kit/core": ^5.0.2
+    react: ">=16.8.0"
+  checksum: 809bec9746f602563e4ac3841ea80d8fea06f1a3d040bfdcfdab8e232a3f62e0802dc944d4ef865a183a81de382754883543b79dd45edc432f97b3922b29c9da
+  languageName: node
+  linkType: hard
+
+"@dnd-kit/utilities@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@dnd-kit/utilities@npm:3.1.0"
+  dependencies:
+    tslib: ^2.0.0
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: cf57d1395e73c1f0e5c5cb228fbe41a2ae5748b3232bed3a53354e7e06ce078351ae44856211d7f0d9ad62ae47ae82f615f16f3d030aec9c26a901c3bafcd423
+  languageName: node
+  linkType: hard
+
 "@emotion/cache@npm:^10.0.27":
   version: 10.0.29
   resolution: "@emotion/cache@npm:10.0.29"
@@ -2570,6 +2619,9 @@ __metadata:
     "@babel/plugin-proposal-decorators": ^7.14.5
     "@babel/preset-env": ^7.15.0
     "@brainhubeu/react-carousel": ^2.0.4
+    "@dnd-kit/core": ^5.0.3
+    "@dnd-kit/sortable": ^6.0.1
+    "@dnd-kit/utilities": ^3.1.0
     "@grabrinc/isomorphic-logger": ^0.1.59
     "@mdx-js/react": ^1.6.22
     "@msgpack/msgpack": ^2.7.0
@@ -2627,7 +2679,7 @@ __metadata:
     react-simple-code-editor: ^0.11.0
     react-use: ^17.3.2
     react-virtualized: ^9.22.3
-    recoil: ^0.5.2
+    recoil: ^0.6.1
     sanitize-filename: ^1.6.3
     semantic-ui-react: ^2.0.4
     storybook-addon-themes: ^6.1.0
@@ -18623,9 +18675,9 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"recoil@npm:^0.5.2":
-  version: 0.5.2
-  resolution: "recoil@npm:0.5.2"
+"recoil@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "recoil@npm:0.6.1"
   dependencies:
     hamt_plus: 1.0.2
   peerDependencies:
@@ -18635,7 +18687,7 @@ fsevents@^1.2.7:
       optional: true
     react-native:
       optional: true
-  checksum: cc912f770d992933d2db8c543af69b7650790d185f994e75e8f4a814510e7499ea72cc175cba6f0abea12b45d90b2f8b736704fa8cd8bced00915dee1ce7b78e
+  checksum: 67c93c49d3ef7a104f1fcb28a635a341d36ab676b31b761c3e9dfe5667f43330a6b1b3dde2d1a82a148c6d300e12130c26ab83e20eaabff8e2565de15522bf18
   languageName: node
   linkType: hard
 

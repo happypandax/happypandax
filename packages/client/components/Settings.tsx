@@ -22,7 +22,8 @@ import { useConfig } from '../client/hooks/settings';
 import t from '../misc/lang';
 import { defined } from '../misc/utility';
 import { AppState, MiscState } from '../state';
-import { PluginAccordion } from './Plugin';
+import { JSONTextEditor } from './Misc';
+import { Plugins } from './Plugin';
 
 function namespaceExists(
   cfg: Record<string, any>,
@@ -35,7 +36,11 @@ function namespaceExists(
   );
 }
 
-function IsolationLabel({ isolation }: { isolation: 'user' | 'client' }) {
+export function IsolationLabel({
+  isolation,
+}: {
+  isolation: 'user' | 'client';
+}) {
   return (
     <Label
       horizontal
@@ -51,10 +56,10 @@ function IsolationLabel({ isolation }: { isolation: 'user' | 'client' }) {
   );
 }
 
-function OptionField<
+export function OptionField<
   T extends Record<string, any>,
   K extends keyof T,
-  I extends 'select' | 'number' | 'boolean' | 'string'
+  I extends 'select' | 'number' | 'boolean' | 'string' | 'json'
 >({
   nskey,
   label,
@@ -91,6 +96,8 @@ function OptionField<
     ? React.ComponentProps<typeof Input>
     : I extends 'string'
     ? React.ComponentProps<typeof Input>
+    : I extends 'json'
+    ? React.ComponentProps<typeof JSONTextEditor>
     : never,
   'value' | 'label' | 'type'
 >) {
@@ -107,10 +114,10 @@ function OptionField<
           <Checkbox
             toggle
             label={
-              <>
-                {isolation && <IsolationLabel isolation={isolation} />}
-                <label>{label}</label>
-              </>
+              <label>
+                {' '}
+                {isolation && <IsolationLabel isolation={isolation} />} {label}
+              </label>
             }
             checked={cfg[nskey] as any}
             onChange={(ev, { checked }) => {
@@ -157,7 +164,19 @@ function OptionField<
             {...rest}
           />
         )}
-        {help && <div className="muted">{help}</div>}
+        {type === 'json' && (
+          <JSONTextEditor
+            tabIndex={
+              rest.tabIndex ? parseInt(rest.tabIndex as string, 10) : undefined
+            }
+            value={cfg[nskey]}
+            onChange={(v) => {
+              optionChange(nskey, v as any);
+            }}
+            {...rest}
+          />
+        )}
+        {help && <div className="sub-text">{help}</div>}
       </Form.Field>
       {children}
     </>
@@ -404,7 +423,7 @@ function PluginsPane() {
             optionChange={optionChange}
           />
           <OptionField
-            label={t`Automatically download and install a new plugin update is found`}
+            label={t`Automatically download and install when a new plugin update is found`}
             cfg={cfg}
             nskey="plugin.auto_install_plugin_release"
             type="boolean"
@@ -419,10 +438,10 @@ function PluginsPane() {
           />
         </Segment>
       </Form>
-      <Divider />
-      <Segment basic className="no-padding-segment">
-        <PluginAccordion />
-      </Segment>
+      <Header size="small" dividing>
+        {t`Plugins`}
+      </Header>
+      <Plugins basic className="no-padding-segment" />
     </Segment>
   );
 }
@@ -723,7 +742,6 @@ function AdvancedPane() {
     'core.cache_expiration_time': undefined as number,
     'core.interface_cache_time': undefined as number,
     'core.message_cache_time': undefined as number,
-    'metadata.size': undefined as number,
     'download.size': undefined as number,
     'advanced.enable_auto_indexing': undefined as boolean,
     'advanced.enable_cache': undefined as boolean,
@@ -792,13 +810,6 @@ function AdvancedPane() {
               {t`Tasks`}
             </Header>
             <Segment clearing>
-              <OptionField
-                label={t`Amount of metadata tasks allowed to run concurrently`}
-                cfg={cfg}
-                nskey="metadata.size"
-                type="number"
-                optionChange={optionChange}
-              />
               <OptionField
                 label={t`Amount of download tasks allowed to run concurrently`}
                 cfg={cfg}

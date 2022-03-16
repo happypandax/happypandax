@@ -263,7 +263,7 @@ export interface CommandID<T> extends String {}
 interface _ItemHandler {
   identifier: string;
   name: string;
-  sites: string;
+  sites: string[];
   description: string;
   priority: Priority;
   disabled: boolean;
@@ -316,10 +316,10 @@ export type ReaderData = Optional<
 
 export type Version = [number, number, number];
 export interface PluginData {
-  id: number;
+  id: string;
   name: string;
   shortname: string;
-  version: Version;
+  version: string;
   author: string;
   description: string;
   website: string;

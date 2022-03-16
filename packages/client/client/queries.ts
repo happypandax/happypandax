@@ -26,8 +26,8 @@ import {
 
 import { FieldPath, ServerSortIndex } from '../misc/types';
 import { urlstring } from '../misc/utility';
-
 import type ServerService from '../services/server';
+
 export enum QueryType {
   PROFILE = 1,
   PAGES,
@@ -46,6 +46,9 @@ export enum QueryType {
   SERVER_STATUS,
   CONFIG,
   LOG,
+  PLUGIN,
+  PLUGINS,
+  PLUGIN_UPDATE,
 }
 
 export enum MutatationType {
@@ -61,6 +64,10 @@ export enum MutatationType {
   ADD_ITEMS_TO_METADATA_QUEUE,
   ADD_URLS_TO_DOWNLOAD_QUEUE,
   PAGE_READ_EVENT,
+  INSTALL_PLUGIN,
+  DISABLE_PLUGIN,
+  REMOVE_PLUGIN,
+  UPDATE_PLUGIN,
 }
 
 export const queryClient = new QueryClient({
@@ -150,6 +157,29 @@ export function useMutationType<
       break;
     }
 
+    case MutatationType.INSTALL_PLUGIN: {
+      endpoint = '/api/plugin';
+      method = 'POST';
+      break;
+    }
+
+    case MutatationType.DISABLE_PLUGIN: {
+      endpoint = '/api/plugin';
+      method = 'PUT';
+      break;
+    }
+
+    case MutatationType.REMOVE_PLUGIN: {
+      endpoint = '/api/plugin';
+      method = 'DELETE';
+      break;
+    }
+
+    case MutatationType.UPDATE_PLUGIN: {
+      endpoint = '/api/plugin_update';
+      break;
+    }
+
     default:
       throw Error('Invalid mutation type');
   }
@@ -178,6 +208,14 @@ export function CreateInitialData<R>(d: R | InitialDataFunction<R>) {
     config: {},
     request: {},
   };
+}
+
+export function getQueryTypeKey(
+  type: any,
+  variables?: any,
+  onQueryKey?: () => any
+) {
+  return [onQueryKey?.() ?? type.toString(), variables];
 }
 
 // If A is defined, it renders the rest of generics useless
@@ -232,7 +270,7 @@ export function useQueryType<
       : undefined,
   };
 
-  const key = [options?.onQueryKey?.() ?? type.toString(), variables];
+  const key = getQueryTypeKey(type, variables, options?.onQueryKey);
   let endpoint = '';
 
   switch (type) {
@@ -308,6 +346,21 @@ export function useQueryType<
 
     case QueryType.CONFIG: {
       endpoint = '/api/config';
+      break;
+    }
+
+    case QueryType.PLUGINS: {
+      endpoint = '/api/plugins';
+      break;
+    }
+
+    case QueryType.PLUGIN: {
+      endpoint = '/api/plugin';
+      break;
+    }
+
+    case QueryType.PLUGIN_UPDATE: {
+      endpoint = '/api/plugin_update';
       break;
     }
 
@@ -470,6 +523,24 @@ interface FetchConfig<T = undefined> extends QueryAction<T> {
   variables: Parameters<ServerService['config']>[0];
 }
 
+interface FetchPlugin<T = undefined> extends QueryAction<T> {
+  type: QueryType.PLUGIN;
+  dataType: Unwrap<ReturnType<ServerService['plugin']>>;
+  variables: Parameters<ServerService['plugin']>[0];
+}
+
+interface FetchPluginUpdate<T = undefined> extends QueryAction<T> {
+  type: QueryType.PLUGIN_UPDATE;
+  dataType: Unwrap<ReturnType<ServerService['check_plugin_update']>>;
+  variables: Parameters<ServerService['check_plugin_update']>[0];
+}
+
+interface FetchPlugins<T = undefined> extends QueryAction<T> {
+  type: QueryType.PLUGINS;
+  dataType: Unwrap<ReturnType<ServerService['list_plugins']>>;
+  variables: Parameters<ServerService['list_plugins']>[0];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -487,6 +558,9 @@ type QueryActions<T = undefined> =
   | FetchDownloadInfo<T>
   | FetchMetadataInfo<T>
   | FetchConfig<T>
+  | FetchPlugin<T>
+  | FetchPluginUpdate<T>
+  | FetchPlugins<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
@@ -571,6 +645,30 @@ interface PageReadEvent<T = undefined> extends MutationAction<T> {
   variables: Parameters<ServerService['page_read_event']>[0];
 }
 
+interface InstallPlugin<T = undefined> extends MutationAction<T> {
+  type: MutatationType.INSTALL_PLUGIN;
+  dataType: Unwrap<ReturnType<ServerService['install_plugin']>>;
+  variables: Parameters<ServerService['install_plugin']>[0];
+}
+
+interface DisablePlugin<T = undefined> extends MutationAction<T> {
+  type: MutatationType.DISABLE_PLUGIN;
+  dataType: Unwrap<ReturnType<ServerService['disable_plugin']>>;
+  variables: Parameters<ServerService['disable_plugin']>[0];
+}
+
+interface RemovePlugin<T = undefined> extends MutationAction<T> {
+  type: MutatationType.REMOVE_PLUGIN;
+  dataType: Unwrap<ReturnType<ServerService['remove_plugin']>>;
+  variables: Parameters<ServerService['remove_plugin']>[0];
+}
+
+interface UpdatePlugin<T = undefined> extends MutationAction<T> {
+  type: MutatationType.UPDATE_CONFIG;
+  dataType: Unwrap<ReturnType<ServerService['update_plugin']>>;
+  variables: Parameters<ServerService['update_plugin']>[0];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
@@ -583,6 +681,10 @@ type MutationActions<T = undefined> =
   | PageReadEvent<T>
   | StopQueue<T>
   | StartQueue<T>
+  | UpdatePlugin<T>
+  | RemovePlugin<T>
+  | DisablePlugin<T>
+  | InstallPlugin<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================

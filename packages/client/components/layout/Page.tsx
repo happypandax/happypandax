@@ -1,12 +1,9 @@
 import classNames from 'classnames';
-import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { useRecoilState } from 'recoil';
 import { Button, Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
 
 import t from '../../misc/lang';
-import { AppState } from '../../state';
 import DrawerPortal, { DrawerButton } from '../Drawer';
 import { ScrollUpButton } from '../Misc';
 import MainSidebar from '../Sidebar';
@@ -72,7 +69,6 @@ export default function PageLayout({
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
-  const [drawerOpen, setDrawerOpen] = useRecoilState(AppState.drawerOpen);
 
   return (
     <>
@@ -87,8 +83,6 @@ export default function PageLayout({
           {centered && <Container>{children}</Container>}
           {!centered && children}
           <DrawerPortal
-            open={drawerOpen}
-            onClose={useCallback(() => setDrawerOpen(false), [])}
           />
           <BottomZone>
             {bottomZone}

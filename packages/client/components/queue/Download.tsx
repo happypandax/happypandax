@@ -317,6 +317,7 @@ export function DownloadLabel() {
       include_finished: false,
     },
     {
+      enabled: false,
       refetchInterval: interval,
       refetchOnMount: 'always',
     }
