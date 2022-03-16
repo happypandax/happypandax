@@ -38,20 +38,35 @@ function namespaceExists(
 
 export function IsolationLabel({
   isolation,
+  ...props
 }: {
-  isolation: 'user' | 'client';
-}) {
+  isolation: 'user' | 'client' | 'server';
+} & React.ComponentProps<typeof Label>) {
   return (
     <Label
       horizontal
+      basic={isolation === 'server'}
       size="mini"
       title={
         isolation === 'user'
           ? t`This option is isolated to the user`
-          : t`This option is isolated to the client`
+          : isolation === 'client'
+          ? t`This option is isolated to the client`
+          : t`This option is global`
       }
-      color={isolation === 'user' ? 'purple' : 'teal'}>
-      {isolation === 'user' ? t`User` : t`Client`}
+      color={
+        isolation === 'user'
+          ? 'purple'
+          : isolation === 'client'
+          ? 'teal'
+          : 'black'
+      }
+      {...props}>
+      {isolation === 'user'
+        ? t`User`
+        : isolation === 'client'
+        ? t`Client`
+        : t`Global`}
     </Label>
   );
 }
@@ -81,7 +96,7 @@ export function OptionField<
   help?: string;
   float?: boolean;
   width?: FormFieldProps['width'];
-  isolation?: 'user' | 'client';
+  isolation?: 'user' | 'client' | 'server';
   visible?: boolean;
   nskey: K;
   children?: React.ReactNode;
@@ -216,7 +231,11 @@ function GeneralPane() {
           <Form.Field>
             <Checkbox
               toggle
-              label={t`Blur`}
+              label={
+                <label>
+                  <IsolationLabel isolation="client" /> {t`Blur`}
+                </label>
+              }
               checked={blur}
               onChange={useCallback((ev, { checked }) => {
                 ev.preventDefault();
@@ -393,6 +412,7 @@ function PluginsPane() {
     <Segment basic>
       <Form>
         <Segment clearing>
+          <IsolationLabel attached="top left" isolation="server" />
           <OptionField
             label={t`Additional plugin directory to look for plugins`}
             cfg={cfg}
@@ -423,7 +443,7 @@ function PluginsPane() {
             optionChange={optionChange}
           />
           <OptionField
-            label={t`Automatically download and install when a new plugin update is found`}
+            label={t`Automatically download and install new plugin updates`}
             cfg={cfg}
             nskey="plugin.auto_install_plugin_release"
             type="boolean"
@@ -439,6 +459,7 @@ function PluginsPane() {
         </Segment>
       </Form>
       <Header size="small" dividing>
+        <IsolationLabel isolation="server" />
         {t`Plugins`}
       </Header>
       <Plugins basic className="no-padding-segment" />
@@ -474,6 +495,7 @@ function ServerPane() {
     <Segment basic>
       <Form>
         <Segment clearing>
+          <IsolationLabel attached="top left" isolation="server" />
           <OptionField
             label={t`Server name`}
             cfg={cfg}
@@ -493,6 +515,7 @@ function ServerPane() {
         {namespaceExists(cfg, 'core', ['core.check_new_releases']) && (
           <>
             <Header size="small" dividing>
+              <IsolationLabel isolation="server" />
               {t`Updates`}
             </Header>
             <Segment clearing>
@@ -538,6 +561,7 @@ function ServerPane() {
         {namespaceExists(cfg, 'core', ['core.backup_dir']) && (
           <>
             <Header size="small" dividing>
+              <IsolationLabel isolation="server" />
               {t`Backup`}
             </Header>
             <Segment clearing>
@@ -569,6 +593,7 @@ function ServerPane() {
         {namespaceExists(cfg, 'core', ['core.trash_send_to_systemtrash']) && (
           <>
             <Header size="small" dividing>
+              <IsolationLabel isolation="server" />
               {t`Trash`}
             </Header>
             <Segment clearing>
@@ -698,6 +723,7 @@ function ImportPane() {
         {namespaceExists(cfg, 'watch') && (
           <>
             <Header size="small" dividing>
+              <IsolationLabel isolation="server" />
               {t`Watch`}
             </Header>
             <Segment>
@@ -765,6 +791,7 @@ function AdvancedPane() {
       </Message>
       <Form>
         <Segment>
+          <IsolationLabel attached="top left" isolation="server" />
           <OptionField
             label={t`Enable debug mode`}
             cfg={cfg}
@@ -807,6 +834,7 @@ function AdvancedPane() {
         {namespaceExists(cfg, 'core', ['core.concurrent_image_tasks']) && (
           <>
             <Header size="small" dividing>
+              <IsolationLabel isolation="server" />
               {t`Tasks`}
             </Header>
             <Segment clearing>
@@ -838,6 +866,7 @@ function AdvancedPane() {
         {namespaceExists(cfg, 'core', ['core.auto_thumb_clean_size']) && (
           <>
             <Header size="small" dividing>
+              <IsolationLabel isolation="server" />
               {t`Cache`}
             </Header>
             <Segment clearing>

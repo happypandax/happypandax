@@ -36,9 +36,15 @@ export function BottomZoneItem({
   return <div className={classNames('item', x, y, className)}>{children}</div>;
 }
 
-export function BottomZone({ children }: { children?: React.ReactNode }) {
+export function BottomZone({
+  children,
+  mountNode,
+}: {
+  children?: React.ReactNode;
+  mountNode?: HTMLElement;
+}) {
   return (
-    <Portal open>
+    <Portal open mountNode={mountNode}>
       <div id="bottom_zone">
         <div>{children}</div>
       </div>
@@ -69,7 +75,6 @@ export default function PageLayout({
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
-
   return (
     <>
       <MainSidebar />
@@ -82,8 +87,7 @@ export default function PageLayout({
         <DndProvider backend={HTML5Backend}>
           {centered && <Container>{children}</Container>}
           {!centered && children}
-          <DrawerPortal
-          />
+          <DrawerPortal />
           <BottomZone>
             {bottomZone}
             <BottomZoneItem x="left" y="top" className="flex">

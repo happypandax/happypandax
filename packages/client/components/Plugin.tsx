@@ -209,9 +209,9 @@ export function PluginAccordion(props: React.ComponentProps<typeof Plugin>) {
 }
 
 export function Plugins(props: React.ComponentProps<typeof Segment>) {
-  const { data } = useQueryType(QueryType.PLUGINS);
+  const { data, isLoading } = useQueryType(QueryType.PLUGINS);
   return (
-    <Segment {...props} clearing>
+    <Segment loading={isLoading} {...props} clearing>
       {data?.data
         ?.sort?.((a, b) => a.name.localeCompare(b.name))
         .map?.((plugin) => (

@@ -16,7 +16,7 @@ import {
   Segment,
 } from 'semantic-ui-react';
 
-import { useConfig } from '../../client/hooks/settings';
+import { useConfig, useSetting } from '../../client/hooks/settings';
 import {
   MutatationType,
   QueryType,
@@ -39,8 +39,8 @@ import {
   ItemCardActionContentItem,
 } from '../item/index';
 import { EmptyMessage, SortableList } from '../Misc';
-import { OptionField } from '../Settings';
-import { ItemQueueBase } from './';
+import { IsolationLabel, OptionField } from '../Settings';
+import { HandlerLabelGroup, ItemQueueBase } from './';
 import { HandlerSortableItem } from './index';
 
 function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
@@ -51,11 +51,11 @@ function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
     'metadata.only_if_never_fetched': undefined as boolean,
     'metadata.stop_after_first': undefined as boolean,
     'metadata.choose_first_candidate': undefined as boolean,
-    'metadata.disabled': undefined as string[],
-    'metadata.priority': undefined as string[],
     'metadata.attributes': undefined as string,
     'metadata.overwrites': undefined as string,
   });
+
+  const [priority, setPriority] = useSetting<string[]>('metadata.priority', []);
 
   const { data: metadataHandlers } = useQueryType(QueryType.METADATA_INFO);
 
@@ -82,19 +82,13 @@ function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
     }
   }, [metadataHandlers]);
 
-  useEffect(() => {
-    optionChange(
-      'metadata.priority',
-      handlers.map((h) => h.id)
-    );
-  }, [handlers]);
-
   return (
     <Modal dimmer={false} {...props}>
       <Modal.Header>{t`Metadata Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
           <OptionField
+            isolation="server"
             label={t`Amount of metadata tasks allowed to run concurrently`}
             cfg={cfg}
             nskey="metadata.size"
@@ -164,17 +158,19 @@ function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
         </Form>
         <Divider />
         <Container textAlign="center" className="sub-text">
+          <IsolationLabel isolation="user" />
           {t`Drag item to change priority`}
         </Container>
         <List relaxed="very" ordered>
           <SortableList
             element={HandlerSortableItem}
-            onItemsChange={setHandlers}
+            onItemsChange={useCallback((items) => {
+              setPriority(items.map((i) => i.id));
+              setHandlers(items);
+            }, [])}
             onlyOnDragItem
             items={handlers.sort(
-              (a, b) =>
-                cfg['metadata.priority'].indexOf(a.id) -
-                cfg['metadata.priority'].indexOf(b.id)
+              (a, b) => priority.indexOf(a.id) - priority.indexOf(b.id)
             )}
           />
         </List>
@@ -247,8 +243,6 @@ function MetadataItemActionContent({
 export function MetadataQueue() {
   const [addLoading, setAddLoading] = useState(false);
   const [active, setActive] = useState(true);
-
-  const { data: metadataHandlers } = useQueryType(QueryType.METADATA_INFO);
 
   const refetchEvery = 5000;
 
@@ -364,17 +358,7 @@ export function MetadataQueue() {
         )}
       />
       <Header size="tiny" textAlign="center" className="no-margins sub-text">
-        {!metadataHandlers?.data?.length && t`No handlers activated`}
-        {!!metadataHandlers?.data?.length && (
-          <Label.Group>
-            {metadataHandlers?.data?.map?.((h, i) => (
-              <Label size="small" key={h.identifier}>
-                {i + 1}
-                <Label.Detail>{h.identifier}</Label.Detail>
-              </Label>
-            ))}
-          </Label.Group>
-        )}
+        <HandlerLabelGroup type="metadata" />
       </Header>
       {!items?.data?.length && <EmptyMessage className="h-full" />}
       {!!items?.data?.length && (

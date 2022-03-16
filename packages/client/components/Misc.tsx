@@ -35,6 +35,7 @@ import {
 } from '@dnd-kit/core';
 import {
   arrayMove,
+  horizontalListSortingStrategy,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -63,7 +64,7 @@ export function SortableItemItem<T extends { id: string }>({
   item: T;
   children?: React.ReactNode;
   as?: React.ElementType;
-}) {
+} & { [key: string]: any }) {
   const {
     attributes,
     listeners,
@@ -109,12 +110,14 @@ class DragItemPointerSensor extends PointerSensor {
 
 export function SortableList<T extends { id: string }, P extends { item: T }>({
   element: Element,
+  direction = 'vertical',
   items,
   onlyOnDragItem,
   onItemsChange,
 }: {
   element: React.ComponentType<P>;
   items: T[];
+  direction?: 'vertical' | 'horizontal';
   onlyOnDragItem?: boolean;
   onItemsChange: (items: T[]) => void;
 }) {
@@ -141,7 +144,13 @@ export function SortableList<T extends { id: string }, P extends { item: T }>({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}>
-      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={items}
+        strategy={
+          direction === 'vertical'
+            ? verticalListSortingStrategy
+            : horizontalListSortingStrategy
+        }>
         {items.map((i) => (
           <Element key={i.id} item={i} />
         ))}

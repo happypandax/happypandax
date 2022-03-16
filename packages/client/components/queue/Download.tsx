@@ -3,19 +3,21 @@ import { useHoverDirty } from 'react-use';
 import { useRecoilValue } from 'recoil';
 import {
   Card,
-  Checkbox,
+  Container,
+  Divider,
   Form,
   Header,
   Icon,
   Image,
   Label,
+  List,
   Modal,
   Progress,
   Ref,
   Segment,
-  Select,
 } from 'semantic-ui-react';
 
+import { useConfig, useSetting } from '../../client/hooks/settings';
 import {
   MutatationType,
   QueryType,
@@ -24,10 +26,11 @@ import {
 } from '../../client/queries';
 import { CommandState, DrawerTab, LogType, QueueType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { DownloadItem } from '../../misc/types';
+import { DownloadHandler, DownloadItem } from '../../misc/types';
 import { AppState } from '../../state';
-import { EmptyMessage } from '../Misc';
-import { ItemQueueBase } from './index';
+import { EmptyMessage, SortableList } from '../Misc';
+import { IsolationLabel, OptionField } from '../Settings';
+import { HandlerLabelGroup, HandlerSortableItem, ItemQueueBase } from './index';
 
 function DownloadItemCard({
   item,
@@ -101,95 +104,135 @@ function DownloadItemCard({
   );
 }
 
-function DownloadSettings({ trigger }: { trigger: React.ReactNode }) {
+function DownloadSettings(props: React.ComponentProps<typeof Modal>) {
+  const [cfg, setConfig] = useConfig({
+    'download.size': undefined as number,
+    'download.skip_if_downloaded_before': undefined as boolean,
+    'download.skip_if_item_exists': undefined as boolean,
+    'download.delete_failed_downloads': undefined as boolean,
+    'download.import': undefined as boolean,
+    'download.download_cache_dir': undefined as string,
+    'download.download_dir': undefined as string,
+    'download.options': undefined as object,
+  });
+
+  const [priority, setPriority] = useSetting<string[]>('download.priority', []);
+
+  const { data: downloadHandlers } = useQueryType(QueryType.DOWNLOAD_INFO);
+
+  const optionChange = useCallback(
+    function f<T extends typeof cfg, K extends keyof T>(key: K, value: T[K]) {
+      setConfig({ [key]: value });
+    },
+    [setConfig]
+  );
+
+  const [handlers, setHandlers] = useState<
+    { id: string; handler: DownloadHandler; type: string }[]
+  >([]);
+
+  useEffect(() => {
+    if (downloadHandlers?.data) {
+      setHandlers(
+        downloadHandlers.data.map((h) => ({
+          id: h.identifier,
+          handler: h,
+          type: 'download',
+        }))
+      );
+    }
+  }, [downloadHandlers]);
+
   return (
-    <Modal trigger={trigger} dimmer={false}>
+    <Modal dimmer={false} {...props}>
       <Modal.Header>{t`Download Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
-          <Form.Group inline>
-            <label>{t`Display`}</label>
-            <Form.Radio label={t`Card`} value="card" />
-            <Form.Radio label={t`List`} value="list" />
-          </Form.Group>
-
-          <Form.Group inline>
-            <label>{t`Default view`}</label>
-            <Form.Radio label={t`All`} />
-            <Form.Radio label={t`Library`} />
-            <Form.Radio label={t`Inbox`} />
-          </Form.Group>
-
-          <Form.Field
-            control={Select}
-            label={t`Items per page`}
-            placeholder={t`Items per page`}
-            onChange={useCallback((ev, { value }) => {
-              ev.preventDefault();
-              setLimit(parseInt(value, 10));
-            }, [])}
-            // width={4}
+          <OptionField
+            isolation="server"
+            label={t`Amount of download tasks allowed to run concurrently`}
+            cfg={cfg}
+            nskey="download.size"
+            type="number"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default item`}
-            placeholder={t`Default item`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Import item after download`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.import"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default sort`}
-            placeholder={t`Default sort`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Skip import if item already exists in the database`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.skip_if_item_exists"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default sort order`}
-            placeholder={t`Default sort order`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Skip a download URL if it has been successfully downloaded before`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.skip_if_downloaded_before"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field
-            control={Select}
-            label={t`Default filter`}
-            placeholder={t`Default filter`}
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-            }, [])}
-            value={30}
-            defaultValue={30}
-            // width={4}
+          <OptionField
+            label={t`Clean left-over files if downloading fails`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.delete_failed_downloads"
+            type="boolean"
+            optionChange={optionChange}
           />
-
-          <Form.Field>
-            <label>{t`Infinite scroll`}</label>
-            <Checkbox
-              toggle
-              onChange={useCallback((ev, { checked }) => {
-                ev.preventDefault();
-                setInfinite(checked);
-              }, [])}
-            />
-          </Form.Field>
+          <OptionField
+            label={t`Download folder`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.download_dir"
+            type="string"
+            optionChange={optionChange}
+          />
+          <OptionField
+            label={t`Download cache folder`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.download_cache_dir"
+            type="string"
+            optionChange={optionChange}
+          />
+          <OptionField
+            label={t`Overwritten options`}
+            help={t`A mapping of setting:value, where setting is a fully qualified name of a config setting name that should be overwritten only during download.
+            For example: { 'import.move_gallery' : true, 'import.move_dir': 'some/other/path' } will move only downloaded galleries to 'some/other/path' during import`}
+            cfg={cfg}
+            isolation="user"
+            nskey="download.options"
+            type="json"
+            optionChange={optionChange}
+          />
         </Form>
+        <Divider />
+        <Container textAlign="center" className="sub-text">
+          <IsolationLabel isolation="user" />
+          {t`Drag item to change priority`}
+        </Container>
+        <List relaxed="very" ordered>
+          <SortableList
+            element={HandlerSortableItem}
+            onItemsChange={useCallback((items) => {
+              setPriority(items.map((i) => i.id));
+              setHandlers(items);
+            }, [])}
+            onlyOnDragItem
+            items={handlers.sort(
+              (a, b) => priority.indexOf(a.id) - priority.indexOf(b.id)
+            )}
+          />
+        </List>
       </Modal.Content>
     </Modal>
   );
@@ -277,17 +320,7 @@ export function DownloadQueue() {
         onActive={setActive}
       />
       <Header size="tiny" textAlign="center" className="no-margins sub-text">
-        {!downloadHandlers?.data?.length && t`No handlers activated`}
-        {!!downloadHandlers?.data?.length && (
-          <Label.Group>
-            {downloadHandlers?.data?.map?.((h, i) => (
-              <Label size="small" key={h.identifier}>
-                {i + 1}
-                <Label.Detail>{h.identifier}</Label.Detail>
-              </Label>
-            ))}
-          </Label.Group>
-        )}
+        <HandlerLabelGroup type="download" />
       </Header>
       {!!queueItems?.data?.length && (
         <Segment tertiary className="no-margin-top">
@@ -317,7 +350,6 @@ export function DownloadLabel() {
       include_finished: false,
     },
     {
-      enabled: false,
       refetchInterval: interval,
       refetchOnMount: 'always',
     }

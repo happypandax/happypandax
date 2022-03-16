@@ -9,12 +9,13 @@ import {
   MutatationType,
   QueryType,
   useMutationType,
+  useQueryType,
 } from '../../client/queries';
 import { LogType, QueueType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { DownloadHandler, MetadataHandler } from '../../misc/types';
 import { AppState } from '../../state';
-import { ServerLog, SortableItemItem } from '../Misc';
+import { ServerLog, SortableItemItem, SortableList } from '../Misc';
 
 export function ItemQueueBase({
   Settings,
@@ -139,19 +140,115 @@ export function ItemQueueBase({
   );
 }
 
+export const HandlerLabel = forwardRef(function HandlerLabel(
+  {
+    item,
+    ...props
+  }: {
+    item: {
+      id: string;
+      handler: MetadataHandler | DownloadHandler;
+      index: number;
+      type: 'metadata' | 'download';
+    };
+  },
+  ref
+) {
+  const [disabled, setDisabled] = useSetting<string[]>(
+    item?.type === 'metadata' ? 'metadata.disabled' : 'download.disabled',
+    []
+  );
+
+  console.debug(disabled);
+
+  return (
+    <Ref innerRef={ref}>
+      <Label
+        basic
+        color={disabled.includes(item.id) ? 'red' : 'green'}
+        {...props}
+        size="small">
+        <Icon
+          link
+          name="border none"
+          className="sub-text"
+          data-drag-item="true"
+        />
+        {item.index}
+        <Label.Detail>
+          {item.id}
+          <span className="small-margin-left">
+            <Icon
+              onClick={useCallback(() => {
+                const v = disabled.includes(item.id)
+                  ? disabled.filter((i) => i !== item.id)
+                  : [...disabled, item.id];
+                setDisabled(v);
+              }, [disabled])}
+              color={disabled.includes(item.id) ? 'red' : 'green'}
+              link
+              name="circle"
+            />
+          </span>
+        </Label.Detail>
+      </Label>
+    </Ref>
+  );
+});
+
+export function HandlerLabelSortItem(props) {
+  return <SortableItemItem as={HandlerLabel} {...props} />;
+}
+
+export function HandlerLabelGroup({ type }: { type: 'metadata' | 'download' }) {
+  const { data, remove } = useQueryType(
+    type === 'metadata' ? QueryType.METADATA_INFO : QueryType.DOWNLOAD_INFO
+  );
+
+  const [priority, setPriority] = useSetting<string[]>(
+    type === 'metadata' ? 'metadata.priority' : 'download.priority',
+    []
+  );
+
+  const handlers = data?.data ?? [];
+
+  const onChange = useCallback((items) => {
+    setPriority(items.map((i) => i.id));
+    setTimeout(() => {
+      remove();
+    }, 500);
+  }, []);
+
+  return handlers.length ? (
+    <SortableList
+      onItemsChange={onChange}
+      onlyOnDragItem
+      direction="horizontal"
+      element={HandlerLabelSortItem}
+      items={handlers
+        .map((h, i) => ({ id: h.identifier, handler: h, index: i + 1, type }))
+        .sort((a, b) => priority.indexOf(a.id) - priority.indexOf(b.id))}
+    />
+  ) : (
+    <>{t`No handlers activated`}</>
+  );
+}
+
 export const HandlerItem = forwardRef(function HandlerItem(
   {
     item,
-    type,
     ...props
   }: {
-    item: { id: string; handler: MetadataHandler | DownloadHandler };
-    type: 'metadata' | 'download';
+    item: {
+      id: string;
+      handler: MetadataHandler | DownloadHandler;
+      type: 'metadata' | 'download';
+    };
   },
   ref
 ) {
   const [value, setValue] = useSetting<string[]>(
-    type === 'metadata' ? 'metadata.disabled' : 'download.disabled',
+    item?.type === 'metadata' ? 'metadata.disabled' : 'download.disabled',
     []
   );
   const qclient = useQueryClient();
@@ -162,7 +259,12 @@ export const HandlerItem = forwardRef(function HandlerItem(
       <List.Item
         {...props}
         style={{ ...props?.style, display: 'flex', alignItems: 'center' }}>
-        <Icon link name="border none" data-drag-item="true" />
+        <Icon
+          link
+          name="border none"
+          className="sub-text"
+          data-drag-item="true"
+        />
 
         <List.Content>
           <List.Header>
@@ -191,12 +293,14 @@ export const HandlerItem = forwardRef(function HandlerItem(
                     v = [...v, item.id];
                   }
                   setValue(v);
-                  qclient.invalidateQueries(
-                    getQueryTypeKey(QueryType.METADATA_INFO)
-                  );
-                  qclient.invalidateQueries(
-                    getQueryTypeKey(QueryType.DOWNLOAD_INFO)
-                  );
+                  setTimeout(() => {
+                    qclient.invalidateQueries(
+                      getQueryTypeKey(QueryType.METADATA_INFO)
+                    );
+                    qclient.invalidateQueries(
+                      getQueryTypeKey(QueryType.DOWNLOAD_INFO)
+                    );
+                  }, 500);
                 }, [value, disabled])}>
                 {disabled ? t`Enable` : t`Disable`}
               </Label>
