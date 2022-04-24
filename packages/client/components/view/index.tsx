@@ -18,6 +18,7 @@ import { ArrayContext, ArrayContextT } from '../../client/context';
 import t from '../../misc/lang';
 import { getClientHeight } from '../../misc/utility';
 import { AppState } from '../../state';
+import { PlaceholderItemCard } from '../item/index';
 
 export function ViewPagination({
   onPageChange,
@@ -260,6 +261,7 @@ export function PaginatedView({
   loading,
   hrefTemplate,
   infinite,
+  placeholderElement: Placeholder = PlaceholderItemCard,
   onLoadMore: loadMore,
   ...props
 }: {
@@ -270,6 +272,7 @@ export function PaginatedView({
   infinite?: boolean;
   onLoadMore?: () => void;
   loading?: boolean;
+  placeholderElement?: React.ComponentType;
   totalItemCount?: number;
   itemCount?: number;
   itemsPerPage?: number;
@@ -282,7 +285,7 @@ export function PaginatedView({
       ? _.throttle(() => {
           loadMore();
           setCanLoadMore(false);
-        }, 500)
+        }, 1000)
       : undefined,
     [loadMore]
   );
@@ -323,7 +326,11 @@ export function PaginatedView({
   );
 
   useEffect(() => {
-    setCanLoadMore(true);
+    if (itemsPerPage * +(activePage ?? 1) < totalItemCount) {
+      setTimeout(() => {
+        setCanLoadMore(true);
+      }, 500);
+    }
   }, [itemCount, activePage]);
 
   return (

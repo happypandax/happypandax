@@ -614,6 +614,27 @@ export default class ServerService extends Service {
     return data.data as CommandID<string[]>;
   }
 
+  async send_plugin_message(
+    args: { plugin_id?: string; msg: AnyJson },
+    group?: GroupCall
+  ) {
+    const data = await this._call('send_plugin_message', args, group);
+    throw_msg_error(data);
+    return data.data as AnyJson;
+  }
+
+  async submit_login(
+    args: { identifier?: string; credentials: JsonMap; options?: JsonMap },
+    group?: GroupCall
+  ) {
+    const data = await this._call('submit_login', args, group);
+    throw_msg_error(data);
+    return data.data as CommandID<{
+      status: string;
+      logged_in: boolean;
+    }>;
+  }
+
   async page_read_event(args: { item_id: number }, group?: GroupCall) {
     const data = await this._call('page_read_event', args, group);
     throw_msg_error(data);

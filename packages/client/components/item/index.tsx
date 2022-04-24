@@ -23,6 +23,7 @@ import {
   List,
   Loader,
   Modal,
+  Placeholder,
   Popup,
   Ref,
   Segment,
@@ -722,5 +723,43 @@ export const ItemCard = React.forwardRef(
     return el;
   }
 );
+
+export function PlaceholderItemCard({
+  size,
+  fluid,
+  horizontal,
+  centered = true,
+  type = ItemType.Gallery,
+}: {
+  size?: ItemSize;
+  fluid?: boolean;
+  centered?: boolean;
+  type?: ItemType;
+  horizontal?: boolean;
+}) {
+  return (
+    <ItemCard
+      type={type}
+      draggable={false}
+      centered={centered}
+      fluid={fluid}
+      horizontal={horizontal}
+      size={size}
+      disableModal={true}
+      image={useCallback(
+        ({ children }: { children?: React.ReactNode }) => (
+          <ItemCardImage src="/img/default.png">{children}</ItemCardImage>
+        ),
+        []
+      )}>
+      <Placeholder>
+        <Placeholder.Header>
+          <Placeholder.Line />
+        </Placeholder.Header>
+        <Placeholder.Line />
+      </Placeholder>
+    </ItemCard>
+  );
+}
 
 export default {};

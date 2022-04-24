@@ -553,7 +553,6 @@ export default function Page({
     ? libraryargs.page + 1
     : page;
 
-  console.log(infiniteKey, initialPage, libraryargs.page, page, activePage);
 
   const errorLimited = errorLimit || initialErrorLimit;
 

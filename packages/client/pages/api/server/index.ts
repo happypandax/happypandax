@@ -8,34 +8,13 @@ import { handler } from '../../../misc/requests';
 import {
   ITEM_THUMB_STATIC_FOLDER,
   PAGE_STATIC_FOLDER,
-  PIXIE_ENDPOINT,
-  ServiceType,
   THUMB_STATIC_FOLDER,
 } from '../../../services/constants';
+import { getPixie } from '../../../services/pixie';
 
 // THIS IS SPECIFIC TO WHEN THE WEBSERVER IS STARTED BY HPX SERVER
 
 const errTxt = "Momo didn't find anything!";
-
-async function getPixie() {
-  const pixie = global.app.service.get(ServiceType.Pixie);
-  if (!pixie.connected) {
-    let addr = PIXIE_ENDPOINT;
-    if (!addr) {
-      const server = global.app.service.get(ServiceType.Server);
-      const s = server.status();
-      if (s.connected && s.loggedIn) {
-        const props = await server.properties({ keys: ['pixie.connect'] });
-        addr = props.pixie.connect;
-      } else {
-        throw Error('server not connected');
-      }
-    }
-
-    await pixie.connect(addr);
-  }
-  return pixie;
-}
 
 async function imageFromPath(path_type, req, res) {
   const { t, p1, p2, p3, it } = req.query;

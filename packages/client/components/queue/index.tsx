@@ -168,12 +168,7 @@ export const HandlerLabel = forwardRef(function HandlerLabel(
         color={disabled.includes(item.id) ? 'red' : 'green'}
         {...props}
         size="small">
-        <Icon
-          link
-          name="border none"
-          className="sub-text"
-          data-drag-item="true"
-        />
+        <DragItem />
         {item.index}
         <Label.Detail>
           {item.id}
@@ -234,6 +229,18 @@ export function HandlerLabelGroup({ type }: { type: 'metadata' | 'download' }) {
   );
 }
 
+function DragItem() {
+  return (
+    <Icon
+      link
+      name="border none"
+      style={{ cursor: 'move' }}
+      className="sub-text"
+      data-drag-item="true"
+    />
+  );
+}
+
 export const HandlerItem = forwardRef(function HandlerItem(
   {
     item,
@@ -259,12 +266,7 @@ export const HandlerItem = forwardRef(function HandlerItem(
       <List.Item
         {...props}
         style={{ ...props?.style, display: 'flex', alignItems: 'center' }}>
-        <Icon
-          link
-          name="border none"
-          className="sub-text"
-          data-drag-item="true"
-        />
+        <DragItem />
 
         <List.Content>
           <List.Header>

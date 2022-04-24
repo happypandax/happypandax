@@ -209,7 +209,15 @@ export function PluginAccordion(props: React.ComponentProps<typeof Plugin>) {
 }
 
 export function Plugins(props: React.ComponentProps<typeof Segment>) {
-  const { data, isLoading } = useQueryType(QueryType.PLUGINS);
+  const { data, isLoading } = useQueryType(
+    QueryType.PLUGINS,
+    {},
+    {
+      refetchInterval: 5000,
+      keepPreviousData: true,
+      refetchOnMount: 'always',
+    }
+  );
   return (
     <Segment loading={isLoading} {...props} clearing>
       {data?.data

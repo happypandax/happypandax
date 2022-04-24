@@ -1,7 +1,7 @@
 /*******************************
          Site Overrides
 *******************************/
-@font-path: '../../public/font';
+@font-path: '../font';
 
 @color_1: @green;
 @color_2: @orange;

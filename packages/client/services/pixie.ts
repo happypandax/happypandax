@@ -4,7 +4,38 @@ import { Request } from 'zeromq';
 import { Decoder, Encoder } from '@msgpack/msgpack';
 
 import { Service } from './base';
-import { ServiceType } from './constants';
+import { PIXIE_ENDPOINT, ServiceType } from './constants';
+
+export async function getPixie() {
+  const pixie = global.app.service.get(ServiceType.Pixie);
+  if (!pixie.connected) {
+    let addr = PIXIE_ENDPOINT;
+    if (!addr) {
+      const server = global.app.service.get(ServiceType.Server);
+      const s = server.status();
+      if (s.connected && s.loggedIn) {
+        const props = await server.properties({ keys: ['pixie.connect'] });
+        addr = props.pixie.connect;
+      } else {
+        throw Error('server not connected');
+      }
+    }
+
+    await pixie.connect(addr);
+  }
+  return pixie;
+}
+
+export interface PluginInfo {
+  id: string;
+  name: string;
+  shortname: string;
+  author: string;
+  website: string;
+  description: string;
+  version: string;
+  site: string;
+}
 
 export default class PixieService extends Service {
   endpoint: string;
@@ -38,6 +69,20 @@ export default class PixieService extends Service {
       this.#socket.connect(endpoint ?? this.endpoint);
       this.#connected = true;
     }
+  }
+
+  async plugin({ plugin_id }: { plugin_id: string }) {
+    const r = await this.communicate({
+      name: 'plugin_info',
+      id: plugin_id,
+    });
+    return r?.data as {
+      info: PluginInfo;
+      default_site: string;
+      version: string;
+      version_web: string;
+      version_db: string;
+    };
   }
 
   async image({

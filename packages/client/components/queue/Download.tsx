@@ -246,7 +246,6 @@ export function DownloadQueue() {
 
   const ref = useRef<HTMLInputElement>();
 
-  const { data: downloadHandlers } = useQueryType(QueryType.DOWNLOAD_INFO);
 
   const refetchEvery = 5000;
 

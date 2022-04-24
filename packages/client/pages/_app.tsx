@@ -1,4 +1,4 @@
-import '../semantic/dist/semantic.css';
+import '../public/semantic/semantic.css';
 import '../style/global.css';
 import 'animate.css';
 import 'react-virtualized/styles.css';
