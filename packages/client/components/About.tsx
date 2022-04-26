@@ -6,13 +6,18 @@ import {
   Header,
   Icon,
   Label,
+  List,
   Modal,
+  Progress,
   Segment,
   Tab,
   Table,
 } from 'semantic-ui-react';
 
+import { QueryType, useQueryType } from '../client/queries';
 import t from '../misc/lang';
+import { CommandProgress } from '../misc/types';
+import { dateFromTimestamp } from '../misc/utility';
 import { EmptySegment } from './Misc';
 
 function InfoPane() {
@@ -129,6 +134,48 @@ function InfoPane() {
   );
 }
 
+function ActivityPane() {
+  const { data } = useQueryType(QueryType.COMMAND_PROGRESS);
+
+  return (
+    <Segment basic className="max-400-h">
+      {!data?.data?.length && <EmptySegment />}
+      {!!data?.data?.length && (
+        <List size="small">
+          {data.data.map((p: CommandProgress) => (
+            <List.Item key={p.id}>
+              <List.Content>
+                <List.Header>{p.title}</List.Header>
+                <Progress
+                  precision={2}
+                  active
+                  indicating
+                  progress="percent"
+                  percent={p.max ? undefined : 99}
+                  total={p.max ? p.max : undefined}
+                  value={p.max ? p.value : undefined}
+                  autoSuccess={p.max ? true : false}>
+                  {p.subtitle}
+                </Progress>
+                <List.Description className="sub-text">
+                  <List divided horizontal>
+                    <List.Item>
+                      {dateFromTimestamp(p.timestamp, { relative: true })}
+                    </List.Item>
+                    <List.Item>
+                      <List.Content>{p.text}</List.Content>
+                    </List.Item>
+                  </List>
+                </List.Description>
+              </List.Content>
+            </List.Item>
+          ))}
+        </List>
+      )}
+    </Segment>
+  );
+}
+
 function StatsPane() {
   return (
     <Segment basic>
@@ -166,7 +213,7 @@ export function AboutTab() {
             },
             render: () => (
               <Tab.Pane basic className="no-padding-segment">
-                <StatsPane />
+                <ActivityPane />
               </Tab.Pane>
             ),
           },

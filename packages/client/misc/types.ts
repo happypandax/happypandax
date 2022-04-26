@@ -227,6 +227,7 @@ export type SearchItem = {
 export type CommandIDKey = string;
 
 export interface CommandProgress {
+  id: CommandIDKey;
   title: string;
   value: number;
   subtitle: string;

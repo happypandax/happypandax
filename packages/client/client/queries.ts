@@ -49,6 +49,7 @@ export enum QueryType {
   PLUGIN,
   PLUGINS,
   PLUGIN_UPDATE,
+  COMMAND_PROGRESS,
 }
 
 export enum MutatationType {
@@ -364,6 +365,11 @@ export function useQueryType<
       break;
     }
 
+    case QueryType.COMMAND_PROGRESS: {
+      endpoint = '/api/command_progress';
+      break;
+    }
+
     default:
       throw Error('Invalid query type');
   }
@@ -541,6 +547,12 @@ interface FetchPlugins<T = undefined> extends QueryAction<T> {
   variables: Parameters<ServerService['list_plugins']>[0];
 }
 
+interface FetchCommandProgress<T = undefined> extends QueryAction<T> {
+  type: QueryType.COMMAND_PROGRESS;
+  dataType: Unwrap<ReturnType<ServerService['command_progress']>>;
+  variables: Parameters<ServerService['command_progress']>[0];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -561,6 +573,7 @@ type QueryActions<T = undefined> =
   | FetchPlugin<T>
   | FetchPluginUpdate<T>
   | FetchPlugins<T>
+  | FetchCommandProgress<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================

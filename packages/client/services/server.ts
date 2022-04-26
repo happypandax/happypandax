@@ -559,7 +559,9 @@ export default class ServerService extends Service {
   async command_progress(args: { command_ids: string[] }, group?: GroupCall) {
     const data = await this._call('get_command_progress', args, group);
     throw_msg_error(data);
-    return data.data as Record<CommandIDKey, CommandProgress>;
+    return data.data as
+      | Record<CommandIDKey, CommandProgress>
+      | CommandProgress[];
   }
 
   async list_plugins(args: { state?: PluginState }, group?: GroupCall) {
