@@ -200,6 +200,7 @@ export function OptionField<
 
 function GeneralPane() {
   const [blur, setBlur] = useRecoilState(AppState.blur);
+  const [theme, setTheme] = useRecoilState(AppState.theme);
 
   const [cfg, setConfig] = useConfig({
     'gallery.auto_rate_on_favorite': undefined as boolean,
@@ -226,7 +227,7 @@ function GeneralPane() {
   return (
     <Segment basic>
       <Form>
-        <Header size="small" dividing>{t`View`}</Header>
+        <Header size="small" dividing>{t`Application`}</Header>
         <Segment>
           <Form.Field>
             <Checkbox
@@ -243,6 +244,27 @@ function GeneralPane() {
               }, [])}
             />
             <div className="muted">{t`Blurs gallery and and collection covers across the application`}</div>
+          </Form.Field>
+          <Form.Field>
+            <label>
+              <IsolationLabel isolation="client" /> {t`Select theme`}
+            </label>
+            <Select
+              options={[
+                { key: 'momo-l', value: 'momo-l', text: 'Momo (Light)' },
+                {
+                  key: 'momo-d',
+                  value: 'momo-d',
+                  text: 'Momo (Dark)',
+                },
+              ]}
+              value={theme}
+              placeholder={t`Select theme`}
+              onChange={useCallback((ev, { value }) => {
+                ev.preventDefault();
+                if (value) setTheme(value as any);
+              }, [])}
+            />
           </Form.Field>
           <OptionField
             isolation="client"

@@ -328,3 +328,5 @@ export interface PluginData {
   site: string;
   update_version: Version;
 }
+
+export type ThemeValue = 'momo-d' | 'momo-l';

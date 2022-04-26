@@ -6,13 +6,14 @@ import {
 import React, { useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 
+import { ThemeValue } from '../misc/types';
 import { AppState } from '../state';
 
 export default function Theme({
   name,
   children,
 }: {
-  name?: 'light' | 'dark';
+  name?: ThemeValue;
   children: React.ReactNode | React.ReactNode[];
 }) {
   const theme = useRecoilValue(AppState.theme);
@@ -27,7 +28,7 @@ export default function Theme({
 
     if (themeName) {
       followSystemColorScheme(false);
-      if (themeName === 'dark') {
+      if (themeName === 'momo-d') {
         enableDarkMode(darkProps);
       } else {
         disableDarkMode();

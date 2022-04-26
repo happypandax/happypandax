@@ -1,5 +1,5 @@
 import { DrawerTab } from '../misc/enums';
-import { NotificationData } from '../misc/types';
+import { NotificationData, ThemeValue } from '../misc/types';
 import StateBlock, { defineAtom } from './_base';
 import { localStorageEffect } from './_statehelpers';
 
@@ -11,7 +11,8 @@ export default class _AppState extends StateBlock {
   });
 
   static theme = defineAtom({
-    default: 'light' as 'light' | 'dark',
+    default: 'momo-l' as ThemeValue,
+    effects: [localStorageEffect()],
   });
 
   static sameMachine = defineAtom({ default: false });
