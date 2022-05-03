@@ -95,6 +95,8 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
                 return (
                   <Label
                     key={ns + tag}
+                    color="red"
+                    basic
                     as="a"
                     className="no-bottom-margin"
                     onClick={(ev) => {

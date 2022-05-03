@@ -14,7 +14,7 @@ import {
   ServerItemWithName,
   ServerItemWithUrls,
   ServerMetaTags,
-  ServerTag,
+  ServerNamespaceTag,
 } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { AppState } from '../../state';
@@ -510,6 +510,20 @@ export function UrlList({
   );
 }
 
+export function TagLabel({
+  data,
+}: {
+  data: PartialExcept<ServerNamespaceTag, 'id'>;
+}) {
+  return (
+    <Label
+      basic={data?.metatags?.favorite}
+      color={data?.metatags?.favorite ? 'red' : undefined}>
+      {data?.tag?.name}
+    </Label>
+  );
+}
+
 export function TagsTable({
   data: initialData,
 }: {
@@ -519,16 +533,16 @@ export function TagsTable({
 
   const { data } = useUpdateDataState(initialData);
 
-  const freeTags: ServerTag[] = [];
-  const tags = {} as Record<string, ServerTag[]>;
+  const freeTags: ServerNamespaceTag[] = [];
+  const tags = {} as Record<string, ServerNamespaceTag[]>;
 
   data?.tags?.forEach?.((t) => {
     // TODO: query this value from server
     if (t?.namespace?.name === properties.special_namespace) {
-      freeTags.push(t.tag);
+      freeTags.push(t);
     } else {
       const l = tags[t?.namespace?.name] ?? [];
-      tags[t?.namespace?.name] = [...l, t.tag];
+      tags[t?.namespace?.name] = [...l, t];
     }
   });
 
@@ -544,9 +558,9 @@ export function TagsTable({
           <Table.Row>
             <Table.Cell colspan="2">
               {freeTags
-                .sort((a, b) => a?.name?.localeCompare?.(b?.name))
+                .sort((a, b) => a?.tag.name?.localeCompare?.(b?.tag.name))
                 .map((x) => (
-                  <Label key={x?.id}>{x?.name}</Label>
+                  <TagLabel key={x?.id} data={x} />
                 ))}
             </Table.Cell>
           </Table.Row>
@@ -561,9 +575,9 @@ export function TagsTable({
               <Table.Cell>
                 <Label.Group>
                   {t
-                    .sort((a, b) => a?.name?.localeCompare?.(b?.name))
+                    .sort((a, b) => a?.tag.name?.localeCompare?.(b?.tag.name))
                     .map((x) => (
-                      <Label key={x?.id}>{x?.name}</Label>
+                      <TagLabel key={x?.id} data={x} />
                     ))}
                 </Label.Group>
               </Table.Cell>

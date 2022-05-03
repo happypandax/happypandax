@@ -65,6 +65,7 @@ export default function GalleryDataTable({
       'timestamp',
       'pub_date',
       'tags.namespace.name',
+      'tags.metatags.favorite',
       'tags.tag.name',
       'urls.name',
       'times_read',

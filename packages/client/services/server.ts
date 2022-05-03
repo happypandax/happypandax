@@ -300,6 +300,19 @@ export default class ServerService extends Service {
     return data.data as null | ServerGallery;
   }
 
+  async open_gallery(
+    args: {
+      item_id: number;
+      item_type: ItemType;
+      viewer_args?: string;
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('open_gallery', args, group);
+    throw_msg_error(data);
+    return data.data as boolean;
+  }
+
   async pages(
     args: {
       gallery_id: number;

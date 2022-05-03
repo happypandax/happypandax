@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
 import { ItemSize } from '../../misc/types';
+import { PlaceholderItemCard } from '../item/index';
 import { PaginatedView, ViewAutoSizer, ViewBase } from './';
 import styles from './ListView.module.css';
 
@@ -16,6 +17,8 @@ interface ListViewProps<T> {
   items: T[];
   onItemKey: (T) => any;
   itemRender: ItemRender<T>;
+  loading?: boolean;
+  itemsPerPage?: number;
   size?: ItemSize;
   dynamicRowHeight?: boolean;
 }
@@ -28,6 +31,8 @@ function ListViewList<T>({
   size,
   itemRender: ItemRender,
   isScrolling,
+  loading,
+  itemsPerPage,
   onScroll,
   scrollTop,
   autoHeight,
@@ -47,7 +52,9 @@ function ListViewList<T>({
   const [width, setWidth] = useState(initialWidth);
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
-  const rowCount = Math.ceil((items.length ?? 0) / itemsPerRow);
+  const rowCount = Math.ceil(
+    ((items?.length ?? 0) + (loading ? itemsPerPage : 0)) / itemsPerRow
+  );
 
   const resize = useCallback(() => {
     if (itemRef.current) {
@@ -103,9 +110,24 @@ function ListViewList<T>({
         ({ index, key, style }) => {
           const cols = [];
           const fromIndex = index * itemsPerRow;
-          const toIndex = Math.min(fromIndex + itemsPerRow, items.length);
+          const toIndex = fromIndex + itemsPerRow;
 
           for (let i = fromIndex; i < toIndex; i++) {
+            if (i >= items.length) {
+              if (loading) {
+                cols.push(
+                  <div
+                    ref={itemRef}
+                    key={`loading-${i}`}
+                    className={styles.item}
+                    style={{ flexGrow: 1 }}>
+                    <PlaceholderItemCard horizontal fluid size={size} />
+                  </div>
+                );
+              }
+              continue;
+            }
+
             cols.push(
               <div
                 ref={itemRef}
@@ -155,6 +177,8 @@ export default function ListView<T>({
           items={items}
           size={size}
           itemRender={itemRender}
+          loading={props.loading}
+          itemsPerPage={props.itemsPerPage}
           dynamicRowHeight={dynamicRowHeight}
           disableWindowScroll={disableWindowScroll}
           onItemKey={onItemKey}

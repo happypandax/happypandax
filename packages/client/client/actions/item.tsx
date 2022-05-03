@@ -3,9 +3,9 @@ import { AxiosResponse } from 'axios';
 import { ItemType } from '../../misc/enums';
 import { ServerItem, ServerItemWithMetatags } from '../../misc/types';
 import { update } from '../../misc/utility';
+import type ServerService from '../../services/server';
 import { MutatationType, Query } from '../queries';
 
-import type ServerService from '../../services/server';
 export class ItemActions {
   static async updateItem<T extends Partial<ServerItem>>(
     item_id: number,
@@ -55,6 +55,7 @@ export class ItemActions {
       ).catch(reject);
     });
   }
+
   static async updateMetatags<
     T extends RecursivePartial<ServerItemWithMetatags>
   >(
@@ -104,5 +105,8 @@ export class ItemActions {
       }).catch(reject);
     });
   }
+
   static updateFilters(filters, type: ItemType, item_ids: number[]) {}
+
+  static openGallery() {}
 }

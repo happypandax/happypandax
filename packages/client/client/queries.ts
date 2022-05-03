@@ -61,6 +61,7 @@ export enum MutatationType {
   START_QUEUE,
   CLEAR_QUEUE,
   ADD_ITEM_TO_QUEUE,
+  OPEN_GALLERY,
   REMOVE_ITEM_FROM_QUEUE,
   ADD_ITEMS_TO_METADATA_QUEUE,
   ADD_URLS_TO_DOWNLOAD_QUEUE,
@@ -682,6 +683,12 @@ interface UpdatePlugin<T = undefined> extends MutationAction<T> {
   variables: Parameters<ServerService['update_plugin']>[0];
 }
 
+interface OpenGallery<T = undefined> extends MutationAction<T> {
+  type: MutatationType.OPEN_GALLERY;
+  dataType: Unwrap<ReturnType<ServerService['open_gallery']>>;
+  variables: Parameters<ServerService['open_gallery']>[0];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
@@ -698,6 +705,7 @@ type MutationActions<T = undefined> =
   | RemovePlugin<T>
   | DisablePlugin<T>
   | InstallPlugin<T>
+  | OpenGallery<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================

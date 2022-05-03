@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
 import { ItemSize } from '../../misc/types';
+import { PlaceholderItemCard } from '../item/index';
 import styles from './CardView.module.css';
 import { PaginatedView, ViewAutoSizer, ViewBase } from './index';
 
@@ -12,6 +13,8 @@ interface CardViewProps<T> {
   items: T[];
   onItemKey: (T) => any;
   itemRender: ItemRender<T>;
+  loading?: boolean;
+  itemsPerPage?: number;
   size?: ItemSize;
   dynamicRowHeight?: boolean;
 }
@@ -22,6 +25,8 @@ function CardViewGrid<T>({
   items,
   dynamicRowHeight,
   itemRender: ItemRender,
+  loading,
+  itemsPerPage,
   isScrolling,
   onScroll,
   scrollTop,
@@ -43,7 +48,9 @@ function CardViewGrid<T>({
   const [dims, setDims] = useState(false);
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
-  const rowCount = Math.ceil((items?.length ?? 0) / itemsPerRow);
+  const rowCount = Math.ceil(
+    ((items?.length ?? 0) + (loading ? itemsPerPage : 0)) / itemsPerRow
+  );
 
   const resize = useCallback(() => {
     if (itemRef.current) {
@@ -99,9 +106,23 @@ function CardViewGrid<T>({
         ({ index, key, style }) => {
           const cols = [];
           const fromIndex = index * itemsPerRow;
-          const toIndex = Math.min(fromIndex + itemsPerRow, items.length);
+          const toIndex = fromIndex + itemsPerRow;
 
           for (let i = fromIndex; i < toIndex; i++) {
+            if (i >= items.length) {
+              if (loading) {
+                cols.push(
+                  <div
+                    ref={itemRef}
+                    key={`loading-${i}`}
+                    className={styles.item}>
+                    <PlaceholderItemCard size={size} />
+                  </div>
+                );
+              }
+              continue;
+            }
+
             cols.push(
               <div
                 ref={itemRef}
@@ -120,7 +141,7 @@ function CardViewGrid<T>({
             </div>
           );
         },
-        [items, itemsPerRow, ItemRender]
+        [items, itemsPerRow, ItemRender, loading, itemsPerPage]
       )}
     />
   );
@@ -146,6 +167,8 @@ export default function CardView<T>({
         <ViewAutoSizer
           items={items}
           size={size}
+          loading={props.loading}
+          itemsPerPage={props.itemsPerPage}
           itemRender={itemRender}
           dynamicRowHeight={dynamicRowHeight}
           onItemKey={onItemKey}

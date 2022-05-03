@@ -348,12 +348,12 @@ function LibrarySettings({
             />
           </Form.Group>
 
-          <Form.Group inline>
+          {/* <Form.Group inline>
             <label>{t`Default view`}</label>
             <Form.Radio label={t`All`} />
             <Form.Radio label={t`Library`} />
             <Form.Radio label={t`Inbox`} />
-          </Form.Group>
+          </Form.Group> */}
 
           <Form.Field
             control={Select}
@@ -368,7 +368,7 @@ function LibrarySettings({
             // width={4}
           />
 
-          <Form.Field
+          {/* <Form.Field
             control={Select}
             label={t`Default item`}
             placeholder={t`Default item`}
@@ -379,9 +379,9 @@ function LibrarySettings({
             defaultValue={30}
             options={itemsPerPage}
             // width={4}
-          />
+          /> */}
 
-          <Form.Field
+          {/* <Form.Field
             control={Select}
             label={t`Default sort`}
             placeholder={t`Default sort`}
@@ -418,7 +418,7 @@ function LibrarySettings({
             defaultValue={30}
             options={itemsPerPage}
             // width={4}
-          />
+          /> */}
 
           <Form.Field>
             <label>{t`Collapse galleries in series`}</label>
@@ -552,7 +552,6 @@ export default function Page({
     : libraryargs.page !== undefined
     ? libraryargs.page + 1
     : page;
-
 
   const errorLimited = errorLimit || initialErrorLimit;
 

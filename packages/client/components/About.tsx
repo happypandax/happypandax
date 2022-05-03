@@ -141,7 +141,7 @@ function ActivityPane() {
     <Segment basic className="max-400-h">
       {!data?.data?.length && <EmptySegment />}
       {!!data?.data?.length && (
-        <List size="small">
+        <List size="mini">
           {data.data.map((p: CommandProgress) => (
             <List.Item key={p.id}>
               <List.Content>
@@ -150,6 +150,7 @@ function ActivityPane() {
                   precision={2}
                   active
                   indicating
+                  size="tiny"
                   progress="percent"
                   percent={p.max ? undefined : 99}
                   total={p.max ? p.max : undefined}
@@ -158,7 +159,7 @@ function ActivityPane() {
                   {p.subtitle}
                 </Progress>
                 <List.Description className="sub-text">
-                  <List divided horizontal>
+                  <List divided horizontal size="mini">
                     <List.Item>
                       {dateFromTimestamp(p.timestamp, { relative: true })}
                     </List.Item>
