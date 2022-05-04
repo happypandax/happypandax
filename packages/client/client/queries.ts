@@ -6,6 +6,7 @@ import axios, {
 } from 'axios';
 import _ from 'lodash';
 import {
+  FetchQueryOptions,
   InitialDataFunction,
   MutationObserver,
   MutationObserverOptions,
@@ -730,33 +731,48 @@ export class Query {
       T,
       { type: K }
     >['dataType']
-  >(action: K, variables?: V, config?: Parameters<AxiosInstance['get']>[1]) {
+  >(
+    action: K,
+    variables?: V,
+    options?: FetchQueryOptions<AxiosResponse<R, any>>,
+    config?: Parameters<AxiosInstance['get']>[1]
+  ) {
     const key = [action.toString(), variables];
 
     switch (action) {
       case QueryType.ITEM: {
-        return queryClient.fetchQuery(key, () =>
-          axios.get<R>(urlstring('/api/item', variables as any))
+        return queryClient.fetchQuery(
+          key,
+          () => axios.get<R>(urlstring('/api/item', variables as any)),
+          options
         );
       }
       case QueryType.PROFILE: {
-        return queryClient.fetchQuery(key, () =>
-          axios.get<R>(urlstring('/api/profile', variables as any))
+        return queryClient.fetchQuery(
+          key,
+          () => axios.get<R>(urlstring('/api/profile', variables as any)),
+          options
         );
       }
       case QueryType.PAGES: {
-        return queryClient.fetchQuery(key, () =>
-          axios.get<R>(urlstring('/api/pages', variables as any))
+        return queryClient.fetchQuery(
+          key,
+          () => axios.get<R>(urlstring('/api/pages', variables as any)),
+          options
         );
       }
       case QueryType.SEARCH_LABELS: {
-        return queryClient.fetchQuery(key, () =>
-          axios.get<R>(urlstring('/api/search_labels', variables as any))
+        return queryClient.fetchQuery(
+          key,
+          () => axios.get<R>(urlstring('/api/search_labels', variables as any)),
+          options
         );
       }
       case QueryType.SEARCH_ITEMS: {
-        return queryClient.fetchQuery(key, () =>
-          axios.get<R>(urlstring('/api/search_items', variables as any))
+        return queryClient.fetchQuery(
+          key,
+          () => axios.get<R>(urlstring('/api/search_items', variables as any)),
+          options
         );
       }
 

@@ -345,6 +345,7 @@ export function PaginatedView({
               const pixelsLeft = height - pixelsPassed - getClientHeight();
               if (
                 infinite &&
+                !loading &&
                 itemCount &&
                 itemCount * +activePage < totalItemCount &&
                 onLoadMore &&
@@ -353,7 +354,7 @@ export function PaginatedView({
                 onLoadMore();
               }
             },
-            [infinite, onLoadMore]
+            [infinite, onLoadMore, loading]
           )}>
           {children}
         </Visibility>

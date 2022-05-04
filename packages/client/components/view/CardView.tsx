@@ -105,35 +105,37 @@ function CardViewGrid<T>({
       rowRenderer={useCallback(
         ({ index, key, style }) => {
           const cols = [];
-          const fromIndex = index * itemsPerRow;
-          const toIndex = fromIndex + itemsPerRow;
+          if (items?.length) {
+            const fromIndex = index * itemsPerRow;
+            const toIndex = fromIndex + itemsPerRow;
 
-          for (let i = fromIndex; i < toIndex; i++) {
-            if (i >= items.length) {
-              if (loading) {
-                cols.push(
-                  <div
-                    ref={itemRef}
-                    key={`loading-${i}`}
-                    className={styles.item}>
-                    <PlaceholderItemCard size={size} />
-                  </div>
-                );
+            for (let i = fromIndex; i < toIndex; i++) {
+              if (i >= items.length) {
+                if (loading) {
+                  cols.push(
+                    <div
+                      ref={itemRef}
+                      key={`loading-${i}`}
+                      className={styles.item}>
+                      <PlaceholderItemCard size={size} />
+                    </div>
+                  );
+                }
+                continue;
               }
-              continue;
+
+              cols.push(
+                <div
+                  ref={itemRef}
+                  key={onItemKey(items[i])}
+                  className={styles.item}>
+                  <ItemRender data={items[i]} size={size} />
+                </div>
+              );
             }
 
-            cols.push(
-              <div
-                ref={itemRef}
-                key={onItemKey(items[i])}
-                className={styles.item}>
-                <ItemRender data={items[i]} size={size} />
-              </div>
-            );
+            setDims(true);
           }
-
-          setDims(true);
 
           return (
             <div className={styles.row} key={key} style={style}>

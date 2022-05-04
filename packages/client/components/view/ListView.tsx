@@ -109,37 +109,40 @@ function ListViewList<T>({
       rowRenderer={useCallback(
         ({ index, key, style }) => {
           const cols = [];
-          const fromIndex = index * itemsPerRow;
-          const toIndex = fromIndex + itemsPerRow;
 
-          for (let i = fromIndex; i < toIndex; i++) {
-            if (i >= items.length) {
-              if (loading) {
-                cols.push(
-                  <div
-                    ref={itemRef}
-                    key={`loading-${i}`}
-                    className={styles.item}
-                    style={{ flexGrow: 1 }}>
-                    <PlaceholderItemCard horizontal fluid size={size} />
-                  </div>
-                );
+          if (items?.length) {
+            const fromIndex = index * itemsPerRow;
+            const toIndex = fromIndex + itemsPerRow;
+
+            for (let i = fromIndex; i < toIndex; i++) {
+              if (i >= items.length) {
+                if (loading) {
+                  cols.push(
+                    <div
+                      ref={itemRef}
+                      key={`loading-${i}`}
+                      className={styles.item}
+                      style={{ flexGrow: 1 }}>
+                      <PlaceholderItemCard horizontal fluid size={size} />
+                    </div>
+                  );
+                }
+                continue;
               }
-              continue;
+
+              cols.push(
+                <div
+                  ref={itemRef}
+                  key={onItemKey(items[i])}
+                  className={styles.item}
+                  style={{ flexGrow: 1 }}>
+                  <ItemRender data={items[i]} horizontal size={size} fluid />
+                </div>
+              );
             }
 
-            cols.push(
-              <div
-                ref={itemRef}
-                key={onItemKey(items[i])}
-                className={styles.item}
-                style={{ flexGrow: 1 }}>
-                <ItemRender data={items[i]} horizontal size={size} fluid />
-              </div>
-            );
+            setDims(true);
           }
-
-          setDims(true);
 
           return (
             <div className={styles.row} key={key} style={style}>

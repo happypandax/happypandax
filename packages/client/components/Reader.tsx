@@ -168,11 +168,13 @@ function CanvasImage({
   stretchFit = false,
   direction = ReadingDirection.TopToBottom,
   wheelZoom,
+  onError,
   focused,
 }: {
   href: string;
   fit?: ItemFit;
   stretchFit?: boolean;
+  onError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   wheelZoom?: boolean;
   direction?: ReadingDirection;
   focused?: boolean;
@@ -559,6 +561,8 @@ function CanvasImage({
         </div>
       )}
       <img
+        alt="page"
+        onError={onError}
         draggable="false"
         onLoad={useCallback(
           (e) => {
@@ -1155,6 +1159,12 @@ export default function Reader({
   });
   const fetchingImagesRef = useRef<number[]>();
 
+  // keep track of image refetch retries
+
+  const maxRetries = 3;
+
+  const retryImageRef = useRef<{ [k: number]: number }>({});
+
   // initial props
 
   useEffect(() => {
@@ -1344,13 +1354,7 @@ export default function Reader({
     }
   }, [windowSize, pageNumber, pages, pageWindow]);
 
-  // fetch missing images for windowed pages
-
-  useEffect(() => {
-    if (!fetchingImagesRef.current) {
-      fetchingImagesRef.current = [];
-    }
-
+  const fetchImages = useCallback(() => {
     // only if not already fetching
     if (
       pageWindow.length &&
@@ -1364,7 +1368,17 @@ export default function Reader({
         .map((i) => pages[i])
         .filter((p) => !p?.profile?.data)
         .forEach((p) => {
+          if (retryImageRef.current[p.id] === undefined) {
+            retryImageRef.current[p.id] = -1;
+          }
+
+          // if max retries reached, do nothing
+          if (retryImageRef.current[p.id] >= maxRetries) {
+            return;
+          }
+
           if (!fetchingImagesRef.current.includes(p.id)) {
+            retryImageRef.current[p.id]++;
             fetchingImagesRef.current.push(p.id);
             fetch_ids.push(p.id);
           }
@@ -1380,13 +1394,19 @@ export default function Reader({
           size = scaling === 0 ? getOptimalImageSize() : scaling;
         }
 
-        Query.get(QueryType.PROFILE, {
-          item_type: ItemType.Page,
-          item_ids: fetch_ids,
-          profile_options: {
-            size,
+        Query.get(
+          QueryType.PROFILE,
+          {
+            item_type: ItemType.Page,
+            item_ids: fetch_ids,
+            profile_options: {
+              size,
+            },
           },
-        }).then((r) => {
+          {
+            cacheTime: 1000,
+          }
+        ).then((r) => {
           const spec = {};
 
           Object.entries(r.data).forEach(([k, v]) => {
@@ -1415,6 +1435,34 @@ export default function Reader({
       }
     }
   }, [pageWindow, pages, scaling]);
+
+  const removePageImage = useCallback(
+    (pageId: number) => {
+      // if max retries reached, do nothing
+      if (
+        retryImageRef.current[pageId] &&
+        retryImageRef.current[pageId] >= maxRetries
+      ) {
+        return;
+      }
+
+      const pageIndex = pages.findIndex((p) => p.id === pageId);
+      setPages(
+        update(pages, { [pageIndex]: { profile: { $set: undefined } } })
+      );
+    },
+    [pages]
+  );
+
+  // fetch missing images for windowed pages
+
+  useEffect(() => {
+    if (!fetchingImagesRef.current) {
+      fetchingImagesRef.current = [];
+    }
+
+    fetchImages();
+  }, [fetchImages]);
 
   const onFocusChild = useCallback(
     (child) => {
@@ -1484,6 +1532,7 @@ export default function Reader({
             href={pages[i]?.profile?.data}
             fit={fit}
             stretchFit={stretchFit}
+            onError={removePageImage.bind(null, pages[i].id)}
             direction={direction}
             wheelZoom={wheelZoom}
             focused={idx === pageFocus}
