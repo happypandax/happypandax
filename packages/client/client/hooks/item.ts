@@ -7,6 +7,7 @@ import { ServerItem, ServerItemWithProfile } from '../../misc/types';
 import { update } from '../../misc/utility';
 import { DataState } from '../../state';
 import { DataContextT, useDataContext } from '../context';
+import { useSetting } from './settings';
 
 const defaultImage = '/img/default.png';
 const errorImage = '/img/error-image.png';
@@ -94,4 +95,38 @@ export function useUpdateDataState<T extends Partial<ServerItem>>(
     updateData: ctx.key ? _.partial(update, data) : undefined,
     context: ctx,
   };
+}
+
+export interface RecentItem {
+  id: number;
+  type: ItemType;
+}
+
+export function useRecentViewedItem() {
+  const [recents] = useSetting<RecentItem[]>('user.recently_viewed', [], {
+    cacheTime: 0,
+  });
+
+  return recents;
+}
+
+export function useUpdateRecentlyViewedItem(id: number, type: ItemType) {
+  const [recents, setRecents] = useSetting<RecentItem[] | false>(
+    'user.recently_viewed',
+    false
+  );
+
+  useEffect(() => {
+    if (id && type && recents) {
+      // remove if exists
+      const newRecents = [
+        { id, type },
+        ...recents.filter((r) => !(r.id === id && r.type === type)),
+      ];
+
+      const count = 20;
+
+      setRecents(newRecents.slice(0, count));
+    }
+  }, [id, type, typeof recents === 'boolean']);
 }

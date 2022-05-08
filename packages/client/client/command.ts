@@ -8,7 +8,7 @@ import ServerService from '../services/server';
 
 type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;
 
-type CommandIDs<T> = CommandID<T> | string[];
+type CommandIDs<T> = CommandID<T> | CommandID<T>[] | string[];
 
 interface CommandOptions<T> {
   track?: boolean;
@@ -237,10 +237,12 @@ export class Command<T = unknown> {
 
 export function useCommand<T = unknown>(
   command_ids: CommandIDs<T>,
-  options: CommandOptions<T> & {
+  options?: CommandOptions<T> & {
     stopOnUnmount?: boolean;
     stopOnUpdate?: boolean;
-  }
+  },
+  callback?: () => void,
+  deps: React.DependencyList = []
 ) {
   const optionsRef = useRef<{
     stopOnUnmount?: boolean;
@@ -274,16 +276,26 @@ export function useCommand<T = unknown>(
       }
 
       let c;
-      if (command_ids) {
+      if (
+        (Array.isArray(command_ids) && command_ids.length) ||
+        (!Array.isArray(command_ids) && command_ids)
+      ) {
         c = new Command(command_ids, options);
       } else {
         c = undefined;
       }
+
       cmdRef.current = c;
       setCmd(c);
     },
-    typeof command_ids === 'string' ? [command_ids] : (command_ids as string[])
+    !Array.isArray(command_ids) ? [command_ids] : [...(command_ids as string[])]
   );
+
+  useEffect(() => {
+    if (cmd && callback) {
+      cmd.setCallback(callback);
+    }
+  }, [cmd, ...deps]);
 
   return cmd;
 }

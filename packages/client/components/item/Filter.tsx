@@ -1,7 +1,18 @@
 import classNames from 'classnames';
 import Link from 'next/link';
-import { Card, Checkbox, Grid, Label, List, Segment } from 'semantic-ui-react';
+import { useCallback, useState } from 'react';
+import {
+  Card,
+  Checkbox,
+  Grid,
+  Icon,
+  Label,
+  List,
+  Segment,
+} from 'semantic-ui-react';
 
+import { useCommand } from '../../client/command';
+import { MutatationType, useMutationType } from '../../client/queries';
 import t from '../../misc/lang';
 import { FieldPath, ServerFilter } from '../../misc/types';
 import { urlstring } from '../../misc/utility';
@@ -24,6 +35,19 @@ export default function FilterCard({
   data,
   ...props
 }: { data: FilterCardData } & React.ComponentProps<typeof Card>) {
+  const [updating, setUpdating] = useState(false);
+
+  const { mutate, data: filterUpdateData } = useMutationType(
+    MutatationType.UPDATE_FILTERS,
+    {
+      onMutate: () => setUpdating(true),
+    }
+  );
+
+  useCommand(filterUpdateData ? filterUpdateData.data : undefined, {}, () => {
+    setUpdating(false);
+  });
+
   return (
     <Card
       color="black"
@@ -43,7 +67,11 @@ export default function FilterCard({
             size="small"
             className="right"
             empty
-            icon="refresh"
+            color={updating ? 'orange' : undefined}
+            icon={<Icon name="refresh" loading={updating} />}
+            onClick={useCallback(() => {
+              if (data) mutate({ item_ids: [data?.id] });
+            }, [data])}
             title={t`Update`}
             as="a"
           />

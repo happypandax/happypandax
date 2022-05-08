@@ -2,6 +2,7 @@ import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import { useCallback, useMemo, useState } from 'react';
 import { Container, Grid, Icon, Label, Segment } from 'semantic-ui-react';
 
+import { useUpdateRecentlyViewedItem } from '../../../../client/hooks/item';
 import { QueryType, useQueryType } from '../../../../client/queries';
 import CollectionCard, {
   CollectionCardData,
@@ -136,6 +137,8 @@ export async function getServerSideProps(
 export default function Page(props: PageProps) {
   const display = 'card';
   const pagesLimit = 50;
+
+  useUpdateRecentlyViewedItem(props.item?.id, ItemType.Gallery);
 
   const [page, setPage] = useState(1);
 

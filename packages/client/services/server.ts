@@ -387,6 +387,17 @@ export default class ServerService extends Service {
     }>;
   }
 
+  async update_filters(
+    args: {
+      item_ids: number[];
+    },
+    group?: GroupCall
+  ) {
+    const data = await this._call('update_filters', args, group);
+    throw_msg_error(data);
+    return data.data as CommandID<boolean>;
+  }
+
   async search_labels(
     args: {
       item_types: ItemType[];

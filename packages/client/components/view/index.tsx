@@ -283,7 +283,7 @@ export function PaginatedView({
     loadMore
       ? _.throttle(() => {
           loadMore();
-        }, 1000)
+        }, 3000)
       : undefined,
     [loadMore]
   );

@@ -1,6 +1,6 @@
 import { NextPageContext } from 'next';
 import { useRouter } from 'next/router';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Button,
   Container,
@@ -10,6 +10,8 @@ import {
   Statistic,
 } from 'semantic-ui-react';
 
+import { useCommand } from '../../client/command';
+import { MutatationType, useMutationType } from '../../client/queries';
 import FilterCard, { filterCardDataFields } from '../../components/item/Filter';
 import { ItemSearch } from '../../components/Search';
 import { PaginatedView } from '../../components/view/index';
@@ -60,6 +62,19 @@ export async function getServerSideProps(context: NextPageContext) {
 export default function Page({ page, data }: PageProps) {
   const router = useRouter();
 
+  const [updating, setUpdating] = useState(false);
+
+  const { mutate, data: filterUpdateData } = useMutationType(
+    MutatationType.UPDATE_FILTERS,
+    {
+      onMutate: () => setUpdating(true),
+    }
+  );
+
+  useCommand(filterUpdateData ? filterUpdateData.data : undefined, {}, () => {
+    setUpdating(false);
+  });
+
   const urlQuery = urlparse(router.asPath);
 
   const pageHrefTemplate = useMemo(
@@ -73,7 +88,14 @@ export default function Page({ page, data }: PageProps) {
         <Button size="small" floated="right" color="green" compact>
           <Icon name="plus" /> {t`New`}
         </Button>
-        <Button size="small" floated="right" compact>
+        <Button
+          size="small"
+          loading={updating}
+          floated="right"
+          compact
+          onClick={useCallback(() => {
+            mutate({ item_ids: [] });
+          }, [])}>
           <Icon name="refresh" /> {t`Update`}
         </Button>
         <Statistic horizontal color="grey">

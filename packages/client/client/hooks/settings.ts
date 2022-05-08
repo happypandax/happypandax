@@ -11,15 +11,20 @@ import {
 } from '../queries';
 
 export function useConfig<T extends Record<string, any> = Record<string, any>>(
-  cfg?: T
+  cfg?: T,
+  options?: Parameters<typeof useQueryType>['2']
 ): [Partial<T>, (cfg: Partial<T>) => void] {
   const [value, setValue] = useState<Partial<T>>(cfg ?? {});
   const [touched, setTouched] = useRecoilState(MiscState.touchedConfig);
 
-  const { data, remove } = useQueryType(QueryType.CONFIG, {
-    cfg: cfg ?? {},
-    flatten: true,
-  });
+  const { data, remove } = useQueryType(
+    QueryType.CONFIG,
+    {
+      cfg: cfg ?? {},
+      flatten: true,
+    },
+    options as any
+  );
 
   const { mutate } = useMutationType(MutatationType.UPDATE_CONFIG);
 
@@ -57,10 +62,12 @@ export function useConfig<T extends Record<string, any> = Record<string, any>>(
 
 export function useSetting<T = any>(
   key: string,
-  defaultValue?: T
+  defaultValue?: T,
+  options?: Parameters<typeof useConfig>['1']
 ): [T, (value: T) => void] {
   const [config, setConfig] = useConfig(
-    defaultValue !== undefined ? { [key]: defaultValue } : undefined
+    defaultValue !== undefined ? { [key]: defaultValue } : undefined,
+    options
   );
 
   const setValue = useCallback(

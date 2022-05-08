@@ -14,17 +14,18 @@ import {
   TransitionablePortal,
 } from 'semantic-ui-react';
 
+import { useRecentViewedItem } from '../client/hooks/item';
 import { Query, QueryType, useQueryType } from '../client/queries';
 import { DrawerTab, ImageSize, ItemType, QueueType } from '../misc/enums';
 import t from '../misc/lang';
-import { DragItemData } from '../misc/types';
+import { DragItemData, ServerGallery } from '../misc/types';
 import { urlstring } from '../misc/utility';
 import { AppState } from '../state';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import { EmptySegment, Visible } from './Misc';
+import { EmptySegment, Slider, SliderElement, Visible } from './Misc';
 import { DownloadLabel, DownloadQueue } from './queue/Download';
 import { MetadataLabel, MetadataQueue } from './queue/Metadata';
 import ListView from './view/ListView';
@@ -159,9 +160,40 @@ export function QueueBoard({}: {}) {
 }
 
 export function RecentViewed() {
-  const items = [];
+  const recentItems = useRecentViewedItem();
 
-  return <>{!items.length && <EmptySegment />}</>;
+  const { data } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_id: recentItems
+        .filter((i) => i.type === ItemType.Gallery)
+        .map((i) => i.id),
+      item_type: ItemType.Gallery,
+      profile_options: { size: ImageSize.Small },
+      fields: galleryCardDataFields,
+    },
+    {
+      enabled:
+        recentItems.filter((i) => i.type === ItemType.Gallery).length > 0,
+    }
+  );
+
+  console.debug(recentItems);
+
+  return (
+    <Segment basic>
+      {!data?.data?.length && <EmptySegment />}
+      {data?.data?.length && (
+        <Slider>
+          {(data?.data as ServerGallery[]).map((v) => (
+            <SliderElement key={v.id}>
+              <GalleryCard size="small" data={v} />
+            </SliderElement>
+          ))}
+        </Slider>
+      )}
+    </Segment>
+  );
 }
 
 function DrawerPane({ children }: { children: React.ReactNode }) {

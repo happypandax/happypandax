@@ -71,6 +71,7 @@ export enum MutatationType {
   DISABLE_PLUGIN,
   REMOVE_PLUGIN,
   UPDATE_PLUGIN,
+  UPDATE_FILTERS,
 }
 
 export const queryClient = new QueryClient({
@@ -180,6 +181,11 @@ export function useMutationType<
 
     case MutatationType.UPDATE_PLUGIN: {
       endpoint = '/api/plugin_update';
+      break;
+    }
+
+    case MutatationType.UPDATE_FILTERS: {
+      endpoint = '/api/update_filters';
       break;
     }
 
@@ -690,6 +696,12 @@ interface OpenGallery<T = undefined> extends MutationAction<T> {
   variables: Parameters<ServerService['open_gallery']>[0];
 }
 
+interface UpdateFilters<T = undefined> extends MutationAction<T> {
+  type: MutatationType.UPDATE_FILTERS;
+  dataType: Unwrap<ReturnType<ServerService['update_filters']>>;
+  variables: Parameters<ServerService['update_filters']>[0];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
@@ -707,6 +719,7 @@ type MutationActions<T = undefined> =
   | DisablePlugin<T>
   | InstallPlugin<T>
   | OpenGallery<T>
+  | UpdateFilters<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================
