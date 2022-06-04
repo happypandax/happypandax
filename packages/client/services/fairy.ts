@@ -54,6 +54,6 @@ export default class FairyService extends Service {
 
   get(id: string) {
     const d = [...this.global, ...(this.store?.[id] ?? [])];
-    return d.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(10);
+    return d.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 10);
   }
 }

@@ -330,6 +330,9 @@ export function useQueryType<
 
     case QueryType.QUEUE_ITEMS: {
       endpoint = '/api/queue_items';
+      if (opts.cacheTime === undefined) {
+        opts.cacheTime = 0;
+      }
       break;
     }
 
@@ -340,6 +343,9 @@ export function useQueryType<
 
     case QueryType.LOG: {
       endpoint = '/api/log';
+      if (opts.cacheTime === undefined) {
+        opts.cacheTime = 0;
+      }
       break;
     }
 
@@ -355,6 +361,9 @@ export function useQueryType<
 
     case QueryType.CONFIG: {
       endpoint = '/api/config';
+      if (opts.cacheTime === undefined) {
+        opts.cacheTime = 0;
+      }
       break;
     }
 
@@ -375,6 +384,9 @@ export function useQueryType<
 
     case QueryType.COMMAND_PROGRESS: {
       endpoint = '/api/command_progress';
+      if (opts.cacheTime === undefined) {
+        opts.cacheTime = 0;
+      }
       break;
     }
 

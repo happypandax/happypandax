@@ -168,9 +168,9 @@ export default function ListView<T>({
 }: {
   disableWindowScroll?: boolean;
 } & ListViewProps<T> &
-  React.ComponentProps<typeof ViewBase> &
   Omit<
-    React.ComponentProps<typeof PaginatedView>,
+    React.ComponentProps<typeof PaginatedView> &
+      React.ComponentProps<typeof ViewBase>,
     'children' | 'itemCount' | 'paddedChildren'
   >) {
   return (

@@ -178,8 +178,6 @@ export function RecentViewed() {
     }
   );
 
-  console.debug(recentItems);
-
   return (
     <Segment basic>
       {!data?.data?.length && <EmptySegment />}
@@ -204,7 +202,7 @@ function DrawerPane({ children }: { children: React.ReactNode }) {
       basic
       className={classNames('no-padding-segment', {
         ['min-250-h max-250-h']: !drawerExpanded,
-        ['min-400-h max-400-h']: drawerExpanded,
+        ['min-500-h max-500-h']: drawerExpanded,
       })}>
       {children}
     </Tab.Pane>
@@ -324,7 +322,7 @@ export function Drawer({
         onClick={useCallback(() => {
           setDrawerExpanded(!drawerExpanded);
         }, [drawerExpanded])}>
-        <Icon name={drawerExpanded ? 'triangle down' : 'triangle up'} fitted />
+        <Icon name={drawerExpanded ? 'compress' : 'expand'} fitted />
       </Label>
       <Label as="a" attached="top right" onClick={onClose}>
         <Icon name="close" fitted />

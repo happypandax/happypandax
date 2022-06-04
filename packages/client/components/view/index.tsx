@@ -279,10 +279,13 @@ export function PaginatedView({
   bottomPagination?: boolean;
 } & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
   React.ComponentProps<typeof Segment>) {
+  const [canLoadMore, setCanLoadMore] = useState(true);
+
   const onLoadMore = useCallback(
     loadMore
       ? _.throttle(() => {
           loadMore();
+          setCanLoadMore(false);
         }, 3000)
       : undefined,
     [loadMore]
@@ -323,6 +326,14 @@ export function PaginatedView({
     </Grid.Row>
   );
 
+  useEffect(() => {
+    if (itemsPerPage * +(activePage ?? 1) < totalItemCount) {
+      setTimeout(() => {
+        setCanLoadMore(true);
+      }, 500);
+    }
+  }, [itemCount, activePage]);
+
   return (
     <Segment
       basic
@@ -345,6 +356,7 @@ export function PaginatedView({
               const pixelsLeft = height - pixelsPassed - getClientHeight();
               if (
                 infinite &&
+                canLoadMore &&
                 !loading &&
                 itemCount &&
                 itemCount * +activePage < totalItemCount &&
@@ -354,7 +366,7 @@ export function PaginatedView({
                 onLoadMore();
               }
             },
-            [infinite, onLoadMore, loading]
+            [infinite, onLoadMore, canLoadMore, loading]
           )}>
           {children}
         </Visibility>

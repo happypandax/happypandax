@@ -66,7 +66,7 @@ export default class _AppState extends StateBlock {
       ({ setSelf, onSet }) => {
         onSet((newValue) => {
           if (newValue.length > 15) {
-            setSelf(newValue.slice(15));
+            setSelf(newValue.slice(0, 15));
           }
         });
       },
@@ -87,7 +87,7 @@ export default class _AppState extends StateBlock {
           }
 
           if (newValue.length > 5) {
-            setSelf(newValue.slice(5));
+            setSelf(newValue.slice(0, 5));
           }
         });
       },

@@ -41,11 +41,32 @@ import {
 import { Service } from './base';
 import { ServiceType } from './constants';
 
+// We are going to create multiple clients to support parallel requests, HPX supports this
+enum ClientType {
+  /**
+   * main client, used for most requests
+   */
+  main,
+  /**
+   * background client, used for long running requests
+   */
+  background,
+  /**
+   * poll client, used for poll requests
+   */
+  poll,
+}
+
+interface CallOptions {
+  client?: ClientType;
+}
+
 export default class ServerService extends Service {
   cache: ReturnType<typeof createCache>;
   endpoint: { host: string; port: number };
 
-  #client: Client;
+  #clients: Record<ClientType, Client>;
+  #main_client: Client;
 
   constructor(endpoint?: { host: string; port: number }) {
     super(ServiceType.Server);
@@ -58,24 +79,45 @@ export default class ServerService extends Service {
       error: global.app.log.e,
     };
 
+    const client_name = 'next-client';
+
     // this avoiding recreating the hpx client during HMR
-    this.#client =
-      global.app?.hpx_client ?? new Client({ name: 'next-client' });
-    global.app.hpx_client = this.#client;
+    this.#clients = global.app?.hpx_clients ?? {
+      [ClientType.main]: new Client({ name: client_name }),
+      [ClientType.background]: new Client({
+        name: client_name + '#background',
+      }),
+      [ClientType.poll]: new Client({ name: client_name + '#poll' }),
+    };
+    global.app.hpx_clients = this.#clients;
+    this.#main_client = this.#clients[ClientType.main];
+
     this.cache = global.app?.hpx_cache ?? createCache();
     global.app.hpx_cache = this.cache;
 
     this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
   }
 
-  async _call(func: string, args: JsonMap, group?: GroupCall) {
+  async _call(
+    func: string,
+    args: JsonMap,
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const client_type = options?.client ?? ClientType.main;
+
+    const client = this.#clients[client_type];
+    if (!client) {
+      throw Error(`Invalid client from type ${client_type}`);
+    }
+
     if (group) {
-      return await group._group_call(this.#client, func, args);
+      return await group._group_call(client, func, args);
     }
 
     global.app.log.d('calling', func, args);
 
-    const data = await this.#client
+    const data = await client
       .send([
         {
           fname: func,
@@ -92,13 +134,14 @@ export default class ServerService extends Service {
   }
 
   get logged_in() {
-    return this.#client._accepted;
+    return this.#main_client._accepted;
   }
 
   status() {
     return {
       loggedIn: this.logged_in,
-      connected: this.#client.is_connected(),
+      // TODO: what if any other client disconnects?
+      connected: this.#main_client.is_connected(),
     };
   }
 
@@ -132,6 +175,14 @@ export default class ServerService extends Service {
     return data.data as Record<Unwrap<K>, any>;
   }
 
+  _close_clients() {
+    for (const client of Object.values(this.#clients)) {
+      if (client.is_connected()) {
+        client.close();
+      }
+    }
+  }
+
   async login(
     user?: string,
     password?: string,
@@ -139,25 +190,36 @@ export default class ServerService extends Service {
   ) {
     if (endpoint) {
       if (
-        this.#client.is_connected() &&
+        this.#main_client.is_connected() &&
         (endpoint.host !== this.endpoint.host ||
           endpoint.port !== this.endpoint.port)
       ) {
         global.app.log.i(
           'New HPX server endpoint specificed while old connection exists, closing old connection'
         );
-        this.#client.close();
+        this._close_clients();
       }
       this.endpoint = endpoint;
     }
 
-    if (!this.#client.is_connected()) {
-      await this.#client.connect(this.endpoint);
+    if (!this.#main_client.is_connected()) {
+      this._close_clients();
+      for (const client of Object.values(this.#clients)) {
+        await client.connect(this.endpoint);
+      }
     }
 
-    const r = await this.#client
-      .request_auth()
-      .then((m) => this.#client.handshake({ user, password }));
+    const r = await this.#main_client.request_auth().then(async (m) => {
+      const s = await this.#main_client.handshake({ user, password });
+      if (s) {
+        // link the others
+        for (const client of Object.values(this.#clients)) {
+          if (client != this.#main_client) {
+            client.session = this.#main_client.session;
+          }
+        }
+      }
+    });
     return r;
   }
 
@@ -166,9 +228,10 @@ export default class ServerService extends Service {
       cfg: Record<string, AnyJson>;
       flatten?: boolean;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_config', args, group);
+    const data = await this._call('get_config', args, group, options);
     throw_msg_error(data);
     return data.data as JsonMap;
   }
@@ -177,9 +240,10 @@ export default class ServerService extends Service {
     args: {
       cfg: Record<string, AnyJson>;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('set_config', args, group);
+    const data = await this._call('set_config', args, group, options);
     throw_msg_error(data);
     return data.data as AnyJson;
   }
@@ -190,9 +254,10 @@ export default class ServerService extends Service {
       item: Record<string, AnyJson>;
       options?: JsonMap;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('update_item', args, group);
+    const data = await this._call('update_item', args, group, options);
     throw_msg_error(data);
     return data.data as boolean;
   }
@@ -203,9 +268,10 @@ export default class ServerService extends Service {
       item_id: number | number[];
       metatags: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('update_metatags', args, group);
+    const data = await this._call('update_metatags', args, group, options);
     throw_msg_error(data);
     return data.data as boolean | number;
   }
@@ -217,9 +283,10 @@ export default class ServerService extends Service {
       fields?: FieldPath[];
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_item', args, group);
+    const data = await this._call('get_item', args, group, options);
     throw_msg_error(data);
     return data.data as R extends undefined ? JsonMap : R;
   }
@@ -233,9 +300,10 @@ export default class ServerService extends Service {
       metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_items', args, group);
+    const data = await this._call('get_items', args, group, options);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -253,9 +321,10 @@ export default class ServerService extends Service {
       search_options?: SearchOptions;
       sort_options?: SortOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('search_items', args, group);
+    const data = await this._call('search_items', args, group, options);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -274,9 +343,10 @@ export default class ServerService extends Service {
       limit?: number;
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_related_items', args, group);
+    const data = await this._call('get_related_items', args, group, options);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -293,9 +363,10 @@ export default class ServerService extends Service {
       fields?: FieldPath[];
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_from_grouping', args, group);
+    const data = await this._call('get_from_grouping', args, group, options);
     throw_msg_error(data);
     return data.data as null | ServerGallery;
   }
@@ -306,9 +377,10 @@ export default class ServerService extends Service {
       item_type: ItemType;
       viewer_args?: string;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('open_gallery', args, group);
+    const data = await this._call('open_gallery', args, group, options);
     throw_msg_error(data);
     return data.data as boolean;
   }
@@ -321,9 +393,10 @@ export default class ServerService extends Service {
       fields?: FieldPath[];
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_pages', args, group);
+    const data = await this._call('get_pages', args, group, options);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -337,9 +410,10 @@ export default class ServerService extends Service {
       item_ids: number[];
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_profile', args, group);
+    const data = await this._call('get_profile', args, group, options);
     throw_msg_error(data);
     return data.data as { [key: string]: number };
   }
@@ -359,9 +433,10 @@ export default class ServerService extends Service {
       search_options?: SearchOptions;
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('library_view', args, group);
+    const data = await this._call('library_view', args, group, options);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -377,9 +452,10 @@ export default class ServerService extends Service {
       limit?: number;
       profile_options?: ProfileOptions;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_similar', args, group);
+    const data = await this._call('get_similar', args, group, options);
     throw_msg_error(data);
     return data.data as CommandID<{
       count: number;
@@ -391,9 +467,10 @@ export default class ServerService extends Service {
     args: {
       item_ids: number[];
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('update_filters', args, group);
+    const data = await this._call('update_filters', args, group, options);
     throw_msg_error(data);
     return data.data as CommandID<boolean>;
   }
@@ -404,9 +481,10 @@ export default class ServerService extends Service {
       search_query: string;
       limit?: number;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_search_labels', args, group);
+    const data = await this._call('get_search_labels', args, group, options);
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -421,27 +499,35 @@ export default class ServerService extends Service {
       children?: boolean;
       locale?: string;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_sort_indexes', args, group);
+    const data = await this._call('get_sort_indexes', args, group, options);
     throw_msg_error(data);
     return data.data as ServerSortIndex[];
   }
 
-  async log(args: { log_type: LogType }, group?: GroupCall) {
-    const data = await this._call('get_log', args, group);
+  async log(
+    args: { log_type: LogType },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_log', args, group, {
+      client: ClientType.poll,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as { log: string };
   }
 
-  async download_info(args: {}, group?: GroupCall) {
-    const data = await this._call('get_download_info', args, group);
+  async download_info(args: {}, group?: GroupCall, options?: CallOptions) {
+    const data = await this._call('get_download_info', args, group, options);
     throw_msg_error(data);
     return data.data as DownloadHandler[];
   }
 
-  async metadata_info(args: {}, group?: GroupCall) {
-    const data = await this._call('get_metadata_info', args, group);
+  async metadata_info(args: {}, group?: GroupCall, options?: CallOptions) {
+    const data = await this._call('get_metadata_info', args, group, options);
     throw_msg_error(data);
     return data.data as MetadataHandler[];
   }
@@ -453,9 +539,13 @@ export default class ServerService extends Service {
       options?: {};
       priority?: Priority;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('add_items_to_metadata_queue', args, group);
+    const data = await this._call('add_items_to_metadata_queue', args, group, {
+      client: ClientType.background,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean;
   }
@@ -467,9 +557,13 @@ export default class ServerService extends Service {
       options?: {};
       priority?: Priority;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('add_urls_to_download_queue', args, group);
+    const data = await this._call('add_urls_to_download_queue', args, group, {
+      client: ClientType.background,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean;
   }
@@ -482,9 +576,13 @@ export default class ServerService extends Service {
       options?: {};
       priority?: Priority;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('add_item_to_queue', args, group);
+    const data = await this._call('add_item_to_queue', args, group, {
+      client: ClientType.background,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean;
   }
@@ -495,46 +593,79 @@ export default class ServerService extends Service {
       item_type?: ItemType;
       queue_type: QueueType;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('remove_item_from_queue', args, group);
+    const data = await this._call(
+      'remove_item_from_queue',
+      args,
+      group,
+      options
+    );
     throw_msg_error(data);
     return data.data as boolean;
   }
 
-  async stop_queue(args: { queue_type: QueueType }, group?: GroupCall) {
-    const data = await this._call('stop_queue', args, group);
+  async stop_queue(
+    args: { queue_type: QueueType },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('stop_queue', args, group, options);
     throw_msg_error(data);
     return data.data as boolean;
   }
 
-  async start_queue(args: { queue_type: QueueType }, group?: GroupCall) {
-    const data = await this._call('start_queue', args, group);
+  async start_queue(
+    args: { queue_type: QueueType },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('start_queue', args, group, options);
     throw_msg_error(data);
     return data.data as boolean;
   }
 
-  async clear_queue(args: { queue_type: QueueType }, group?: GroupCall) {
-    const data = await this._call('clear_queue', args, group);
+  async clear_queue(
+    args: { queue_type: QueueType },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('clear_queue', args, group, {
+      client: ClientType.background,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean;
   }
 
   async queue_state<T extends QueueType>(
-    args: { queue_type: T; include_finished?: boolean },
-    group?: GroupCall
+    args: {
+      queue_type: T;
+      include_finished?: boolean;
+      include_queued?: boolean;
+      include_active?: boolean;
+    },
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_queue_state', args, group);
+    const data = await this._call('get_queue_state', args, group, {
+      client: ClientType.poll,
+      ...options,
+    });
     throw_msg_error(data);
 
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
     return data.data as {
+      active_size: number;
+      queued_size: number;
       size: number;
       value: number;
       percent: number;
       active: D;
       finished: D;
+      queued: D;
       running: boolean;
     };
   }
@@ -542,87 +673,146 @@ export default class ServerService extends Service {
   async queue_items<T extends QueueType>(
     args: {
       limit?: number;
+      include_finished?: boolean;
+      include_queued?: boolean;
+      include_active?: boolean;
       queue_type: T;
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_queue_items', args, group);
+    const data = await this._call('get_queue_items', args, group, options);
     throw_msg_error(data);
-    return data.data as T extends QueueType.Metadata
-      ? MetadataItem[]
-      : DownloadItem[];
+
+    type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
+
+    return data.data as {
+      active_size: number;
+      queued_size: number;
+      size: number;
+      active: D;
+      finished: D;
+      queued: D;
+    };
   }
 
-  async start_command(args: { command_ids: string[] }, group?: GroupCall) {
-    const data = await this._call('start_command', args, group);
+  async start_command(
+    args: { command_ids: string[] },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('start_command', args, group, options);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
-  async stop_command(args: { command_ids: string[] }, group?: GroupCall) {
-    const data = await this._call('stop_command', args, group);
+  async stop_command(
+    args: { command_ids: string[] },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('stop_command', args, group, options);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
-  async command_state(args: { command_ids: string[] }, group?: GroupCall) {
-    const data = await this._call('get_command_state', args, group);
+  async command_state(
+    args: { command_ids: string[] },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_command_state', args, group, {
+      client: ClientType.poll,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
   async command_value<R = AnyJson>(
     args: { command_ids: string[] },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_command_value', args, group);
+    const data = await this._call('get_command_value', args, group, options);
     throw_msg_error(data);
     return data.data as Record<CommandIDKey, R>;
   }
 
-  async command_progress(args: { command_ids: string[] }, group?: GroupCall) {
-    const data = await this._call('get_command_progress', args, group);
+  async command_progress(
+    args: { command_ids: string[] },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_command_progress', args, group, {
+      client: ClientType.poll,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as
       | Record<CommandIDKey, CommandProgress>
       | CommandProgress[];
   }
 
-  async list_plugins(args: { state?: PluginState }, group?: GroupCall) {
-    const data = await this._call('list_plugins', args, group);
+  async list_plugins(
+    args: { state?: PluginState },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('list_plugins', args, group, options);
     throw_msg_error(data);
     return data.data as PluginData[];
   }
 
-  async plugin(args: { plugin_id: string }, group?: GroupCall) {
-    const data = await this._call('get_plugin', args, group);
+  async plugin(
+    args: { plugin_id: string },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_plugin', args, group, options);
     throw_msg_error(data);
     return data.data as PluginData;
   }
 
-  async install_plugin(args: { plugin_id: string }, group?: GroupCall) {
-    const data = await this._call('install_plugin', args, group);
+  async install_plugin(
+    args: { plugin_id: string },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('install_plugin', args, group, options);
     throw_msg_error(data);
     return data.data as PluginState;
   }
 
-  async disable_plugin(args: { plugin_id: string }, group?: GroupCall) {
-    const data = await this._call('disable_plugin', args, group);
+  async disable_plugin(
+    args: { plugin_id: string },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('disable_plugin', args, group, options);
     throw_msg_error(data);
     return data.data as PluginState;
   }
 
-  async remove_plugin(args: { plugin_id: string }, group?: GroupCall) {
-    const data = await this._call('remove_plugin', args, group);
+  async remove_plugin(
+    args: { plugin_id: string },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('remove_plugin', args, group, options);
     throw_msg_error(data);
     return data.data as PluginState;
   }
 
   async check_plugin_update(
     args: { plugin_ids?: string[]; force?: boolean; push?: boolean },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('check_plugin_update', args, group);
+    const data = await this._call('check_plugin_update', args, group, {
+      client: ClientType.poll,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as CommandID<{
       plugin_id: string;
@@ -633,27 +823,30 @@ export default class ServerService extends Service {
 
   async update_plugin(
     args: { plugin_ids?: string[]; force?: boolean; push?: boolean },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('update_plugin', args, group);
+    const data = await this._call('update_plugin', args, group, options);
     throw_msg_error(data);
     return data.data as CommandID<string[]>;
   }
 
   async send_plugin_message(
     args: { plugin_id?: string; msg: AnyJson },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('send_plugin_message', args, group);
+    const data = await this._call('send_plugin_message', args, group, options);
     throw_msg_error(data);
     return data.data as AnyJson;
   }
 
   async submit_login(
     args: { identifier?: string; credentials: JsonMap; options?: JsonMap },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('submit_login', args, group);
+    const data = await this._call('submit_login', args, group, options);
     throw_msg_error(data);
     return data.data as CommandID<{
       status: string;
@@ -661,8 +854,12 @@ export default class ServerService extends Service {
     }>;
   }
 
-  async page_read_event(args: { item_id: number }, group?: GroupCall) {
-    const data = await this._call('page_read_event', args, group);
+  async page_read_event(
+    args: { item_id: number },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('page_read_event', args, group, options);
     throw_msg_error(data);
     return data.data as boolean;
   }

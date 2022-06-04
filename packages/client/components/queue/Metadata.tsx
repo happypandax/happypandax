@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   Card,
@@ -11,6 +11,7 @@ import {
   Icon,
   Label,
   List,
+  Loader,
   Menu,
   Modal,
   Segment,
@@ -32,7 +33,7 @@ import {
   QueueType,
 } from '../../misc/enums';
 import t from '../../misc/lang';
-import { MetadataHandler, MetadataItem } from '../../misc/types';
+import { MetadataHandler, MetadataItem, ServerGallery } from '../../misc/types';
 import GalleryCard, { galleryCardDataFields } from '../item/Gallery';
 import {
   ItemCardActionContent,
@@ -244,51 +245,135 @@ export function MetadataQueue() {
   const [addLoading, setAddLoading] = useState(false);
   const [active, setActive] = useState(true);
 
-  const refetchEvery = 5000;
+  const genItemsMap = () => ({
+    ..._.keyBy(queueState?.data?.queued, 'item_id'),
+    ..._.keyBy(queueState?.data?.active, 'item_id'),
+    ..._.keyBy(queueState?.data?.finished, 'item_id'),
+  });
 
-  const { data: queueState } = useQueryType(
+  const refetchEvery =
+    !active && !addLoading ? 10000 : addLoading ? 3500 : 5000;
+
+  const { data: queueState, refetch } = useQueryType(
     QueryType.QUEUE_STATE,
     {
       queue_type: QueueType.Metadata,
+      include_active: true,
+      include_finished: true,
+      include_queued: true,
     },
     {
-      refetchInterval: active ? refetchEvery : false,
+      refetchInterval: refetchEvery,
       keepPreviousData: true,
       refetchOnMount: 'always',
+      onSettled: () => {
+        itemsMapRef.current = { ...itemsMapRef.current, ...genItemsMap() };
+        console.debug('count', Object.keys(itemsMapRef.current).length);
+      },
     }
   );
 
-  const { data: queueItems, refetch: refetchQueueItems } = useQueryType(
-    QueryType.QUEUE_ITEMS,
-    {
-      queue_type: QueueType.Metadata,
-    },
-    {
-      refetchInterval: active ? refetchEvery : false,
-      keepPreviousData: true,
-      refetchOnMount: 'always',
-    }
-  );
+  const itemsMapRef = useRef(genItemsMap());
+
+  const itemsMap = itemsMapRef.current;
 
   const addItems = useMutationType(MutatationType.ADD_ITEMS_TO_METADATA_QUEUE, {
-    onMutate: () => setAddLoading(true),
+    onMutate: () => {
+      setAddLoading(true);
+      setTimeout(() => refetch(), 300);
+    },
     onSettled: () => {
-      refetchQueueItems().finally(() => setAddLoading(false));
+      refetch().finally(() => setAddLoading(false));
     },
   });
 
-  const { data: items, isLoading } = useQueryType(
+  const hasActiveItems = !!queueState?.data?.active?.length;
+
+  const { data: activeItems, isLoading: isLoadingActive } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
-      item_id: queueItems?.data?.map((i) => i.item_id),
+      item_id: queueState?.data?.active?.map?.((i) => i.item_id),
       fields: galleryCardDataFields,
       profile_options: { size: ImageSize.Small },
     },
-    { enabled: !!queueItems?.data?.length, refetchOnMount: 'always' }
+    {
+      enabled: hasActiveItems,
+      keepPreviousData: hasActiveItems,
+    }
   );
 
-  const queueItemsMap = _.keyBy(queueItems?.data, 'item_id');
+  const hasFinishedItems = !!queueState?.data?.finished?.length;
+
+  const { data: finishedItems, isLoading: isLoadingFinished } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_type: ItemType.Gallery,
+      item_id: queueState?.data?.finished
+        ?.slice?.(0, 10)
+        ?.map?.((i) => i.item_id),
+      fields: galleryCardDataFields,
+      profile_options: { size: ImageSize.Small },
+    },
+    {
+      enabled: hasFinishedItems,
+      keepPreviousData: hasFinishedItems,
+    }
+  );
+
+  const hasQueueItems = !!queueState?.data?.queued?.length;
+
+  const { data: queuedItems, isLoading: isLoadingQueued } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_type: ItemType.Gallery,
+      item_id: queueState?.data?.queued
+        ?.slice?.(0, 50)
+        ?.map?.((i) => i.item_id),
+      fields: galleryCardDataFields,
+      profile_options: { size: ImageSize.Small },
+    },
+    {
+      enabled: hasQueueItems,
+      keepPreviousData: hasQueueItems,
+    }
+  );
+
+  const itemMap = (i: ServerGallery) => {
+    if (!itemsMap[i.id]) return null;
+    return (
+      <GalleryCard
+        hiddenLabel
+        activity={(itemsMap[i.id] as MetadataItem).active}
+        hiddenAction={false}
+        actionContent={
+          !(itemsMap[i.id] as MetadataItem).active
+            ? () => (
+                <MetadataItemActionContent
+                  item={itemsMap[i.id] as MetadataItem}
+                  onUpdate={refetch}
+                />
+              )
+            : undefined
+        }
+        activityContent={
+          <MetadataItemState item={itemsMap[i.id] as MetadataItem} />
+        }
+        key={i.id}
+        data={i}
+        horizontal
+        size="mini"
+      />
+    );
+  };
+
+  const isEmpty = !(
+    queueState?.data?.active?.length ||
+    queueState?.data?.finished?.length ||
+    queueState?.data?.queued?.length
+  );
+
+  console.debug('queueState', queueState?.data);
 
   return (
     <>
@@ -296,8 +381,11 @@ export function MetadataQueue() {
         queue_type={QueueType.Metadata}
         log_type={LogType.Metadata}
         Settings={MetadataSettings}
-        refetch={refetchQueueItems}
+        refetch={refetch}
         running={queueState?.data?.running}
+        active_size={queueState?.data?.active_size}
+        queue_size={queueState?.data?.queued_size}
+        percent={queueState?.data?.percent}
         onActive={setActive}
         menuItems={useMemo(
           () => (
@@ -357,35 +445,54 @@ export function MetadataQueue() {
           []
         )}
       />
+
       <Header size="tiny" textAlign="center" className="no-margins sub-text">
         <HandlerLabelGroup type="metadata" />
       </Header>
-      {!items?.data?.length && <EmptyMessage className="h-full" />}
-      {!!items?.data?.length && (
-        <Segment tertiary loading={isLoading || addLoading}>
+      {isEmpty && <EmptyMessage loading={isLoadingActive} className="h-full" />}
+      {!!activeItems?.data?.length && (
+        <Segment tertiary>
           <Card.Group itemsPerRow={2} doubling>
-            {items?.data?.map?.((i) => (
-              <GalleryCard
-                hiddenLabel
-                activity={(queueItemsMap[i.id] as MetadataItem).active}
-                hiddenAction={false}
-                actionContent={() => (
-                  <MetadataItemActionContent
-                    item={queueItemsMap[i.id] as MetadataItem}
-                    onUpdate={refetchQueueItems}
-                  />
-                )}
-                activityContent={
-                  <MetadataItemState
-                    item={queueItemsMap[i.id] as MetadataItem}
-                  />
-                }
-                key={i.id}
-                data={i}
-                horizontal
-                size="mini"
-              />
-            ))}
+            {activeItems?.data?.map?.(itemMap)}
+          </Card.Group>
+        </Segment>
+      )}
+      <Divider fitted horizontal>
+        <Header as="h5" className="load">
+          <Segment basic className="small-padding-segment">
+            {t`Finished`}
+            <Loader size="small" active={isLoadingFinished} />
+          </Segment>
+        </Header>
+      </Divider>
+      {isEmpty && (
+        <EmptyMessage loading={isLoadingFinished} className="h-full" />
+      )}
+      {!!finishedItems?.data?.length && (
+        <Segment tertiary>
+          <Card.Group itemsPerRow={2} doubling>
+            {finishedItems?.data?.map?.(itemMap)}
+          </Card.Group>
+        </Segment>
+      )}
+      <Divider fitted horizontal>
+        <Header as="h5">
+          <Segment basic className="small-padding-segment">
+            {t`Queue`}
+            <Loader size="small" active={isLoadingQueued || addLoading} />
+          </Segment>
+        </Header>
+      </Divider>
+      {isEmpty && (
+        <EmptyMessage
+          loading={isLoadingQueued || addLoading}
+          className="h-full"
+        />
+      )}
+      {!!queuedItems?.data?.length && (
+        <Segment tertiary>
+          <Card.Group itemsPerRow={1} doubling>
+            {queuedItems?.data?.map?.(itemMap)}
           </Card.Group>
         </Segment>
       )}
@@ -402,7 +509,6 @@ export function MetadataLabel() {
     QueryType.QUEUE_STATE,
     {
       queue_type: QueueType.Metadata,
-      include_finished: false,
     },
     {
       refetchInterval: interval,

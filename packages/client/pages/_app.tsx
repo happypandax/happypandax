@@ -183,7 +183,6 @@ function redirect(params: {
   if (ctx.res) {
     ctx.res.writeHead(status, {
       Location: location,
-      // Add the content-type for SEO considerations
       'Content-Type': 'text/html; charset=utf-8',
     });
     ctx.res.end();

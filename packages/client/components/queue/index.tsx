@@ -1,7 +1,16 @@
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSetRecoilState } from 'recoil';
-import { Icon, Label, List, Loader, Menu, Ref } from 'semantic-ui-react';
+import {
+  Divider,
+  Icon,
+  Label,
+  List,
+  Loader,
+  Menu,
+  Progress,
+  Ref,
+} from 'semantic-ui-react';
 
 import { useSetting } from '../../client/hooks/settings';
 import {
@@ -23,12 +32,18 @@ export function ItemQueueBase({
   onActive,
   running,
   log_type,
+  queue_size,
+  percent,
+  active_size,
   queue_type,
   menuItems,
 }: {
   Settings: React.ElementType;
   running: boolean;
   log_type: LogType;
+  queue_size: number;
+  percent: number;
+  active_size: number;
   queue_type: QueueType;
   onActive: (boolean) => void;
   refetch: () => Promise<any>;
@@ -113,6 +128,14 @@ export function ItemQueueBase({
           <Loader active={clearLoading} size="small" />
           <Icon name="remove" /> {t`Clear`}
         </Menu.Item>
+        <Menu.Item>
+          <Label basic color="black">
+            {t`Active`}:<Label.Detail>{active_size}</Label.Detail>
+          </Label>
+          <Label basic color="black">
+            {t`In queue`}:<Label.Detail>{queue_size}</Label.Detail>
+          </Label>
+        </Menu.Item>
         <Menu.Menu position="right">
           <Menu.Item
             onClick={useCallback(() => setLogVisible(!logVisible), [
@@ -136,6 +159,14 @@ export function ItemQueueBase({
           attached="top"
         />
       )}
+      <Progress
+        size="tiny"
+        className="no-margins"
+        autoSuccess
+        value={percent}
+        total={queue_size}
+      />
+      <Divider hidden horizontal />
     </>
   );
 }
@@ -158,8 +189,6 @@ export const HandlerLabel = forwardRef(function HandlerLabel(
     item?.type === 'metadata' ? 'metadata.disabled' : 'download.disabled',
     []
   );
-
-  console.debug(disabled);
 
   return (
     <Ref innerRef={ref}>

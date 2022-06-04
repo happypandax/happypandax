@@ -5,9 +5,20 @@
     contain: strict;
 }
 
+.header_hero::before {
+    opacity: 0.5;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    content: '';
+    background-color: #000;
+    left: 0;
+    top: 0;;
+}
+
 .header_hero img {
     width: 100%;
-    filter: blur(4px);
+    filter: blur(10px);
     position: absolute;
     min-width: 100%;
     top: 0;

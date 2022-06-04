@@ -347,8 +347,10 @@ export function EmptyMessage({
   title = t`Nothing to see here...`,
   description,
   className,
+  loading,
 }: {
   title?: string;
+  loading?: boolean;
   className?: React.ReactNode;
   description?: React.ReactNode;
 }) {
@@ -359,7 +361,7 @@ export function EmptyMessage({
       </Message.Header>
       <Message.Content className="text-center sub-text">
         {description}
-        <Segment basic textAlign="center">
+        <Segment basic textAlign="center" loading={loading}>
           <Icon className="hpx-standard sub-text" size="huge" />
         </Segment>
       </Message.Content>

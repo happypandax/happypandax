@@ -246,7 +246,6 @@ export function DownloadQueue() {
 
   const ref = useRef<HTMLInputElement>();
 
-
   const refetchEvery = 5000;
 
   const { data: queueState } = useQueryType(
@@ -316,6 +315,8 @@ export function DownloadQueue() {
         Settings={DownloadSettings}
         refetch={refetchQueueItems}
         running={queueState?.data?.running}
+        active_size={queueState?.data?.active?.length}
+        queue_size={queueState?.data?.size}
         onActive={setActive}
       />
       <Header size="tiny" textAlign="center" className="no-margins sub-text">
@@ -346,7 +347,6 @@ export function DownloadLabel() {
     QueryType.QUEUE_STATE,
     {
       queue_type: QueueType.Download,
-      include_finished: false,
     },
     {
       refetchInterval: interval,
