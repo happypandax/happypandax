@@ -19,6 +19,7 @@ import {
   Menu,
   Message,
   Modal,
+  Portal,
   Segment,
   Select,
 } from 'semantic-ui-react';
@@ -264,6 +265,8 @@ function LibrarySidebar() {
   const sidebarData = useRecoilValue(LibraryState.sidebarData);
 
   return (
+    <Portal open>
+
     <StickySidebar
       className="sticky-page-sidebar"
       visible={sidebarVisible}
@@ -272,6 +275,7 @@ function LibrarySidebar() {
       }, [])}>
       {sidebarData && <GalleryDataTable data={sidebarData} />}
     </StickySidebar>
+    </Portal>
   );
 }
 

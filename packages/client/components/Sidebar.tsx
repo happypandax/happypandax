@@ -200,13 +200,18 @@ function mainMenuProps() {
   const fixedEl: HTMLDivElement = document.querySelector('.main-menu.fixed');
   const r = {
     height: fixedEl?.offsetHeight ?? 0,
+    bottom: fixedEl?.getBoundingClientRect?.()?.bottom ?? 0,
     fixed: !!fixedEl,
   };
 
   if (!r.fixed) {
     const el: HTMLDivElement = document.querySelector('.main-menu:not(.fixed)');
-    if (el.offsetHeight) {
+    if (el?.offsetHeight) {
       r.height = el.offsetHeight;
+    }
+
+    if (el?.getBoundingClientRect?.()?.bottom) {
+      r.bottom = el.getBoundingClientRect().bottom;
     }
   }
   return r;
@@ -223,18 +228,27 @@ export function StickySidebar({
   const computeTop = useCallback(() => {
     if (visible) {
       const mh = mainMenuProps();
-      const t = Math.max(0, window.scrollY + (mh.fixed ? 0 : -mh.height));
+      const margin = 5
+      const t = Math.max(0, mh.height + margin);
       ref.current.style.top = `${t}px`;
       if (mh.height && (mh.fixed || !t)) {
-        ref.current.style.setProperty('max-height', '94.5vh', 'important');
+        ref.current.style.setProperty('max-height', `calc(100% - ${t + margin}px)`, 'important');
       } else {
-        ref.current.style.setProperty('max-height', '98vh', 'important');
+        ref.current.style.setProperty('max-height', `calc(100% - ${t + margin}px)`, 'important');
       }
     }
   }, [visible]);
 
   useEffect(() => {
+    const mh = mainMenuProps();
+    // // if overlapping
+    // if (mh.bottom > ref.current.getBoundingClientRect().top) {
+    //   const t = Math.max(0, window.scrollY + (mh.fixed ? 0 : mh.height));
+    //   ref.current.style.setProperty('top', `${t}px`, 'important');
+    // }
+
     ref.current.style.setProperty('max-height', '98vh', 'important');
+
     ref.current.style.paddingRight = `calc(${
       window.innerWidth - document.body.offsetWidth
     }px + ${ref.current.style.paddingRight ?? 0})`;
