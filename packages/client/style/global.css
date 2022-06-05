@@ -225,3 +225,17 @@ html, body {
 .z-index-1 {
     z-index: 1;
 }
+
+/* slightly transparent fallback */
+.backdrop-blur {
+    background-color: rgba(255, 255, 255, .9);
+  }
+  
+  /* if backdrop support: very transparent and blurred */
+  @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+    .backdrop-blur {
+      background-color: rgba(255, 255, 255, .5);
+      -webkit-backdrop-filter: blur(2em);
+      backdrop-filter: blur(2em);
+    }
+  }

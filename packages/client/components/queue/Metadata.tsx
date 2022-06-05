@@ -268,7 +268,6 @@ export function MetadataQueue() {
       refetchOnMount: 'always',
       onSettled: () => {
         itemsMapRef.current = { ...itemsMapRef.current, ...genItemsMap() };
-        console.debug('count', Object.keys(itemsMapRef.current).length);
       },
     }
   );
@@ -372,8 +371,6 @@ export function MetadataQueue() {
     queueState?.data?.finished?.length ||
     queueState?.data?.queued?.length
   );
-
-  console.debug('queueState', queueState?.data);
 
   return (
     <>

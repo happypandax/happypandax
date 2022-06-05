@@ -67,6 +67,11 @@ export default class _ReaderState extends StateBlock {
     true
   );
 
+  static blurryBg = defineAtom(
+    { default: true, effects_UNSTABLE: [localStorageEffect('blurry_bg')] },
+    true
+  );
+
   static direction = defineAtom(
     {
       default: ReadingDirection.TopToBottom,

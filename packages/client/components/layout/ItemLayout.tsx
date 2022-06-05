@@ -67,10 +67,9 @@ export function ParallaxDiv({
             return;
           }
 
-          ref.current.style.transform = `translate(0, ${
-            runningAnimationRef.current.startPos -
+          ref.current.style.transform = `translate(0, ${runningAnimationRef.current.startPos -
             runningAnimationRef.current.lastOffset
-          }px)`;
+            }px)`;
 
           runningAnimationRef.current.lastOffset += delta;
           requestAnimationFrame(loop);
@@ -216,6 +215,37 @@ export function ItemHeaderParallax({
           />
         </ParallaxDiv>
       </Container>
+    </div>
+  );
+}
+
+export function BlurryBackgroundContainer({
+  data,
+  ...props
+}: React.ComponentProps<typeof Container> & {
+  data?: DeepPick<ServerItemWithProfile, 'id' | 'profile'>;
+}) {
+  const containerRef = useRef<HTMLDivElement>();
+  const imgRef = useRef<HTMLImageElement>(new Image());
+  const colorThief = useMemo(() => new ColorThief(), []);
+
+  useEffect(() => {
+    const setColor = () => {
+      const c = colorThief.getColor(imgRef.current);
+      containerRef.current.style.backgroundColor = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+    };
+    imgRef.current.src = data.profile.data
+    if (imgRef.current.complete) {
+      setColor();
+    } else {
+      imgRef.current.onload = setColor;
+    }
+  }, [data?.id]);
+
+  return (
+    <div className={styles.blurry_background_parent}>
+      <div ref={containerRef} className={styles.blurry_background_container} style={{ backgroundImage: `url(${data.profile.data})` }} />
+      <Container {...props} />
     </div>
   );
 }

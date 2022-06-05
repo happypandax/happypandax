@@ -279,6 +279,7 @@ export function PaginatedView({
   bottomPagination?: boolean;
 } & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
   React.ComponentProps<typeof Segment>) {
+  const [hasScrolled, setHasSCrolled] = useState(false);
   const [canLoadMore, setCanLoadMore] = useState(true);
 
   const onLoadMore = useCallback(
@@ -286,6 +287,8 @@ export function PaginatedView({
       ? _.throttle(() => {
           loadMore();
           setCanLoadMore(false);
+          setHasSCrolled(false)
+
         }, 3000)
       : undefined,
     [loadMore]
@@ -330,6 +333,7 @@ export function PaginatedView({
     if (itemsPerPage * +(activePage ?? 1) < totalItemCount) {
       setTimeout(() => {
         setCanLoadMore(true);
+        setHasSCrolled(true);
       }, 500);
     }
   }, [itemCount, activePage]);
@@ -352,10 +356,15 @@ export function PaginatedView({
           fireOnMount={false}
           className={classNames({ 'no-padding-segment': !paddedChildren })}
           onUpdate={useCallback(
-            (e, { calculations: { pixelsPassed, height } }) => {
+            (e, { calculations: { pixelsPassed, height, direction } }) => {
               const pixelsLeft = height - pixelsPassed - getClientHeight();
+              if (direction === 'down') {
+                setHasSCrolled(true)
+
+              }
               if (
                 infinite &&
+                hasScrolled &&
                 canLoadMore &&
                 !loading &&
                 itemCount &&
@@ -366,7 +375,7 @@ export function PaginatedView({
                 onLoadMore();
               }
             },
-            [infinite, onLoadMore, canLoadMore, loading]
+            [infinite, onLoadMore, canLoadMore, loading, hasScrolled]
           )}>
           {children}
         </Visibility>

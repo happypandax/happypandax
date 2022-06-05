@@ -240,15 +240,6 @@ export function StickySidebar({
   }, [visible]);
 
   useEffect(() => {
-    const mh = mainMenuProps();
-    // // if overlapping
-    // if (mh.bottom > ref.current.getBoundingClientRect().top) {
-    //   const t = Math.max(0, window.scrollY + (mh.fixed ? 0 : mh.height));
-    //   ref.current.style.setProperty('top', `${t}px`, 'important');
-    // }
-
-    ref.current.style.setProperty('max-height', '98vh', 'important');
-
     ref.current.style.paddingRight = `calc(${
       window.innerWidth - document.body.offsetWidth
     }px + ${ref.current.style.paddingRight ?? 0})`;

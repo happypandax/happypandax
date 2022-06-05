@@ -179,6 +179,8 @@ function CanvasImage({
   direction?: ReadingDirection;
   focused?: boolean;
 }) {
+  // TODO: Use mobx or something instead of relying on useState for this part
+
   const preload = useRef(new Image());
 
   if (href && !preload.current.src) {
@@ -634,6 +636,8 @@ function Canvas({
   onFocusChild?: (number) => void;
   onEnd?: () => void;
 }) {
+  // TODO: Use mobx or something instead of relying on useState for this part
+
   const ref = useRef<HTMLDivElement>();
   const refMouseDownEvent = useRef<React.MouseEvent<HTMLDivElement>>(null);
   const refIsPanning = useRef<boolean>(false);
@@ -1034,6 +1038,7 @@ function Canvas({
         [scroller]
       )}>
       <div className="top-content text-center">{!!label && label}</div>
+
       <div
         ref={refContent}
         className={classNames(
@@ -1069,6 +1074,7 @@ export default function Reader({
   fit: initialFit,
   wheelZoom: initialWheelZoom,
   direction: initialDirection,
+  blurryBg: initialBlurryBg,
   scaling: initialScaling,
   padded,
   children,
@@ -1078,6 +1084,7 @@ export default function Reader({
   autoNavigateInterval?: number;
   fit?: ItemFit;
   stretchFit?: boolean;
+  blurryBg?: boolean;
   autoNavigate?: boolean;
   direction?: ReadingDirection;
   scaling?: ImageSize | 0;
@@ -1102,6 +1109,10 @@ export default function Reader({
   const wheelZoom = useInitialRecoilValue(
     ReaderState.wheelZoom(stateKey),
     initialWheelZoom
+  );
+  const blurryBg = useInitialRecoilValue(
+    ReaderState.blurryBg(stateKey),
+    initialBlurryBg
   );
   const stretchFit = useInitialRecoilValue(
     ReaderState.stretchFit(stateKey),
@@ -1489,6 +1500,16 @@ export default function Reader({
       blurring
       dimmed={isEnd}
       className={classNames({ 'no-padding-segment': !padded }, 'no-margins')}>
+      {blurryBg && (
+        <div
+          style={{
+            backgroundImage: `url(${
+              pages?.[pageWindow?.[pageFocus]]?.profile?.data
+            })`,
+          }}
+          className="reader-blurry-canvas"
+        />
+      )}
       <Dimmer
         active={isEnd}
         className="fluid-dimmer"
@@ -2049,6 +2070,9 @@ export function ReaderSettings({
   const [direction, setDirection] = useRecoilState(
     ReaderState.direction(stateKey)
   );
+  const [blurryBg, setBlurryBg] = useRecoilState(
+    ReaderState.blurryBg(stateKey)
+  );
 
   return (
     <Segment basic size="tiny" {...props}>
@@ -2137,6 +2161,18 @@ export function ReaderSettings({
             onChange={useCallback((ev, data) => {
               ev.preventDefault();
               setWheelZoom(data.checked);
+            }, [])}
+          />
+        </Form.Field>
+
+        <Form.Field>
+          <label>{t`Blurry background`}</label>
+          <Checkbox
+            toggle
+            checked={blurryBg}
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+              setBlurryBg(data.checked);
             }, [])}
           />
         </Form.Field>

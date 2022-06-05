@@ -1,5 +1,5 @@
 import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
-import { Divider, Label } from 'semantic-ui-react';
+import { Divider } from 'semantic-ui-react';
 
 import {
   CollectionHeaderData,
@@ -7,7 +7,6 @@ import {
   CollectionItemHeader,
 } from '../../../components/layout/CollectionLayout';
 import { ImageSize, ItemType } from '../../../misc/enums';
-import t from '../../../misc/lang';
 import { ServerCollection } from '../../../misc/types';
 import { urlparse } from '../../../misc/utility';
 import { ServiceType } from '../../../services/constants';
@@ -21,7 +20,7 @@ const stateKey = 'collection_page';
 
 interface PageProps extends LibraryPageProps {
   collection: CollectionHeaderData &
-    DeepPick<ServerCollection, 'gallery_count'>;
+  DeepPick<ServerCollection, 'gallery_count'>;
 }
 
 export async function getServerSideProps(
@@ -109,12 +108,7 @@ export default function Page({ collection, ...props }: PageProps) {
         relatedType: ItemType.Gallery,
       }}>
       <CollectionItemHeader data={collection} />
-      <Divider horizontal>
-        <Label>
-          {t`Total count`}
-          <Label.Detail>{collection?.gallery_count}</Label.Detail>
-        </Label>
-      </Divider>
+      <Divider horizontal hidden />
     </LibraryPage>
   );
 }

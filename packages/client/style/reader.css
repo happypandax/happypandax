@@ -81,3 +81,34 @@
     right: 50px;
     z-index: 1;
 }
+
+.reader-blurry-canvas::before {
+    content: '';
+    background-color: #000;
+    opacity: 0.5;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.reader-blurry-canvas {
+    transition: none;
+    background-color: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    filter: blur(15px) !important;
+    -webkit-filter: blur(15px) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    width: 100vw;
+    height: 100vh;
+    transform: scale(1.3);
+    opacity: 1;
+}
+
+
