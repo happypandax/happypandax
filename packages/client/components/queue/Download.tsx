@@ -12,7 +12,6 @@ import {
   Label,
   List,
   Modal,
-  Progress,
   Ref,
   Segment,
 } from 'semantic-ui-react';
@@ -28,7 +27,9 @@ import { CommandState, DrawerTab, LogType, QueueType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { DownloadHandler, DownloadItem } from '../../misc/types';
 import { AppState } from '../../state';
-import { EmptyMessage, SortableList } from '../Misc';
+import { EmptyMessage } from '../misc';
+import { Progress } from '../misc/Progress';
+import { SortableList } from '../misc/SortableList';
 import { IsolationLabel, OptionField } from '../Settings';
 import { HandlerLabelGroup, HandlerSortableItem, ItemQueueBase } from './index';
 

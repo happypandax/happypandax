@@ -12,7 +12,7 @@ import {
 } from 'semantic-ui-react';
 
 import t from '../misc/lang';
-import { Markdown } from './Misc';
+import { Markdown } from './misc';
 
 function StepBody({
   show,

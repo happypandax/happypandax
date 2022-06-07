@@ -1,5 +1,5 @@
 import MainMenu from '../Menu';
-import { Visible } from '../Misc';
+import { Visible } from '../misc';
 import {
   ClearFilterButton,
   FilterButtonInput,

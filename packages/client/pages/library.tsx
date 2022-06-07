@@ -52,7 +52,7 @@ import {
   PageInfoMessage,
   PageTitle,
   Visible,
-} from '../components/Misc';
+} from '../components/misc';
 import { ItemSearch } from '../components/Search';
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
@@ -266,15 +266,14 @@ function LibrarySidebar() {
 
   return (
     <Portal open>
-
-    <StickySidebar
-      className="sticky-page-sidebar"
-      visible={sidebarVisible}
-      onHide={useCallback(() => {
-        setSidebarVisible(false);
-      }, [])}>
-      {sidebarData && <GalleryDataTable data={sidebarData} />}
-    </StickySidebar>
+      <StickySidebar
+        className="sticky-page-sidebar"
+        visible={sidebarVisible}
+        onHide={useCallback(() => {
+          setSidebarVisible(false);
+        }, [])}>
+        {sidebarData && <GalleryDataTable data={sidebarData} />}
+      </StickySidebar>
     </Portal>
   );
 }
@@ -304,8 +303,10 @@ function LibrarySettings({
   const [view, setView] = useRecoilState(LibraryState.view(stateKey));
   const [series, setSeries] = useRecoilState(LibraryState.series);
   const [infinite, setInfinite] = useRecoilState(LibraryState.infinite);
+
   const [limit, setLimit] = useRecoilState(LibraryState.limit);
   const [display, setDisplay] = useRecoilState(LibraryState.display);
+
   const [externalViewer, setExternalViewer] = useRecoilState(
     AppState.externalViewer
   );
@@ -436,7 +437,6 @@ function LibrarySettings({
               }, [])}
             />
           </Form.Field>
-
           <Form.Field>
             <label>{t`Infinite scroll`}</label>
             <Checkbox
@@ -707,11 +707,12 @@ export default function Page({
 
     if (!isFetching && fetchNextPage) {
       let p = initialPage + data.pages.length;
-      console.log(p);
       fetchNextPage({
         pageParam: p,
       });
+
       setPage(p);
+
       router.replace(urlstring({ p }), undefined, {
         shallow: true,
         scroll: false,

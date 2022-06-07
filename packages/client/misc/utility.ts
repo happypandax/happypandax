@@ -95,6 +95,24 @@ export function scrollToElement(element: HTMLElement, smooth = true) {
   });
 }
 
+export function isElementInViewport(
+  el: HTMLElement,
+  opts?: { offset?: number }
+) {
+  const rect = el.getBoundingClientRect();
+
+  const offset = opts?.offset || 0;
+
+  return (
+    rect.bottom >= 0 - offset &&
+    rect.right >= 0 - offset &&
+    rect.top <=
+      (window.innerHeight || document.documentElement.clientHeight) + offset &&
+    rect.left <=
+      (window.innerWidth || document.documentElement.clientWidth) + offset
+  );
+}
+
 function formatQuery(query: StringifiableRecord) {
   const q = { ...query };
   Object.entries(q).forEach(([k, v]) => {
@@ -342,4 +360,47 @@ export function JSONSafe<T extends Record<any, any>>(obj: T) {
 
 export function defined(value) {
   return value !== undefined;
+}
+
+type DebounceArgs = Parameters<typeof _.debounce>;
+
+/**
+ * Like _.debounce, but collects all the arguments from each call in an array and passes them to the callback
+ */
+export function debounceCollect<P extends any[], T extends (args: P) => any>(
+  fn: T,
+  wait: DebounceArgs[1],
+  {
+    maxSize = Infinity,
+    ...debounceOptions
+  }: { maxSize?: number } & DebounceArgs[2] = {}
+): _.DebouncedFunc<T> {
+  const args = [] as P;
+
+  const runFn = () => {
+    const r = fn(args);
+    args.length = 0;
+    return r;
+  };
+
+  const debounced = _.debounce(runFn, wait, debounceOptions);
+
+  const cancel = () => {
+    debounced.cancel();
+
+    args.length = 0;
+  };
+
+  const queuedDebounce = (a: P) => {
+    args.push(...a);
+
+    if (args.length >= maxSize) debounced.flush();
+    else return debounced();
+  };
+
+  queuedDebounce.cancel = cancel;
+
+  queuedDebounce.flush = debounced.flush;
+
+  return queuedDebounce;
 }

@@ -1,6 +1,7 @@
+import classNames from 'classnames';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   Divider,
   Icon,
@@ -8,7 +9,6 @@ import {
   List,
   Loader,
   Menu,
-  Progress,
   Ref,
 } from 'semantic-ui-react';
 
@@ -24,7 +24,9 @@ import { LogType, QueueType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { DownloadHandler, MetadataHandler } from '../../misc/types';
 import { AppState } from '../../state';
-import { ServerLog, SortableItemItem, SortableList } from '../Misc';
+import { ServerLog } from '../misc';
+import { Progress } from '../misc/Progress';
+import { SortableItemItem, SortableList } from '../misc/SortableList';
 
 export function ItemQueueBase({
   Settings,
@@ -33,6 +35,7 @@ export function ItemQueueBase({
   running,
   log_type,
   queue_size,
+  finish_size,
   percent,
   active_size,
   queue_type,
@@ -42,6 +45,7 @@ export function ItemQueueBase({
   running: boolean;
   log_type: LogType;
   queue_size: number;
+  finish_size: number;
   percent: number;
   active_size: number;
   queue_type: QueueType;
@@ -56,6 +60,7 @@ export function ItemQueueBase({
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   const setDrawerSticky = useSetRecoilState(AppState.drawerSticky);
+  const drawerExpanded = useRecoilValue(AppState.drawerExpanded);
 
   const clearQueue = useMutationType(MutatationType.CLEAR_QUEUE, {
     onMutate: () => setClearLoading(true),
@@ -129,11 +134,11 @@ export function ItemQueueBase({
           <Icon name="remove" /> {t`Clear`}
         </Menu.Item>
         <Menu.Item>
-          <Label basic color="black">
-            {t`Active`}:<Label.Detail>{active_size}</Label.Detail>
-          </Label>
-          <Label basic color="black">
-            {t`In queue`}:<Label.Detail>{queue_size}</Label.Detail>
+          <Label color="black">
+            {t`Session`}:
+            <Label.Detail>
+              {queue_size} ⟹ {active_size} ⟹ {finish_size}
+            </Label.Detail>
           </Label>
         </Menu.Item>
         <Menu.Menu position="right">
@@ -155,7 +160,10 @@ export function ItemQueueBase({
       {logVisible && (
         <ServerLog
           type={log_type}
-          className="max-100-h no-margins"
+          className={classNames('no-margins', {
+            'max-300-h': drawerExpanded,
+            'max-100-h': !drawerExpanded,
+          })}
           attached="top"
         />
       )}
@@ -164,7 +172,7 @@ export function ItemQueueBase({
         className="no-margins"
         autoSuccess
         value={percent}
-        total={queue_size}
+        total={100}
       />
       <Divider hidden horizontal />
     </>

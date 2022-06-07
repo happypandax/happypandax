@@ -23,9 +23,9 @@ import PageLayout from '../../../../components/layout/Page';
 import {
   PageTitle,
   SimilarItemsSlider,
-  Slider,
   SliderElement,
-} from '../../../../components/Misc';
+} from '../../../../components/misc';
+import { Slider } from '../../../../components/Slider';
 import CardView from '../../../../components/view/CardView';
 import ListView from '../../../../components/view/ListView';
 import { ImageSize, ItemType } from '../../../../misc/enums';

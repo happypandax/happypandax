@@ -15,7 +15,7 @@ import {
 import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import PageLayout from '../components/layout/Page';
 import MainMenu from '../components/Menu';
-import { PageTitle } from '../components/Misc';
+import { PageTitle } from '../components/misc';
 import { ItemType, ViewType } from '../misc/enums';
 import t from '../misc/lang';
 import { ServerGallery, ServerItem } from '../misc/types';

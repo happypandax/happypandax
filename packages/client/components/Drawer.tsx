@@ -25,7 +25,8 @@ import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import { EmptySegment, Slider, SliderElement, Visible } from './Misc';
+import { EmptySegment, Visible } from './misc';
+import { Slider, SliderElement } from './misc/Slider';
 import { DownloadLabel, DownloadQueue } from './queue/Download';
 import { MetadataLabel, MetadataQueue } from './queue/Metadata';
 import ListView from './view/ListView';

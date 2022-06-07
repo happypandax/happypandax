@@ -2664,6 +2664,8 @@ __metadata:
     jest: ^27.0.6
     liquidjs: ^9.36.0
     lodash: ^4.17.21
+    mobx: ^6.6.0
+    mobx-react-lite: ^3.4.0
     next: ^12.0.10
     next-connect: ^0.11.1
     next-session: ^4.0.4
@@ -15934,6 +15936,28 @@ fsevents@^1.2.7:
   bin:
     mkdirp: bin/cmd.js
   checksum: 1aa3a6a2d7514f094a91329ec09994f5d32d2955a4985ecbb3d86f2aaeafc4aa11521f98d606144c1d49cd9835004d9a73342709b8c692c92e59eacf37412468
+  languageName: node
+  linkType: hard
+
+"mobx-react-lite@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "mobx-react-lite@npm:3.4.0"
+  peerDependencies:
+    mobx: ^6.1.0
+    react: ^16.8.0 || ^17 || ^18
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: a89caffdd37888c8c6b8cdf9f190dd31ea601351935f3c75fb5adedccfa8ef5510e63af49ac79e4dbc58331bac68bfd96ff3199b5c45b494bf4d12733786117f
+  languageName: node
+  linkType: hard
+
+"mobx@npm:^6.6.0":
+  version: 6.6.0
+  resolution: "mobx@npm:6.6.0"
+  checksum: 295e27e9608d93d435cbf4c2de942753db5697ba549c356ed1bf8fa26e094005c203d6522ee59222fa9f116e21408fc4c67ca580f7bbd8d542a777d7caac397c
   languageName: node
   linkType: hard
 

@@ -5,7 +5,7 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { Divider, Grid, Segment } from 'semantic-ui-react';
 
 import { LoginForm } from '../components/Login';
-import { PageTitle } from '../components/Misc';
+import { PageTitle } from '../components/misc';
 import t from '../misc/lang';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';

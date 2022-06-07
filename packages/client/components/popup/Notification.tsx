@@ -5,7 +5,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { Header, Icon, Popup, Segment } from 'semantic-ui-react';
 
 import { AppState } from '../../state';
-import { EmptySegment } from '../Misc';
+import { EmptySegment } from '../misc';
 import styles from './Notification.module.css';
 
 export function Notification({

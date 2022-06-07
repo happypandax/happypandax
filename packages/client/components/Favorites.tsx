@@ -1,7 +1,7 @@
 import { Divider, Grid, Header, Segment } from 'semantic-ui-react';
 
 import t from '../misc/lang';
-import { EmptySegment, TitleSegment } from './Misc';
+import { EmptySegment, TitleSegment } from './misc';
 
 // TODO; these should use metalists
 

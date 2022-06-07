@@ -16,7 +16,7 @@ import { MutatationType, useMutationType } from '../../client/queries';
 import t from '../../misc/lang';
 import { FieldPath, ServerFilter } from '../../misc/types';
 import { urlstring } from '../../misc/utility';
-import { LabelAccordion } from '../Misc';
+import { LabelAccordion } from '../misc';
 
 export type FilterCardData = DeepPick<
   ServerFilter,

@@ -53,16 +53,20 @@ function ListViewList<T>({
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil(
-    ((items?.length ?? 0) + (loading ? itemsPerPage : 0)) / itemsPerRow
+    ((items?.length ?? 0) + ((loading && itemsPerPage) ? itemsPerPage : 0)) / itemsPerRow
   );
 
   const resize = useCallback(() => {
     if (itemRef.current) {
       if (dynamicRowHeight) {
         const margin = size === 'small' ? 7 : 15;
+        console.debug("width", itemRef.current.children[0].offsetWidth)
+        console.debug("height", itemRef.current.children[0].offsetHeight)
         setItemWidth(itemRef.current.children[0].offsetWidth);
         setRowHeight(itemRef.current.children[0].offsetHeight + margin);
       } else {
+        console.debug("width 2", itemRef.current.offsetWidth)
+        console.debug("height 2", itemRef.current.offsetHeight)
         setItemWidth(itemRef.current.offsetWidth);
         setRowHeight(itemRef.current.offsetHeight);
       }
@@ -93,6 +97,18 @@ function ListViewList<T>({
       setWidth(initialWidth);
     }
   }, [initialWidth]);
+
+
+  console.table({
+    autoHeight,
+    scrollTop,
+    width,
+    height,
+    rowCount,
+    itemsPerRow,
+    itemsPerPage,
+    rowHeight
+  })
 
   return (
     <List
@@ -170,7 +186,7 @@ export default function ListView<T>({
 } & ListViewProps<T> &
   Omit<
     React.ComponentProps<typeof PaginatedView> &
-      React.ComponentProps<typeof ViewBase>,
+    React.ComponentProps<typeof ViewBase>,
     'children' | 'itemCount' | 'paddedChildren'
   >) {
   return (

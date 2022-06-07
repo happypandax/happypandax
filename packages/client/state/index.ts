@@ -66,8 +66,6 @@ export function useInitialRecoilValue<T>(state: RecoilState<T>, optional?: T) {
   cls.forEach((c) => StateBlock.setup(c));
 })(AppState, LibraryState, DataState, ReaderState, MiscState, SearchState);
 
-console.log(LibraryState.sort.prototype);
-
 export function getStateKey(
   atom: { key: string } | ((p) => any),
   stateKey?: string

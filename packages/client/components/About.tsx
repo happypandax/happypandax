@@ -6,20 +6,17 @@ import {
   Header,
   Icon,
   Label,
-  List,
   Modal,
-  Progress,
   Segment,
   Tab,
   Table,
 } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../client/queries';
-import { CommandState } from '../misc/enums';
 import t from '../misc/lang';
 import { CommandProgress } from '../misc/types';
-import { dateFromTimestamp } from '../misc/utility';
-import { EmptySegment } from './Misc';
+import { EmptySegment } from './misc';
+import { ActivityList } from './misc/ActivityList';
 
 function InfoPane() {
   return (
@@ -136,83 +133,16 @@ function InfoPane() {
 }
 
 function ActivityPane() {
-  const { data } = useQueryType(QueryType.COMMAND_PROGRESS);
+  const { data } = useQueryType(QueryType.COMMAND_PROGRESS, undefined, {
+    refetchInterval: 1000,
+    refetchOnMount: true,
+  });
 
   return (
     <Segment basic className="small-padding-segment max-400-h">
       {!data?.data?.length && <EmptySegment />}
       {!!data?.data?.length && (
-        <List size="mini">
-          {data.data.map((p: CommandProgress) => (
-            <List.Item key={p.id}>
-              <List.Content>
-                <List.Header>
-                  <span className="right">
-                    <Label size="mini">
-                      {t`ID`}:<Label.Detail>{p.id}</Label.Detail>
-                    </Label>
-                    <Label size="mini" basic color="black">
-                      {t`Status`}:
-                      <Label.Detail>
-                        {p.state === CommandState.failed
-                          ? t`Failed`
-                          : p.state === CommandState.finished
-                          ? t`Finished`
-                          : p.state === CommandState.in_queue
-                          ? t`In Queue`
-                          : p.state === CommandState.in_service
-                          ? t`In Service`
-                          : p.state === CommandState.out_of_service
-                          ? t`Out of Service`
-                          : p.state === CommandState.started
-                          ? t`Started`
-                          : p.state === CommandState.stopped
-                          ? t`Stopped`
-                          : t`Unknown`}
-                      </Label.Detail>
-                    </Label>
-                  </span>
-                  {p.title}
-                </List.Header>
-                <Progress
-                  precision={2}
-                  active
-                  indicating
-                  size="small"
-                  progress="percent"
-                  percent={
-                    p.max
-                      ? undefined
-                      : [
-                          CommandState.finished,
-                          CommandState.stopped,
-                          CommandState.failed,
-                        ].includes(p.state)
-                      ? 100
-                      : 99
-                  }
-                  total={p.max ? p.max : undefined}
-                  value={p.max ? p.value : undefined}
-                  success={
-                    p.max ? undefined : p.state === CommandState.finished
-                  }
-                  autoSuccess={p.max ? true : false}>
-                  {p.subtitle}
-                </Progress>
-                <List.Description className="sub-text">
-                  <List divided horizontal size="mini">
-                    <List.Item>
-                      {dateFromTimestamp(p.timestamp, { relative: true })}
-                    </List.Item>
-                    <List.Item>
-                      <List.Content>{p.text}</List.Content>
-                    </List.Item>
-                  </List>
-                </List.Description>
-              </List.Content>
-            </List.Item>
-          ))}
-        </List>
+        <ActivityList data={data.data as CommandProgress[]} detail />
       )}
     </Segment>
   );

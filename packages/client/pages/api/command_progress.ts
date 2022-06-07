@@ -1,4 +1,5 @@
 import { handler } from '../../misc/requests';
+import { CommandIDKey } from '../../misc/types';
 import { urlparse } from '../../misc/utility';
 import { ServiceType } from '../../services/constants';
 
@@ -9,7 +10,7 @@ export default handler().get(async (req, res) => {
 
   return server
     .command_progress({
-      command_ids: command_ids as number[],
+      command_ids: command_ids as CommandIDKey[],
     })
     .then((r) => {
       res.status(200).json(r);

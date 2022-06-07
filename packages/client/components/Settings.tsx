@@ -22,7 +22,7 @@ import { useConfig } from '../client/hooks/settings';
 import t from '../misc/lang';
 import { defined } from '../misc/utility';
 import { AppState, MiscState } from '../state';
-import { JSONTextEditor } from './Misc';
+import { JSONTextEditor } from './misc';
 import { Plugins } from './Plugin';
 
 function namespaceExists(

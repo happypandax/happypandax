@@ -73,8 +73,8 @@ import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import { SimilarItemsSlider, Slider, SliderElement } from './Misc';
-import Rating from './Rating';
+import Rating from './misc/Rating';
+import { SimilarItemsSlider, Slider, SliderElement } from './misc/Slider';
 
 function getOptimalImageSize() {
   const w = getClientWidth();
@@ -179,7 +179,7 @@ function CanvasImage({
   direction?: ReadingDirection;
   focused?: boolean;
 }) {
-  // TODO: Use mobx or something instead of relying on useState for this part
+  // TODO: Reimplment using mobx or something instead of relying on useState
 
   const preload = useRef(new Image());
 

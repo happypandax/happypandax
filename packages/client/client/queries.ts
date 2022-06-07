@@ -51,10 +51,11 @@ export enum QueryType {
   PLUGINS,
   PLUGIN_UPDATE,
   COMMAND_PROGRESS,
+  ACTIVITIES,
 }
 
 export enum MutatationType {
-  LOGIN = 50,
+  LOGIN = 100,
   UPDATE_ITEM,
   UPDATE_METATAGS,
   UPDATE_CONFIG,
@@ -281,6 +282,7 @@ export function useQueryType<
 
   const key = getQueryTypeKey(type, variables, options?.onQueryKey);
   let endpoint = '';
+  let method: AxiosRequestConfig['method'] = 'GET';
 
   switch (type) {
     case QueryType.SERVER_STATUS: {
@@ -390,6 +392,12 @@ export function useQueryType<
       break;
     }
 
+    case QueryType.ACTIVITIES: {
+      endpoint = '/api/activities';
+      throw Error('Not implemented');
+      break;
+    }
+
     default:
       throw Error('Invalid query type');
   }
@@ -400,8 +408,8 @@ export function useQueryType<
     r = useInfiniteQuery(
       key,
       _.throttle((ctx) => {
-        return axios.get(
-          urlstring(endpoint, options.infinitePageParam(variables, ctx))
+        return axios.request(
+          {method, url: urlstring(endpoint, options.infinitePageParam(variables, ctx))}
         );
       }, 100),
       opts
@@ -410,7 +418,7 @@ export function useQueryType<
     r = useQuery(
       key,
       _.throttle(() => {
-        return axios.get(urlstring(endpoint, variables));
+        return axios.request({method, url: urlstring(endpoint, variables)});
       }, 100),
       opts
     );
@@ -572,6 +580,11 @@ interface FetchCommandProgress<T = undefined> extends QueryAction<T> {
   dataType: Unwrap<ReturnType<ServerService['command_progress']>>;
   variables: Parameters<ServerService['command_progress']>[0];
 }
+interface FetchActivities<T = undefined> extends QueryAction<T> {
+  type: QueryType.ACTIVITIES;
+  dataType: Unwrap<ReturnType<ServerService['activities']>>;
+  variables: Parameters<ServerService['activities']>[0];
+}
 
 type QueryActions<T = undefined> =
   | FetchProfile<T>
@@ -594,6 +607,7 @@ type QueryActions<T = undefined> =
   | FetchPluginUpdate<T>
   | FetchPlugins<T>
   | FetchCommandProgress<T>
+  | FetchActivities<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
@@ -797,6 +811,13 @@ export class Query {
         return queryClient.fetchQuery(
           key,
           () => axios.get<R>(urlstring('/api/search_items', variables as any)),
+          options
+        );
+      }
+      case QueryType.ACTIVITIES: {
+        return queryClient.fetchQuery(
+          key,
+          () => axios.post<R>(urlstring('/api/activities'), variables, ),
           options
         );
       }

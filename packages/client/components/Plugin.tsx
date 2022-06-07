@@ -20,7 +20,7 @@ import {
 import { PluginState } from '../misc/enums';
 import t from '../misc/lang';
 import { PluginData } from '../misc/types';
-import { LabelAccordion } from './Misc';
+import { LabelAccordion } from './misc';
 
 function getPluginState(state) {
   return state === PluginState.Installed || state === PluginState.Unloaded

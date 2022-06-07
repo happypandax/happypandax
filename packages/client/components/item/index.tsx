@@ -29,6 +29,7 @@ import {
   Segment,
 } from 'semantic-ui-react';
 
+import { useItemActivity } from '../../client/activity';
 import {
   DataContext,
   DataContextT,
@@ -46,6 +47,7 @@ import {
 } from '../../misc/types';
 import { maskText } from '../../misc/utility';
 import { AppState, LibraryState } from '../../state';
+import { ActivityList } from '../misc/ActivityList';
 import { GalleryCardData } from './Gallery';
 import { GroupingCardData } from './Grouping';
 import styles from './Item.module.css';
@@ -260,12 +262,34 @@ export function ItemLabel({
   );
 }
 
-export function ActivityLabel() {
-  return (
-    <TranslucentLabel floating size="mini" circular basic={false}>
-      <Loader inline active size="mini" />
-    </TranslucentLabel>
+export function ActivityLabel({
+  type,
+  data,
+  parentRef,
+}: {
+  type: ItemType;
+  data: DeepPick<ServerItem, 'id'>;
+  parentRef?: React.RefObject<HTMLElement>;
+}) {
+  const [open, setOpen] = useState(false);
+  const activities = useItemActivity(
+    { type, id: data?.id },
+    { ref: parentRef, interval: open ? 1000 : undefined }
   );
+
+  return activities.length ? (
+    <Popup
+      size="tiny"
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      trigger={
+        <TranslucentLabel floating size="mini" circular basic={false}>
+          <Loader inline active indeterminate className="double" size="mini" />
+        </TranslucentLabel>
+      }>
+      <ActivityList data={activities} />
+    </Popup>
+  ) : null;
 }
 
 function ItemCardLabels({ children }: { children: React.ReactNode }) {
@@ -289,22 +313,20 @@ function ItemDetailsModal(props: React.ComponentProps<typeof Modal>) {
   );
 }
 
-function ActivityDimmerContent(): any {
+function AlternativeContent(): any {
   const itemContext = useContext(ItemContext);
 
-  return itemContext.activityContent ? (
-    itemContext.activityContent
-  ) : (
-    <Loader active={itemContext.activity} />
-  );
+  return itemContext.AlternativeContent ? (
+    <itemContext.AlternativeContent />
+  ) : null;
 }
 
-function ActivityDimmer() {
+function AlternativeDimmer() {
   const itemContext = useContext(ItemContext);
 
   return (
-    <Dimmer active={itemContext.activity} className="no-padding-segment">
-      <ActivityDimmerContent />
+    <Dimmer active={itemContext.alternative} className="no-padding-segment">
+      <AlternativeContent />
     </Dimmer>
   );
 }
@@ -369,7 +391,7 @@ export function ItemCardContent({
               <Details data={itemContext.detailsData} />
             </ItemDetailsModal>
           )}
-        {itemContext.horizontal && <ActivityDimmer />}
+        {itemContext.horizontal && <AlternativeDimmer />}
         <Dimmer
           active={itemContext.horizontal && itemContext.hover}
           inverted
@@ -419,13 +441,35 @@ export function ItemCardActionContent({
 
   return (
     <List horizontal={itemContext.horizontal}>
-      {itemContext?.size === 'mini' && itemContext.hiddenAction !== false
+      {itemContext?.size === 'mini' && !itemContext.showMiniActionContent
         ? null
         : children}
     </List>
   );
 }
 
+export function ItemCardHorizontalDetailContent({
+  children,
+  tertiary = true,
+  middle = true,
+  ...props
+}: {
+  middle?: boolean;
+  children: React.ReactNode;
+} & React.ComponentProps<typeof Segment>) {
+  return (
+    <Segment
+      {...props}
+      className={classNames(
+        'small-padding-segment no-margins',
+        props.className
+      )}>
+      {middle ? <div className="centered-container">{children}</div> : children}
+    </Segment>
+  );
+}
+
+// TODO: any way to add this? any benefits?
 function SemanticNextImage({
   children,
   width,
@@ -510,11 +554,11 @@ export function ItemCardImage({
       )}
       dimmer={{
         active:
-          (itemContext.hover || itemContext.activity) &&
+          (itemContext.hover || itemContext.alternative) &&
           !itemContext.horizontal,
-        inverted: itemContext.activity ? false : true,
-        children: itemContext.activity ? (
-          <ActivityDimmerContent />
+        inverted: itemContext.alternative ? false : true,
+        children: itemContext.alternative ? (
+          <AlternativeContent />
         ) : (
           <>
             {!!itemContext.Details &&
@@ -549,11 +593,13 @@ export const ItemCard = React.forwardRef(
       onDetailsOpen,
       labels,
       actionContent: ActionContent,
+      horizontalDetailContent: HorizontalDetailContent,
+      horizontalDetailPosition = 'right',
       loading,
-      activity,
-      hiddenLabel,
-      hiddenAction,
-      activityContent,
+      alternative,
+      hideLabel,
+      showMiniActionContent,
+      alternativeContent: AlternativeContentComponent,
       fluid,
       horizontal,
       image: Image,
@@ -569,17 +615,19 @@ export const ItemCard = React.forwardRef(
       type: ItemType;
       labels?: React.ReactNode;
       actionContent?: React.ElementType;
+      horizontalDetailContent?: React.ElementType;
       details?: React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>;
       detailsData?: PartialExcept<ServerItem, 'id'>;
       image?: React.ElementType;
       href?: string;
       disableModal?: boolean;
       onDetailsOpen?: () => void;
-      hiddenLabel?: boolean;
-      hiddenAction?: boolean;
+      hideLabel?: boolean;
+      showMiniActionContent?: boolean;
+      horizontalDetailPosition?: 'left' | 'right';
       loading?: boolean;
-      activity?: boolean;
-      activityContent?: React.ReactNode;
+      alternative?: boolean;
+      alternativeContent?: React.ElementType;
       fluid?: boolean;
       draggable?: boolean;
       horizontal?: boolean;
@@ -622,7 +670,7 @@ export const ItemCard = React.forwardRef(
 
     let itemSize = size ?? 'medium';
 
-    const labelContent = hiddenLabel ? null : labels;
+    const labelContent = hideLabel ? null : labels;
 
     const imageElement = Image ? (
       horizontal ? (
@@ -645,13 +693,13 @@ export const ItemCard = React.forwardRef(
           hover,
           href,
           disableModal,
-          hiddenAction,
+          showMiniActionContent,
           openMenu,
-          activity,
-          activityContent,
+          alternative,
           onDetailsOpen,
           Details,
           detailsData,
+          AlternativeContent: AlternativeContentComponent,
           ActionContent,
           labels: labelContent,
           loading,
@@ -692,7 +740,6 @@ export const ItemCard = React.forwardRef(
               e.preventDefault();
               setOpenMenu(true);
             }}>
-            {}
             <Dimmer active={loading} inverted>
               <Loader inverted active={loading} />
             </Dimmer>
@@ -707,8 +754,16 @@ export const ItemCard = React.forwardRef(
                 {labelContent}
               </ItemCardLabels>
             )}
+            {horizontal &&
+              HorizontalDetailContent &&
+              horizontalDetailPosition == 'left' && <HorizontalDetailContent />}
             {horizontal && !!imageElement && imageElement}
             {children}
+            {horizontal &&
+              HorizontalDetailContent &&
+              horizontalDetailPosition == 'right' && (
+                <HorizontalDetailContent />
+              )}
           </Card>
         </Ref>
       </ItemContext.Provider>

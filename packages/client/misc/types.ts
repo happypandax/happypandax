@@ -1,6 +1,7 @@
 import { AnyJson } from 'happypandax-client';
 
 import {
+  ActivityType,
   CommandState,
   ImageSize,
   ItemSort,
@@ -240,6 +241,10 @@ export interface CommandProgress {
   state: CommandState;
 }
 
+export interface Activity extends CommandProgress {
+  activity_type: ActivityType;
+}
+
 export type ProfileOptions = {
   size?: ImageSize;
   url?: boolean;
@@ -281,7 +286,10 @@ export interface QueueItem {
   percent: number;
   active: boolean;
   state: CommandState;
-  success: boolean;
+  success: boolean | null;
+  in_queue: boolean;
+  finished: boolean;
+  failed: boolean;
 }
 
 export interface MetadataItem extends QueueItem {
@@ -331,3 +339,5 @@ export interface PluginData {
 }
 
 export type ThemeValue = 'momo-d' | 'momo-l';
+
+export type ItemID = number;

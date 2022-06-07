@@ -12,7 +12,7 @@ import {
 import { MutatationType, useMutationType } from '../client/queries';
 import t from '../misc/lang';
 import { AppState } from '../state';
-import { LabelAccordion } from './Misc';
+import { LabelAccordion } from './misc';
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [endpoint, setEndpoint] = useState({

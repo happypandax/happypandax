@@ -1,6 +1,6 @@
 import { Header, Loader, Table } from 'semantic-ui-react';
 
-import { TextEditor } from '../Misc';
+import { TextEditor } from '../misc/';
 
 export function DataTableItem({
   children,

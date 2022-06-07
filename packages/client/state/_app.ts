@@ -1,6 +1,7 @@
-import { DrawerTab } from '../misc/enums';
-import { NotificationData, ThemeValue } from '../misc/types';
-import StateBlock, { defineAtom } from './_base';
+import type { ActivityMap } from '../client/activity';
+import { DrawerTab, ItemType } from '../misc/enums';
+import { ItemID, NotificationData, ThemeValue } from '../misc/types';
+import StateBlock, { defineAtom, defineSelector } from './_base';
 import { localStorageEffect } from './_statehelpers';
 
 export default class _AppState extends StateBlock {
@@ -24,12 +25,12 @@ export default class _AppState extends StateBlock {
 
   static externalViewer = defineAtom({
     default: false,
-    effects_UNSTABLE: [localStorageEffect('external_viewer')],
+    effects: [localStorageEffect('external_viewer')],
   });
 
   static blur = defineAtom({
     default: true,
-    effects_UNSTABLE: [localStorageEffect('blur')],
+    effects: [localStorageEffect('blur')],
   });
 
   static sidebarWidth = defineAtom({
@@ -40,7 +41,7 @@ export default class _AppState extends StateBlock {
   static drawerExpanded = defineAtom({ default: false });
   static drawerOpen = defineAtom({
     default: false,
-    effects_UNSTABLE: [
+    effects: [
       ({ setSelf, onSet, getLoadable }) => {
         onSet((newValue) => {
           if (!getLoadable(_AppState.drawerSticky).getValue()) {
@@ -52,17 +53,17 @@ export default class _AppState extends StateBlock {
   });
   static drawerTab = defineAtom({
     default: DrawerTab.Queue,
-    effects_UNSTABLE: [localStorageEffect('drawing_tab')],
+    effects: [localStorageEffect('drawing_tab')],
   });
 
   static readingQueue = defineAtom({
     default: [] as number[],
-    effects_UNSTABLE: [localStorageEffect('reading_queue', { session: true })],
+    effects: [localStorageEffect('reading_queue', { session: true })],
   });
 
   static notifications = defineAtom({
     default: [] as NotificationData[],
-    effects_UNSTABLE: [
+    effects: [
       ({ setSelf, onSet }) => {
         onSet((newValue) => {
           if (newValue.length > 15) {
@@ -75,7 +76,7 @@ export default class _AppState extends StateBlock {
 
   static notificationAlert = defineAtom({
     default: [] as NotificationData[],
-    effects_UNSTABLE: [
+    effects: [
       ({ setSelf, onSet }) => {
         onSet((newValue) => {
           if (notifID) {
@@ -93,6 +94,27 @@ export default class _AppState extends StateBlock {
       },
     ],
   });
+
+  static itemActivityState = defineAtom({
+    default: {} as ActivityMap,
+  });
+
+  static itemActivity = defineSelector(
+    {
+      get: ({ type, item_id }: { type: ItemType; item_id: ItemID }) => ({
+        get,
+      }) => {
+        const state = get(_AppState.itemActivityState);
+
+        if (type && item_id && state[type] && state[type][item_id]) {
+          return state[type][item_id];
+        }
+        return [];
+      },
+      cachePolicy_UNSTABLE: { eviction: 'lru', maxSize: 250 },
+    },
+    true
+  );
 }
 
 let notifID = undefined;

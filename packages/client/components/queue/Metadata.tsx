@@ -17,6 +17,7 @@ import {
   Segment,
 } from 'semantic-ui-react';
 
+import { ItemActivityManager } from '../../client/activity';
 import { useConfig, useSetting } from '../../client/hooks/settings';
 import {
   MutatationType,
@@ -25,7 +26,6 @@ import {
   useQueryType,
 } from '../../client/queries';
 import {
-  CommandState,
   ImageSize,
   ItemsKind,
   ItemType,
@@ -38,8 +38,10 @@ import GalleryCard, { galleryCardDataFields } from '../item/Gallery';
 import {
   ItemCardActionContent,
   ItemCardActionContentItem,
+  ItemCardHorizontalDetailContent,
 } from '../item/index';
-import { EmptyMessage, SortableList } from '../Misc';
+import { EmptyMessage } from '../misc';
+import { SortableList } from '../misc/SortableList';
 import { IsolationLabel, OptionField } from '../Settings';
 import { HandlerLabelGroup, ItemQueueBase } from './';
 import { HandlerSortableItem } from './index';
@@ -180,31 +182,6 @@ function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
   );
 }
 
-function MetadataItemState({ item }: { item: MetadataItem }) {
-  return (
-    <Header inverted size="tiny">
-      {item.active && <Icon name="asterisk" loading />}
-      {item.state === CommandState.finished && (
-        <Icon name="check" color="green" />
-      )}
-      {item.state === CommandState.stopped && (
-        <Icon name="exclamation circle" color="orange" />
-      )}
-      {item.state === CommandState.failed && (
-        <Icon name="exclamation triangle" color="red" />
-      )}
-      <Header.Content>
-        {item.subtitle && item.text
-          ? item.subtitle
-          : item.title
-          ? item.title
-          : t`Fetching...`}
-        <Header.Subheader>{item.text || item.subtitle}</Header.Subheader>
-      </Header.Content>
-    </Header>
-  );
-}
-
 function MetadataItemActionContent({
   item,
   onUpdate,
@@ -242,6 +219,7 @@ function MetadataItemActionContent({
 }
 
 export function MetadataQueue() {
+  const [loading, setLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [active, setActive] = useState(true);
 
@@ -251,10 +229,9 @@ export function MetadataQueue() {
     ..._.keyBy(queueState?.data?.finished, 'item_id'),
   });
 
-  const refetchEvery =
-    !active && !addLoading ? 10000 : addLoading ? 3500 : 5000;
+  const refetchEvery = addLoading ? 1500 : 3000;
 
-  const { data: queueState, refetch } = useQueryType(
+  const { data: queueState, refetch, isLoading: isLoadingState } = useQueryType(
     QueryType.QUEUE_STATE,
     {
       queue_type: QueueType.Metadata,
@@ -280,9 +257,11 @@ export function MetadataQueue() {
     onMutate: () => {
       setAddLoading(true);
       setTimeout(() => refetch(), 300);
+      setTimeout(() => ItemActivityManager.flush(), 500);
     },
     onSettled: () => {
       refetch().finally(() => setAddLoading(false));
+      ItemActivityManager.flush();
     },
   });
 
@@ -338,13 +317,28 @@ export function MetadataQueue() {
     }
   );
 
+  useEffect(() => {
+    if (isLoadingState) {
+      setLoading(isLoadingState);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!(isLoadingActive || isLoadingFinished || isLoadingQueued)) {
+      setLoading(false);
+    }
+  }, [isLoadingQueued, isLoadingActive, isLoadingFinished]);
+
   const itemMap = (i: ServerGallery) => {
     if (!itemsMap[i.id]) return null;
+
+    const item = itemsMap[i.id] as MetadataItem;
+
     return (
       <GalleryCard
-        hiddenLabel
-        activity={(itemsMap[i.id] as MetadataItem).active}
-        hiddenAction={false}
+        key={i.id}
+        hideLabel
+        showMiniActionContent
         actionContent={
           !(itemsMap[i.id] as MetadataItem).active
             ? () => (
@@ -355,10 +349,19 @@ export function MetadataQueue() {
               )
             : undefined
         }
-        activityContent={
-          <MetadataItemState item={itemsMap[i.id] as MetadataItem} />
-        }
-        key={i.id}
+        horizontalDetailPosition="right"
+        horizontalDetailContent={() => (
+          <ItemCardHorizontalDetailContent middle>
+            {item.success && <Icon name="check" color="green" />}
+            {item.failed && <Icon name="exclamation circle" color="red" />}
+            {item.active && (
+              <Loader active size="tiny" inline indeterminate color="blue" />
+            )}
+            {!item.active && !item.finished && (
+              <Icon name="ellipsis horizontal" />
+            )}
+          </ItemCardHorizontalDetailContent>
+        )}
         data={i}
         horizontal
         size="mini"
@@ -381,7 +384,8 @@ export function MetadataQueue() {
         refetch={refetch}
         running={queueState?.data?.running}
         active_size={queueState?.data?.active_size}
-        queue_size={queueState?.data?.queued_size}
+        queue_size={queueState?.data?.session?.queued}
+        finish_size={queueState?.data?.session?.finished}
         percent={queueState?.data?.percent}
         onActive={setActive}
         menuItems={useMemo(
@@ -446,29 +450,34 @@ export function MetadataQueue() {
       <Header size="tiny" textAlign="center" className="no-margins sub-text">
         <HandlerLabelGroup type="metadata" />
       </Header>
-      {isEmpty && <EmptyMessage loading={isLoadingActive} className="h-full" />}
+      {isEmpty && (
+        <EmptyMessage loading={isLoadingActive || loading} className="h-full" />
+      )}
       {!!activeItems?.data?.length && (
         <Segment tertiary>
           <Card.Group itemsPerRow={2} doubling>
-            {activeItems?.data?.map?.(itemMap)}
+            {activeItems?.data?.map?.(itemMap).reverse?.()}
           </Card.Group>
         </Segment>
       )}
       <Divider fitted horizontal>
         <Header as="h5" className="load">
           <Segment basic className="small-padding-segment">
-            {t`Finished`}
-            <Loader size="small" active={isLoadingFinished} />
+            {t`Recently finished`}
+            <Loader size="small" active={isLoadingFinished || loading} />
           </Segment>
         </Header>
       </Divider>
       {isEmpty && (
-        <EmptyMessage loading={isLoadingFinished} className="h-full" />
+        <EmptyMessage
+          loading={isLoadingFinished || loading}
+          className="h-full"
+        />
       )}
       {!!finishedItems?.data?.length && (
         <Segment tertiary>
           <Card.Group itemsPerRow={2} doubling>
-            {finishedItems?.data?.map?.(itemMap)}
+            {finishedItems?.data?.map?.(itemMap).reverse?.()}
           </Card.Group>
         </Segment>
       )}
@@ -476,20 +485,23 @@ export function MetadataQueue() {
         <Header as="h5">
           <Segment basic className="small-padding-segment">
             {t`Queue`}
-            <Loader size="small" active={isLoadingQueued || addLoading} />
+            <Loader
+              size="small"
+              active={isLoadingQueued || addLoading || loading}
+            />
           </Segment>
         </Header>
       </Divider>
       {isEmpty && (
         <EmptyMessage
-          loading={isLoadingQueued || addLoading}
+          loading={isLoadingQueued || addLoading || loading}
           className="h-full"
         />
       )}
       {!!queuedItems?.data?.length && (
         <Segment tertiary>
           <Card.Group itemsPerRow={1} doubling>
-            {queuedItems?.data?.map?.(itemMap)}
+            {queuedItems?.data?.map?.(itemMap)?.reverse?.()}
           </Card.Group>
         </Segment>
       )}

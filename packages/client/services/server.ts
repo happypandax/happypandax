@@ -9,6 +9,7 @@ import Client, {
 
 import { createCache } from '../misc/cache';
 import {
+  ActivityType,
   CommandState,
   ItemsKind,
   ItemType,
@@ -18,6 +19,7 @@ import {
   QueueType,
 } from '../misc/enums';
 import {
+  Activity,
   CommandID,
   CommandIDKey,
   CommandProgress,
@@ -667,6 +669,14 @@ export default class ServerService extends Service {
       finished: D;
       queued: D;
       running: boolean;
+      session: {
+        queued: number;
+        finished: number;
+        active: number;
+        total: number;
+        start_time: number;
+        end_time: number;
+      }
     };
   }
 
@@ -752,6 +762,20 @@ export default class ServerService extends Service {
     return data.data as
       | Record<CommandIDKey, CommandProgress>
       | CommandProgress[];
+  }
+
+  async activities(
+    args: { items: Record<string, number[]>, activity_type?: ActivityType },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_activities', args, group, {
+      client: ClientType.background,
+      ...options,
+    });
+    throw_msg_error(data);
+    return data.data as
+      Record<string, Record<string, Activity[]>>;
   }
 
   async list_plugins(

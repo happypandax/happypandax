@@ -51,7 +51,7 @@ import {
   UrlList,
 } from '../dataview/Common';
 import { ContinueButton, GalleryMenu } from '../item/Gallery';
-import { PopupNoOverflow } from '../Misc';
+import { PopupNoOverflow } from '../misc';
 import { ItemHeaderParallax, LabelField, LabelFields } from './ItemLayout';
 import styles from './ItemLayout.module.css';
 

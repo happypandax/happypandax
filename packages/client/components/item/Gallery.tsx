@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { Button, Icon, Label, Popup } from 'semantic-ui-react';
 
@@ -214,10 +214,12 @@ export function GalleryCard({
   data: initialData,
   fluid,
   loading,
-  hiddenLabel,
-  hiddenAction,
-  activity,
-  activityContent,
+  hideLabel,
+  showMiniActionContent,
+  alternative,
+  horizontalDetailContent,
+  alternativeContent,
+  horizontalDetailPosition,
   actionContent,
   draggable = true,
   disableModal,
@@ -228,11 +230,19 @@ export function GalleryCard({
   size?: ItemSize;
   data: GalleryCardData;
   fluid?: boolean;
-  hiddenLabel?: boolean;
-  hiddenAction?: boolean;
+  hideLabel?: boolean;
+  showMiniActionContent?: boolean;
   loading?: boolean;
-  activity?: boolean;
-  activityContent?: React.ReactNode;
+  alternative?: boolean;
+  horizontalDetailContent?: React.ComponentProps<
+    typeof ItemCard
+  >['horizontalDetailContent'];
+  horizontalDetailPosition?: React.ComponentProps<
+    typeof ItemCard
+  >['horizontalDetailPosition'];
+  alternativeContent?: React.ComponentProps<
+    typeof ItemCard
+  >['alternativeContent'];
   actionContent?: React.ComponentProps<typeof ItemCard>['actionContent'];
   draggable?: boolean;
   disableModal?: boolean;
@@ -245,6 +255,8 @@ export function GalleryCard({
     itemType: ItemType.Gallery,
     key: '_gallery',
   });
+
+  const ref = useRef<HTMLDivElement>(null);
 
   const isLibraryCtx = useLibraryContext();
 
@@ -285,17 +297,20 @@ export function GalleryCard({
 
   return (
     <ItemCard
+      ref={ref}
       type={ItemType.Gallery}
       dataContext={dataContext}
       href={`/item/gallery/${data.id}`}
       dragData={data}
       draggable={draggable}
       centered
-      hiddenLabel={hiddenLabel}
-      hiddenAction={hiddenAction}
+      hideLabel={hideLabel}
+      showMiniActionContent={showMiniActionContent}
       loading={loading}
-      activity={activity}
-      activityContent={activityContent}
+      alternative={alternative}
+      horizontalDetailContent={horizontalDetailContent}
+      horizontalDetailPosition={horizontalDetailPosition}
+      alternativeContent={alternativeContent}
       link
       fluid={fluid}
       horizontal={horizontal}
@@ -328,7 +343,11 @@ export function GalleryCard({
                 {data?.number}
               </GroupingNumberLabel>
             )}
-            <ActivityLabel />
+            <ActivityLabel
+              data={data}
+              type={ItemType.Gallery}
+              parentRef={ref}
+            />
           </ItemLabel>,
           <ItemLabel key="info" x="right" y="bottom">
             {horizontal && (

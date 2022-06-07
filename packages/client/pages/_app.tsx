@@ -4,6 +4,8 @@ import 'animate.css';
 import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
+import { toJS } from 'mobx';
+import { observer } from 'mobx-react-lite';
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
@@ -15,6 +17,7 @@ import { QueryClientProvider, useIsFetching } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
 
+import { ItemActivityManager } from '../client/activity';
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
 import { getSession } from '../misc/requests';
@@ -95,7 +98,7 @@ function Fairy() {
   return null;
 }
 
-function Progress() {
+function AppProgress() {
   const router = useRouter();
   const isFetching = useIsFetching({
     predicate: (q) => {
@@ -133,6 +136,26 @@ function Progress() {
   return null;
 }
 
+const ItemActivity = observer(() => {
+  const setItemActivityMap = useSetRecoilState(AppState.itemActivityState);
+
+  useEffect(() => {
+    setItemActivityMap(toJS(ItemActivityManager.state).activity);
+  }, [ItemActivityManager.state.activity]);
+
+  return null;
+});
+
+function AppInit() {
+  return (
+    <>
+      <AppProgress />
+      <Fairy />
+      <ItemActivity />
+    </>
+  );
+}
+
 export function AppRoot({
   children,
   pageProps,
@@ -150,8 +173,7 @@ export function AppRoot({
           }
         }}>
         <DndProvider backend={HTML5Backend}>
-          <Progress />
-          <Fairy />
+          <AppInit />
           {children}
         </DndProvider>
       </RecoilRoot>

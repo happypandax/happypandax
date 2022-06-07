@@ -18,7 +18,7 @@ import {
 } from '../../misc/types';
 import { dateFromTimestamp } from '../../misc/utility';
 import { AppState } from '../../state';
-import Rating from '../Rating';
+import Rating from '../misc/Rating';
 import styles from './Common.module.css';
 
 export function LanguageLabel({

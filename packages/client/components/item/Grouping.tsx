@@ -49,7 +49,7 @@ export const groupingCardDataFields: FieldPath<ServerGrouping>[] = [
   ...(galleryCardDataFields.map((f) => 'galleries.' + f) as any),
 ];
 
-function GroupingMenu({}: { hasProgress: boolean; read: boolean }) {
+function GroupingMenu({ }: { hasProgress: boolean; read: boolean }) {
   return (
     <ItemMenuLabel>
       <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
@@ -90,20 +90,17 @@ export function GroupingCard({
   size,
   data,
   fluid,
-  draggable,
-  disableModal,
   actionContent,
   horizontal,
+  ...props
 }: {
   size?: ItemSize;
   data: GroupingCardData;
   fluid?: boolean;
-  draggable?: boolean;
   actionContent?: React.ComponentProps<typeof ItemCard>['actionContent'];
-
-  disableModal?: boolean;
   horizontal?: boolean;
-}) {
+
+} & React.ComponentProps<typeof GalleryCard>) {
   const blur = useRecoilValue(AppState.blur);
   const readingQueue = useRecoilValue(AppState.readingQueue);
 
@@ -116,10 +113,10 @@ export function GroupingCard({
       <ItemCardActionContent>
         {(horizontal ||
           !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
-          <ItemCardActionContentItem>
-            <AddToQueueButton itemType={ItemType.Grouping} data={data} />
-          </ItemCardActionContentItem>
-        )}
+            <ItemCardActionContentItem>
+              <AddToQueueButton itemType={ItemType.Grouping} data={data} />
+            </ItemCardActionContentItem>
+          )}
       </ItemCardActionContent>
     ),
     [data, size, horizontal]
@@ -130,36 +127,36 @@ export function GroupingCard({
       is_gallery
         ? []
         : [
-            <ItemLabel key="fav" x="left" y="top">
-              <FavoriteLabel
-                defaultRating={
-                  data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
-                }
-              />
-            </ItemLabel>,
-            <ItemLabel key="icons" x="right" y="top">
-              {data?.galleries?.every?.((g) => readingQueue.includes(g.id)) && (
-                <QueueIconLabel />
-              )}
-              {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
-                <InboxIconLabel />
-              )}
-              <ActivityLabel />
-            </ItemLabel>,
-            <ItemLabel key="menu" x="right" y="bottom">
-              {horizontal && (
-                <GalleryCountLabel as={TranslucentLabel}>
-                  {data?.gallery_count}
-                </GalleryCountLabel>
-              )}
-              {!horizontal && (
-                <TranslucentLabel circular>
-                  {data?.gallery_count}
-                </TranslucentLabel>
-              )}
-              <GroupingMenu />
-            </ItemLabel>,
-          ],
+          <ItemLabel key="fav" x="left" y="top">
+            <FavoriteLabel
+              defaultRating={
+                data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
+              }
+            />
+          </ItemLabel>,
+          <ItemLabel key="icons" x="right" y="top">
+            {data?.galleries?.every?.((g) => readingQueue.includes(g.id)) && (
+              <QueueIconLabel />
+            )}
+            {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
+              <InboxIconLabel />
+            )}
+            <ActivityLabel />
+          </ItemLabel>,
+          <ItemLabel key="menu" x="right" y="bottom">
+            {horizontal && (
+              <GalleryCountLabel as={TranslucentLabel}>
+                {data?.gallery_count}
+              </GalleryCountLabel>
+            )}
+            {!horizontal && (
+              <TranslucentLabel circular>
+                {data?.gallery_count}
+              </TranslucentLabel>
+            )}
+            <GroupingMenu />
+          </ItemLabel>,
+        ],
     [horizontal, data, readingQueue]
   );
 
@@ -173,11 +170,10 @@ export function GroupingCard({
   if (is_gallery) {
     return (
       <GalleryCard
+        {...props}
         size={size}
         data={data.galleries[0]}
         fluid={fluid}
-        draggable={draggable}
-        disableModal={disableModal}
         horizontal={horizontal}
       />
     );

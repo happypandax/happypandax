@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import PageLayout from '../../components/layout/Page';
 import MainMenu, { MenuItem } from '../../components/Menu';
-import { PageTitle } from '../../components/Misc';
+import { PageTitle } from '../../components/misc';
 import t from '../../misc/lang';
 
 interface PageProps {

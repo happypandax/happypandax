@@ -17,7 +17,7 @@ import {
 import PageLayout, {
   BottomZoneItem,
 } from '../../../../../components/layout/Page';
-import { PageTitle } from '../../../../../components/Misc';
+import { PageTitle } from '../../../../../components/misc';
 import { ItemSort, ItemType } from '../../../../../misc/enums';
 import t from '../../../../../misc/lang';
 import {
