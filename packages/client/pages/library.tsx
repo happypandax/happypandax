@@ -64,6 +64,7 @@ import { getCookies, urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
 import { AppState, getStateKey, LibraryState, SearchState } from '../state';
+import { useGlobalValue } from '../state/global';
 
 const StateKey = 'library_page';
 
@@ -298,7 +299,8 @@ function LibrarySettings({
   trigger: React.ReactNode;
   stateKey: string;
 }) {
-  const sameMachine = useRecoilState(AppState.sameMachine);
+  const sameMachine = useGlobalValue('sameMachine');
+
   const [item, setItem] = useRecoilState(LibraryState.item(stateKey));
   const [view, setView] = useRecoilState(LibraryState.view(stateKey));
   const [series, setSeries] = useRecoilState(LibraryState.series);

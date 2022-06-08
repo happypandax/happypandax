@@ -191,14 +191,19 @@ export function TitleSegment({
 export function EmptySegment({
   title = t`Nothing to see here...`,
   description,
+  fluid = true,
   children,
 }: {
   title?: React.ReactNode;
   children?: React.ReactNode;
+  fluid?: boolean;
   description?: React.ReactNode;
 }) {
   return (
-    <Segment placeholder disabled className="!min-0-h w-full h-full">
+    <Segment
+      placeholder
+      disabled
+      className={classNames('!min-0-h w-full', { 'h-full': fluid })}>
       <Header className="center text-center sub-text" icon>
         <Icon className="hpx-standard sub-text" size="huge" />
         {title}

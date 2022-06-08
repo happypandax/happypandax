@@ -423,9 +423,9 @@ export function DrawerButton({ basic }: { basic?: boolean }) {
         />
       )}
       <Button
-        primary
         circular
         basic={basic}
+        color="violet"
         onClick={useCallback(() => setOpen(true), [])}
         icon="window maximize outline"
         size="small"

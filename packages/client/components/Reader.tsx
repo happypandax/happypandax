@@ -67,13 +67,12 @@ import {
   useInitialRecoilState,
   useInitialRecoilValue,
 } from '../state';
-import { FavoriteLabel, TagsTable } from './dataview/Common';
+import { FavoriteLabel, RatingLabel, TagsTable } from './dataview/Common';
 import CollectionCard, { CollectionCardData } from './item/Collection';
 import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from './item/Gallery';
-import Rating from './misc/Rating';
 import { SimilarItemsSlider, Slider, SliderElement } from './misc/Slider';
 
 function getOptimalImageSize() {
@@ -1763,6 +1762,8 @@ function RatingIcon({
 
 function EndRating() {
   const { item } = useContext(ReaderContext);
+
+  // TODO: rating doesnt update to server
   const [rating, setRating] = useState(item?.rating);
 
   return (
@@ -1814,20 +1815,16 @@ function EndRating() {
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>
-        <Rating
+        <RatingLabel
           size="massive"
-          icon="star"
-          color="yellow"
-          rating={rating}
-          maxRating={10}
+          onRating={useCallback((r) => setRating(r), [])}
+          defaultRating={rating}
         />
       </Grid.Row>
       <span className="left-0 pos-absolute">
-        <Rating
+        <FavoriteLabel
           size="massive"
-          color="red"
           defaultRating={item?.metatags?.favorite ? 1 : 0}
-          icon="heart"
         />
       </span>
       <div className="right-0 pos-absolute">
@@ -1888,6 +1885,12 @@ export function EndContent({
 } & React.ComponentProps<typeof ReadNext>) {
   const { item, stateKey } = useContext(ReaderContext);
 
+  const { dataContext } = useSetupDataState({
+    initialData: item,
+    itemType: ItemType.Gallery,
+    key: stateKey,
+  });
+
   const collectionCategories = useRecoilValue(ReaderState.collectionCategories);
   const endReached = useRecoilValue(ReaderState.endReached(stateKey));
   const [_readingQueue, setReadingQueue] = useRecoilState(
@@ -1923,7 +1926,9 @@ export function EndContent({
             size="large">{t`What did you think?`}</Header>
         </Grid.Column>
         <Grid.Column width={16} textAlign="center">
-          <EndRating />
+          <DataContext.Provider value={dataContext}>
+            <EndRating />
+          </DataContext.Provider>
         </Grid.Column>
       </Grid.Row>
       <Grid.Row>

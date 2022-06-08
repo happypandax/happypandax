@@ -2,16 +2,13 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import { useCallback, useState } from 'react';
 import {
-  Rating as SUIRating,
-  RatingIcon as SUIRatingIcon,
+  RatingIconProps,
+  RatingProps,
   SemanticCOLORS,
 } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
-function RatingIcon({
-  as: ElementType = 'i',
-  ...props
-}: React.ComponentProps<typeof SUIRatingIcon>) {
+function RatingIcon({ as: ElementType = 'i', ...props }: RatingIconProps) {
   return (
     <ElementType
       {...props}
@@ -46,7 +43,7 @@ export default function Rating({
   icon,
   color,
   ...props
-}: Omit<React.ComponentProps<typeof SUIRating>, 'icon'> & {
+}: Omit<RatingProps, 'icon'> & {
   color?: SemanticCOLORS;
   icon: SemanticICONS;
 }) {

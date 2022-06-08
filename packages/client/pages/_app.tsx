@@ -4,8 +4,6 @@ import 'animate.css';
 import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
-import { toJS } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
@@ -17,13 +15,13 @@ import { QueryClientProvider, useIsFetching } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
 
-import { ItemActivityManager } from '../client/activity';
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
 import { getSession } from '../misc/requests';
 import { NotificationData } from '../misc/types';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';
+import { useGlobalValue, useSetGlobalState } from '../state/global';
 
 const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
@@ -41,8 +39,8 @@ function Fairy() {
   const [notifications, setNotifications] = useRecoilState(
     AppState.notifications
   );
-  const setLoggedIn = useSetRecoilState(AppState.loggedIn);
-  const setConnected = useSetRecoilState(AppState.connected);
+  const setLoggedIn = useSetGlobalState('loggedIn');
+  const setConnected = useSetGlobalState('connected');
 
   const [fairy, setFairy] = useState<EventSource>();
 
@@ -136,15 +134,19 @@ function AppProgress() {
   return null;
 }
 
-const ItemActivity = observer(() => {
+/**
+ * Since we make use of recoil selectors, we need to have both recoil and global states, synced
+ */
+function ItemActivity() {
   const setItemActivityMap = useSetRecoilState(AppState.itemActivityState);
+  const activity = useGlobalValue('activity');
 
   useEffect(() => {
-    setItemActivityMap(toJS(ItemActivityManager.state).activity);
-  }, [ItemActivityManager.state.activity]);
+    setItemActivityMap({ ...activity });
+  }, [activity]);
 
   return null;
-});
+}
 
 function AppInit() {
   return (
@@ -163,15 +165,17 @@ export function AppRoot({
   children: React.ReactNode;
   pageProps?: AppPageProps['pageProps'];
 }) {
+  const setLoggedIn = useSetGlobalState('loggedIn');
+  const setSameMachine = useSetGlobalState('sameMachine');
+
+  useEffect(() => {
+    setLoggedIn(pageProps.loggedIn);
+    setSameMachine(pageProps.sameMachine);
+  }, [pageProps]);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <RecoilRoot
-        initializeState={(snapshot) => {
-          if (pageProps.loggedIn) {
-            snapshot.set(AppState.loggedIn, pageProps.loggedIn);
-            snapshot.set(AppState.sameMachine, pageProps.sameMachine);
-          }
-        }}>
+      <RecoilRoot initializeState={(snapshot) => {}}>
         <DndProvider backend={HTML5Backend}>
           <AppInit />
           {children}

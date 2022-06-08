@@ -20,12 +20,12 @@ import {
 } from '../../../../components/layout/GalleryLayout';
 import { ItemMenu } from '../../../../components/layout/ItemLayout';
 import PageLayout from '../../../../components/layout/Page';
+import { PageTitle } from '../../../../components/misc';
 import {
-  PageTitle,
   SimilarItemsSlider,
+  Slider,
   SliderElement,
-} from '../../../../components/misc';
-import { Slider } from '../../../../components/Slider';
+} from '../../../../components/misc/Slider';
 import CardView from '../../../../components/view/CardView';
 import ListView from '../../../../components/view/ListView';
 import { ImageSize, ItemType } from '../../../../misc/enums';

@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import { observable, runInAction } from 'mobx';
 import { useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 
@@ -7,16 +6,13 @@ import { ActivityType, ItemType } from '../misc/enums';
 import { Activity, ItemID } from '../misc/types';
 import { debounceCollect, isElementInViewport, update } from '../misc/utility';
 import { AppState } from '../state';
+import { GlobalState, useGlobalValue } from '../state/global';
 import { useInterval, useTabActive } from './hooks/utils';
 import { Query, QueryType } from './queries';
 
 export type ActivityMap = { [key in ItemType]?: Record<ItemID, Activity[]> };
 
 export class ItemActivityManager {
-  static state = observable({
-    activity: {} as ActivityMap,
-  });
-
   private static fetch?: _.DebouncedFunc<
     (args: [ItemType, ItemID, ActivityType][]) => void
   >;
@@ -52,7 +48,7 @@ export class ItemActivityManager {
           );
 
           if (r.data) {
-            let updated = ItemActivityManager.state.activity;
+            let updated = GlobalState.activity;
             const old = updated;
 
             for (const [type, ids] of Object.entries(items)) {
@@ -81,9 +77,7 @@ export class ItemActivityManager {
             }
 
             if (!_.isEqual(old, updated)) {
-              runInAction(() => {
-                ItemActivityManager.state.activity = updated;
-              });
+              GlobalState.setState({ activity: updated });
             }
           }
         },
@@ -125,14 +119,12 @@ export function useItemActivity(
     AppState.itemActivity({ type, item_id: id })
   );
 
+  const debug = useGlobalValue('debug');
+
   const tabActive = useTabActive();
 
   const delay =
-    tabActive && type && id
-      ? process.env.NODE_ENV !== 'production'
-        ? 15000
-        : opts?.interval ?? 3000
-      : null;
+    tabActive && type && id ? (debug ? 15000 : opts?.interval ?? 3000) : null;
 
   const ref = opts?.ref;
 

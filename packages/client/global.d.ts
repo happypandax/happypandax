@@ -91,5 +91,6 @@ declare module NodeJS {
       log: Logger;
       service: ServiceLocator;
     };
+    log: Logger;
   }
 }

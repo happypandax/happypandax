@@ -1,4 +1,4 @@
-import { getEnumMembers, getEnumMembersMKeyMap } from './utility';
+import { getEnumMembersMKeyMap } from './utility';
 
 // IMPORTANT: Don't reorder this
 export enum ErrorCode {
@@ -48,3 +48,9 @@ export class UnknownError extends Error {
 export class NoOpError extends UnknownError {}
 export class ClientError extends UnknownError {}
 export class ServerError extends NoOpError {}
+
+// HPX SERVER ERRORS ---------------------------------------------------------------
+
+export enum ServerErrorCode {
+  CommandError = 120,
+}

@@ -1,3 +1,4 @@
+import { GlobalState } from '../../state/global';
 import setupLogger from '../logger';
 
 export async function clientInitialize() {
@@ -6,9 +7,11 @@ export async function clientInitialize() {
   global.app.title = 'HappyPanda X';
 
   global.app.log = setupLogger();
+  global.log = global.app.log;
 
   global.app.log.i('initialized client');
   global.app.initialized = true;
+  GlobalState.initialized = true;
 }
 
 export default clientInitialize;

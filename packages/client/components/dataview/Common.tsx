@@ -256,21 +256,23 @@ export function GroupingLabel({
 
 export function FavoriteLabel({
   onRate,
+  onRating,
   className,
   size = 'massive',
   ...props
 }: Omit<MakeOptional<React.ComponentProps<typeof Rating>, 'icon'>, 'size'> & {
   size?: React.ComponentProps<typeof Rating>['size'] | 'gigantic';
+  onRating?: (rating: number) => void;
 }) {
   const { data, setData, context } = useUpdateDataState<{
     id: number;
     metatags: PartialExcept<ServerMetaTags, 'favorite'>;
   }>();
 
-  // console.log(context.key, data);
-
   const onFav = useCallback(
     (e, d) => {
+      e.preventDefault();
+
       if (context.editing) {
         throw Error('not implemented');
       } else {
@@ -288,8 +290,10 @@ export function FavoriteLabel({
           }
         ).catch((err) => console.error(err));
       }
+
+      onRating?.(d.rating);
     },
-    [context.type, data]
+    [context.type, data, onRating]
   );
 
   return (
@@ -365,10 +369,12 @@ export function FolllowLabel({
 
 export function RatingLabel({
   size = 'huge',
+  onRating,
   defaultRating,
 }: {
   defaultRating?: number;
-  size?: React.ComponentProps<typeof Rating>;
+  size?: React.ComponentProps<typeof Rating>['size'] | 'gigantic';
+  onRating?: (rating: number) => void;
 }) {
   const { data, setData, context } = useUpdateDataState<{
     id: number;
@@ -382,6 +388,7 @@ export function RatingLabel({
       color="yellow"
       onRate={useCallback(
         (e, d) => {
+          e.preventDefault();
           if (context.editing) {
             throw Error('not implemented');
           } else {
@@ -395,9 +402,11 @@ export function RatingLabel({
                 }
               }
             ).catch((err) => console.error(err));
+
+            onRating?.(d.rating);
           }
         },
-        [context.type, data]
+        [context.type, data, onRating]
       )}
       rating={data?.rating}
       defaultRating={defaultRating}

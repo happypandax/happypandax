@@ -201,6 +201,9 @@ export function OptionField<
 function GeneralPane() {
   const [blur, setBlur] = useRecoilState(AppState.blur);
   const [theme, setTheme] = useRecoilState(AppState.theme);
+  const [drawerButtonPosition, setDrawerButtonPosition] = useRecoilState(
+    AppState.drawerButtonPosition
+  );
 
   const [cfg, setConfig] = useConfig({
     'gallery.auto_rate_on_favorite': undefined as boolean,
@@ -230,22 +233,6 @@ function GeneralPane() {
         <Header size="small" dividing>{t`Application`}</Header>
         <Segment>
           <Form.Field>
-            <Checkbox
-              toggle
-              label={
-                <label>
-                  <IsolationLabel isolation="client" /> {t`Blur`}
-                </label>
-              }
-              checked={blur}
-              onChange={useCallback((ev, { checked }) => {
-                ev.preventDefault();
-                setBlur(checked);
-              }, [])}
-            />
-            <div className="muted">{t`Blurs gallery and and collection covers across the application`}</div>
-          </Form.Field>
-          <Form.Field>
             <label>
               <IsolationLabel isolation="client" /> {t`Select theme`}
             </label>
@@ -266,6 +253,40 @@ function GeneralPane() {
               }, [])}
             />
           </Form.Field>
+          <Form.Field>
+            <Checkbox
+              toggle
+              label={
+                <label>
+                  <IsolationLabel isolation="client" /> {t`Blur`}
+                </label>
+              }
+              checked={blur}
+              onChange={useCallback((ev, { checked }) => {
+                ev.preventDefault();
+                setBlur(checked);
+              }, [])}
+            />
+            <div className="muted">{t`Blurs gallery and and collection covers across the application`}</div>
+          </Form.Field>
+          <Form.Field>
+            <label>
+              <IsolationLabel isolation="client" /> {t`Drawer button position`}
+            </label>
+            <Select
+              options={[
+                { key: 'left', value: 'left', text: t`Left` },
+                { key: 'right', value: 'right', text: t`Right` },
+              ]}
+              value={drawerButtonPosition}
+              placeholder={t`Select position`}
+              onChange={useCallback((ev, { value }) => {
+                ev.preventDefault();
+                if (value) setDrawerButtonPosition(value as any);
+              }, [])}
+            />
+          </Form.Field>
+
           <OptionField
             isolation="client"
             label={t`Select language`}

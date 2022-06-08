@@ -1,0 +1,67 @@
+/**
+ * Difference between global state and other states is that global state does not depend on the react context
+ */
+
+import { autorun, get, makeAutoObservable, set, toJS } from 'mobx';
+import { enableStaticRendering } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+
+import type { ActivityMap } from '../client/activity';
+
+/**
+ * Call enableStaticRendering(true) when running in an SSR environment, in which observer wrapped components should never re-render,
+ * but cleanup after the first rendering automatically. Use isUsingStaticRendering() to inspect the current setting.
+ */
+enableStaticRendering(typeof window === 'undefined');
+
+class State {
+  initialized = false;
+
+  connected = false;
+  debug = process.env.NODE_ENV !== 'production';
+  sameMachine = false;
+  loggedIn = false;
+
+  activity: ActivityMap = {};
+
+  constructor() {
+    makeAutoObservable(this, undefined, {
+      deep: false,
+    });
+  }
+
+  setState<T extends StateKey>(state: { [key in T]?: State[key] }) {
+    const S: State = this;
+    for (const key of Object.keys(state)) {
+      set(this, key, state[key]);
+    }
+  }
+}
+
+// TODO: filter out functions
+type StateKey = keyof State;
+
+export const GlobalState = new State();
+
+export const useGlobalState = <T extends StateKey>(
+  state: T
+): [State[T], (v: State[T]) => void] => {
+  const [value, setValue] = useState<State[T]>(toJS(get(GlobalState, state)));
+
+  useEffect(() => {
+    const dispose = autorun(() => {
+      setValue?.(toJS(get(GlobalState, state)));
+    });
+    return () => dispose();
+  }, [state]);
+
+  return [value, (newValue) => GlobalState.setState({ [state]: newValue })];
+};
+
+export const useGlobalValue = <T extends StateKey>(state: T) => {
+  return useGlobalState<T>(state)[0];
+};
+
+export const useSetGlobalState = <T extends StateKey>(state: T) => {
+  return useGlobalState<T>(state)[1];
+};

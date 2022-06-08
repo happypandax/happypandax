@@ -2,9 +2,11 @@ import classNames from 'classnames';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { Header, Icon, Popup, Segment } from 'semantic-ui-react';
+import { Header, Icon, Menu, Popup, Segment } from 'semantic-ui-react';
 
+import t from '../../misc/lang';
 import { AppState } from '../../state';
+import { useGlobalValue } from '../../state/global';
 import { EmptySegment } from '../misc';
 import styles from './Notification.module.css';
 
@@ -71,7 +73,7 @@ export function Notifications() {
 
   return (
     <>
-      {!notifications.length && <EmptySegment />}
+      {!notifications.length && <EmptySegment fluid={false} />}
       {notifications.map((d) => (
         <Notification
           key={d.date?.getTime?.()}
@@ -92,6 +94,8 @@ export function NotificationsPopup({
 }) {
   const setNotificationAlert = useSetRecoilState(AppState.notificationAlert);
 
+  const sameMachine = useGlobalValue('sameMachine');
+
   return (
     <Popup
       on="click"
@@ -101,6 +105,31 @@ export function NotificationsPopup({
       }, [])}
       className={classNames('no-padding-segment', styles.notification_group)}
       trigger={trigger}>
+      <Menu size="tiny" attached="top" secondary>
+        <Menu.Item position="right">
+          {sameMachine && (
+            <Popup
+              inverted
+              position="left center"
+              trigger={<Icon name="home" color="green" />}
+              content={t`Connected locally to server`}
+            />
+          )}
+          {!sameMachine && (
+            <Popup
+              inverted
+              position="left center"
+              trigger={
+                <Icon.Group>
+                  <Icon name="dont" size="big" color="red" />
+                  <Icon name="home" />
+                </Icon.Group>
+              }
+              content={t`Connected remotely to server`}
+            />
+          )}
+        </Menu.Item>
+      </Menu>
       <Notifications />
     </Popup>
   );

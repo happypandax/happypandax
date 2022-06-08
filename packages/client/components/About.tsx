@@ -15,6 +15,7 @@ import {
 import { QueryType, useQueryType } from '../client/queries';
 import t from '../misc/lang';
 import { CommandProgress } from '../misc/types';
+import { useGlobalValue } from '../state/global';
 import { EmptySegment } from './misc';
 import { ActivityList } from './misc/ActivityList';
 
@@ -224,6 +225,8 @@ export default function AboutModal({
   className,
   ...props
 }: React.ComponentProps<typeof Modal>) {
+  const debug = useGlobalValue('debug');
+
   return (
     <Modal
       dimmer="inverted"
@@ -237,6 +240,18 @@ export default function AboutModal({
         </Header>
         <AboutTab />
       </Modal.Content>
+      {debug && (
+        <Segment
+          attached="bottom"
+          textAlign="center"
+          inverted
+          color="violet"
+          tertiary
+          className="no-margins">
+          {t`Running in debug mode`}
+        </Segment>
+      )}
+
       <Segment
         attached="bottom"
         textAlign="center"

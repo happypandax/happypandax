@@ -13,15 +13,13 @@ export default class _AppState extends StateBlock {
 
   static theme = defineAtom({
     default: 'momo-l' as ThemeValue,
-    effects: [localStorageEffect()],
+    effects: [localStorageEffect('theme')],
   });
 
-  static sameMachine = defineAtom({ default: false });
-
-  static home = defineAtom({ default: '/library' });
-
-  static connected = defineAtom({ default: false });
-  static loggedIn = defineAtom({ default: false });
+  static home = defineAtom({
+    default: '/library',
+    effects: [localStorageEffect()],
+  });
 
   static externalViewer = defineAtom({
     default: false,
@@ -31,6 +29,10 @@ export default class _AppState extends StateBlock {
   static blur = defineAtom({
     default: true,
     effects: [localStorageEffect('blur')],
+  });
+  static drawerButtonPosition = defineAtom({
+    default: 'left' as 'left' | 'right',
+    effects: [localStorageEffect()],
   });
 
   static sidebarWidth = defineAtom({

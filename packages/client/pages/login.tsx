@@ -1,7 +1,7 @@
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import { useRouter } from 'next/dist/client/router';
 import { useCallback, useEffect } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { Divider, Grid, Segment } from 'semantic-ui-react';
 
 import { LoginForm } from '../components/Login';
@@ -9,6 +9,7 @@ import { PageTitle } from '../components/misc';
 import t from '../misc/lang';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';
+import { useSetGlobalState } from '../state/global';
 
 interface PageProps {
   next: string;
@@ -32,7 +33,7 @@ export async function getServerSideProps(
 
 export default function Page({ next }: PageProps) {
   const home = useRecoilValue(AppState.home);
-  const setLoggedIn = useSetRecoilState(AppState.loggedIn);
+  const setLoggedIn = useSetGlobalState('loggedIn');
 
   const router = useRouter();
 
@@ -71,8 +72,6 @@ export default function Page({ next }: PageProps) {
                 <LoginForm
                   onSuccess={useCallback(() => {
                     setLoggedIn(true);
-
-                    console.log(next);
 
                     if (next) {
                       // router.replace doesn't work, idk why

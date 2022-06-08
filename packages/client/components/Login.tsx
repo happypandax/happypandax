@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
 import {
   Button,
   Divider,
@@ -11,7 +10,7 @@ import {
 
 import { MutatationType, useMutationType } from '../client/queries';
 import t from '../misc/lang';
-import { AppState } from '../state';
+import { useGlobalState, useGlobalValue } from '../state/global';
 import { LabelAccordion } from './misc';
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
@@ -140,8 +139,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function LoginModal({ open }: { open?: boolean }) {
-  const [loggedIn, setLoggedIn] = useRecoilState(AppState.loggedIn);
-  const connected = useRecoilValue(AppState.connected);
+  const [loggedIn, setLoggedIn] = useGlobalState('loggedIn');
+  const connected = useGlobalValue('connected');
 
   return (
     <Modal open={open ?? (!loggedIn && connected)}>

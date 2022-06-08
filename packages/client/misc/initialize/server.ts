@@ -7,6 +7,8 @@ export async function serverInitialize() {
   global.app.title = 'HappyPanda X';
 
   global.app.log = setupLogger();
+  global.log = global.app.log;
+
   global.app.service = await setupServices();
 
   global.app.log.i('initialized server');

@@ -1,9 +1,11 @@
 import classNames from 'classnames';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useRecoilValue } from 'recoil';
 import { Button, Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
 
 import t from '../../misc/lang';
+import { AppState } from '../../state';
 import DrawerPortal, { DrawerButton } from '../Drawer';
 import { ScrollUpButton } from '../misc';
 import MainSidebar from '../Sidebar';
@@ -75,6 +77,8 @@ export default function PageLayout({
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const drawerButtonPosition = useRecoilValue(AppState.drawerButtonPosition);
+
   return (
     <>
       <MainSidebar />
@@ -97,11 +101,16 @@ export default function PageLayout({
               {bottomZoneRight}
             </BottomZoneItem>
             <BottomZoneItem x="left" y="bottom">
-              <DrawerButton basic={basicDrawerButton} />
+              {drawerButtonPosition !== 'right' && (
+                <DrawerButton basic={basicDrawerButton} />
+              )}
               {bottomZoneLeftBottom}
             </BottomZoneItem>
             <BottomZoneItem x="right" y="bottom">
               {bottomZoneRightBottom}
+              {drawerButtonPosition === 'right' && (
+                <DrawerButton basic={basicDrawerButton} />
+              )}
               <ScrollUpButton />
             </BottomZoneItem>
           </BottomZone>

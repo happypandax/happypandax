@@ -31,6 +31,7 @@ import {
 } from '../../misc/types';
 import { urlstring } from '../../misc/utility';
 import { AppState } from '../../state';
+import { useGlobalValue } from '../../state/global';
 import {
   ArtistLabels,
   CategoryLabel,
@@ -430,7 +431,7 @@ export function GalleryItemHeader({
   const blur = useRecoilValue(AppState.blur);
   const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
 
-  const sameMachine = useRecoilValue(AppState.sameMachine);
+  const sameMachine = useGlobalValue('sameMachine');
 
   const { data, dataContext } = useSetupDataState({
     initialData,
@@ -479,7 +480,8 @@ export function GalleryItemHeader({
                     <Grid.Row centered textAlign="center">
                       <Button as="div" labelPosition="right">
                         <ContinueButton data={data} size="small">
-                          <Icon className="play" /> {t`Continue`}
+                          <Icon className="play" /> {t`Continue`} 「
+                          {data?.times_read}」
                         </ContinueButton>
                         <Label basic color="orange" pointing="left">
                           {Math.round(data?.progress?.percent)}%
@@ -500,8 +502,8 @@ export function GalleryItemHeader({
                         href={urlstring(`/item/gallery/${data?.id}/page/1`)}
                         passHref>
                         <Button as="a" primary>
-                          <Icon className="book open" /> {t`Read`}
-                          {!!data?.times_read && `「${data?.times_read}」`}
+                          <Icon className="book open" /> {t`Read`} 「
+                          {data?.times_read}」
                         </Button>
                       </Link>
                       <Button.Or text={t`Or`} />

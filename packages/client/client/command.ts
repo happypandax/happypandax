@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 
 import { CommandState } from '../misc/enums';
+import { ServerErrorCode } from '../misc/error';
 import { CommandID, CommandIDKey } from '../misc/types';
 import { urlstring } from '../misc/utility';
 import ServerService from '../services/server';
@@ -99,13 +100,24 @@ export class Command<T = unknown> {
   _poll() {
     const c = this._commands_not_finished();
     if (c.length) {
-      this.state().then(() => {
-        if (!this._commands_not_finished().length) {
-          this._end_poll();
-        } else {
-          this.#poll_id = setTimeout(this._poll.bind(this), this.interval);
-        }
-      });
+      this.state()
+        .then(() => {
+          if (!this._commands_not_finished().length) {
+            this._end_poll();
+          } else {
+            this.#poll_id = setTimeout(this._poll.bind(this), this.interval);
+          }
+        })
+        .catch((e) => {
+          if (
+            e.response.status === 500 &&
+            e.response?.data?.code === ServerErrorCode.CommandError
+          ) {
+            // command doesn't exist, so we can ignore it
+            return e.response;
+          }
+          throw e;
+        });
     } else {
       this._end_poll();
     }
@@ -255,11 +267,22 @@ export function useCommand<T = unknown>(
     optionsRef.current = options;
   }, [options]);
 
+  const ignoreError = (e) => {
+    if (
+      e.response.status === 500 &&
+      e.response?.data?.code === ServerErrorCode.CommandError
+    ) {
+      // command doesn't exist, so we can ignore it
+      return e.response;
+    }
+    throw e;
+  };
+
   useEffect(() => {
     return () => {
       if (cmdRef.current) {
         if (optionsRef.current?.stopOnUnmount !== false) {
-          cmdRef.current.stop();
+          cmdRef.current.stop().catch(ignoreError);
         }
         cmdRef.current.stopTracking();
       }
@@ -270,7 +293,7 @@ export function useCommand<T = unknown>(
     () => {
       if (cmd) {
         if (optionsRef.current?.stopOnUpdate) {
-          cmd.stop();
+          cmd.stop().catch(ignoreError);
         }
         cmd.stopTracking();
       }
