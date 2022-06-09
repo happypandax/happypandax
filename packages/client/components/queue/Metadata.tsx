@@ -249,7 +249,6 @@ export function MetadataQueue() {
     }
   );
 
-
   const itemsMapRef = useRef(genItemsMap());
 
   const itemsMap = itemsMapRef.current;
@@ -268,7 +267,7 @@ export function MetadataQueue() {
 
   const hasActiveItems = !!queueState?.data?.active?.length;
 
-  const { data: activeItems, isLoading: isLoadingActive } = useQueryType(
+  const { data: activeItems, isFetching: isLoadingActive } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
@@ -284,7 +283,7 @@ export function MetadataQueue() {
 
   const hasFinishedItems = !!queueState?.data?.finished?.length;
 
-  const { data: finishedItems, isLoading: isLoadingFinished } = useQueryType(
+  const { data: finishedItems, isFetching: isLoadingFinished } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
@@ -302,7 +301,7 @@ export function MetadataQueue() {
 
   const hasQueueItems = !!queueState?.data?.queued?.length;
 
-  const { data: queuedItems, isLoading: isLoadingQueued } = useQueryType(
+  const { data: queuedItems, isFetching: isLoadingQueued } = useQueryType(
     QueryType.ITEM,
     {
       item_type: ItemType.Gallery,
@@ -396,6 +395,7 @@ export function MetadataQueue() {
               icon="plus"
               loading={addLoading}
               compact
+              className="tiny"
               text={t`Add`}
               upward={false}>
               <Dropdown.Menu>

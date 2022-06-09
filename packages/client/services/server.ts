@@ -7,8 +7,8 @@ import Client, {
   ServerErrorMsg,
   ServerMsg,
 } from 'happypandax-client';
+import { QueryClient, QueryFunctionContext } from 'react-query';
 
-import { createCache } from '../misc/cache';
 import {
   ActivityType,
   CommandState,
@@ -65,9 +65,9 @@ interface CallOptions {
 }
 
 export default class ServerService extends Service {
-  cache: ReturnType<typeof createCache>;
   endpoint: { host: string; port: number };
 
+  query_client: QueryClient;
   #clients: Record<ClientType, Client>;
   #main_client: Client;
 
@@ -95,10 +95,21 @@ export default class ServerService extends Service {
     global.app.hpx_clients = this.#clients;
     this.#main_client = this.#clients[ClientType.main];
 
-    this.cache = global.app?.hpx_cache ?? createCache();
-    global.app.hpx_cache = this.cache;
-
     this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
+
+    this.query_client = new QueryClient({
+      defaultOptions: {
+        queries: { networkMode: 'always' },
+        mutations: { networkMode: 'always' },
+      },
+    });
+  }
+
+  async _query(client: Client, fname: string, args: JsonMap) {
+    const key = [fname, args];
+    return this.query_client.fetchQuery(key, () => {
+      return client.send([fname, args]);
+    });
   }
 
   async _call(
@@ -115,34 +126,14 @@ export default class ServerService extends Service {
     }
 
     if (group) {
-      return await group._group_call(client, func, args);
+      return await group._group_call(this.query_client, client, func, args);
     }
 
-    global.app.log.d('calling', func, args);
+    const r = await queryClientFetchQuery(this.query_client, client, [
+      [func, args],
+    ]);
 
-    const data = await client
-      .send([
-        {
-          fname: func,
-          ...args,
-        },
-      ])
-      .then((d) => {
-        global.app.log.d(func, 'received data');
-        throw_msg_error(d);
-        return d?.data?.[0];
-      })
-      .catch((e) => {
-        if (
-          e instanceof ServerDisconnectError ||
-          e.message.includes('not connected')
-        ) {
-          const fairy = global.app.service.get(ServiceType.Fairy);
-          fairy.healthcheck();
-        }
-
-        throw e;
-      });
+    const data = r?.data?.[0];
 
     return data;
   }
@@ -900,6 +891,52 @@ export default class ServerService extends Service {
   }
 }
 
+function clientCall(ctx: QueryFunctionContext) {
+  const client = ctx.meta.client as Client;
+  const calls = ctx.meta.calls as [fname: string, args: JsonMap][];
+  const fnames = calls.map((v) => v[0]);
+
+  global.app.log.d('calling', ...calls.flat());
+
+  return client
+    .send(
+      calls.map((c) => ({
+        fname: c[0],
+        ...c[1],
+      }))
+    )
+    .then((d) => {
+      global.app.log.d(fnames, 'received data');
+      throw_msg_error(d);
+      return d;
+    })
+    .catch((e) => {
+      if (
+        e instanceof ServerDisconnectError ||
+        e.message.includes('not connected')
+      ) {
+        const fairy = global.app.service.get(ServiceType.Fairy);
+        fairy.healthcheck();
+      }
+
+      throw e;
+    });
+}
+
+function queryClientFetchQuery(
+  query_client: QueryClient,
+  client: Client,
+  calls: [fname: string, args: JsonMap][]
+) {
+  const key = calls.flat();
+  return query_client.fetchQuery(key, clientCall, {
+    meta: {
+      client,
+      calls,
+    },
+  });
+}
+
 function throw_msg_error(msg: ServerMsg) {
   if (msg.error) {
     const msgerror: ServerErrorMsg = msg.error;
@@ -927,6 +964,7 @@ function promiseTimeout(
 }
 export class GroupCall {
   #client: Client;
+  #query_client: QueryClient;
   #functions: {
     name: string;
     args: JsonMap;
@@ -946,11 +984,17 @@ export class GroupCall {
     this.#promises = [];
   }
 
-  _group_call(client: Client, func: string, args: JsonMap) {
+  _group_call(
+    query_client: QueryClient,
+    client: Client,
+    func: string,
+    args: JsonMap
+  ) {
     if (this.#resolved) {
       throw Error('Group call already resolved');
     }
     this.#client = client;
+    this.#query_client = query_client;
     this.#functions.push({
       name: func,
       args,
@@ -980,20 +1024,11 @@ export class GroupCall {
         throw Error('Group call already resolved');
       }
       this.#resolved = true;
-      global.app.log.d('group calling', this.#functions.length, 'functions');
-      const data = await this.#client.send(
-        this.#functions.map((f) => {
-          return {
-            fname: f.name,
-            ...f.args,
-          };
-        })
-      );
 
-      global.app.log.d(
-        'group calling',
-        this.#functions.length,
-        'functions received data'
+      const data = await queryClientFetchQuery(
+        this.#query_client,
+        this.#client,
+        this.#functions.map((f) => [f.name, f.args])
       );
 
       throw_msg_error(data);

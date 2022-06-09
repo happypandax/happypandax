@@ -42,7 +42,6 @@
     "next": "^12.0.10",
     "next-connect": "^0.11.1",
     "next-session": "^4.0.4",
-    "normalized-cache": "^0.0.3",
     "nprogress": "next",
     "on-finished": "^2.4.1",
     "p-queue": "^6.6.2",

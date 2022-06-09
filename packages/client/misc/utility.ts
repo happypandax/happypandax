@@ -404,3 +404,29 @@ export function debounceCollect<P extends any[], T extends (args: P) => any>(
 
   return queuedDebounce;
 }
+
+export function pauseUntil(
+  condition: () => boolean,
+  interval = 100,
+  timeout = Infinity
+) {
+  return new Promise<true>((resolve, reject) => {
+    let timeoutId: NodeJS.Timeout;
+
+    const check = () => {
+      if (condition()) {
+        clearTimeout(timeoutId);
+        resolve(true);
+      } else {
+        timeoutId = setTimeout(check, interval);
+      }
+    };
+
+    check();
+
+    setTimeout(() => {
+      clearTimeout(timeoutId);
+      reject(new Error('Timeout'));
+    }, timeout);
+  });
+}

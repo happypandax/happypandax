@@ -25,7 +25,7 @@ import {
 } from 'react-query';
 
 import { FieldPath, ServerSortIndex } from '../misc/types';
-import { urlstring } from '../misc/utility';
+import { pauseUntil, urlstring } from '../misc/utility';
 import type ServerService from '../services/server';
 import {
   GlobalState,
@@ -877,14 +877,12 @@ export class Query {
 
     if (!GlobalState.connected || !GlobalState.loggedIn) {
       // pause until connected
-      async function pause() {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        if (!GlobalState.connected || !GlobalState.loggedIn) {
-          await pause();
-        }
-      }
 
-      await pause();
+      await pauseUntil(
+        () => GlobalState.connected && GlobalState.loggedIn,
+        1000,
+        1000 * 60 * 60 * 6
+      );
     }
 
     switch (action) {
@@ -968,7 +966,7 @@ export class Query {
     }
   }
 
-  static mutate<
+  static async mutate<
     A = undefined,
     T extends MutationActions<A> = MutationActions<A>,
     K extends T['type'] = T['type'],
@@ -991,6 +989,17 @@ export class Query {
     reqConfig?: Parameters<AxiosInstance['post']>[2]
   ) {
     const key = JSON.stringify([action.toString(), variables]);
+
+    if (!GlobalState.connected || !GlobalState.loggedIn) {
+      // pause until connected
+
+      await pauseUntil(
+        () => GlobalState.connected && GlobalState.loggedIn,
+        1000,
+        1000 * 60 * 60 * 6
+      );
+    }
+
     let obs: MutationObserver<AxiosResponse<R>, E, V> =
       Query.mutationObservers[key];
     if (!obs) {
