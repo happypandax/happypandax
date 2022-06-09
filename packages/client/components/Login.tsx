@@ -10,7 +10,7 @@ import {
 
 import { MutatationType, useMutationType } from '../client/queries';
 import t from '../misc/lang';
-import { useGlobalState, useGlobalValue } from '../state/global';
+import { useGlobalState, useSetGlobalState } from '../state/global';
 import { LabelAccordion } from './misc';
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
@@ -140,10 +140,10 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
 export function LoginModal({ open }: { open?: boolean }) {
   const [loggedIn, setLoggedIn] = useGlobalState('loggedIn');
-  const connected = useGlobalValue('connected');
+  const setConnected = useSetGlobalState('connected');
 
   return (
-    <Modal open={open ?? (!loggedIn && connected)}>
+    <Modal open={open ?? !loggedIn}>
       <Segment clearing>
         <div className="center-text">
           <img src="/img/hpx_logo.svg" className="hpxlogo" alt="hpxlogo" />
@@ -152,6 +152,7 @@ export function LoginModal({ open }: { open?: boolean }) {
         <LoginForm
           onSuccess={useCallback(() => {
             setLoggedIn(true);
+            setConnected(true);
           }, [])}
         />
       </Segment>

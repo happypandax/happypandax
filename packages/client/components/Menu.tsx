@@ -1,13 +1,13 @@
 import classNames from 'classnames';
-import { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useUpdateEffect } from 'react-use';
 import { Icon, IconProps, Menu, Ref } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
 import { useDocumentEvent } from '../client/hooks/utils';
+import { useGlobalValue } from '../state/global';
 import styles from './Menu.module.css';
 import { NotificationAlert, NotificationsPopup } from './popup/Notification';
-
-const MenuContext = createContext({});
 
 export function MenuItem({
   className,
@@ -44,13 +44,13 @@ export function ConnectionItem({
   position?: 'left' | 'right';
 }) {
   const ref = useRef();
-  const connected = true;
+  const connected = useGlobalValue('connected');
 
   const [connectState, setConnectState] = useState<
     'connected' | 'connecting' | 'disconnected'
   >(connected ? 'connected' : 'connecting');
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (!connected) {
       setConnectState('disconnected');
     } else {

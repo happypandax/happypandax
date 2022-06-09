@@ -38,7 +38,7 @@ export class ItemActivityManager {
             items[type].add(id);
           });
 
-          const r = await Query.get(
+          const r = await Query.fetch(
             QueryType.ACTIVITIES,
             {
               items: _.mapValues(items, (v) => [...v]),

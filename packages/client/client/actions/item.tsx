@@ -34,7 +34,7 @@ export class ItemActions {
         onUpdatedData?.(updatedData, mutated);
       }
 
-      Query.post(
+      Query.mutate(
         MutatationType.UPDATE_ITEM,
         { ...args, item: newData },
         {
@@ -86,7 +86,7 @@ export class ItemActions {
         onUpdatedData?.(updatedData, mutated);
       }
 
-      Query.post(MutatationType.UPDATE_METATAGS, args, {
+      Query.mutate(MutatationType.UPDATE_METATAGS, args, {
         onSettled: (res, err, variables) => {
           // return original data if error
           if ((err || !res.data) && mutated) {

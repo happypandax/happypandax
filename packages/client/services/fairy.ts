@@ -14,15 +14,19 @@ export default class FairyService extends Service {
     this.global = [];
     this.store = {};
     this.channel = new Channel();
-    setTimeout(() => this.status(), 1000 * 10);
+    setTimeout(() => this._healthcheck(), 1000 * 10);
   }
 
-  status() {
+  _healthcheck() {
+    this.healthcheck();
+
+    setTimeout(() => this._healthcheck(), 1000 * 30);
+  }
+
+  healthcheck() {
     const server = global.app.service.get(ServiceType.Server);
 
     this.channel.broadcast('status', server.status());
-
-    setTimeout(() => this.status(), 1000 * 30);
   }
 
   register(req: NextApiRequest, session: Session, id: string) {

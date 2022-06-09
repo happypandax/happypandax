@@ -1316,7 +1316,7 @@ export default function Reader({
       fetchingMoreRef.current.previousNumber = pNumber;
 
       fetchingMoreRef.current.fetching = true;
-      Query.get(QueryType.PAGES, {
+      Query.fetch(QueryType.PAGES, {
         gallery_id: item.id,
         number: pNumber,
         fields: pageFields,
@@ -1404,7 +1404,7 @@ export default function Reader({
           size = scaling === 0 ? getOptimalImageSize() : scaling;
         }
 
-        Query.get(
+        Query.fetch(
           QueryType.PROFILE,
           {
             item_type: ItemType.Page,

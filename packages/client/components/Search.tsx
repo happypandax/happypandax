@@ -256,7 +256,7 @@ function SearchResults({
 
           const q = query.slice(t.startPosition, t.endPosition);
 
-          Query.get(QueryType.SEARCH_LABELS, {
+          Query.fetch(QueryType.SEARCH_LABELS, {
             item_types: itemTypes ?? [
               ItemType.Artist,
               ItemType.Category,

@@ -249,6 +249,7 @@ export function MetadataQueue() {
     }
   );
 
+
   const itemsMapRef = useRef(genItemsMap());
 
   const itemsMap = itemsMapRef.current;

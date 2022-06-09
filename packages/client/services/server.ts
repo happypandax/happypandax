@@ -3,6 +3,7 @@ import Client, {
   JsonArray,
   JsonMap,
   log,
+  ServerDisconnectError,
   ServerErrorMsg,
   ServerMsg,
 } from 'happypandax-client';
@@ -130,6 +131,17 @@ export default class ServerService extends Service {
         global.app.log.d(func, 'received data');
         throw_msg_error(d);
         return d?.data?.[0];
+      })
+      .catch((e) => {
+        if (
+          e instanceof ServerDisconnectError ||
+          e.message.includes('not connected')
+        ) {
+          const fairy = global.app.service.get(ServiceType.Fairy);
+          fairy.healthcheck();
+        }
+
+        throw e;
       });
 
     return data;
@@ -676,7 +688,7 @@ export default class ServerService extends Service {
         total: number;
         start_time: number;
         end_time: number;
-      }
+      };
     };
   }
 
@@ -765,7 +777,7 @@ export default class ServerService extends Service {
   }
 
   async activities(
-    args: { items: Record<string, number[]>, activity_type?: ActivityType },
+    args: { items: Record<string, number[]>; activity_type?: ActivityType },
     group?: GroupCall,
     options?: CallOptions
   ) {
@@ -774,8 +786,7 @@ export default class ServerService extends Service {
       ...options,
     });
     throw_msg_error(data);
-    return data.data as
-      Record<string, Record<string, Activity[]>>;
+    return data.data as Record<string, Record<string, Activity[]>>;
   }
 
   async list_plugins(

@@ -65,3 +65,23 @@ export const useGlobalValue = <T extends StateKey>(state: T) => {
 export const useSetGlobalState = <T extends StateKey>(state: T) => {
   return useGlobalState<T>(state)[1];
 };
+
+type ValuesOf<T extends any[]> = T[number];
+
+export function onGlobalStateChange<S extends StateKey[]>(
+  states: S,
+  callback: (state: { [key in ValuesOf<S>]: State[key] }) => void
+) {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  return autorun(() => {
+    const s = {} as { [key in ValuesOf<S>]: State[key] };
+    for (const state of states) {
+      s[state] = toJS(get(GlobalState, state));
+    }
+
+    callback(s);
+  });
+}

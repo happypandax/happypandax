@@ -28,6 +28,7 @@ interface AppPageProps extends AppInitialProps {
   pageProps: {
     notifications: NotificationData[];
     loggedIn: boolean;
+    connected: boolean;
     sameMachine: boolean;
   };
 }
@@ -69,7 +70,6 @@ function Fairy() {
       if (d.date) {
         d.date = new Date(d.date);
       }
-      console.debug('received notification', d);
       setNotificatioAlert([d, ...notificationAlertRef.current]);
       setNotifications([d, ...notificationsRef.current]);
     };
@@ -165,10 +165,12 @@ export function AppRoot({
   children: React.ReactNode;
   pageProps?: AppPageProps['pageProps'];
 }) {
+  const setConnected = useSetGlobalState('connected');
   const setLoggedIn = useSetGlobalState('loggedIn');
   const setSameMachine = useSetGlobalState('sameMachine');
 
   useEffect(() => {
+    setConnected(pageProps.connected);
     setLoggedIn(pageProps.loggedIn);
     setSameMachine(pageProps.sameMachine);
   }, [pageProps]);
@@ -223,12 +225,16 @@ MyApp.getInitialProps = async function (
 ): Promise<AppPageProps> {
   let loggedIn = false;
   let sameMachine = false;
+  let connected = false;
   if (global.app.IS_SERVER) {
     sameMachine =
       context.ctx.req.socket.localAddress ===
       context.ctx.req.socket.remoteAddress;
     const server = global.app.service.get(ServiceType.Server);
-    loggedIn = server.logged_in;
+
+    const s = server.status();
+    connected = s.connected;
+    loggedIn = s.loggedIn;
 
     if (!loggedIn && !['/login', '/_error'].includes(context.router.pathname)) {
       return redirect({
@@ -249,6 +255,7 @@ MyApp.getInitialProps = async function (
       ...props.pageProps,
       loggedIn,
       sameMachine,
+      connected,
       notifications: fairy.get(session.id),
     },
   };

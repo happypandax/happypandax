@@ -94,7 +94,7 @@ export function QueueBoard({}: {}) {
     const f_ids = readingQueue.filter((i) => !items.find((i2) => i2.id === i));
     if (f_ids.length) {
       setLoading(true);
-      Query.get(QueryType.ITEM, {
+      Query.fetch(QueryType.ITEM, {
         item_id: f_ids,
         item_type: ItemType.Gallery,
         profile_options: {

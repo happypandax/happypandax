@@ -1,11 +1,10 @@
-import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 
 import { CommandState } from '../misc/enums';
 import { ServerErrorCode } from '../misc/error';
 import { CommandID, CommandIDKey } from '../misc/types';
-import { urlstring } from '../misc/utility';
 import ServerService from '../services/server';
+import { MutatationType, Query, QueryType } from './queries';
 
 type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;
 
@@ -199,13 +198,9 @@ export class Command<T = unknown> {
   }
 
   async state(command_ids: string[] = undefined) {
-    const r = await axios.patch<
-      Unwrap<ReturnType<ServerService['command_state']>>
-    >(
-      urlstring('/api/command', {
-        command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
-      })
-    );
+    const r = await Query.fetch(QueryType.COMMAND_STATE, {
+      command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
+    });
 
     this._on_state(r.data);
 
@@ -213,36 +208,27 @@ export class Command<T = unknown> {
   }
 
   async start(command_ids: string[] = undefined) {
-    const r = await axios.post<
-      Unwrap<ReturnType<ServerService['start_command']>>
-    >(
-      urlstring('/api/command', {
-        command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
-      })
-    );
+    const r = await Query.mutate(MutatationType.START_COMMAND, {
+      command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
+    });
+
     return this._return(r.data, command_ids);
   }
 
   async stop(command_ids: string[] = undefined) {
-    const r = await axios.delete<
-      Unwrap<ReturnType<ServerService['stop_command']>>
-    >(
-      urlstring('/api/command', {
-        command_ids:
-          this._command_ids_param(command_ids) ?? this._commands_not_finished(),
-      })
-    );
+    const r = await Query.mutate(MutatationType.STOP_COMMAND, {
+      command_ids:
+        this._command_ids_param(command_ids) ?? this._commands_not_finished(),
+    });
+
     return this._return(r.data, command_ids);
   }
 
   async value(command_ids: string[] = undefined) {
-    const r = await axios.get<
-      Unwrap<ReturnType<ServerService['command_value']>>
-    >(
-      urlstring('/api/command', {
-        command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
-      })
-    );
+    const r = await Query.fetch(QueryType.COMMAND_VALUE, {
+      command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
+    });
+
     return this._return(r.data, command_ids);
   }
 }

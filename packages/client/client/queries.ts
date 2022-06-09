@@ -4,7 +4,6 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from 'axios';
-import _ from 'lodash';
 import {
   FetchQueryOptions,
   InitialDataFunction,
@@ -28,6 +27,11 @@ import {
 import { FieldPath, ServerSortIndex } from '../misc/types';
 import { urlstring } from '../misc/utility';
 import type ServerService from '../services/server';
+import {
+  GlobalState,
+  onGlobalStateChange,
+  useGlobalValue,
+} from '../state/global';
 
 export enum QueryType {
   PROFILE = 1,
@@ -50,6 +54,8 @@ export enum QueryType {
   PLUGIN,
   PLUGINS,
   PLUGIN_UPDATE,
+  COMMAND_STATE,
+  COMMAND_VALUE,
   COMMAND_PROGRESS,
   ACTIVITIES,
 }
@@ -59,6 +65,8 @@ export enum MutatationType {
   UPDATE_ITEM,
   UPDATE_METATAGS,
   UPDATE_CONFIG,
+  START_COMMAND,
+  STOP_COMMAND,
   STOP_QUEUE,
   START_QUEUE,
   CLEAR_QUEUE,
@@ -77,12 +85,51 @@ export enum MutatationType {
 
 export const queryClient = new QueryClient({
   defaultOptions: {
+    mutations: {
+      networkMode: 'offlineFirst',
+      retry: true,
+      // https://tanstack.com/query/v4/docs/guides/migrating-to-react-query-4#no-default-manual-garbage-collection-server-side
+      cacheTime: typeof window === 'undefined' ? Infinity : undefined,
+    },
     queries: {
+      networkMode: 'offlineFirst',
+      retry: true,
+      // https://tanstack.com/query/v4/docs/guides/migrating-to-react-query-4#no-default-manual-garbage-collection-server-side
+      cacheTime: typeof window === 'undefined' ? Infinity : undefined,
       staleTime:
-        process.env.NODE_ENV === 'development' ? Infinity : 1000 * 60 * 60 * 6,
+        process.env.NODE_ENV === 'development' ? Infinity : 1000 * 60 * 60 * 3, // 3 hours
     },
   },
 });
+
+const defaultClientOptions = queryClient.getDefaultOptions();
+
+onGlobalStateChange(['connected', 'loggedIn'], (state) => {
+  if (!state.connected || !state.loggedIn) {
+    queryClient.cancelQueries();
+    queryClient.setDefaultOptions({
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+        enabled: false,
+      },
+    });
+  } else {
+    queryClient.setDefaultOptions({
+      mutations: {
+        retry: defaultClientOptions.mutations.retry || true,
+      },
+      queries: {
+        retry: defaultClientOptions.queries.retry || true,
+        enabled: defaultClientOptions.queries.enabled || true,
+      },
+    });
+  }
+});
+
+queryClient.setDefaultOptions({});
 
 export function useMutationType<
   T extends MutationActions,
@@ -281,6 +328,18 @@ export function useQueryType<
   };
 
   const key = getQueryTypeKey(type, variables, options?.onQueryKey);
+
+  const connected = useGlobalValue('connected');
+  const loggedIn = useGlobalValue('loggedIn');
+
+  if (!connected || !loggedIn) {
+    opts.enabled = false;
+    global.log.d(
+      'Query disabled because of not connected or not logged in',
+      key
+    );
+  }
+
   let endpoint = '';
   let method: AxiosRequestConfig['method'] = 'GET';
 
@@ -392,8 +451,9 @@ export function useQueryType<
       break;
     }
 
+    case QueryType.COMMAND_STATE:
+    case QueryType.COMMAND_VALUE:
     case QueryType.ACTIVITIES: {
-      endpoint = '/api/activities';
       throw Error('Not implemented');
       break;
     }
@@ -407,19 +467,28 @@ export function useQueryType<
   if (opts.infinite) {
     r = useInfiniteQuery(
       key,
-      _.throttle((ctx) => {
-        return axios.request(
-          {method, url: urlstring(endpoint, options.infinitePageParam(variables, ctx))}
-        );
-      }, 100),
+      (ctx) => {
+        return axios.request({
+          method,
+          url: urlstring(
+            endpoint,
+            options.infinitePageParam(variables, ctx) as any
+          ),
+          signal: ctx.signal,
+        });
+      },
       opts
     );
   } else {
     r = useQuery(
       key,
-      _.throttle(() => {
-        return axios.request({method, url: urlstring(endpoint, variables)});
-      }, 100),
+      ({ signal }) => {
+        return axios.request({
+          method,
+          url: urlstring(endpoint, variables as any),
+          signal,
+        });
+      },
       opts
     );
   }
@@ -580,6 +649,18 @@ interface FetchCommandProgress<T = undefined> extends QueryAction<T> {
   dataType: Unwrap<ReturnType<ServerService['command_progress']>>;
   variables: Parameters<ServerService['command_progress']>[0];
 }
+
+interface FetchCommandState<T = undefined> extends QueryAction<T> {
+  type: QueryType.COMMAND_STATE;
+  dataType: Unwrap<ReturnType<ServerService['command_state']>>;
+  variables: Parameters<ServerService['command_state']>[0];
+}
+
+interface FetchCommandValue<T = undefined> extends QueryAction<T> {
+  type: QueryType.COMMAND_VALUE;
+  dataType: Unwrap<ReturnType<ServerService['command_value']>>;
+  variables: Parameters<ServerService['command_value']>[0];
+}
 interface FetchActivities<T = undefined> extends QueryAction<T> {
   type: QueryType.ACTIVITIES;
   dataType: Unwrap<ReturnType<ServerService['activities']>>;
@@ -607,6 +688,8 @@ type QueryActions<T = undefined> =
   | FetchPluginUpdate<T>
   | FetchPlugins<T>
   | FetchCommandProgress<T>
+  | FetchCommandState<T>
+  | FetchCommandValue<T>
   | FetchActivities<T>
   | FetchServerStatus<T>;
 
@@ -728,6 +811,18 @@ interface UpdateFilters<T = undefined> extends MutationAction<T> {
   variables: Parameters<ServerService['update_filters']>[0];
 }
 
+interface StartCommand<T = undefined> extends MutationAction<T> {
+  type: MutatationType.START_COMMAND;
+  dataType: Unwrap<ReturnType<ServerService['start_command']>>;
+  variables: Parameters<ServerService['start_command']>[0];
+}
+
+interface StopCommand<T = undefined> extends MutationAction<T> {
+  type: MutatationType.STOP_COMMAND;
+  dataType: Unwrap<ReturnType<ServerService['stop_command']>>;
+  variables: Parameters<ServerService['stop_command']>[0];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
@@ -746,6 +841,8 @@ type MutationActions<T = undefined> =
   | InstallPlugin<T>
   | OpenGallery<T>
   | UpdateFilters<T>
+  | StartCommand<T>
+  | StopCommand<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================
@@ -758,7 +855,7 @@ export class Query {
     MutationObserver<any, any, any, any>
   > = {};
 
-  static get<
+  static async fetch<
     A = undefined,
     T extends QueryActions<A> = QueryActions<A>,
     K extends T['type'] = T['type'],
@@ -778,46 +875,90 @@ export class Query {
   ) {
     const key = [action.toString(), variables];
 
+    if (!GlobalState.connected || !GlobalState.loggedIn) {
+      // pause until connected
+      async function pause() {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (!GlobalState.connected || !GlobalState.loggedIn) {
+          await pause();
+        }
+      }
+
+      await pause();
+    }
+
     switch (action) {
       case QueryType.ITEM: {
         return queryClient.fetchQuery(
           key,
-          () => axios.get<R>(urlstring('/api/item', variables as any)),
+          ({ signal }) =>
+            axios.get<R>(urlstring('/api/item', variables as any), { signal }),
           options
         );
       }
       case QueryType.PROFILE: {
         return queryClient.fetchQuery(
           key,
-          () => axios.get<R>(urlstring('/api/profile', variables as any)),
+          ({ signal }) =>
+            axios.get<R>(urlstring('/api/profile', variables as any), {
+              signal,
+            }),
           options
         );
       }
       case QueryType.PAGES: {
         return queryClient.fetchQuery(
           key,
-          () => axios.get<R>(urlstring('/api/pages', variables as any)),
+          ({ signal }) =>
+            axios.get<R>(urlstring('/api/pages', variables as any), { signal }),
           options
         );
       }
       case QueryType.SEARCH_LABELS: {
         return queryClient.fetchQuery(
           key,
-          () => axios.get<R>(urlstring('/api/search_labels', variables as any)),
+          ({ signal }) =>
+            axios.get<R>(urlstring('/api/search_labels', variables as any), {
+              signal,
+            }),
           options
         );
       }
       case QueryType.SEARCH_ITEMS: {
         return queryClient.fetchQuery(
           key,
-          () => axios.get<R>(urlstring('/api/search_items', variables as any)),
+          ({ signal }) =>
+            axios.get<R>(urlstring('/api/search_items', variables as any), {
+              signal,
+            }),
           options
         );
       }
       case QueryType.ACTIVITIES: {
         return queryClient.fetchQuery(
           key,
-          () => axios.post<R>(urlstring('/api/activities'), variables, ),
+          ({ signal }) =>
+            axios.post<R>(urlstring('/api/activities'), variables, { signal }),
+          options
+        );
+      }
+      case QueryType.COMMAND_STATE: {
+        return queryClient.fetchQuery(
+          key,
+          ({ signal }) =>
+            axios.post<R>(urlstring('/api/command_state'), variables, {
+              signal,
+            }),
+          options
+        );
+      }
+      case QueryType.COMMAND_VALUE: {
+        return queryClient.fetchQuery(
+          key,
+          ({ signal }) =>
+            axios.post<R>(urlstring('/api/command_value'), variables, {
+              signal,
+            }),
           options
         );
       }
@@ -827,7 +968,7 @@ export class Query {
     }
   }
 
-  static post<
+  static mutate<
     A = undefined,
     T extends MutationActions<A> = MutationActions<A>,
     K extends T['type'] = T['type'],
@@ -862,6 +1003,14 @@ export class Query {
         }
         case MutatationType.UPDATE_METATAGS: {
           endpoint = '/api/metatags';
+          break;
+        }
+        case MutatationType.START_COMMAND: {
+          endpoint = '/api/start_command';
+          break;
+        }
+        case MutatationType.STOP_COMMAND: {
+          endpoint = '/api/stop_command';
           break;
         }
 
