@@ -60,9 +60,13 @@ enum ClientType {
   poll,
 }
 
-interface CallOptions {
+export interface CallOptions {
   client?: ClientType;
+  cache?: boolean;
+  invalidate?: boolean;
 }
+
+const cacheTime = 1000 * 60 * 60 * 6; // 6 hours
 
 export default class ServerService extends Service {
   endpoint: { host: string; port: number };
@@ -99,8 +103,12 @@ export default class ServerService extends Service {
 
     this.query_client = new QueryClient({
       defaultOptions: {
-        queries: { networkMode: 'always' },
-        mutations: { networkMode: 'always' },
+        queries: {
+          retry: false,
+          networkMode: 'always',
+          staleTime: cacheTime * 2,
+          cacheTime: cacheTime,
+        },
       },
     });
   }
@@ -126,12 +134,21 @@ export default class ServerService extends Service {
     }
 
     if (group) {
-      return await group._group_call(this.query_client, client, func, args);
+      return await group._group_call(
+        this.query_client,
+        client,
+        func,
+        args,
+        options
+      );
     }
 
-    const r = await queryClientFetchQuery(this.query_client, client, [
-      [func, args],
-    ]);
+    const r = await queryClientFetchQuery(
+      this.query_client,
+      client,
+      [[func, args]],
+      options
+    );
 
     const data = r?.data?.[0];
 
@@ -262,7 +279,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('update_item', args, group, options);
+    const data = await this._call('update_item', args, group, {
+      invalidate: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean;
   }
@@ -276,7 +296,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('update_metatags', args, group, options);
+    const data = await this._call('update_metatags', args, group, {
+      invalidate: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean | number;
   }
@@ -291,7 +314,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_item', args, group, options);
+    const data = await this._call('get_item', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as R extends undefined ? JsonMap : R;
   }
@@ -308,7 +334,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_items', args, group, options);
+    const data = await this._call('get_items', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -329,7 +358,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('search_items', args, group, options);
+    const data = await this._call('search_items', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -351,7 +383,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_related_items', args, group, options);
+    const data = await this._call('get_related_items', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -371,7 +406,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_from_grouping', args, group, options);
+    const data = await this._call('get_from_grouping', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as null | ServerGallery;
   }
@@ -401,7 +439,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_pages', args, group, options);
+    const data = await this._call('get_pages', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -418,7 +459,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_profile', args, group, options);
+    const data = await this._call('get_profile', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as { [key: string]: number };
   }
@@ -441,7 +485,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('library_view', args, group, options);
+    const data = await this._call('library_view', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -460,7 +507,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_similar', args, group, options);
+    const data = await this._call('get_similar', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as CommandID<{
       count: number;
@@ -475,7 +525,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('update_filters', args, group, options);
+    const data = await this._call('update_filters', args, group, {
+      invalidate: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as CommandID<boolean>;
   }
@@ -489,7 +542,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_search_labels', args, group, options);
+    const data = await this._call('get_search_labels', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as {
       count: number;
@@ -507,7 +563,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('get_sort_indexes', args, group, options);
+    const data = await this._call('get_sort_indexes', args, group, {
+      cache: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as ServerSortIndex[];
   }
@@ -805,7 +864,9 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('install_plugin', args, group, options);
+    const data = await this._call('install_plugin', args, group, {
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as PluginState;
   }
@@ -815,7 +876,9 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('disable_plugin', args, group, options);
+    const data = await this._call('disable_plugin', args, group, {
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as PluginState;
   }
@@ -825,7 +888,7 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('remove_plugin', args, group, options);
+    const data = await this._call('remove_plugin', args, group, { ...options });
     throw_msg_error(data);
     return data.data as PluginState;
   }
@@ -852,7 +915,7 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('update_plugin', args, group, options);
+    const data = await this._call('update_plugin', args, group, { ...options });
     throw_msg_error(data);
     return data.data as CommandID<string[]>;
   }
@@ -885,9 +948,35 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('page_read_event', args, group, options);
+    const data = await this._call('page_read_event', args, group, {
+      invalidate: true,
+      ...options,
+    });
     throw_msg_error(data);
     return data.data as boolean;
+  }
+
+  async resolve_path_pattern(
+    args: { pattern: string },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('resolve_path_pattern', args, group, {
+      ...options,
+    });
+    throw_msg_error(data);
+    return data.data as (
+      | string
+      | {
+          class: string;
+          start: number;
+          end: number;
+          text: string;
+          token: string;
+          type: string;
+          error: string;
+        }
+    )[];
   }
 }
 
@@ -923,13 +1012,21 @@ function clientCall(ctx: QueryFunctionContext) {
     });
 }
 
-function queryClientFetchQuery(
+async function queryClientFetchQuery(
   query_client: QueryClient,
   client: Client,
-  calls: [fname: string, args: JsonMap][]
+  calls: [fname: string, args: JsonMap][],
+  call_options?: CallOptions
 ) {
+  if (call_options?.invalidate) {
+    const fnames = calls.map((v) => v[0]);
+    global.log.d('invalidating cache by', ...fnames);
+    await query_client.invalidateQueries();
+  }
+
   const key = calls.flat();
   return query_client.fetchQuery(key, clientCall, {
+    cacheTime: !call_options?.cache ? 0 : cacheTime,
     meta: {
       client,
       calls,
@@ -965,6 +1062,7 @@ function promiseTimeout(
 export class GroupCall {
   #client: Client;
   #query_client: QueryClient;
+  #options: CallOptions;
   #functions: {
     name: string;
     args: JsonMap;
@@ -982,13 +1080,15 @@ export class GroupCall {
     this.#promises_resolves = [];
     this.#functions = [];
     this.#promises = [];
+    this.#options = {};
   }
 
   _group_call(
     query_client: QueryClient,
     client: Client,
     func: string,
-    args: JsonMap
+    args: JsonMap,
+    options?: CallOptions
   ) {
     if (this.#resolved) {
       throw Error('Group call already resolved');
@@ -999,6 +1099,26 @@ export class GroupCall {
       name: func,
       args,
     });
+
+    if (this.#options.cache === undefined) {
+      this.#options.cache = options?.cache;
+    } else if (options.cache) {
+      if (this.#options.cache !== false) {
+        this.#options.cache = options.cache;
+      }
+    } else {
+      this.#options.cache = options?.cache;
+    }
+
+    if (this.#options.invalidate === undefined) {
+      this.#options.invalidate = options?.invalidate;
+    } else if (options.invalidate) {
+      if (this.#options.invalidate !== false) {
+        this.#options.invalidate = options.invalidate;
+      }
+    } else {
+      this.#options.invalidate = options?.invalidate;
+    }
 
     const p = new Promise((resolve, reject) => {
       this.#promises_resolves.push([resolve, reject]);
@@ -1028,7 +1148,8 @@ export class GroupCall {
       const data = await queryClientFetchQuery(
         this.#query_client,
         this.#client,
-        this.#functions.map((f) => [f.name, f.args])
+        this.#functions.map((f) => [f.name, f.args]),
+        this.#options
       );
 
       throw_msg_error(data);

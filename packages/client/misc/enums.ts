@@ -5,25 +5,25 @@ export enum TemporaryViewType {
 
 export enum CommandState {
   // // command has not been put in any service yet
-  out_of_service = 0,
+  OutOfService = 0,
 
   // // command has been put in a service (but not started or stopped yet)
-  in_service = 1,
+  InService = 1,
 
   // // command has been scheduled to start
-  in_queue = 2,
+  InQueue = 2,
 
   // // command has been started
-  started = 3,
+  Started = 3,
 
   // // command has finished succesfully
-  finished = 4,
+  Finished = 4,
 
   // // command has been forcefully stopped without finishing
-  stopped = 5,
+  Stopped = 5,
 
   // // command has finished with an error
-  failed = 6,
+  Failed = 6,
 }
 
 export enum ItemType {
@@ -286,36 +286,34 @@ export enum ViewType {
   Inbox = 2,
 }
 
-
 export enum ActivityType {
-    // unknown
-    unknown = 1,
+  // unknown
+  Unknown = 1,
 
-    // metadata fetching activity
-    metadata = 2,
+  // metadata fetching activity
+  Metadata = 2,
 
-    // download activity
-    download = 3,
+  // download activity
+  Download = 3,
 
-    // item data update activity
-    itemdata_update = 4,
+  // item data update activity
+  ItemdataUpdate = 4,
 
-    // item database update activity
-    item_update = 5,
+  // item database update activity
+  ItemUpdate = 5,
 
-    // item database delete activity
-    item_delete = 6,
+  // item database delete activity
+  ItemDelete = 6,
 
-    // item move  activity
-    item_move = 7,
+  // item move  activity
+  ItemMove = 7,
 
-    // item similar items calculation activity
-    items_similar = 8,
+  // item similar items calculation activity
+  ItemSimilar = 8,
 
-    // item image generation activity
-    image = 9,
+  // item image generation activity
+  Image = 9,
 
-    // sync item source activity
-    sync_with_source = 10
-
+  // sync item source activity
+  SyncWithSource = 10,
 }

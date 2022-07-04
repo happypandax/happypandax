@@ -4,6 +4,7 @@ import 'animate.css';
 import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
+import { Session } from 'next-session/lib/types';
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
@@ -226,6 +227,9 @@ MyApp.getInitialProps = async function (
   let loggedIn = false;
   let sameMachine = false;
   let connected = false;
+  let session: Session;
+  let notifications: NotificationData[] = [];
+
   if (global.app.IS_SERVER) {
     sameMachine =
       context.ctx.req.socket.localAddress ===
@@ -242,12 +246,13 @@ MyApp.getInitialProps = async function (
         ctx: context.ctx,
       }) as any;
     }
+
+    session = await getSession(context.ctx.req, context.ctx.res);
+    const fairy = global.app.service.get(ServiceType.Fairy);
+    notifications = fairy.get(session?.id);
   }
 
   const props = await App.getInitialProps(context);
-
-  const session = await getSession(context.ctx.req, context.ctx.res);
-  const fairy = global.app.service.get(ServiceType.Fairy);
 
   return {
     ...props,
@@ -256,7 +261,7 @@ MyApp.getInitialProps = async function (
       loggedIn,
       sameMachine,
       connected,
-      notifications: fairy.get(session.id),
+      notifications,
     },
   };
 };

@@ -11,7 +11,7 @@ type ItemRender<T> = React.ComponentType<{ data: T; size?: ItemSize }>;
 
 interface CardViewProps<T> {
   items: T[];
-  onItemKey: (T) => any;
+  onItemKey: (item: T) => any;
   itemRender: ItemRender<T>;
   loading?: boolean;
   itemsPerPage?: number;
@@ -49,7 +49,8 @@ function CardViewGrid<T>({
 
   const itemsPerRow = Math.max(Math.floor(width / itemWidth), 1);
   const rowCount = Math.ceil(
-    ((items?.length ?? 0) + ((loading && itemsPerPage) ? itemsPerPage : 0)) / itemsPerRow
+    ((items?.length ?? 0) + (loading && itemsPerPage ? itemsPerPage : 0)) /
+      itemsPerRow
   );
 
   const resize = useCallback(() => {

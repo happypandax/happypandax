@@ -1,4 +1,4 @@
-import { handler } from '../../misc/requests';
+import { handler, RequestOptions } from '../../misc/requests';
 import { urlparse } from '../../misc/utility';
 import { ServiceType } from '../../services/constants';
 
@@ -10,15 +10,20 @@ export default handler().get(async (req, res) => {
     include_finished,
     include_queued,
     include_active,
+    __options,
   } = urlparse(req.url).query;
 
   return server
-    .queue_state({
-      queue_type: queue_type as number,
-      include_finished: include_finished as boolean,
-      include_queued: include_queued as boolean,
-      include_active: include_active as boolean,
-    })
+    .queue_state(
+      {
+        queue_type: queue_type as number,
+        include_finished: include_finished as boolean,
+        include_queued: include_queued as boolean,
+        include_active: include_active as boolean,
+      },
+      undefined,
+      __options as RequestOptions
+    )
     .then((r) => {
       res.status(200).json(r);
     });

@@ -323,7 +323,7 @@ function GeneralPane() {
                 optionChange={optionChange}
               />
               <OptionField
-                label={t`How many pages in percent has to be read before the gallery is considered read`}
+                label={t`How many pages in percent have to be read before the gallery is considered read`}
                 cfg={cfg}
                 nskey="gallery.pages_to_read"
                 float

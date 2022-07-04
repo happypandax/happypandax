@@ -142,7 +142,9 @@ export function QueueBoard({}: {}) {
               onClick={reverse}
               icon={{ name: 'exchange', rotated: 'counterclockwise' }}
             />
-            <Button floated="right" color="red" onClick={clear} icon="remove" />
+            <Button floated="right" color="red" onClick={clear}>
+              {t`Clear`}
+            </Button>
           </Segment>
         )}
         <ListView

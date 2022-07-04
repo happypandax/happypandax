@@ -127,9 +127,9 @@ export class Command<T = unknown> {
       .map((i) => {
         if (
           ![
-            CommandState.finished,
-            CommandState.failed,
-            CommandState.stopped,
+            CommandState.Finished,
+            CommandState.Failed,
+            CommandState.Stopped,
           ].includes(this.#state[i])
         ) {
           return i;
@@ -141,7 +141,7 @@ export class Command<T = unknown> {
   _commands_finished_successfully(unresolved = true) {
     return this.command_ids
       .map((i) => {
-        if ([CommandState.finished].includes(this.#state[i])) {
+        if ([CommandState.Finished].includes(this.#state[i])) {
           if (unresolved) {
             if (!Object.keys(this.#resolved_ids).includes(i)) {
               return i;

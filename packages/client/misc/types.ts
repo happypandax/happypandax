@@ -341,3 +341,10 @@ export interface PluginData {
 export type ThemeValue = 'momo-d' | 'momo-l';
 
 export type ItemID = number;
+
+export type FileT = File & { isDirectory?: boolean };
+export interface SourceItem {
+  source: 'host' | 'file';
+  path?: string;
+  file?: FileT;
+}

@@ -9,5 +9,5 @@ export async function getServerSideProps(context) {
 }
 
 export default function Page() {
-  return <div></div>;
+  return <div>Redirecting...</div>;
 }

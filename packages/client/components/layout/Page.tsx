@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useRecoilValue } from 'recoil';
-import { Button, Container, Dimmer, Portal, Sidebar } from 'semantic-ui-react';
+import { Button, Container, Dimmer, Sidebar } from 'semantic-ui-react';
 
 import t from '../../misc/lang';
 import { AppState } from '../../state';
@@ -40,17 +40,15 @@ export function BottomZoneItem({
 
 export function BottomZone({
   children,
-  mountNode,
+  className,
 }: {
   children?: React.ReactNode;
-  mountNode?: HTMLElement;
+  className?: string;
 }) {
   return (
-    <Portal open mountNode={mountNode}>
-      <div id="bottom_zone">
-        <div>{children}</div>
-      </div>
-    </Portal>
+    <div id="bottom_zone" className={className}>
+      <div>{children}</div>
+    </div>
   );
 }
 
@@ -83,39 +81,39 @@ export default function PageLayout({
     <>
       <MainSidebar />
       {menu}
-      <Sidebar.Pusher
-        as={Dimmer.Dimmable}
-        dimmed={dimmed}
-        className={classNames()}>
-        <Dimmer simple active={dimmed} />
-        <DndProvider backend={HTML5Backend}>
+      <DndProvider backend={HTML5Backend}>
+        <Sidebar.Pusher
+          as={Dimmer.Dimmable}
+          dimmed={dimmed}
+          className={classNames()}>
+          <Dimmer simple active={dimmed} />
           {centered && <Container>{children}</Container>}
           {!centered && children}
           <DrawerPortal />
-          <BottomZone>
-            {bottomZone}
-            <BottomZoneItem x="left" y="top" className="flex">
-              {bottomZoneLeft}
-            </BottomZoneItem>
-            <BottomZoneItem x="right" y="top" className="flex">
-              {bottomZoneRight}
-            </BottomZoneItem>
-            <BottomZoneItem x="left" y="bottom">
-              {drawerButtonPosition !== 'right' && (
-                <DrawerButton basic={basicDrawerButton} />
-              )}
-              {bottomZoneLeftBottom}
-            </BottomZoneItem>
-            <BottomZoneItem x="right" y="bottom">
-              {bottomZoneRightBottom}
-              {drawerButtonPosition === 'right' && (
-                <DrawerButton basic={basicDrawerButton} />
-              )}
-              <ScrollUpButton />
-            </BottomZoneItem>
-          </BottomZone>
-        </DndProvider>
-      </Sidebar.Pusher>
+        </Sidebar.Pusher>
+        <BottomZone className="pusher">
+          {bottomZone}
+          <BottomZoneItem x="left" y="top" className="flex">
+            {bottomZoneLeft}
+          </BottomZoneItem>
+          <BottomZoneItem x="right" y="top" className="flex">
+            {bottomZoneRight}
+          </BottomZoneItem>
+          <BottomZoneItem x="left" y="bottom">
+            {drawerButtonPosition !== 'right' && (
+              <DrawerButton basic={basicDrawerButton} />
+            )}
+            {bottomZoneLeftBottom}
+          </BottomZoneItem>
+          <BottomZoneItem x="right" y="bottom">
+            {bottomZoneRightBottom}
+            {drawerButtonPosition === 'right' && (
+              <DrawerButton basic={basicDrawerButton} />
+            )}
+            <ScrollUpButton />
+          </BottomZoneItem>
+        </BottomZone>
+      </DndProvider>
     </>
   );
 }

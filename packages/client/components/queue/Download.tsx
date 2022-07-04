@@ -58,9 +58,9 @@ function DownloadItemCard({
 
   const color = item.success ? 'green' : 'red';
 
-  if ([CommandState.finished, CommandState.failed].includes(item.state)) {
+  if ([CommandState.Finished, CommandState.Failed].includes(item.state)) {
     lbl = <Icon name={item.success ? 'check' : 'remove'} color={color} />;
-  } else if (item.state === CommandState.stopped) {
+  } else if (item.state === CommandState.Stopped) {
     lbl = <Icon name="remove" />;
   }
 
@@ -82,18 +82,18 @@ function DownloadItemCard({
             {item?.title ? item.url : item.thumbnail_url}
           </Card.Meta>
           <Card.Description>
-            {item.state !== CommandState.in_queue && (
+            {item.state !== CommandState.InQueue && (
               <Progress
-                error={item.state === CommandState.failed}
-                success={item.state === CommandState.finished && item.success}
-                warning={item.state === CommandState.finished && !item.success}
+                error={item.state === CommandState.Failed}
+                success={item.state === CommandState.Finished && item.success}
+                warning={item.state === CommandState.Finished && !item.success}
                 indicating={item.active}
                 percent={item.active ? item.percent : 100}
                 active={item.active}>
                 {lbl}
               </Progress>
             )}
-            {item.state === CommandState.in_queue && (
+            {item.state === CommandState.InQueue && (
               <div className="ui placeholder fluid">
                 <div className="very long line" />
               </div>

@@ -18,6 +18,7 @@ import { CommandProgress } from '../misc/types';
 import { useGlobalValue } from '../state/global';
 import { EmptySegment } from './misc';
 import { ActivityList } from './misc/ActivityList';
+import { TrashTabView } from './Trash';
 
 function InfoPane() {
   return (
@@ -157,6 +158,14 @@ function StatsPane() {
   );
 }
 
+function TrashPane() {
+  return (
+    <Segment basic>
+      <TrashTabView />
+    </Segment>
+  );
+}
+
 export function AboutTab() {
   return (
     <Tab
@@ -210,7 +219,7 @@ export function AboutTab() {
             },
             render: () => (
               <Tab.Pane basic className="no-padding-segment">
-                <StatsPane />
+                <TrashPane />
               </Tab.Pane>
             ),
           },

@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
 } from 'react';
@@ -196,8 +198,8 @@ export function MainSidebar({
 
 export default MainSidebar;
 
-function mainMenuProps() {
-  const fixedEl: HTMLDivElement = document.querySelector('.main-menu.fixed');
+function mainMenuProps(selector = '.main-menu') {
+  const fixedEl: HTMLDivElement = document.querySelector(`${selector}.fixed`);
   const r = {
     height: fixedEl?.offsetHeight ?? 0,
     bottom: fixedEl?.getBoundingClientRect?.()?.bottom ?? 0,
@@ -205,7 +207,9 @@ function mainMenuProps() {
   };
 
   if (!r.fixed) {
-    const el: HTMLDivElement = document.querySelector('.main-menu:not(.fixed)');
+    const el: HTMLDivElement = document.querySelector(
+      `${selector}:not(.fixed)`
+    );
     if (el?.offsetHeight) {
       r.height = el.offsetHeight;
     }
@@ -217,27 +221,42 @@ function mainMenuProps() {
   return r;
 }
 
-export function StickySidebar({
-  visible,
-  ...props
-}: {
-  visible?: boolean;
-} & React.ComponentProps<typeof Sidebar>) {
+export const StickySidebar = forwardRef(function StickySidebar(
+  {
+    visible,
+    menuSelector = '.main-menu',
+    ...props
+  }: {
+    visible?: boolean;
+    menuSelector?: string;
+  } & React.ComponentProps<typeof Sidebar>,
+  fref
+) {
   const ref = useRef<HTMLDivElement>();
+
+  useImperativeHandle(fref, () => ref.current);
 
   const computeTop = useCallback(() => {
     if (visible) {
-      const mh = mainMenuProps();
-      const margin = 5
+      const mh = mainMenuProps(menuSelector);
+      const margin = 5;
       const t = Math.max(0, mh.height + margin);
       ref.current.style.top = `${t}px`;
       if (mh.height && (mh.fixed || !t)) {
-        ref.current.style.setProperty('max-height', `calc(100% - ${t + margin}px)`, 'important');
+        ref.current.style.setProperty(
+          'max-height',
+          `calc(100% - ${t + margin}px)`,
+          'important'
+        );
       } else {
-        ref.current.style.setProperty('max-height', `calc(100% - ${t + margin}px)`, 'important');
+        ref.current.style.setProperty(
+          'max-height',
+          `calc(100% - ${t + margin}px)`,
+          'important'
+        );
       }
     }
-  }, [visible]);
+  }, [visible, menuSelector]);
 
   useEffect(() => {
     ref.current.style.paddingRight = `calc(${
@@ -263,4 +282,4 @@ export function StickySidebar({
       />
     </Ref>
   );
-}
+});

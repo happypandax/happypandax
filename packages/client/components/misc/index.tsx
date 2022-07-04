@@ -4,23 +4,29 @@ import 'swiper/swiper-bundle.css';
 import classNames from 'classnames';
 import maxSize from 'popper-max-size-modifier';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDrop } from 'react-dnd';
+import { NativeTypes } from 'react-dnd-html5-backend';
 import Editor from 'react-simple-code-editor';
-import { useWindowScroll } from 'react-use';
+import { useUpdateEffect, useWindowScroll } from 'react-use';
 import {
   Button,
+  Dimmer,
   Divider,
   Header,
   Icon,
   Label,
+  List,
   Message,
   Popup,
+  Ref,
   Segment,
 } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../../client/queries';
 import { LogType } from '../../misc/enums';
 import t from '../../misc/lang';
-import { parseMarkdown, scrollToTop } from '../../misc/utility';
+import { FileT } from '../../misc/types';
+import { humanFileSize, parseMarkdown, scrollToTop } from '../../misc/utility';
 import { MiscState } from '../../state';
 import { useInitialRecoilState } from '../../state/index';
 import styles from './Misc.module.css';
@@ -78,9 +84,12 @@ export function JSONTextEditor({
   value,
   defaultValue,
   onChange: initialOnChange,
+  pretty,
+  ...props
 }: {
   value?: object;
   defaultValue?: object;
+  pretty?: boolean;
   onChange?: (value: object) => void;
 } & Omit<
   React.ComponentProps<typeof TextEditor>,
@@ -88,7 +97,7 @@ export function JSONTextEditor({
 >) {
   const [error, setError] = useState('');
   const [textValue, setTextValue] = useState<string>(
-    value ? JSON.stringify(value) : undefined
+    value ? JSON.stringify(value, undefined, pretty ? 2 : undefined) : undefined
   );
 
   const onChange = useCallback(
@@ -107,11 +116,22 @@ export function JSONTextEditor({
     [initialOnChange]
   );
 
+  useEffect(() => {
+    if (value !== undefined) {
+      setTextValue(JSON.stringify(value, undefined, pretty ? 2 : undefined));
+    }
+  }, [value]);
+
   return (
     <div>
       <TextEditor
+        {...props}
         value={textValue}
-        defaultValue={defaultValue ? JSON.stringify(defaultValue) : undefined}
+        defaultValue={
+          defaultValue
+            ? JSON.stringify(defaultValue, undefined, pretty ? 2 : undefined)
+            : undefined
+        }
         onChange={onChange}
       />
       {!!error && (
@@ -374,5 +394,118 @@ export function PopupNoOverflow(props: React.ComponentProps<typeof Popup>) {
       offset={[20, 0]}
       popperModifiers={[maxSize, applyMaxSize]}
     />
+  );
+}
+
+export function FileDropZone({
+  onFiles,
+  files = [],
+  ...props
+}: {
+  files?: FileT[];
+  onFiles: (files: FileT[]) => void;
+} & React.ComponentProps<typeof Segment>) {
+  const [droppedFiles, setDroppedFiles] = useState<FileT[]>(files);
+
+  const [{ canDrop, isOver }, drop] = useDrop(
+    () => ({
+      accept: [NativeTypes.FILE],
+      drop(item: DataTransfer) {
+        if (item) {
+          const files = item.items;
+          setDroppedFiles([
+            ...droppedFiles,
+            ...Array.from(files).map((f) => {
+              const o: FileT = f.getAsFile();
+              o.isDirectory = f.webkitGetAsEntry().isDirectory;
+              return o;
+            }),
+          ]);
+        }
+      },
+      canDrop(item: any) {
+        return true;
+      },
+      collect: (monitor) => {
+        return {
+          isOver: monitor.isOver(),
+          canDrop: monitor.canDrop(),
+        };
+      },
+    }),
+    [droppedFiles]
+  );
+
+  useUpdateEffect(() => {
+    onFiles?.(droppedFiles);
+  }, [droppedFiles]);
+
+  useEffect(() => {
+    setDroppedFiles(files);
+  }, [files]);
+
+  const dropEl = (
+    <Header
+      inverted={!!droppedFiles.length}
+      className="center text-center sub-text"
+      icon>
+      <Icon
+        color={isOver ? 'green' : undefined}
+        className="hpx-standard sub-text"
+        size="huge"
+      />
+      {isOver ? t`Release!` : t`Drop files here`}
+    </Header>
+  );
+
+  let el = dropEl;
+
+  if (droppedFiles.length) {
+    el = (
+      <>
+        <Dimmer active={isOver}>{dropEl}</Dimmer>
+        <List divided verticalAlign="middle">
+          {droppedFiles.map((file, idx) => {
+            return (
+              <List.Item key={file.name}>
+                <List.Icon name={file.isDirectory ? 'folder' : 'file'} />
+                <List.Content>
+                  <List.Header>
+                    {file.name}
+
+                    <Button
+                      floated="right"
+                      icon="remove"
+                      size="mini"
+                      color="red"
+                      onClick={() =>
+                        setDroppedFiles(
+                          droppedFiles.filter((_, i) => i !== idx)
+                        )
+                      }
+                    />
+                  </List.Header>
+                  <List.Description>
+                    {file.isDirectory ? t`Folder` : humanFileSize(file.size)}
+                  </List.Description>
+                </List.Content>
+              </List.Item>
+            );
+          })}
+        </List>
+      </>
+    );
+  }
+
+  return (
+    <Ref innerRef={drop}>
+      <Segment
+        {...props}
+        placeholder={!droppedFiles.length}
+        tertiary={!droppedFiles.length}
+        className="min-200-h">
+        {el}
+      </Segment>
+    </Ref>
   );
 }

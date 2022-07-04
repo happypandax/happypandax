@@ -83,3 +83,8 @@ export const ItemContext = React.createContext({
   loading: false,
   horizontal: false,
 });
+
+export const NewItemContext = React.createContext({
+  data: ServerItem,
+  
+});

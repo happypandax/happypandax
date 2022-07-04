@@ -15,21 +15,21 @@ export function ActivityList({
   data: (CommandProgress | Activity)[];
 }) {
   const title = {
-    [ActivityType.metadata]: t`Fetching metadata...`,
-    [ActivityType.item_move]: t`Moving item...`,
-    [ActivityType.item_update]: t`Updating item...`,
-    [ActivityType.image]: t`Generating image...`,
-    [ActivityType.items_similar]: t`Getting similar items...`,
-    [ActivityType.sync_with_source]: t`Syncing with source...`,
+    [ActivityType.Metadata]: t`Fetching metadata...`,
+    [ActivityType.ItemMove]: t`Moving item...`,
+    [ActivityType.ItemUpdate]: t`Updating item...`,
+    [ActivityType.Image]: t`Generating image...`,
+    [ActivityType.ItemSimilar]: t`Getting similar items...`,
+    [ActivityType.SyncWithSource]: t`Syncing with source...`,
   };
 
   return (
     <List size="mini">
       {data?.map?.((p) => {
         const done = [
-          CommandState.finished,
-          CommandState.stopped,
-          CommandState.failed,
+          CommandState.Finished,
+          CommandState.Stopped,
+          CommandState.Failed,
         ].includes(p.state);
 
         console.debug({ p });
@@ -45,19 +45,19 @@ export function ActivityList({
                   <Label size="mini" basic color="black">
                     {t`Status`}:
                     <Label.Detail>
-                      {p.state === CommandState.failed
+                      {p.state === CommandState.Failed
                         ? t`Failed`
-                        : p.state === CommandState.finished
+                        : p.state === CommandState.Finished
                         ? t`Finished`
-                        : p.state === CommandState.in_queue
+                        : p.state === CommandState.InQueue
                         ? t`In Queue`
-                        : p.state === CommandState.in_service
+                        : p.state === CommandState.InService
                         ? t`In Service`
-                        : p.state === CommandState.out_of_service
+                        : p.state === CommandState.OutOfService
                         ? t`Out of Service`
-                        : p.state === CommandState.started
+                        : p.state === CommandState.Started
                         ? t`Started`
-                        : p.state === CommandState.stopped
+                        : p.state === CommandState.Stopped
                         ? t`Stopped`
                         : t`Unknown`}
                     </Label.Detail>
@@ -76,9 +76,9 @@ export function ActivityList({
                 color={!p.max && !done ? 'blue' : undefined}
                 indeterminate={!p.max && !done ? 'filling' : undefined}
                 speed={
-                  p.state === CommandState.started
+                  p.state === CommandState.Started
                     ? 'fast'
-                    : [CommandState.in_service, CommandState.in_queue].includes(
+                    : [CommandState.InService, CommandState.InQueue].includes(
                         p.state
                       )
                     ? 'slow'
@@ -86,10 +86,9 @@ export function ActivityList({
                 }
                 indicating={
                   !done ||
-                  [
-                    CommandState.in_service,
-                    CommandState.out_of_service,
-                  ].includes(p.state)
+                  [CommandState.InService, CommandState.OutOfService].includes(
+                    p.state
+                  )
                 }
                 size={detail ? 'small' : 'tiny'}
                 progress={detail ? 'percent' : false}
@@ -97,9 +96,9 @@ export function ActivityList({
                 total={p.max ? p.max : undefined}
                 centered
                 value={p.max ? p.value : undefined}
-                success={p.state === CommandState.finished}
-                error={p.state === CommandState.failed}
-                warning={p.state === CommandState.stopped}
+                success={p.state === CommandState.Finished}
+                error={p.state === CommandState.Failed}
+                warning={p.state === CommandState.Stopped}
                 autoSuccess={p.max ? true : false}>
                 {p.subtitle}
               </Progress>

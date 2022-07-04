@@ -24,6 +24,7 @@ import {
   UseQueryResult,
 } from 'react-query';
 
+import type { ErrorResponseData, RequestOptions } from '../misc/requests';
 import { FieldPath, ServerSortIndex } from '../misc/types';
 import { pauseUntil, urlstring } from '../misc/utility';
 import type ServerService from '../services/server';
@@ -81,23 +82,24 @@ export enum MutatationType {
   REMOVE_PLUGIN,
   UPDATE_PLUGIN,
   UPDATE_FILTERS,
+  RESOLVE_PATH_PATTERN,
 }
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     mutations: {
       networkMode: 'offlineFirst',
-      retry: true,
+      retry: false,
       // https://tanstack.com/query/v4/docs/guides/migrating-to-react-query-4#no-default-manual-garbage-collection-server-side
       cacheTime: typeof window === 'undefined' ? Infinity : undefined,
     },
     queries: {
       networkMode: 'offlineFirst',
-      retry: true,
+      retry: 2,
       // https://tanstack.com/query/v4/docs/guides/migrating-to-react-query-4#no-default-manual-garbage-collection-server-side
       cacheTime: typeof window === 'undefined' ? Infinity : undefined,
       staleTime:
-        process.env.NODE_ENV === 'development' ? Infinity : 1000 * 60 * 60 * 3, // 3 hours
+        process.env.NODE_ENV === 'development' ? Infinity : 1000 * 60 * 60 * 1, // 1 hours
     },
   },
 });
@@ -137,7 +139,7 @@ export function useMutationType<
   V extends Extract<T, { type: K }>['variables'],
   R extends Extract<T, { type: K }>['dataType'],
   D extends AxiosResponse<R>,
-  E extends AxiosError<D>,
+  E extends AxiosError<ErrorResponseData>,
   TContext = unknown
 >(
   type: K,
@@ -237,6 +239,11 @@ export function useMutationType<
       break;
     }
 
+    case MutatationType.RESOLVE_PATH_PATTERN: {
+      endpoint = '/api/resolve_path_pattern';
+      break;
+    }
+
     default:
       throw Error('Invalid mutation type');
   }
@@ -291,7 +298,7 @@ export function useQueryType<
     { type: K }
   >['dataType'],
   D extends AxiosResponse<R> = AxiosResponse<R>,
-  E extends AxiosError<D> = AxiosError<D>,
+  E extends AxiosError<ErrorResponseData> = AxiosError<ErrorResponseData>,
   I extends Falsy | true = undefined
 >(
   type: K,
@@ -465,6 +472,7 @@ export function useQueryType<
   let r;
 
   if (opts.infinite) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     r = useInfiniteQuery(
       key,
       (ctx) => {
@@ -480,6 +488,7 @@ export function useQueryType<
       opts
     );
   } else {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     r = useQuery(
       key,
       ({ signal }) => {
@@ -497,6 +506,28 @@ export function useQueryType<
 }
 
 // ======================== ACTIONS ====================================
+
+type ServiceParameters = {
+  [K in keyof ServerService]:
+    | {
+        __options?: RequestOptions;
+      }
+    | Parameters<
+        ServerService[K] extends (...args: any[]) => any
+          ? ServerService[K]
+          : never
+      >[0];
+};
+
+type ServiceReturnType = {
+  [K in keyof ServerService]: Unwrap<
+    ReturnType<
+      ServerService[K] extends (...args: any[]) => any
+        ? ServerService[K]
+        : never
+    >
+  >;
+};
 
 interface Action {
   variables?: Record<string, any>;
@@ -520,151 +551,151 @@ interface FetchServerStatus<T = undefined> extends QueryAction<T> {
 interface FetchSortIndexes<T = undefined> extends QueryAction<T> {
   type: QueryType.SORT_INDEXES;
   dataType: ServerSortIndex[];
-  variables: Parameters<typeof ServerService['prototype']['sort_indexes']>[0];
+  variables: ServiceParameters['sort_indexes'];
 }
 
 interface FetchProfile<T = undefined> extends QueryAction<T> {
   type: QueryType.PROFILE;
-  dataType: Unwrap<ReturnType<ServerService['profile']>>;
-  variables: Parameters<ServerService['profile']>[0];
+  dataType: ServiceReturnType['profile'];
+  variables: ServiceParameters['profile'];
 }
 
 interface FetchItem<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEM;
   dataType: Record<string, any>;
-  variables: Omit<Parameters<ServerService['item']>[0], 'fields'> & {
+  variables: Omit<ServiceParameters['item'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchItems<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEMS;
-  dataType: Unwrap<ReturnType<ServerService['items']>>;
-  variables: Omit<Parameters<ServerService['items']>[0], 'fields'> & {
+  dataType: ServiceReturnType['items'];
+  variables: Omit<ServiceParameters['items'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchSearchItems<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEMS;
-  dataType: Unwrap<ReturnType<ServerService['search_items']>>;
-  variables: Omit<Parameters<ServerService['search_items']>[0], 'fields'> & {
+  dataType: ServiceReturnType['search_items'];
+  variables: Omit<ServiceParameters['search_items'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchLibrary<T = undefined> extends QueryAction<T> {
   type: QueryType.LIBRARY;
-  dataType: Unwrap<ReturnType<ServerService['library']>>;
-  variables: Omit<Parameters<ServerService['library']>[0], 'fields'> & {
+  dataType: ServiceReturnType['library'];
+  variables: Omit<ServiceParameters['library'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchRelatedItems<T = undefined> extends QueryAction<T> {
   type: QueryType.RELATED_ITEMS;
-  dataType: Unwrap<ReturnType<ServerService['related_items']>>;
-  variables: Omit<Parameters<ServerService['related_items']>[0], 'fields'> & {
+  dataType: ServiceReturnType['related_items'];
+  variables: Omit<ServiceParameters['related_items'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchPages<T = undefined> extends QueryAction<T> {
   type: QueryType.PAGES;
-  dataType: Unwrap<ReturnType<ServerService['pages']>>;
-  variables: Omit<Parameters<ServerService['pages']>[0], 'fields'> & {
+  dataType: ServiceReturnType['pages'];
+  variables: Omit<ServiceParameters['pages'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchSimilar<T = undefined> extends QueryAction<T> {
   type: QueryType.SIMILAR;
-  dataType: Unwrap<ReturnType<ServerService['similar']>>;
-  variables: Omit<Parameters<ServerService['similar']>[0], 'fields'> & {
+  dataType: ServiceReturnType['similar'];
+  variables: Omit<ServiceParameters['similar'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
 
 interface FetchSearchLabels<T = undefined> extends QueryAction<T> {
   type: QueryType.SEARCH_LABELS;
-  dataType: Unwrap<ReturnType<ServerService['search_labels']>>;
-  variables: Parameters<ServerService['search_labels']>[0];
+  dataType: ServiceReturnType['search_labels'];
+  variables: ServiceParameters['search_labels'];
 }
 
 interface FetchQueueItems<T = undefined> extends QueryAction<T> {
   type: QueryType.QUEUE_ITEMS;
-  dataType: Unwrap<ReturnType<ServerService['queue_items']>>;
-  variables: Parameters<ServerService['queue_items']>[0];
+  dataType: ServiceReturnType['queue_items'];
+  variables: ServiceParameters['queue_items'];
 }
 interface FetchQueueState<T = undefined> extends QueryAction<T> {
   type: QueryType.QUEUE_STATE;
-  dataType: Unwrap<ReturnType<ServerService['queue_state']>>;
-  variables: Parameters<ServerService['queue_state']>[0];
+  dataType: ServiceReturnType['queue_state'];
+  variables: ServiceParameters['queue_state'];
 }
 
 interface FetchLog<T = undefined> extends QueryAction<T> {
   type: QueryType.LOG;
-  dataType: Unwrap<ReturnType<ServerService['log']>>;
-  variables: Parameters<ServerService['log']>[0];
+  dataType: ServiceReturnType['log'];
+  variables: ServiceParameters['log'];
 }
 
 interface FetchDownloadInfo<T = undefined> extends QueryAction<T> {
   type: QueryType.DOWNLOAD_INFO;
-  dataType: Unwrap<ReturnType<ServerService['download_info']>>;
-  variables: Parameters<ServerService['download_info']>[0];
+  dataType: ServiceReturnType['download_info'];
+  variables: ServiceParameters['download_info'];
 }
 
 interface FetchMetadataInfo<T = undefined> extends QueryAction<T> {
   type: QueryType.METADATA_INFO;
-  dataType: Unwrap<ReturnType<ServerService['metadata_info']>>;
-  variables: Parameters<ServerService['metadata_info']>[0];
+  dataType: ServiceReturnType['metadata_info'];
+  variables: ServiceParameters['metadata_info'];
 }
 
 interface FetchConfig<T = undefined> extends QueryAction<T> {
   type: QueryType.CONFIG;
-  dataType: Unwrap<ReturnType<ServerService['config']>>;
-  variables: Parameters<ServerService['config']>[0];
+  dataType: ServiceReturnType['config'];
+  variables: ServiceParameters['config'];
 }
 
 interface FetchPlugin<T = undefined> extends QueryAction<T> {
   type: QueryType.PLUGIN;
-  dataType: Unwrap<ReturnType<ServerService['plugin']>>;
-  variables: Parameters<ServerService['plugin']>[0];
+  dataType: ServiceReturnType['plugin'];
+  variables: ServiceParameters['plugin'];
 }
 
 interface FetchPluginUpdate<T = undefined> extends QueryAction<T> {
   type: QueryType.PLUGIN_UPDATE;
-  dataType: Unwrap<ReturnType<ServerService['check_plugin_update']>>;
-  variables: Parameters<ServerService['check_plugin_update']>[0];
+  dataType: ServiceReturnType['check_plugin_update'];
+  variables: ServiceParameters['check_plugin_update'];
 }
 
 interface FetchPlugins<T = undefined> extends QueryAction<T> {
   type: QueryType.PLUGINS;
-  dataType: Unwrap<ReturnType<ServerService['list_plugins']>>;
-  variables: Parameters<ServerService['list_plugins']>[0];
+  dataType: ServiceReturnType['list_plugins'];
+  variables: ServiceParameters['list_plugins'];
 }
 
 interface FetchCommandProgress<T = undefined> extends QueryAction<T> {
   type: QueryType.COMMAND_PROGRESS;
-  dataType: Unwrap<ReturnType<ServerService['command_progress']>>;
-  variables: Parameters<ServerService['command_progress']>[0];
+  dataType: ServiceReturnType['command_progress'];
+  variables: ServiceParameters['command_progress'];
 }
 
 interface FetchCommandState<T = undefined> extends QueryAction<T> {
   type: QueryType.COMMAND_STATE;
-  dataType: Unwrap<ReturnType<ServerService['command_state']>>;
-  variables: Parameters<ServerService['command_state']>[0];
+  dataType: ServiceReturnType['command_state'];
+  variables: ServiceParameters['command_state'];
 }
 
 interface FetchCommandValue<T = undefined> extends QueryAction<T> {
   type: QueryType.COMMAND_VALUE;
-  dataType: Unwrap<ReturnType<ServerService['command_value']>>;
-  variables: Parameters<ServerService['command_value']>[0];
+  dataType: ServiceReturnType['command_value'];
+  variables: ServiceParameters['command_value'];
 }
 interface FetchActivities<T = undefined> extends QueryAction<T> {
   type: QueryType.ACTIVITIES;
-  dataType: Unwrap<ReturnType<ServerService['activities']>>;
-  variables: Parameters<ServerService['activities']>[0];
+  dataType: ServiceReturnType['activities'];
+  variables: ServiceParameters['activities'];
 }
 
 type QueryActions<T = undefined> =
@@ -701,7 +732,7 @@ interface MutationAction<T = undefined> extends Action {
 
 interface LoginAction<T = undefined> extends MutationAction<T> {
   type: MutatationType.LOGIN;
-  dataType: Unwrap<ReturnType<ServerService['login']>>;
+  dataType: ServiceReturnType['login'];
   variables: {
     username: string;
     password?: string;
@@ -711,116 +742,122 @@ interface LoginAction<T = undefined> extends MutationAction<T> {
 
 interface UpdateItem<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_ITEM;
-  dataType: Unwrap<ReturnType<ServerService['update_item']>>;
-  variables: Parameters<ServerService['update_item']>[0];
+  dataType: ServiceReturnType['update_item'];
+  variables: ServiceParameters['update_item'];
 }
 
 interface UpdateMetatags<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_METATAGS;
-  dataType: Unwrap<ReturnType<ServerService['update_metatags']>>;
-  variables: Parameters<ServerService['update_metatags']>[0];
+  dataType: ServiceReturnType['update_metatags'];
+  variables: ServiceParameters['update_metatags'];
 }
 
 interface UpdateConfig<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_CONFIG;
-  dataType: Unwrap<ReturnType<ServerService['set_config']>>;
-  variables: Parameters<ServerService['set_config']>[0];
+  dataType: ServiceReturnType['set_config'];
+  variables: ServiceParameters['set_config'];
 }
 
 interface StopQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.STOP_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['stop_queue']>>;
-  variables: Parameters<ServerService['stop_queue']>[0];
+  dataType: ServiceReturnType['stop_queue'];
+  variables: ServiceParameters['stop_queue'];
 }
 
 interface StartQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.START_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['start_queue']>>;
-  variables: Parameters<ServerService['start_queue']>[0];
+  dataType: ServiceReturnType['start_queue'];
+  variables: ServiceParameters['start_queue'];
 }
 
 interface ClearQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.CLEAR_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['clear_queue']>>;
-  variables: Parameters<ServerService['clear_queue']>[0];
+  dataType: ServiceReturnType['clear_queue'];
+  variables: ServiceParameters['clear_queue'];
 }
 
 interface AddItemToQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.ADD_ITEM_TO_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['add_item_to_queue']>>;
-  variables: Parameters<ServerService['add_item_to_queue']>[0];
+  dataType: ServiceReturnType['add_item_to_queue'];
+  variables: ServiceParameters['add_item_to_queue'];
 }
 
 interface RemoveItemFromQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.REMOVE_ITEM_FROM_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['remove_item_from_queue']>>;
-  variables: Parameters<ServerService['remove_item_from_queue']>[0];
+  dataType: ServiceReturnType['remove_item_from_queue'];
+  variables: ServiceParameters['remove_item_from_queue'];
 }
 
 interface AddItemsToMetadataQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.ADD_ITEMS_TO_METADATA_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['add_items_to_metadata_queue']>>;
-  variables: Parameters<ServerService['add_items_to_metadata_queue']>[0];
+  dataType: ServiceReturnType['add_items_to_metadata_queue'];
+  variables: ServiceParameters['add_items_to_metadata_queue'];
 }
 
 interface AddUrlsToDownloadQueue<T = undefined> extends MutationAction<T> {
   type: MutatationType.ADD_URLS_TO_DOWNLOAD_QUEUE;
-  dataType: Unwrap<ReturnType<ServerService['add_urls_to_download_queue']>>;
-  variables: Parameters<ServerService['add_urls_to_download_queue']>[0];
+  dataType: ServiceReturnType['add_urls_to_download_queue'];
+  variables: ServiceParameters['add_urls_to_download_queue'];
 }
 
 interface PageReadEvent<T = undefined> extends MutationAction<T> {
   type: MutatationType.PAGE_READ_EVENT;
-  dataType: Unwrap<ReturnType<ServerService['page_read_event']>>;
-  variables: Parameters<ServerService['page_read_event']>[0];
+  dataType: ServiceReturnType['page_read_event'];
+  variables: ServiceParameters['page_read_event'];
 }
 
 interface InstallPlugin<T = undefined> extends MutationAction<T> {
   type: MutatationType.INSTALL_PLUGIN;
-  dataType: Unwrap<ReturnType<ServerService['install_plugin']>>;
-  variables: Parameters<ServerService['install_plugin']>[0];
+  dataType: ServiceReturnType['install_plugin'];
+  variables: ServiceParameters['install_plugin'];
 }
 
 interface DisablePlugin<T = undefined> extends MutationAction<T> {
   type: MutatationType.DISABLE_PLUGIN;
-  dataType: Unwrap<ReturnType<ServerService['disable_plugin']>>;
-  variables: Parameters<ServerService['disable_plugin']>[0];
+  dataType: ServiceReturnType['disable_plugin'];
+  variables: ServiceParameters['disable_plugin'];
 }
 
 interface RemovePlugin<T = undefined> extends MutationAction<T> {
   type: MutatationType.REMOVE_PLUGIN;
-  dataType: Unwrap<ReturnType<ServerService['remove_plugin']>>;
-  variables: Parameters<ServerService['remove_plugin']>[0];
+  dataType: ServiceReturnType['remove_plugin'];
+  variables: ServiceParameters['remove_plugin'];
 }
 
 interface UpdatePlugin<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_CONFIG;
-  dataType: Unwrap<ReturnType<ServerService['update_plugin']>>;
-  variables: Parameters<ServerService['update_plugin']>[0];
+  dataType: ServiceReturnType['update_plugin'];
+  variables: ServiceParameters['update_plugin'];
 }
 
 interface OpenGallery<T = undefined> extends MutationAction<T> {
   type: MutatationType.OPEN_GALLERY;
-  dataType: Unwrap<ReturnType<ServerService['open_gallery']>>;
-  variables: Parameters<ServerService['open_gallery']>[0];
+  dataType: ServiceReturnType['open_gallery'];
+  variables: ServiceParameters['open_gallery'];
 }
 
 interface UpdateFilters<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_FILTERS;
-  dataType: Unwrap<ReturnType<ServerService['update_filters']>>;
-  variables: Parameters<ServerService['update_filters']>[0];
+  dataType: ServiceReturnType['update_filters'];
+  variables: ServiceParameters['update_filters'];
 }
 
 interface StartCommand<T = undefined> extends MutationAction<T> {
   type: MutatationType.START_COMMAND;
-  dataType: Unwrap<ReturnType<ServerService['start_command']>>;
-  variables: Parameters<ServerService['start_command']>[0];
+  dataType: ServiceReturnType['start_command'];
+  variables: ServiceParameters['start_command'];
 }
 
 interface StopCommand<T = undefined> extends MutationAction<T> {
   type: MutatationType.STOP_COMMAND;
-  dataType: Unwrap<ReturnType<ServerService['stop_command']>>;
-  variables: Parameters<ServerService['stop_command']>[0];
+  dataType: ServiceReturnType['stop_command'];
+  variables: ServiceParameters['stop_command'];
+}
+
+interface ResolvePathPattern<T = undefined> extends MutationAction<T> {
+  type: MutatationType.RESOLVE_PATH_PATTERN;
+  dataType: ServiceReturnType['resolve_path_pattern'];
+  variables: ServiceParameters['resolve_path_pattern'];
 }
 
 type MutationActions<T = undefined> =
@@ -843,6 +880,7 @@ type MutationActions<T = undefined> =
   | UpdateFilters<T>
   | StartCommand<T>
   | StopCommand<T>
+  | ResolvePathPattern<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================
@@ -978,7 +1016,7 @@ export class Query {
       T,
       { type: K }
     >['dataType'],
-    E extends AxiosError<R> = AxiosError<R>
+    E extends AxiosError<ErrorResponseData> = AxiosError<ErrorResponseData>
   >(
     action: K,
     variables: V,

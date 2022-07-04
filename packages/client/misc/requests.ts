@@ -3,6 +3,17 @@ import nextConnect, { NextHandler, Options } from 'next-connect';
 import nextSession from 'next-session';
 
 import { ServiceType } from '../services/constants';
+import { CallOptions } from '../services/server';
+import { urlparse } from './utility';
+
+export interface RequestOptions extends CallOptions {
+  notifyError?: boolean;
+}
+
+export interface ErrorResponseData {
+  error: string;
+  code: number;
+}
 
 function onError(
   err: any,
@@ -10,14 +21,24 @@ function onError(
   res: NextApiResponse<any>,
   next: NextHandler
 ) {
-  const fairy = global.app.service.get(ServiceType.Fairy);
-  fairy.notify({
-    type: 'error',
-    title: err?.code ? `Server [${err.code}]` : 'Client Error',
-    body: err?.message,
-  });
+  let __options: RequestOptions;
 
-  res.status(500).json({ error: err.message, code: err?.code });
+  if (req.body) {
+    __options = req.body.__options as RequestOptions;
+  } else {
+    __options = urlparse(req.url).query?.__options as RequestOptions;
+  }
+
+  if ((__options as RequestOptions)?.notifyError !== false) {
+    const fairy = global.app.service.get(ServiceType.Fairy);
+    fairy.notify({
+      type: 'error',
+      title: err?.code ? `Server [${err.code}]` : 'Client Error',
+      body: err?.message,
+    });
+  }
+
+  res.status(500).json({ error: err.message, code: err?.code ?? 0 });
 }
 
 export function handler(options?: Options<NextApiRequest, NextApiResponse>) {

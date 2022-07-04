@@ -14,8 +14,11 @@ import {
 import {
   Button,
   Checkbox,
+  Divider,
+  Dropdown,
   Form,
   Header,
+  Icon,
   Menu,
   Message,
   Modal,
@@ -23,6 +26,7 @@ import {
   Segment,
   Select,
 } from 'semantic-ui-react';
+import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';
@@ -59,7 +63,7 @@ import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
 import { ItemSort, ItemType, ViewType } from '../misc/enums';
 import t from '../misc/lang';
-import { ServerGallery, ServerItem } from '../misc/types';
+import { ServerGallery, ServerItem, ServerMetaTags } from '../misc/types';
 import { getCookies, urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
@@ -428,7 +432,7 @@ function LibrarySettings({
           /> */}
 
           <Form.Field>
-            <label>{t`Collapse galleries in series`}</label>
+            <label>{t`Group galleries in series`}</label>
             <Checkbox
               toggle
               checked={series}
@@ -464,6 +468,110 @@ function LibrarySettings({
         </Form>
       </Modal.Content>
     </Modal>
+  );
+}
+
+function ActionsMenu({
+  itemType,
+  inverted,
+}: {
+  itemType: ItemType;
+  inverted?: boolean;
+}) {
+  const actions: {
+    label: string;
+    metatags?: Partial<ServerMetaTags>;
+    icon?: SemanticICONS;
+    page?: boolean;
+    itemTypes?: ItemType[];
+    divider?: boolean;
+    view?: boolean;
+    onClick?: () => void;
+  }[] = [
+    {
+      label: t`Select all`,
+      view: false,
+      icon: 'plus',
+      itemTypes: [ItemType.Gallery, ItemType.Grouping],
+    },
+    {
+      label: t`Query metadata`,
+      view: false,
+      icon: 'search',
+      itemTypes: [ItemType.Gallery, ItemType.Grouping],
+    },
+    {
+      label: 'd-1',
+      divider: true,
+      view: false,
+      itemTypes: [ItemType.Gallery, ItemType.Grouping],
+    },
+    { label: t`Favorite all`, metatags: { favorite: true }, icon: 'heart' },
+    {
+      label: t`Unfavorite all`,
+      metatags: { favorite: false },
+      icon: 'heart outline',
+    },
+    { label: 'd-2', divider: true },
+    { label: t`Mark as read`, metatags: { read: true }, icon: 'eye' },
+    {
+      label: t`Mark as unread`,
+      metatags: { read: false },
+      icon: 'eye slash outline',
+    },
+    { label: 'd-3', divider: true },
+    {
+      label: t`Send to Library`,
+      metatags: { inbox: false },
+      icon: 'archive',
+    },
+    { label: t`Send to Inbox`, metatags: { inbox: true }, icon: 'inbox' },
+    { label: 'd-4', divider: true },
+    { label: t`Send to Trash`, metatags: { trash: true }, icon: 'trash' },
+  ];
+
+  const cls = classNames('mini', { inverted });
+
+  return (
+    <Divider horizontal fitted>
+      <Dropdown button basic className={cls} text={t`Page actions`}>
+        <Dropdown.Menu>
+          {actions.map((action) => {
+            if (action.page === false) return null;
+            if (action.itemTypes && !action.itemTypes.includes(itemType))
+              return null;
+            if (action.divider) return <Dropdown.Divider key={action.label} />;
+            return (
+              <Dropdown.Item key={action.label} onClick={action?.onClick}>
+                <Icon name={action.icon} />
+                {action.label}
+              </Dropdown.Item>
+            );
+          })}
+        </Dropdown.Menu>
+      </Dropdown>
+      <Dropdown
+        inverted={inverted}
+        button
+        basic
+        className={cls}
+        text={t`View actions`}>
+        <Dropdown.Menu>
+          {actions.map((action) => {
+            if (action.view === false) return null;
+            if (action.itemTypes && !action.itemTypes.includes(itemType))
+              return null;
+            if (action.divider) return <Dropdown.Divider key={action.label} />;
+            return (
+              <Dropdown.Item key={action.label} onClick={action?.onClick}>
+                <Icon name={action.icon} />
+                {action.label}
+              </Dropdown.Item>
+            );
+          })}
+        </Dropdown.Menu>
+      </Dropdown>
+    </Divider>
   );
 }
 
@@ -875,28 +983,34 @@ export default function Page({
       <LibraryContext.Provider value={true}>
         <LibrarySidebar />
         {!errorLimited && (
-          <View
-            hrefTemplate={pageHrefTemplate}
-            activePage={activePage}
-            items={items}
-            infinite={infinite}
-            loading={isFetching}
-            onPageChange={onPageChange}
-            onLoadMore={fetchNext}
-            paddedChildren
-            itemRender={
-              itemType === ItemType.Gallery
-                ? GalleryCard
-                : itemType === ItemType.Collection
-                ? CollectionCard
-                : GroupingCard
-            }
-            itemsPerPage={limit}
-            onItemKey={onItemKey}
-            totalItemCount={count}
-            pagination={!!count || errorLimited}
-            bottomPagination={!!count}
-          />
+          <>
+            <ActionsMenu
+              itemType={itemType}
+              inverted={defaultLibraryArgs?.itemType === ItemType.Collection}
+            />
+            <View
+              hrefTemplate={pageHrefTemplate}
+              activePage={activePage}
+              items={items}
+              infinite={infinite}
+              loading={isFetching}
+              onPageChange={onPageChange}
+              onLoadMore={fetchNext}
+              paddedChildren
+              itemRender={
+                itemType === ItemType.Gallery
+                  ? GalleryCard
+                  : itemType === ItemType.Collection
+                  ? CollectionCard
+                  : GroupingCard
+              }
+              itemsPerPage={limit}
+              onItemKey={onItemKey}
+              totalItemCount={count}
+              pagination={!!count || errorLimited}
+              bottomPagination={!!count}
+            />
+          </>
         )}
       </LibraryContext.Provider>
     </PageLayout>
