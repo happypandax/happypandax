@@ -19,7 +19,7 @@ import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
 import { getSession } from '../misc/requests';
-import { NotificationData } from '../misc/types';
+import { NotificationData, ServerUser } from '../misc/types';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';
 import { useGlobalValue, useSetGlobalState } from '../state/global';
@@ -28,6 +28,7 @@ const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
   pageProps: {
     notifications: NotificationData[];
+    user: ServerUser | null;
     loggedIn: boolean;
     connected: boolean;
     sameMachine: boolean;
@@ -169,11 +170,13 @@ export function AppRoot({
   const setConnected = useSetGlobalState('connected');
   const setLoggedIn = useSetGlobalState('loggedIn');
   const setSameMachine = useSetGlobalState('sameMachine');
+  const setUser = useSetGlobalState('user');
 
   useEffect(() => {
     setConnected(pageProps.connected);
     setLoggedIn(pageProps.loggedIn);
     setSameMachine(pageProps.sameMachine);
+    setUser(pageProps.user);
   }, [pageProps]);
 
   return (
@@ -227,6 +230,7 @@ MyApp.getInitialProps = async function (
   let loggedIn = false;
   let sameMachine = false;
   let connected = false;
+  let user: ServerUser | null = null;
   let session: Session;
   let notifications: NotificationData[] = [];
 
@@ -239,6 +243,10 @@ MyApp.getInitialProps = async function (
     const s = server.status();
     connected = s.connected;
     loggedIn = s.loggedIn;
+
+    user = s.loggedIn
+      ? await server.user({}, undefined, { cache: true })
+      : null;
 
     if (!loggedIn && !['/login', '/_error'].includes(context.router.pathname)) {
       return redirect({
@@ -259,6 +267,7 @@ MyApp.getInitialProps = async function (
     pageProps: {
       ...props.pageProps,
       loggedIn,
+      user,
       sameMachine,
       connected,
       notifications,

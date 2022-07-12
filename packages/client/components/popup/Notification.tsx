@@ -95,6 +95,9 @@ export function NotificationsPopup({
   const setNotificationAlert = useSetRecoilState(AppState.notificationAlert);
 
   const sameMachine = useGlobalValue('sameMachine');
+  const user = useGlobalValue('user');
+
+  console.debug({ user });
 
   return (
     <Popup
@@ -106,6 +109,10 @@ export function NotificationsPopup({
       className={classNames('no-padding-segment', styles.notification_group)}
       trigger={trigger}>
       <Menu size="tiny" attached="top" secondary>
+        <Menu.Item>
+          <Icon name="user" color="blue" />
+          {user?.name}
+        </Menu.Item>
         <Menu.Item position="right">
           {sameMachine && (
             <Popup

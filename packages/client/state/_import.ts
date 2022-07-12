@@ -1,0 +1,12 @@
+import StateBlock, { defineAtom } from './_base';
+import { localStorageEffect } from './_statehelpers';
+
+export default class _ImportState extends StateBlock {
+  static descendingView = defineAtom(
+    {
+      default: false,
+      effects: [localStorageEffect(undefined, { session: true })],
+    },
+    true
+  );
+}

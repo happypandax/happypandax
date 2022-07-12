@@ -18,6 +18,7 @@ import {
   PluginState,
   Priority,
   QueueType,
+  TransientViewType,
 } from '../misc/enums';
 import {
   Activity,
@@ -27,6 +28,7 @@ import {
   DownloadHandler,
   DownloadItem,
   FieldPath,
+  FileViewItem,
   MetadataHandler,
   MetadataItem,
   PluginData,
@@ -38,8 +40,10 @@ import {
   ServerMetaTags,
   ServerPage,
   ServerSortIndex,
+  ServerUser,
   SortOptions,
   Version,
+  ViewID,
 } from '../misc/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
@@ -103,6 +107,9 @@ export default class ServerService extends Service {
 
     this.query_client = new QueryClient({
       defaultOptions: {
+        mutations: {
+          retry: false,
+        },
         queries: {
           retry: false,
           networkMode: 'always',
@@ -160,6 +167,9 @@ export default class ServerService extends Service {
   }
 
   status() {
+    if (!this.logged_in) {
+      this.query_client.clear();
+    }
     return {
       loggedIn: this.logged_in,
       // TODO: what if any other client disconnects?
@@ -203,6 +213,7 @@ export default class ServerService extends Service {
         client.close();
       }
     }
+    this.query_client.clear();
   }
 
   async login(
@@ -243,6 +254,12 @@ export default class ServerService extends Service {
       }
     });
     return r;
+  }
+
+  async user(args: {}, group?: GroupCall, options?: CallOptions) {
+    const data = await this._call('get_user', args, group, options);
+    throw_msg_error(data);
+    return data.data as ServerUser;
   }
 
   async config(
@@ -977,6 +994,75 @@ export default class ServerService extends Service {
           error: string;
         }
     )[];
+  }
+
+  async scan_galleries(
+    args: {
+      path: string;
+      patterns?: string[];
+      options?: {};
+      view_id?: ViewID;
+      limit?: number;
+      offset?: number;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('scan_galleries', args, group, {
+      ...options,
+    });
+    throw_msg_error(data);
+    return data.data as {
+      command_id: string;
+      view_id: string;
+    };
+  }
+
+  async transient_view<T extends TransientViewType>(
+    args: {
+      view_id: ViewID;
+      desc?: boolean;
+      limit?: number;
+      offset?: number;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('transient_view', args, group, {
+      ...options,
+    });
+    throw_msg_error(data);
+    return data.data as {
+      id: ViewID;
+      timestamp: number;
+      type: TransientViewType;
+      options: {};
+      count: number;
+      state: CommandState;
+      roots: string[];
+      items: (T extends TransientViewType.File ? FileViewItem : never)[];
+      progress: CommandProgress;
+    };
+  }
+
+  async transient_views(
+    args: {
+      view_type?: TransientViewType;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('transient_views', args, group, {
+      ...options,
+    });
+    throw_msg_error(data);
+    return data.data as {
+      id: ViewID;
+      timestamp: number;
+      state: CommandState;
+      type: TransientViewType;
+      count: number;
+    }[];
   }
 }
 

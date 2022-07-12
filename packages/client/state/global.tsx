@@ -7,6 +7,7 @@ import { enableStaticRendering } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 
 import type { ActivityMap } from '../client/activity';
+import { ServerUser } from '../misc/types';
 
 /**
  * Call enableStaticRendering(true) when running in an SSR environment, in which observer wrapped components should never re-render,
@@ -21,6 +22,7 @@ class State {
   debug = process.env.NODE_ENV !== 'production';
   sameMachine = false;
   loggedIn = false;
+  user: ServerUser | null = null;
 
   activity: ActivityMap = {};
 

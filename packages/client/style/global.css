@@ -246,3 +246,7 @@ html, body {
     justify-content: center;
     height: 100%;
 }
+
+.visibility-hidden {
+    visibility: hidden;
+}

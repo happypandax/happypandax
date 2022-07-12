@@ -58,6 +58,8 @@ export enum QueryType {
   COMMAND_STATE,
   COMMAND_VALUE,
   COMMAND_PROGRESS,
+  TRANSIENT_VIEW,
+  TRANSIENT_VIEWS,
   ACTIVITIES,
 }
 
@@ -83,6 +85,7 @@ export enum MutatationType {
   UPDATE_PLUGIN,
   UPDATE_FILTERS,
   RESOLVE_PATH_PATTERN,
+  SCAN_GALLERIES,
 }
 
 export const queryClient = new QueryClient({
@@ -241,6 +244,11 @@ export function useMutationType<
 
     case MutatationType.RESOLVE_PATH_PATTERN: {
       endpoint = '/api/resolve_path_pattern';
+      break;
+    }
+
+    case MutatationType.SCAN_GALLERIES: {
+      endpoint = '/api/scan_galleries';
       break;
     }
 
@@ -450,6 +458,16 @@ export function useQueryType<
       break;
     }
 
+    case QueryType.TRANSIENT_VIEW: {
+      endpoint = '/api/transient_view';
+      break;
+    }
+
+    case QueryType.TRANSIENT_VIEWS: {
+      endpoint = '/api/transient_views';
+      break;
+    }
+
     case QueryType.COMMAND_PROGRESS: {
       endpoint = '/api/command_progress';
       if (opts.cacheTime === undefined) {
@@ -507,7 +525,7 @@ export function useQueryType<
 
 // ======================== ACTIONS ====================================
 
-type ServiceParameters = {
+export type ServiceParameters = {
   [K in keyof ServerService]:
     | {
         __options?: RequestOptions;
@@ -519,7 +537,7 @@ type ServiceParameters = {
       >[0];
 };
 
-type ServiceReturnType = {
+export type ServiceReturnType = {
   [K in keyof ServerService]: Unwrap<
     ReturnType<
       ServerService[K] extends (...args: any[]) => any
@@ -698,6 +716,18 @@ interface FetchActivities<T = undefined> extends QueryAction<T> {
   variables: ServiceParameters['activities'];
 }
 
+interface FetchTransientView<T = undefined> extends QueryAction<T> {
+  type: QueryType.TRANSIENT_VIEW;
+  dataType: ServiceReturnType['transient_view'];
+  variables: ServiceParameters['transient_view'];
+}
+
+interface FetchTransientViews<T = undefined> extends QueryAction<T> {
+  type: QueryType.TRANSIENT_VIEWS;
+  dataType: ServiceReturnType['transient_views'];
+  variables: ServiceParameters['transient_views'];
+}
+
 type QueryActions<T = undefined> =
   | FetchProfile<T>
   | FetchItem<T>
@@ -722,6 +752,8 @@ type QueryActions<T = undefined> =
   | FetchCommandState<T>
   | FetchCommandValue<T>
   | FetchActivities<T>
+  | FetchTransientView<T>
+  | FetchTransientViews<T>
   | FetchServerStatus<T>;
 
 // ======================== MUTATION ACTIONS ====================================
@@ -860,6 +892,12 @@ interface ResolvePathPattern<T = undefined> extends MutationAction<T> {
   variables: ServiceParameters['resolve_path_pattern'];
 }
 
+interface ScanGalleries<T = undefined> extends MutationAction<T> {
+  type: MutatationType.SCAN_GALLERIES;
+  dataType: ServiceReturnType['scan_galleries'];
+  variables: ServiceParameters['scan_galleries'];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
@@ -881,6 +919,7 @@ type MutationActions<T = undefined> =
   | StartCommand<T>
   | StopCommand<T>
   | ResolvePathPattern<T>
+  | ScanGalleries<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================

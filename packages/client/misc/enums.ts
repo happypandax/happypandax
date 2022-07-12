@@ -1,6 +1,8 @@
-export enum TemporaryViewType {
-  // // Contains gallery items to be added
-  GalleryAddition = 1,
+export enum TransientViewType {
+  // Contains items to be added
+  Import = 1,
+  // Contains file paths
+  File = 2,
 }
 
 export enum CommandState {

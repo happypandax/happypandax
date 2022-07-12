@@ -23,6 +23,12 @@ export interface ServerItem {
   plugin: object;
 }
 
+export interface ServerUser extends ServerItem {
+  name: string;
+  rights: string[];
+  role: 'default' | 'guest' | 'admin' | 'user';
+}
+
 export interface ServerItemWithName extends ServerItem {
   name: string;
 }
@@ -266,6 +272,8 @@ export type SearchOptions = {
 
 export interface CommandID<T> extends String {}
 
+export type ViewID = string;
+
 interface _ItemHandler {
   identifier: string;
   name: string;
@@ -299,6 +307,18 @@ export interface MetadataItem extends QueueItem {
 export interface DownloadItem extends QueueItem {
   url: string;
   thumbnail_url: string;
+}
+
+export interface FileViewItem {
+  id: ViewID;
+  name: string;
+  type: string;
+  path: string;
+  size: number;
+  is_directory: boolean;
+  date_modified: number;
+  date_created: number;
+  children: FileViewItem[];
 }
 
 export interface NotificationData {

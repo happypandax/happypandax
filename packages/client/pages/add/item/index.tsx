@@ -144,12 +144,7 @@ function ViewSidebar() {
 }
 
 export function ItemBasePage({ children }: { children: React.ReactNode }) {
-  return (
-    <AddPage>
-      <ViewSidebar />
-      {children}
-    </AddPage>
-  );
+  return <AddPage>{children}</AddPage>;
 }
 
 export default function Page() {

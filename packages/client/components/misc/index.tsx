@@ -10,6 +10,7 @@ import Editor from 'react-simple-code-editor';
 import { useUpdateEffect, useWindowScroll } from 'react-use';
 import {
   Button,
+  Confirm as SemanticConfirm,
   Dimmer,
   Divider,
   Header,
@@ -30,6 +31,16 @@ import { humanFileSize, parseMarkdown, scrollToTop } from '../../misc/utility';
 import { MiscState } from '../../state';
 import { useInitialRecoilState } from '../../state/index';
 import styles from './Misc.module.css';
+
+export function Confirm(props: React.ComponentProps<typeof SemanticConfirm>) {
+  return (
+    <SemanticConfirm
+      cancelButton={t`Cancel`}
+      confirmButton={t`Confirm`}
+      {...props}
+    />
+  );
+}
 
 export function ServerLog({
   type,
@@ -293,6 +304,7 @@ export function LabelAccordion({
   children,
   className,
   basic = true,
+  basicLabel,
   label,
   detail,
   show: initialShow,
@@ -303,6 +315,7 @@ export function LabelAccordion({
 }: {
   stateKey?: string;
   show?: boolean;
+  basicLabel?: boolean;
   defaultShow?: boolean;
   attached?: React.ComponentProps<typeof Label>['attached'];
   color?: React.ComponentProps<typeof Label>['color'];
@@ -326,6 +339,7 @@ export function LabelAccordion({
       <Label
         as="a"
         color={color}
+        basic={basicLabel}
         attached={attached}
         onClick={useCallback(
           (e) => {
