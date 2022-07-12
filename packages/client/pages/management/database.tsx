@@ -19,8 +19,14 @@ export async function getServerSideProps(context: NextPageContext) {
 
 const panes = [
   { menuItem: 'Backup', render: () => <Tab.Pane>Backups here</Tab.Pane> },
-  { menuItem: 'Tab 2', render: () => <Tab.Pane>Tab 2 Content</Tab.Pane> },
-  { menuItem: 'Tab 3', render: () => <Tab.Pane>Tab 3 Content</Tab.Pane> },
+  {
+    menuItem: 'Refresh',
+    render: () => <Tab.Pane>Refresh database command</Tab.Pane>,
+  },
+  {
+    menuItem: 'Indexing',
+    render: () => <Tab.Pane>indexing stuff here?</Tab.Pane>,
+  },
 ];
 
 export default function Page({}: PageProps) {

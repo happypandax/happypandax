@@ -12,14 +12,17 @@ import {
   SemanticCOLORS,
 } from 'semantic-ui-react';
 
+import { useCommand } from '../../client/command';
 import {
+  MutatationType,
   QueryType,
   ServiceReturnType,
+  useMutationType,
   useQueryType,
 } from '../../client/queries';
-import { CommandState } from '../../misc/enums';
+import { CommandState, TransientViewAction } from '../../misc/enums';
 import t from '../../misc/lang';
-import { FileViewItem } from '../../misc/types';
+import { CommandID, FileViewItem } from '../../misc/types';
 import { dateFromTimestamp, humanFileSize } from '../../misc/utility';
 import type ServerService from '../../services/server';
 import { ImportState } from '../../state';
@@ -109,7 +112,7 @@ function FileItemContent({ data }: { data: FileViewItem }) {
       })}
 
       <Divider hidden />
-      <Label attached="bottom">
+      <Label attached="bottom" basic>
         {t`Size`}: <span className="muted">{humanFileSize(data.size)}</span> |{' '}
         {t`Created`}:{' '}
         <span className="muted">
@@ -130,6 +133,7 @@ export function TransientFileView({
   data,
   defaultOpen,
   refetchToggle,
+  onRemove,
   onData,
   labelButtons,
 }: React.ComponentProps<typeof Segment> & {
@@ -137,6 +141,7 @@ export function TransientFileView({
   labelButtons?: React.ReactNode;
   refetchToggle?: any;
   defaultOpen?: boolean;
+  onRemove?: (id: string) => void;
   onData?: (data: ServiceReturnType['transient_view']) => void;
   data: Unwrap<Unwrap<ReturnType<ServerService['transient_views']>>>;
 }) {
@@ -145,6 +150,11 @@ export function TransientFileView({
   );
 
   const [state, setState] = useState<CommandState>();
+  const [clearLoading, setClearLoading] = useState(false);
+  const [clearCmdId, setClearCmdId] = useState<CommandID<boolean>>();
+
+  const [removeLoading, setRemoveLoading] = useState(false);
+  const [removeCmdId, setRemoveCmdId] = useState<CommandID<boolean>>();
 
   const doneState = [
     CommandState.Failed,
@@ -159,6 +169,32 @@ export function TransientFileView({
       enabled: !!data?.id,
       refetchInterval: doneState.includes(state) ? false : 1000,
     }
+  );
+
+  const { mutateAsync: viewApply } = useMutationType(
+    MutatationType.TRANSIENT_VIEW_APPLY
+  );
+
+  useCommand(
+    clearCmdId,
+    undefined,
+    () => {
+      setClearLoading(false);
+      setClearCmdId(undefined);
+      refetch();
+    },
+    []
+  );
+
+  useCommand(
+    removeCmdId,
+    undefined,
+    () => {
+      setRemoveLoading(false);
+      setRemoveCmdId(undefined);
+      onRemove?.(data.id);
+    },
+    [onRemove, data]
   );
 
   const prog = viewData ? (
@@ -211,10 +247,21 @@ export function TransientFileView({
             icon={{ name: 'trash', color: 'red' }}
             floated="right"
             size="mini"
-            onClick={useCallback((e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }, [])}
+            loading={removeLoading}
+            onClick={useCallback(
+              (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setRemoveLoading(true);
+                viewApply({
+                  view_id: viewData?.data?.id,
+                  action: TransientViewAction.Remove,
+                }).then((r) => {
+                  setRemoveCmdId(r.data);
+                });
+              },
+              [viewData?.data]
+            )}
             title={t`Remove`}
             compact
           />
@@ -229,10 +276,21 @@ export function TransientFileView({
             basic
             floated="right"
             size="mini"
-            onClick={useCallback((e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }, [])}
+            loading={clearLoading}
+            onClick={useCallback(
+              (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setClearLoading(true);
+                viewApply({
+                  view_id: viewData?.data?.id,
+                  action: TransientViewAction.Clear,
+                }).then((r) => {
+                  setClearCmdId(r.data);
+                });
+              },
+              [viewData?.data]
+            )}
             compact>
             <Icon name="close" />
             {t`Clear`}
@@ -273,8 +331,17 @@ export function TransientFileView({
       <Divider hidden section />
       {viewData?.data?.roots?.map((root) => (
         <>
-          <Label size="small" key={root}>
+          <Label basic color="black" size="small" key={root}>
             {t`Path`}: <Label.Detail>{root}</Label.Detail>
+          </Label>
+          <br />
+        </>
+      ))}
+      {(viewData?.data?.properties?.patterns as string[])?.map((p) => (
+        <>
+          <Divider hidden />
+          <Label size="small" basic key={root}>
+            {t`Pattern`}: <Label.Detail>{p}</Label.Detail>
           </Label>
           <br />
         </>

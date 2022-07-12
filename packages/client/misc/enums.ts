@@ -1,8 +1,20 @@
 export enum TransientViewType {
   // Contains items to be added
   Import = 1,
+
   // Contains file paths
   File = 2,
+}
+
+export enum TransientViewAction {
+  //: Submit transient view
+  Submit = 1,
+
+  //: Clear transient view from items
+  Clear = 2,
+
+  //: Remove transient view
+  Remove = 3,
 }
 
 export enum CommandState {

@@ -18,6 +18,7 @@ import {
   PluginState,
   Priority,
   QueueType,
+  TransientViewAction,
   TransientViewType,
 } from '../misc/enums';
 import {
@@ -1039,10 +1040,26 @@ export default class ServerService extends Service {
       options: {};
       count: number;
       state: CommandState;
+      properties: JsonMap;
       roots: string[];
       items: (T extends TransientViewType.File ? FileViewItem : never)[];
       progress: CommandProgress;
     };
+  }
+
+  async transient_view_apply(
+    args: {
+      view_id: ViewID;
+      action: TransientViewAction;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('transient_view_apply', args, group, {
+      ...options,
+    });
+    throw_msg_error(data);
+    return data.data as CommandID<boolean>;
   }
 
   async transient_views(

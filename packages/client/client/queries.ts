@@ -86,6 +86,7 @@ export enum MutatationType {
   UPDATE_FILTERS,
   RESOLVE_PATH_PATTERN,
   SCAN_GALLERIES,
+  TRANSIENT_VIEW_APPLY,
 }
 
 export const queryClient = new QueryClient({
@@ -249,6 +250,11 @@ export function useMutationType<
 
     case MutatationType.SCAN_GALLERIES: {
       endpoint = '/api/scan_galleries';
+      break;
+    }
+
+    case MutatationType.TRANSIENT_VIEW_APPLY: {
+      endpoint = '/api/transient_view_apply';
       break;
     }
 
@@ -898,6 +904,12 @@ interface ScanGalleries<T = undefined> extends MutationAction<T> {
   variables: ServiceParameters['scan_galleries'];
 }
 
+interface TransientViewApply<T = undefined> extends MutationAction<T> {
+  type: MutatationType.TRANSIENT_VIEW_APPLY;
+  dataType: ServiceReturnType['transient_view_apply'];
+  variables: ServiceParameters['transient_view_apply'];
+}
+
 type MutationActions<T = undefined> =
   | LoginAction<T>
   | UpdateItem<T>
@@ -920,6 +932,7 @@ type MutationActions<T = undefined> =
   | StopCommand<T>
   | ResolvePathPattern<T>
   | ScanGalleries<T>
+  | TransientViewApply<T>
   | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================

@@ -288,6 +288,7 @@ export default function Page({ views }: PageProps) {
                   key={view.id}
                   data={view}
                   refetchToggle={view.state}
+                  onRemove={() => refetch()}
                   onData={(v) => {
                     viewsMap.current[view.id] = v;
                   }}
@@ -305,11 +306,9 @@ export default function Page({ views }: PageProps) {
                         e.stopPropagation();
                         const v = viewsMap.current[view.id];
                         if (v) {
-                          // first entry is original path, rest are patterns
-                          // TODO: unreliable? fix this on server?
-
                           const path = v.roots[0];
-                          const patterns = v.roots.slice(1);
+                          const patterns =
+                            (v.properties?.patterns as string[]) ?? [];
 
                           scanGalleries({
                             path,
