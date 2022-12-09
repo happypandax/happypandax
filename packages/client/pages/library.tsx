@@ -3,7 +3,6 @@ import _ from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
 import { useCallback, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import {
   useRecoilState,
@@ -27,6 +26,8 @@ import {
   Select,
 } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import { LibraryContext } from '../client/context';
 import { QueryType, useQueryType } from '../client/queries';

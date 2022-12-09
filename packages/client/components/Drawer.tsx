@@ -186,7 +186,7 @@ export function RecentViewed() {
       {!data?.data?.length && <EmptySegment />}
       {data?.data?.length && (
         <Slider>
-          {(data?.data as ServerGallery[]).map((v) => (
+          {(data?.data as ServerGallery[]).slice().reverse().map((v) => (
             <SliderElement key={v.id}>
               <GalleryCard size="small" data={v} />
             </SliderElement>

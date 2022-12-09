@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import {
   Button,
   Divider,
@@ -9,6 +8,8 @@ import {
   Segment,
   SemanticCOLORS,
 } from 'semantic-ui-react';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   getQueryTypeKey,

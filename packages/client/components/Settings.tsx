@@ -830,7 +830,7 @@ function AdvancedPane() {
     <Segment basic>
       <Message warning>
         <Icon name="warning sign" />
-        {t`These settings should only be changed if you know what you're doing.`}
+        Momo: {t`Please be careful with these settings!`}
       </Message>
       <Form>
         <Segment>
@@ -851,7 +851,7 @@ function AdvancedPane() {
           />
           <Divider />
           <OptionField
-            label={t`Automatically index new or updated galleries and collections`}
+            label={t`Automatically index new or updated items`}
             cfg={cfg}
             nskey="advanced.enable_auto_indexing"
             type="boolean"
@@ -914,13 +914,6 @@ function AdvancedPane() {
             </Header>
             <Segment clearing>
               <OptionField
-                label={t`Enable cache`}
-                cfg={cfg}
-                nskey="advanced.enable_cache"
-                type="boolean"
-                optionChange={optionChange}
-              />
-              <OptionField
                 label={t`Auto-clean thumbnail cache when it exceeds this size`}
                 cfg={cfg}
                 nskey="core.auto_thumb_clean_size"
@@ -952,6 +945,19 @@ function AdvancedPane() {
                 inputLabel="MB"
                 optionChange={optionChange}
               />
+
+              <Form.Field>
+                <Divider section />
+              </Form.Field>
+
+              <OptionField
+                label={t`Enable cache`}
+                cfg={cfg}
+                nskey="advanced.enable_cache"
+                type="boolean"
+                optionChange={optionChange}
+              />
+
               <OptionField
                 label={t`Cache TTL in seconds`}
                 cfg={cfg}
@@ -969,7 +975,7 @@ function AdvancedPane() {
                 optionChange={optionChange}
               />
               <OptionField
-                label={t`Client message Cache TTL in seconds`}
+                label={t`Client API Cache TTL in seconds`}
                 cfg={cfg}
                 nskey="core.message_cache_time"
                 type="number"

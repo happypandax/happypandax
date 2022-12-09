@@ -12,9 +12,10 @@ import NProgress from 'nprogress';
 import { useEffect, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { QueryClientProvider, useIsFetching } from 'react-query';
-import { ReactQueryDevtools } from 'react-query/devtools';
 import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
+
+import { QueryClientProvider, useIsFetching } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';

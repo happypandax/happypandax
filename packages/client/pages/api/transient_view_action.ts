@@ -9,7 +9,7 @@ export default handler().post(async (req, res) => {
   const { view_id, action, __options } = req.body;
 
   return server
-    .transient_view_apply(
+    .transient_view_action(
       {
         view_id: view_id as ViewID,
         action: action as TransientViewAction,

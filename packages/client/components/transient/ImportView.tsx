@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import {
-  Accordion,
+  Button,
   Grid,
   Header,
   Icon,
   Label,
+  Segment,
   SemanticCOLORS,
 } from 'semantic-ui-react';
 
@@ -28,34 +29,14 @@ function typeProp(data: FileViewItem) {
       type = t`Collection`;
       break;
     }
-    case 'Parody': {
-      type = t`Parody`;
-      color = 'violet';
-      break;
-    }
     case 'Artist': {
       type = t`Artist`;
       color = 'blue';
       break;
     }
-    case 'Language': {
-      type = t`Language`;
-      color = 'blue';
-      break;
-    }
-    case 'Circle': {
-      type = t`Circle`;
-      color = 'teal';
-      break;
-    }
     case 'Grouping': {
       type = t`Series`;
       color = 'teal';
-      break;
-    }
-    case 'Category': {
-      type = t`Category`;
-      color = 'black';
       break;
     }
   }
@@ -142,7 +123,7 @@ function FileItemContent({ data }: { data: FileViewItem }) {
   );
 }
 
-export function TransientFileView({
+export function TransientImportView({
   data,
   onData,
   ...props
@@ -151,16 +132,13 @@ export function TransientFileView({
     ServiceReturnType['transient_view']
   >();
 
-  let root = viewData?.roots?.[0] ?? data?.id;
-
-  if (root.length > 70) {
-    root = root.slice(0, 50) + '...';
-  }
-
   return (
     <TransientView
       {...props}
       data={data}
+      headerColor="blue"
+      submitText={t`Add all`}
+      submitColor="green"
       onData={useCallback(
         (d) => {
           setViewData(d);
@@ -168,50 +146,18 @@ export function TransientFileView({
         },
         [onData]
       )}
-      headerLabel={root}
-      headerContent={
-        <Grid>
-          <Grid.Row>
-            <Grid.Column>
-              <Label size="tiny">
-                {t`ID`}: <Label.Detail>{viewData?.id}</Label.Detail>
-              </Label>
-            </Grid.Column>
-          </Grid.Row>
-          <Grid.Row>
-            {viewData?.roots?.map((root) => (
-              <Grid.Column key={root} width="16">
-                <Label basic color="black" size="small">
-                  {t`Path`}: <Label.Detail>{root}</Label.Detail>
-                </Label>
-              </Grid.Column>
-            ))}
-          </Grid.Row>
-          <Grid.Row>
-            {(viewData?.properties?.patterns as string[])?.map((p) => (
-              <Grid.Column key={p} width="16">
-                <Label size="small" basic>
-                  {t`Pattern`}: <Label.Detail>{p}</Label.Detail>
-                </Label>
-              </Grid.Column>
-            ))}
-          </Grid.Row>
-        </Grid>
-      }>
-      <Accordion
-        exclusive={false}
-        fluid
-        styled
-        panels={viewData?.items?.map?.((file) => ({
-          key: file.id,
-          title: {
-            content: <FileItemTitle data={file} />,
-          },
-          content: {
-            content: <FileItemContent data={file} />,
-          },
-        }))}
-      />
+      headerLabel={viewData?.id}
+      headerContent={<></>}>
+      <Segment.Group>
+        <Segment clearing>
+          test{' '}
+          <Button
+            color="green"
+            size="mini"
+            compact
+            floated="right">{t`Add`}</Button>{' '}
+        </Segment>
+      </Segment.Group>
     </TransientView>
   );
 }

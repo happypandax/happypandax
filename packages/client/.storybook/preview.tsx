@@ -6,9 +6,10 @@ import 'react-virtualized/styles.css';
 import { useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { RecoilRoot } from 'recoil';
 import { withThemes } from 'storybook-addon-themes/react'; // <- or your storybook framework
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import Theme from '../components/Theme';
 import { AppState } from '../state';

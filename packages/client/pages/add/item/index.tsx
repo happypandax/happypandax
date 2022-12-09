@@ -4,17 +4,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHoverDirty } from 'react-use';
 import {
   Button,
+  Container,
   Divider,
   Form,
+  Grid,
   Icon,
   Label,
   Portal,
   Segment,
+  Select,
 } from 'semantic-ui-react';
 
 import AddPage from '../';
 import { FileDropZone } from '../../../components/misc';
 import { StickySidebar } from '../../../components/Sidebar';
+import { TransientImportView } from '../../../components/transient/ImportView';
 import t from '../../../misc/lang';
 import { FileT, SourceItem } from '../../../misc/types';
 
@@ -55,8 +59,8 @@ export function FileSegment({
           onChange={(e, { value }) => setPath(value)}
           placeholder={t`Load from path (path must exist on the host)`}>
           <input />
-          <Button disabled={!path} primary type="submit" title={t`Upload`}>
-            <Icon name="upload" />
+          <Button disabled={!path} primary type="submit" title={t`Create`}>
+            <Icon name="plus" />
             {t`Create`}
           </Button>
         </Form.Input>
@@ -144,7 +148,21 @@ function ViewSidebar() {
 }
 
 export function ItemBasePage({ children }: { children: React.ReactNode }) {
-  return <AddPage>{children}</AddPage>;
+  return (
+    <AddPage>
+      <Container>
+        {children}
+
+        <TransientImportView defaultOpen />
+
+        <Grid centered>
+          <Grid.Row>
+            <Select placeholder={t`Select import view`} />
+          </Grid.Row>
+        </Grid>
+      </Container>
+    </AddPage>
+  );
 }
 
 export default function Page() {

@@ -4,6 +4,7 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from 'axios';
+
 import {
   FetchQueryOptions,
   InitialDataFunction,
@@ -22,7 +23,7 @@ import {
   useQuery,
   UseQueryOptions,
   UseQueryResult,
-} from 'react-query';
+} from '@tanstack/react-query';
 
 import type { ErrorResponseData, RequestOptions } from '../misc/requests';
 import { FieldPath, ServerSortIndex } from '../misc/types';
@@ -86,20 +87,20 @@ export enum MutatationType {
   UPDATE_FILTERS,
   RESOLVE_PATH_PATTERN,
   SCAN_GALLERIES,
-  TRANSIENT_VIEW_APPLY,
+  TRANSIENT_VIEW_ACTION,
 }
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     mutations: {
       networkMode: 'offlineFirst',
-      retry: false,
+      retry: () => false,
       // https://tanstack.com/query/v4/docs/guides/migrating-to-react-query-4#no-default-manual-garbage-collection-server-side
       cacheTime: typeof window === 'undefined' ? Infinity : undefined,
     },
     queries: {
       networkMode: 'offlineFirst',
-      retry: 2,
+      retry: () => false,
       // https://tanstack.com/query/v4/docs/guides/migrating-to-react-query-4#no-default-manual-garbage-collection-server-side
       cacheTime: typeof window === 'undefined' ? Infinity : undefined,
       staleTime:
@@ -115,10 +116,10 @@ onGlobalStateChange(['connected', 'loggedIn'], (state) => {
     queryClient.cancelQueries();
     queryClient.setDefaultOptions({
       mutations: {
-        retry: false,
+        retry: () => false,
       },
       queries: {
-        retry: false,
+        retry: () => false,
         enabled: false,
       },
     });
@@ -253,8 +254,8 @@ export function useMutationType<
       break;
     }
 
-    case MutatationType.TRANSIENT_VIEW_APPLY: {
-      endpoint = '/api/transient_view_apply';
+    case MutatationType.TRANSIENT_VIEW_ACTION: {
+      endpoint = '/api/transient_view_action';
       break;
     }
 
@@ -323,8 +324,8 @@ export function useQueryType<
     onQueryKey?: () => any;
     infinite?: I;
     infinitePageParam?: I extends Falsy
-      ? undefined
-      : (variables: V, context: QueryFunctionContext) => V;
+    ? undefined
+    : (variables: V, context: QueryFunctionContext) => V;
   } & (I extends Falsy
     ? Omit<UseQueryOptions<D, E>, 'initialData' | 'placeholderData'>
     : Omit<UseInfiniteQueryOptions<D, E>, 'initialData' | 'placeholderData'>)
@@ -341,9 +342,9 @@ export function useQueryType<
     placeholderData: options?.placeholderData
       ? options.infinite
         ? {
-            pages: [CreateInitialData(options.placeholderData)],
-            pageParams: [],
-          }
+          pages: [CreateInitialData(options.placeholderData)],
+          pageParams: [],
+        }
         : CreateInitialData(options.placeholderData)
       : undefined,
   };
@@ -533,22 +534,22 @@ export function useQueryType<
 
 export type ServiceParameters = {
   [K in keyof ServerService]:
-    | {
-        __options?: RequestOptions;
-      }
-    | Parameters<
-        ServerService[K] extends (...args: any[]) => any
-          ? ServerService[K]
-          : never
-      >[0];
+  | {
+    __options?: RequestOptions;
+  }
+  | Parameters<
+    ServerService[K] extends (...args: any[]) => any
+    ? ServerService[K]
+    : never
+  >[0];
 };
 
 export type ServiceReturnType = {
   [K in keyof ServerService]: Unwrap<
     ReturnType<
       ServerService[K] extends (...args: any[]) => any
-        ? ServerService[K]
-        : never
+      ? ServerService[K]
+      : never
     >
   >;
 };
@@ -905,7 +906,7 @@ interface ScanGalleries<T = undefined> extends MutationAction<T> {
 }
 
 interface TransientViewApply<T = undefined> extends MutationAction<T> {
-  type: MutatationType.TRANSIENT_VIEW_APPLY;
+  type: MutatationType.TRANSIENT_VIEW_ACTION;
   dataType: ServiceReturnType['transient_view_apply'];
   variables: ServiceParameters['transient_view_apply'];
 }

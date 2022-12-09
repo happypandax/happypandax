@@ -10,8 +10,10 @@ import {
   Input,
   Label,
   List,
+  Message,
   Popup,
   Segment,
+  Select,
 } from 'semantic-ui-react';
 
 import {
@@ -28,13 +30,14 @@ import {
   PageTitle,
 } from '../../components/misc';
 import { TransientFileView } from '../../components/transient/FileView';
+import { TransientImportView } from '../../components/transient/ImportView';
 import { CommandState, TransientViewType } from '../../misc/enums';
 import t from '../../misc/lang';
 import { ViewID } from '../../misc/types';
 import { ServiceType } from '../../services/constants';
-import type ServerService from '../../services/server';
-import { ItemBasePage } from './item';
+import AddPage from './index';
 
+import type ServerService from '../../services/server';
 function PathPattern({ onChange }: { onChange?: (value: string) => void }) {
   const {
     mutate,
@@ -128,6 +131,7 @@ export async function getServerSideProps(
 
 export default function Page({ views }: PageProps) {
   const [path, setPath] = useState('');
+  const [scanViewId, setScanViewId] = useState<ViewID>();
   const [submitting, setSubmitting] = useState(false);
   const [reScanLoading, { set: setRescanLoading }] = useMap<
     Record<ViewID, boolean>
@@ -143,9 +147,19 @@ export default function Page({ views }: PageProps) {
     { initialData: views }
   );
 
-  const { mutateAsync: scanGalleries } = useMutationType(
-    MutatationType.SCAN_GALLERIES
-  );
+  const {
+    mutateAsync: scanGalleriesAsync,
+    mutate: scanGalleries,
+    error: scanError,
+  } = useMutationType(MutatationType.SCAN_GALLERIES, {
+    onSuccess: (data) => {
+      refetch();
+      setPath('');
+    },
+    onSettled: () => {
+      setSubmitting(false);
+    },
+  });
 
   useEffect(() => {
     data?.data?.forEach?.((v) => {
@@ -156,6 +170,14 @@ export default function Page({ views }: PageProps) {
     });
   }, [data]);
 
+  useEffect(() => {
+    if (scanViewId) {
+      if (!data?.data?.find?.((v) => v.id === scanViewId)) {
+        setScanViewId(undefined);
+      }
+    }
+  }, [data, scanViewId]);
+
   let root = path;
   if (root.length > 100) {
     root = '...' + path.slice(path.length - 100);
@@ -164,25 +186,30 @@ export default function Page({ views }: PageProps) {
     root += root.includes('/') ? '/' : '\\';
   }
 
+  const fileViewsOptions = data?.data
+    ?.filter?.((v) => v.type === TransientViewType.File)
+    ?.map?.((v) => {
+      return { key: v.id, value: v.id, text: v.id };
+    });
+
   return (
-    <ItemBasePage>
+    <AddPage>
       <PageTitle title={t`Scan directories`} />
       <Container as={Segment}>
         <Form
+          error={!!scanError}
           onSubmit={useCallback(
             (e) => {
               e.preventDefault();
               setSubmitting(true);
-              scanGalleries({ path, patterns })
-                .then((r) => {
-                  refetch();
-                  setPath('');
-                })
-                .finally(() => {
-                  setSubmitting(false);
-                });
+              scanGalleries({
+                path,
+                patterns,
+                view_id: scanViewId,
+                __options: { notifyError: false },
+              });
             },
-            [path, patterns]
+            [path, patterns, scanViewId]
           )}>
           <Form.Input
             //   type="text"
@@ -191,16 +218,33 @@ export default function Page({ views }: PageProps) {
             onChange={(e, { value }) => setPath(value)}
             placeholder={t`Directory`}>
             <input />
+            <Select
+              options={[
+                { text: t`Create new view`, value: 0 },
+                ...fileViewsOptions,
+              ]}
+              onChange={useCallback((e, { value }) => {
+                e.preventDefault();
+                if (value === 0) {
+                  setScanViewId(undefined);
+                } else {
+                  setScanViewId(value as ViewID);
+                }
+              }, [])}
+              compact
+              value={scanViewId === undefined ? 0 : scanViewId}
+            />
             <Button
               loading={submitting}
               disabled={!path}
               primary
               type="submit"
               title={t`Submit`}>
-              <Icon name="upload" />
-              {t`Submit`}
+              <Icon name="search" />
+              {t`Scan`}
             </Button>
           </Form.Input>
+          <Message error>{scanError?.response?.data?.error} sdsd</Message>
         </Form>
         <Divider />
         <List size="tiny" relaxed>
@@ -231,6 +275,10 @@ export default function Page({ views }: PageProps) {
                     Several **item** tokens exist to specify what item to extract from a path tree. No duplicate **item** tokens are allowed:
                     - \`{collection}\`: The collection
                     - \`{series}\` or \`{grouping}\`: The series
+                    - \`{circle}\`: The circle
+                    - \`{category}\`: The category
+                    - \`{language}\`: The language
+                    - \`{parody}\`: The parody
                     - \`{artist}\`: The artist
                     - \`{gallery}\`: The gallery. Note that the last component in the path must be the gallery item token.
 
@@ -257,7 +305,7 @@ export default function Page({ views }: PageProps) {
                     - \`root/{gallery}/momo/\`: **ERROR** - The last component must be the gallery item token.
                     - \`root/{artist}/momo/{gallery}\`: **OK** - The last component is the gallery item token.
                     - \`*/{gallery}\`: **WARNING** - \`*\` will not be treated as a wildcard character because it is not enclosed in curly braces.
-                    - \`{**}/{gallery}\`: This is the default pattern.
+                    - \`{**}/{gallery}\`: This is the default pattern. It traverses all directories recursively matching files and directories that could pass off as galleries.
                     `}
               </Markdown>
             </Popup>
@@ -292,7 +340,7 @@ export default function Page({ views }: PageProps) {
                   onData={(v) => {
                     viewsMap.current[view.id] = v;
                   }}
-                  label={t`Found items`}
+                  label={t`Scanned items`}
                   labelButtons={
                     <Button
                       secondary
@@ -306,16 +354,17 @@ export default function Page({ views }: PageProps) {
                         e.stopPropagation();
                         const v = viewsMap.current[view.id];
                         if (v) {
-                          const path = v.roots[0];
                           const patterns =
                             (v.properties?.patterns as string[]) ?? [];
 
-                          scanGalleries({
-                            path,
-                            patterns,
-                            options: v.options,
-                            view_id: v.id,
-                          }).finally(() => refetch());
+                          v.roots.forEach((path) => {
+                            scanGalleriesAsync({
+                              path,
+                              patterns,
+                              options: v.options,
+                              view_id: v.id,
+                            }).finally(() => refetch());
+                          });
 
                           setRescanLoading(v.id, true);
                         }
@@ -326,9 +375,11 @@ export default function Page({ views }: PageProps) {
                   }
                 />
               ))}
+
+            <TransientImportView />
           </List>
         </Segment>
       </Container>
-    </ItemBasePage>
+    </AddPage>
   );
 }

@@ -1,6 +1,5 @@
 import classNames from 'classnames';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   Divider,
@@ -11,6 +10,8 @@ import {
   Menu,
   Ref,
 } from 'semantic-ui-react';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useSetting } from '../../client/hooks/settings';
 import {

@@ -21,6 +21,7 @@ import {
   Popup,
   Ref,
   Segment,
+  SemanticCOLORS,
 } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../../client/queries';
@@ -310,11 +311,13 @@ export function LabelAccordion({
   show: initialShow,
   defaultShow,
   color,
+  segmentColor,
   attached = 'top',
   ...props
 }: {
   stateKey?: string;
   show?: boolean;
+  segmentColor?: SemanticCOLORS;
   basicLabel?: boolean;
   defaultShow?: boolean;
   attached?: React.ComponentProps<typeof Label>['attached'];
@@ -334,6 +337,7 @@ export function LabelAccordion({
   return (
     <Segment
       {...props}
+      color={segmentColor}
       basic={basic}
       className={classNames('small-padding-segment', className)}>
       <Label

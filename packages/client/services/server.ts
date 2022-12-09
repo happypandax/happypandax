@@ -7,7 +7,8 @@ import Client, {
   ServerErrorMsg,
   ServerMsg,
 } from 'happypandax-client';
-import { QueryClient, QueryFunctionContext } from 'react-query';
+
+import { QueryClient, QueryFunctionContext } from '@tanstack/react-query';
 
 import {
   ActivityType,
@@ -69,6 +70,7 @@ export interface CallOptions {
   client?: ClientType;
   cache?: boolean;
   invalidate?: boolean;
+  ignoreError?: boolean;
 }
 
 const cacheTime = 1000 * 60 * 60 * 6; // 6 hours
@@ -109,10 +111,10 @@ export default class ServerService extends Service {
     this.query_client = new QueryClient({
       defaultOptions: {
         mutations: {
-          retry: false,
+          retry: () => false,
         },
         queries: {
-          retry: false,
+          retry: () => false,
           networkMode: 'always',
           staleTime: cacheTime * 2,
           cacheTime: cacheTime,
@@ -259,7 +261,7 @@ export default class ServerService extends Service {
 
   async user(args: {}, group?: GroupCall, options?: CallOptions) {
     const data = await this._call('get_user', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as ServerUser;
   }
 
@@ -272,7 +274,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_config', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as JsonMap;
   }
 
@@ -284,7 +286,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('set_config', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as AnyJson;
   }
 
@@ -301,7 +303,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -318,7 +320,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean | number;
   }
 
@@ -336,7 +338,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as R extends undefined ? JsonMap : R;
   }
 
@@ -356,7 +358,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -380,7 +382,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -405,7 +407,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -428,7 +430,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as null | ServerGallery;
   }
 
@@ -442,7 +444,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('open_gallery', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -461,7 +463,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       count: number;
       items: PartialExcept<ServerPage, 'id'>[];
@@ -481,7 +483,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as { [key: string]: number };
   }
 
@@ -507,7 +509,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -529,7 +531,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as CommandID<{
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -547,7 +549,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as CommandID<boolean>;
   }
 
@@ -564,7 +566,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       count: number;
       items: SearchItem[];
@@ -585,7 +587,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as ServerSortIndex[];
   }
 
@@ -598,19 +600,19 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as { log: string };
   }
 
   async download_info(args: {}, group?: GroupCall, options?: CallOptions) {
     const data = await this._call('get_download_info', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as DownloadHandler[];
   }
 
   async metadata_info(args: {}, group?: GroupCall, options?: CallOptions) {
     const data = await this._call('get_metadata_info', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as MetadataHandler[];
   }
 
@@ -628,7 +630,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -646,7 +648,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -665,7 +667,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -684,7 +686,7 @@ export default class ServerService extends Service {
       group,
       options
     );
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -694,7 +696,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('stop_queue', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -704,7 +706,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('start_queue', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -717,7 +719,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -735,7 +737,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
 
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
@@ -772,7 +774,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_queue_items', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
 
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
@@ -792,7 +794,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('start_command', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
@@ -802,7 +804,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('stop_command', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
@@ -815,7 +817,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
@@ -825,7 +827,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_command_value', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as Record<CommandIDKey, R>;
   }
 
@@ -838,7 +840,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as
       | Record<CommandIDKey, CommandProgress>
       | CommandProgress[];
@@ -853,7 +855,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as Record<string, Record<string, Activity[]>>;
   }
 
@@ -863,7 +865,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('list_plugins', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as PluginData[];
   }
 
@@ -873,7 +875,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_plugin', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as PluginData;
   }
 
@@ -885,7 +887,7 @@ export default class ServerService extends Service {
     const data = await this._call('install_plugin', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as PluginState;
   }
 
@@ -897,7 +899,7 @@ export default class ServerService extends Service {
     const data = await this._call('disable_plugin', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as PluginState;
   }
 
@@ -907,7 +909,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('remove_plugin', args, group, { ...options });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as PluginState;
   }
 
@@ -920,7 +922,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as CommandID<{
       plugin_id: string;
       url: string;
@@ -934,7 +936,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('update_plugin', args, group, { ...options });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as CommandID<string[]>;
   }
 
@@ -944,7 +946,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('send_plugin_message', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as AnyJson;
   }
 
@@ -954,7 +956,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('submit_login', args, group, options);
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as CommandID<{
       status: string;
       logged_in: boolean;
@@ -970,7 +972,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as boolean;
   }
 
@@ -982,18 +984,18 @@ export default class ServerService extends Service {
     const data = await this._call('resolve_path_pattern', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as (
       | string
       | {
-          class: string;
-          start: number;
-          end: number;
-          text: string;
-          token: string;
-          type: string;
-          error: string;
-        }
+        class: string;
+        start: number;
+        end: number;
+        text: string;
+        token: string;
+        type: string;
+        error: string;
+      }
     )[];
   }
 
@@ -1012,7 +1014,7 @@ export default class ServerService extends Service {
     const data = await this._call('scan_galleries', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       command_id: string;
       view_id: string;
@@ -1032,7 +1034,7 @@ export default class ServerService extends Service {
     const data = await this._call('transient_view', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       id: ViewID;
       timestamp: number;
@@ -1047,7 +1049,7 @@ export default class ServerService extends Service {
     };
   }
 
-  async transient_view_apply(
+  async transient_view_action(
     args: {
       view_id: ViewID;
       action: TransientViewAction;
@@ -1055,10 +1057,10 @@ export default class ServerService extends Service {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('transient_view_apply', args, group, {
+    const data = await this._call('transient_view_action', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as CommandID<boolean>;
   }
 
@@ -1072,7 +1074,7 @@ export default class ServerService extends Service {
     const data = await this._call('transient_views', args, group, {
       ...options,
     });
-    throw_msg_error(data);
+    throw_msg_error(data, options);
     return data.data as {
       id: ViewID;
       timestamp: number;
@@ -1137,8 +1139,8 @@ async function queryClientFetchQuery(
   });
 }
 
-function throw_msg_error(msg: ServerMsg) {
-  if (msg.error) {
+function throw_msg_error(msg: ServerMsg, options?: CallOptions) {
+  if (msg.error && !options?.ignoreError) {
     const msgerror: ServerErrorMsg = msg.error;
     const err = Error(`${msgerror.code}: ${msgerror.msg}`);
     err.data = msg;

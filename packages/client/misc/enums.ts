@@ -7,14 +7,12 @@ export enum TransientViewType {
 }
 
 export enum TransientViewAction {
-  //: Submit transient view
-  Submit = 1,
 
   //: Clear transient view from items
-  Clear = 2,
+  Clear = 1,
 
   //: Remove transient view
-  Remove = 3,
+  Remove = 2,
 }
 
 export enum CommandState {
