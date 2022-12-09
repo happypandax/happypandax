@@ -747,7 +747,7 @@ export const ItemCard = React.forwardRef(
               <ItemCardLabels>
                 {href && (
                   <Link href={href}>
-                    <a>{imageElement}</a>
+                    {imageElement}
                   </Link>
                 )}
                 {!!!href && !!imageElement && imageElement}

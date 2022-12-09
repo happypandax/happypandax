@@ -40,7 +40,8 @@ export default function CircleCardLabel({
             href={urlstring('/library', {
               q: `circle:"${data.name}"`,
             })}
-            passHref>
+            passHref
+            legacyBehavior>
             <Label
               size="small"
               empty

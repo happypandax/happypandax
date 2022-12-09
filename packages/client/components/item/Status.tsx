@@ -32,7 +32,8 @@ export default function StatusCardLabel({
           href={urlstring('/library', {
             q: `status:"${data.name}"`,
           })}
-          passHref>
+          passHref
+          legacyBehavior>
           <Label
             size="small"
             empty

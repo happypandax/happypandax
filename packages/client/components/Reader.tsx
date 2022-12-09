@@ -1664,7 +1664,8 @@ function ReadNext({
               href={urlstring(
                 `/item/gallery/${random.id}/page/1`,
                 urlparse().query as any
-              )}>
+              )}
+              legacyBehavior>
               <Button as="a">{t`Pick a random`}</Button>
             </Link>
           )}
@@ -1828,7 +1829,7 @@ function EndRating() {
         />
       </span>
       <div className="right-0 pos-absolute">
-        <Link href={`/item/gallery/${item.id}`} passHref>
+        <Link href={`/item/gallery/${item.id}`} passHref legacyBehavior>
           <Button as="a" icon={{ name: 'level up alternate' }} basic />
         </Link>
         {item?.metatags?.inbox && <Button primary>{t`Send to library`}</Button>}

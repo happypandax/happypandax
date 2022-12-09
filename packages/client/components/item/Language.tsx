@@ -34,7 +34,8 @@ export default function LanguageCardLabel({
           href={urlstring('/library', {
             q: `language:"${data.name}"`,
           })}
-          passHref>
+          passHref
+          legacyBehavior>
           <Label
             size="small"
             empty

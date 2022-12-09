@@ -91,7 +91,8 @@ export default function ArtistCardLabel({
               href={urlstring('/library', {
                 q: `artist:"${data.preferred_name.name}"`,
               })}
-              passHref>
+              passHref
+              legacyBehavior>
               <Label
                 size="small"
                 empty

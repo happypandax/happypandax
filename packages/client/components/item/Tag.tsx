@@ -70,7 +70,8 @@ export default function TagCardLabel({
                     ? `${data.namespace.name}:"${data.tag.name}"`
                     : `tag:"${data.tag.name}"`,
               })}
-              passHref>
+              passHref
+              legacyBehavior>
               <Label
                 size="small"
                 empty

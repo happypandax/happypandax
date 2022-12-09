@@ -75,7 +75,7 @@ export default function FilterCard({
             title={t`Update`}
             as="a"
           />
-          <Link href={urlstring('/library', { filter: data.id })} passHref>
+          <Link href={urlstring('/library', { filter: data.id })} passHref legacyBehavior>
             <Label
               size="small"
               empty

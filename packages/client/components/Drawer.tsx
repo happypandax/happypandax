@@ -134,7 +134,8 @@ export function QueueBoard({}: {}) {
             className="small-padding-segment small-margins">
             <Link
               href={urlstring(`/item/gallery/${ritems?.[0].id}/page/1`)}
-              passHref>
+              passHref
+              legacyBehavior>
               <Button primary as="a">{t`Start reading`}</Button>
             </Link>
             <Button

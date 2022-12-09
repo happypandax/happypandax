@@ -95,7 +95,8 @@ export function ReadButton({
       href={useMemo(() => ({ pathname: `/item/gallery/${data?.id}/page/1` }), [
         data,
       ])}
-      passHref>
+      passHref
+      legacyBehavior>
       <Button
         as="a"
         primary
@@ -127,7 +128,8 @@ export function ContinueButton({
         }),
         [data]
       )}
-      passHref>
+      passHref
+      legacyBehavior>
       <Button as="a" color="orange" size="mini" {...props}>
         <Icon name="play" />
         {t`Continue`}

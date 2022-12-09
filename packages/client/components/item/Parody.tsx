@@ -57,7 +57,8 @@ export default function ParodyCardLabel({
             href={urlstring('/library', {
               q: `parody:"${data.preferred_name.name}"`,
             })}
-            passHref>
+            passHref
+            legacyBehavior>
             <Label
               size="small"
               empty

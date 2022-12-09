@@ -34,7 +34,8 @@ export default function CategoryCardLabel({
           href={urlstring('/library', {
             q: `category:"${data.name}"`,
           })}
-          passHref>
+          passHref
+          legacyBehavior>
           <Label
             size="small"
             empty
