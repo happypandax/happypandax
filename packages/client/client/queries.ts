@@ -310,7 +310,7 @@ export class Query {
     action: K,
     variables?: V,
     options?: FetchQueryOptions<AxiosResponse<R, any>>,
-    config?: Parameters<AxiosInstance['get']>[1]
+    config?: AxiosRequestConfig
   ) {
     const key = [action.toString(), variables];
 
@@ -324,85 +324,41 @@ export class Query {
       );
     }
 
+    let params: Partial<V> = variables;
+
+    let method: AxiosRequestConfig['method'] = 'GET'
+    let data: AxiosRequestConfig['data'] = undefined;
+
     switch (action) {
-      case QueryType.ITEM: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.get<R>(urlstring('/api/item', variables as any), { signal }),
-          options
-        );
-      }
-      case QueryType.PROFILE: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.get<R>(urlstring('/api/profile', variables as any), {
-              signal,
-            }),
-          options
-        );
-      }
-      case QueryType.PAGES: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.get<R>(urlstring('/api/pages', variables as any), { signal }),
-          options
-        );
-      }
-      case QueryType.SEARCH_LABELS: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.get<R>(urlstring('/api/search_labels', variables as any), {
-              signal,
-            }),
-          options
-        );
-      }
-      case QueryType.SEARCH_ITEMS: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.get<R>(urlstring('/api/search_items', variables as any), {
-              signal,
-            }),
-          options
-        );
-      }
-      case QueryType.ACTIVITIES: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.post<R>(urlstring('/api/activities'), variables, { signal }),
-          options
-        );
-      }
-      case QueryType.COMMAND_STATE: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.post<R>(urlstring('/api/command_state'), variables, {
-              signal,
-            }),
-          options
-        );
-      }
+      case QueryType.ACTIVITIES:
+      case QueryType.COMMAND_STATE:
       case QueryType.COMMAND_VALUE: {
-        return queryClient.fetchQuery(
-          key,
-          ({ signal }) =>
-            axios.post<R>(urlstring('/api/command_value'), variables, {
-              signal,
-            }),
-          options
-        );
+        method = 'POST'
+        data = variables
+        params = {}
+        break;
       }
 
       default:
         throw Error('Invalid query type');
     }
+
+
+    const cfg: AxiosRequestConfig = {
+      url: urlstring(action, params as any),
+      method,
+      data,
+      ...config
+    }
+
+    return queryClient.fetchQuery(
+      key,
+      ({ signal }) =>
+        axios.request<R>({ ...cfg, signal }),
+      options
+    );
+
+
   }
 
   static async mutate<

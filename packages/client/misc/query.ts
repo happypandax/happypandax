@@ -11,7 +11,7 @@ export enum QueryType {
     RELATED_ITEMS = '/api/related_items',
     SEARCH_ITEMS = '/api/search_items',
     SIMILAR = '/api/similar',
-    SEARCH_LABELS = '/api/search_items',
+    SEARCH_LABELS = '/api/search_labels',
     QUEUE_ITEMS = '/api/queue_items',
     QUEUE_STATE = '/api/queue_state',
     SORT_INDEXES = '/api/sort_indexes',
@@ -23,12 +23,12 @@ export enum QueryType {
     PLUGIN = '/api/plugin',
     PLUGINS = '/api/plugins',
     PLUGIN_UPDATE = '/api/plugin_update',
-    COMMAND_STATE = '',
-    COMMAND_VALUE = '',
+    COMMAND_STATE = '/api/command_state',
+    COMMAND_VALUE = '/api/command_value',
     COMMAND_PROGRESS = '/api/command_progress',
     TRANSIENT_VIEW = '/api/transient_view',
     TRANSIENT_VIEWS = '/api/transient_views',
-    ACTIVITIES = '',
+    ACTIVITIES = '/api/activities',
 }
 
 export enum MutatationType {

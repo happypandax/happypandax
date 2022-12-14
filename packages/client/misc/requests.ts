@@ -2,9 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import nextConnect, { NextHandler, Options } from 'next-connect';
 import nextSession from 'next-session';
 
-import { QueryClient } from '@tanstack/react-query';
+import { FetchQueryOptions, QueryClient } from '@tanstack/react-query';
 
 import { ServiceType } from '../services/constants';
+import { QueryActions } from './query';
 import { urlparse } from './utility';
 
 import type { CallOptions } from '../services/server';
@@ -52,7 +53,7 @@ export function handler(options?: Options<NextApiRequest, NextApiResponse>) {
 
 export const getSession = nextSession({});
 
-const serverQueryClient =  new QueryClient({
+const serverQueryClient = new QueryClient({
   defaultOptions: {
     mutations: {
       retry: () => false,
@@ -67,9 +68,27 @@ const serverQueryClient =  new QueryClient({
 })
 
 
-export async function fetchQuery(url: string, ) {
+export async function fetchQuery<
+  A = undefined,
+  T extends QueryActions<A> = QueryActions<A>,
+  K extends T['type'] = T['type'],
+  V extends Extract<T, { type: K }>['variables'] = Extract<
+    T,
+    { type: K }
+  >['variables'],
+  R extends Extract<T, { type: K }>['dataType'] = Extract<
+    T,
+    { type: K }
+  >['dataType']>(
+    action: K,
+    variables?: V,
+    options?: FetchQueryOptions<Response>,
+    config?: RequestInit
+  ) {
+    const key = [action.toString(), variables];
 
 }
 
 
 
+fetch
