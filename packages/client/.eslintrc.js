@@ -1,5 +1,8 @@
 module.exports = {
   extends: 'next/core-web-vitals',
+  plugins: [
+    "@tanstack/query"
+  ],
 
   rules: {
     'no-continue': 'off',

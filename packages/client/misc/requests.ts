@@ -2,10 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import nextConnect, { NextHandler, Options } from 'next-connect';
 import nextSession from 'next-session';
 
+import { QueryClient } from '@tanstack/react-query';
+
 import { ServiceType } from '../services/constants';
-import { CallOptions } from '../services/server';
 import { urlparse } from './utility';
 
+import type { CallOptions } from '../services/server';
 export interface RequestOptions extends CallOptions {
   notifyError?: boolean;
 }
@@ -49,3 +51,25 @@ export function handler(options?: Options<NextApiRequest, NextApiResponse>) {
 }
 
 export const getSession = nextSession({});
+
+const serverQueryClient =  new QueryClient({
+  defaultOptions: {
+    mutations: {
+      retry: () => false,
+    },
+    queries: {
+      retry: () => false,
+      networkMode: 'always',
+      staleTime: 0,
+      cacheTime: 0,
+    },
+  },
+})
+
+
+export async function fetchQuery(url: string, ) {
+
+}
+
+
+

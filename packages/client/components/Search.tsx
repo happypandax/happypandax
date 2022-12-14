@@ -3,6 +3,7 @@ import _ from 'lodash';
 import React, {
   useCallback,
   useContext,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -556,7 +557,7 @@ export function ItemSearch({
   fluid,
   transparent = true,
   placeholder,
-  debounce = 1000,
+  debounce = 500,
   defaultValue,
   onSearch,
   showSuggestion,
@@ -585,6 +586,7 @@ export function ItemSearch({
   const ref = useRef<HTMLElement>();
   const refTimeoutId = useRef<NodeJS.Timeout>();
   const [query, setQuery] = useState(defaultValue);
+  const deferredQuery = useDeferredValue(query)
   const [resultsVisible, setResultsVisible] = useState(false);
   const [focused, setFocused] = useState(false);
   const options = useRecoilValue(SearchState.options(stateKey));
@@ -638,7 +640,7 @@ export function ItemSearch({
       }
     },
     debounce,
-    [dynamic, query, onSubmit]
+    [dynamic, deferredQuery, onSubmit]
   );
 
   useEffect(() => {

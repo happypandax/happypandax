@@ -1,3 +1,5 @@
+@import (css) url('https://fonts.googleapis.com/css2?family=Roboto');
+
 .ui.modal .header {
   font-family: "Roboto", Arial, Sans-serif !important;
   font-weight: 400 !important;

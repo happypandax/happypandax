@@ -360,7 +360,7 @@ export function ItemCardContent({
   const El = itemContext.horizontal && itemContext.href ? Link : React.Fragment;
 
   return (
-    <El href={itemContext.horizontal ? itemContext.href : undefined} passHref>
+    <El href={itemContext.horizontal ? itemContext.href : undefined} passHref legacyBehavior>
       <Dimmer.Dimmable
         as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
         onClick={useCallback(

@@ -12,8 +12,9 @@ import {
   Table,
 } from 'semantic-ui-react';
 
-import { QueryType, useQueryType } from '../client/queries';
+import { useQueryType } from '../client/queries';
 import t from '../misc/lang';
+import { QueryType } from '../misc/query';
 import { CommandProgress } from '../misc/types';
 import { useGlobalValue } from '../state/global';
 import { EmptySegment } from './misc';

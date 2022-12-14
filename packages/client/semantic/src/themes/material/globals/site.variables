@@ -43,8 +43,7 @@
         Paths
 --------------------*/
 
-@imagePath : './themes/default/assets/images';
-@fontPath  : './themes/default/assets/fonts';
+@imagePath : '../../themes/material/assets/images';
 
 /*--------------
    Paragraphs

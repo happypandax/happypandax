@@ -25,70 +25,22 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ErrorResponseData, RequestOptions } from '../misc/requests';
-import { FieldPath, ServerSortIndex } from '../misc/types';
+import {
+  MutatationType,
+  MutationActions,
+  QueryActions,
+  QueryType,
+} from '../misc/query';
 import { pauseUntil, urlstring } from '../misc/utility';
-import type ServerService from '../services/server';
 import {
   GlobalState,
   onGlobalStateChange,
   useGlobalValue,
 } from '../state/global';
 
-export enum QueryType {
-  PROFILE = 1,
-  PAGES,
-  LIBRARY,
-  ITEMS,
-  ITEM,
-  RELATED_ITEMS,
-  SEARCH_ITEMS,
-  SIMILAR,
-  SEARCH_LABELS,
-  QUEUE_ITEMS,
-  QUEUE_STATE,
-  SORT_INDEXES,
-  DOWNLOAD_INFO,
-  METADATA_INFO,
-  SERVER_STATUS,
-  CONFIG,
-  LOG,
-  PLUGIN,
-  PLUGINS,
-  PLUGIN_UPDATE,
-  COMMAND_STATE,
-  COMMAND_VALUE,
-  COMMAND_PROGRESS,
-  TRANSIENT_VIEW,
-  TRANSIENT_VIEWS,
-  ACTIVITIES,
-}
+import type { ErrorResponseData } from '../misc/requests';
 
-export enum MutatationType {
-  LOGIN = 100,
-  UPDATE_ITEM,
-  UPDATE_METATAGS,
-  UPDATE_CONFIG,
-  START_COMMAND,
-  STOP_COMMAND,
-  STOP_QUEUE,
-  START_QUEUE,
-  CLEAR_QUEUE,
-  ADD_ITEM_TO_QUEUE,
-  OPEN_GALLERY,
-  REMOVE_ITEM_FROM_QUEUE,
-  ADD_ITEMS_TO_METADATA_QUEUE,
-  ADD_URLS_TO_DOWNLOAD_QUEUE,
-  PAGE_READ_EVENT,
-  INSTALL_PLUGIN,
-  DISABLE_PLUGIN,
-  REMOVE_PLUGIN,
-  UPDATE_PLUGIN,
-  UPDATE_FILTERS,
-  RESOLVE_PATH_PATTERN,
-  SCAN_GALLERIES,
-  TRANSIENT_VIEW_ACTION,
-}
+export { QueryType, MutatationType } from '../misc/query'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -152,115 +104,26 @@ export function useMutationType<
 ): UseMutationResult<D, E, V, TContext> {
   const key = [type.toString()];
 
-  let endpoint = '';
+  let endpoint = type as string;
   let method: AxiosRequestConfig['method'] = 'POST';
 
   switch (type) {
-    case MutatationType.LOGIN: {
-      endpoint = '/api/login';
-      break;
-    }
-
-    case MutatationType.UPDATE_ITEM: {
-      endpoint = '/api/item';
-      break;
-    }
-
-    case MutatationType.UPDATE_METATAGS: {
-      endpoint = '/api/metatags';
-      break;
-    }
-
-    case MutatationType.UPDATE_CONFIG: {
-      endpoint = '/api/config';
-      break;
-    }
-
-    case MutatationType.START_QUEUE: {
-      endpoint = '/api/start_queue';
-      break;
-    }
-
-    case MutatationType.STOP_QUEUE: {
-      endpoint = '/api/stop_queue';
-      break;
-    }
-
-    case MutatationType.CLEAR_QUEUE: {
-      endpoint = '/api/clear_queue';
-      break;
-    }
-
-    case MutatationType.ADD_ITEMS_TO_METADATA_QUEUE: {
-      endpoint = '/api/add_items_to_metadata_queue';
-      break;
-    }
-
-    case MutatationType.ADD_URLS_TO_DOWNLOAD_QUEUE: {
-      endpoint = '/api/add_urls_to_download_queue';
-      break;
-    }
-
-    case MutatationType.ADD_ITEM_TO_QUEUE: {
-      endpoint = '/api/add_item_to_queue';
-      break;
-    }
-
-    case MutatationType.REMOVE_ITEM_FROM_QUEUE: {
-      endpoint = '/api/remove_item_from_queue';
-      break;
-    }
-
-    case MutatationType.PAGE_READ_EVENT: {
-      endpoint = '/api/page_read_event';
-      break;
-    }
 
     case MutatationType.INSTALL_PLUGIN: {
-      endpoint = '/api/plugin';
       method = 'POST';
       break;
     }
 
     case MutatationType.DISABLE_PLUGIN: {
-      endpoint = '/api/plugin';
       method = 'PUT';
       break;
     }
 
     case MutatationType.REMOVE_PLUGIN: {
-      endpoint = '/api/plugin';
       method = 'DELETE';
       break;
     }
 
-    case MutatationType.UPDATE_PLUGIN: {
-      endpoint = '/api/plugin_update';
-      break;
-    }
-
-    case MutatationType.UPDATE_FILTERS: {
-      endpoint = '/api/update_filters';
-      break;
-    }
-
-    case MutatationType.RESOLVE_PATH_PATTERN: {
-      endpoint = '/api/resolve_path_pattern';
-      break;
-    }
-
-    case MutatationType.SCAN_GALLERIES: {
-      endpoint = '/api/scan_galleries';
-      break;
-    }
-
-    case MutatationType.TRANSIENT_VIEW_ACTION: {
-      endpoint = '/api/transient_view_action';
-      break;
-    }
-
-    default:
-      throw Error('Invalid mutation type');
   }
 
   return useMutation(
@@ -362,121 +225,15 @@ export function useQueryType<
     );
   }
 
-  let endpoint = '';
+  let endpoint = type as string;
   let method: AxiosRequestConfig['method'] = 'GET';
 
   switch (type) {
-    case QueryType.SERVER_STATUS: {
-      endpoint = '/api/status';
-      break;
-    }
 
-    case QueryType.SORT_INDEXES: {
-      endpoint = '/api/sort_indexes';
-      break;
-    }
-
-    case QueryType.ITEM: {
-      endpoint = '/api/item';
-      break;
-    }
-
-    case QueryType.ITEMS: {
-      endpoint = '/api/items';
-      break;
-    }
-
-    case QueryType.LIBRARY: {
-      endpoint = '/api/library';
-      break;
-    }
-
-    case QueryType.RELATED_ITEMS: {
-      endpoint = '/api/related_items';
-      break;
-    }
-
-    case QueryType.PAGES: {
-      endpoint = '/api/pages';
-      break;
-    }
-
-    case QueryType.SIMILAR: {
-      endpoint = '/api/similar';
-      break;
-    }
-
-    case QueryType.SEARCH_LABELS: {
-      endpoint = '/api/search_items';
-      break;
-    }
-
-    case QueryType.QUEUE_ITEMS: {
-      endpoint = '/api/queue_items';
-      if (opts.cacheTime === undefined) {
-        opts.cacheTime = 0;
-      }
-      break;
-    }
-
-    case QueryType.QUEUE_STATE: {
-      endpoint = '/api/queue_state';
-      break;
-    }
-
-    case QueryType.LOG: {
-      endpoint = '/api/log';
-      if (opts.cacheTime === undefined) {
-        opts.cacheTime = 0;
-      }
-      break;
-    }
-
-    case QueryType.DOWNLOAD_INFO: {
-      endpoint = '/api/download_info';
-      break;
-    }
-
-    case QueryType.METADATA_INFO: {
-      endpoint = '/api/metadata_info';
-      break;
-    }
-
-    case QueryType.CONFIG: {
-      endpoint = '/api/config';
-      if (opts.cacheTime === undefined) {
-        opts.cacheTime = 0;
-      }
-      break;
-    }
-
-    case QueryType.PLUGINS: {
-      endpoint = '/api/plugins';
-      break;
-    }
-
-    case QueryType.PLUGIN: {
-      endpoint = '/api/plugin';
-      break;
-    }
-
-    case QueryType.PLUGIN_UPDATE: {
-      endpoint = '/api/plugin_update';
-      break;
-    }
-
-    case QueryType.TRANSIENT_VIEW: {
-      endpoint = '/api/transient_view';
-      break;
-    }
-
-    case QueryType.TRANSIENT_VIEWS: {
-      endpoint = '/api/transient_views';
-      break;
-    }
-
+    case QueryType.QUEUE_ITEMS:
+    case QueryType.LOG:
+    case QueryType.CONFIG:
     case QueryType.COMMAND_PROGRESS: {
-      endpoint = '/api/command_progress';
       if (opts.cacheTime === undefined) {
         opts.cacheTime = 0;
       }
@@ -487,11 +244,8 @@ export function useQueryType<
     case QueryType.COMMAND_VALUE:
     case QueryType.ACTIVITIES: {
       throw Error('Not implemented');
-      break;
     }
 
-    default:
-      throw Error('Invalid query type');
   }
 
   let r;
@@ -530,415 +284,9 @@ export function useQueryType<
   return { ...r, queryKey: key };
 }
 
-// ======================== ACTIONS ====================================
-
-export type ServiceParameters = {
-  [K in keyof ServerService]:
-  | {
-    __options?: RequestOptions;
-  }
-  | Parameters<
-    ServerService[K] extends (...args: any[]) => any
-    ? ServerService[K]
-    : never
-  >[0];
-};
-
-export type ServiceReturnType = {
-  [K in keyof ServerService]: Unwrap<
-    ReturnType<
-      ServerService[K] extends (...args: any[]) => any
-      ? ServerService[K]
-      : never
-    >
-  >;
-};
-
-interface Action {
-  variables?: Record<string, any>;
-  dataType?: unknown;
-}
-
-// ======================== QUERY ACTIONS ====================================
-
-interface QueryAction<T = undefined> extends Action {
-  type: QueryType;
-}
-
-interface FetchServerStatus<T = undefined> extends QueryAction<T> {
-  type: QueryType.SERVER_STATUS;
-  dataType: {
-    loggedIn: boolean;
-    connected: boolean;
-  };
-}
-
-interface FetchSortIndexes<T = undefined> extends QueryAction<T> {
-  type: QueryType.SORT_INDEXES;
-  dataType: ServerSortIndex[];
-  variables: ServiceParameters['sort_indexes'];
-}
-
-interface FetchProfile<T = undefined> extends QueryAction<T> {
-  type: QueryType.PROFILE;
-  dataType: ServiceReturnType['profile'];
-  variables: ServiceParameters['profile'];
-}
-
-interface FetchItem<T = undefined> extends QueryAction<T> {
-  type: QueryType.ITEM;
-  dataType: Record<string, any>;
-  variables: Omit<ServiceParameters['item'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchItems<T = undefined> extends QueryAction<T> {
-  type: QueryType.ITEMS;
-  dataType: ServiceReturnType['items'];
-  variables: Omit<ServiceParameters['items'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchSearchItems<T = undefined> extends QueryAction<T> {
-  type: QueryType.ITEMS;
-  dataType: ServiceReturnType['search_items'];
-  variables: Omit<ServiceParameters['search_items'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchLibrary<T = undefined> extends QueryAction<T> {
-  type: QueryType.LIBRARY;
-  dataType: ServiceReturnType['library'];
-  variables: Omit<ServiceParameters['library'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchRelatedItems<T = undefined> extends QueryAction<T> {
-  type: QueryType.RELATED_ITEMS;
-  dataType: ServiceReturnType['related_items'];
-  variables: Omit<ServiceParameters['related_items'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchPages<T = undefined> extends QueryAction<T> {
-  type: QueryType.PAGES;
-  dataType: ServiceReturnType['pages'];
-  variables: Omit<ServiceParameters['pages'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchSimilar<T = undefined> extends QueryAction<T> {
-  type: QueryType.SIMILAR;
-  dataType: ServiceReturnType['similar'];
-  variables: Omit<ServiceParameters['similar'], 'fields'> & {
-    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
-  };
-}
-
-interface FetchSearchLabels<T = undefined> extends QueryAction<T> {
-  type: QueryType.SEARCH_LABELS;
-  dataType: ServiceReturnType['search_labels'];
-  variables: ServiceParameters['search_labels'];
-}
-
-interface FetchQueueItems<T = undefined> extends QueryAction<T> {
-  type: QueryType.QUEUE_ITEMS;
-  dataType: ServiceReturnType['queue_items'];
-  variables: ServiceParameters['queue_items'];
-}
-interface FetchQueueState<T = undefined> extends QueryAction<T> {
-  type: QueryType.QUEUE_STATE;
-  dataType: ServiceReturnType['queue_state'];
-  variables: ServiceParameters['queue_state'];
-}
-
-interface FetchLog<T = undefined> extends QueryAction<T> {
-  type: QueryType.LOG;
-  dataType: ServiceReturnType['log'];
-  variables: ServiceParameters['log'];
-}
-
-interface FetchDownloadInfo<T = undefined> extends QueryAction<T> {
-  type: QueryType.DOWNLOAD_INFO;
-  dataType: ServiceReturnType['download_info'];
-  variables: ServiceParameters['download_info'];
-}
-
-interface FetchMetadataInfo<T = undefined> extends QueryAction<T> {
-  type: QueryType.METADATA_INFO;
-  dataType: ServiceReturnType['metadata_info'];
-  variables: ServiceParameters['metadata_info'];
-}
-
-interface FetchConfig<T = undefined> extends QueryAction<T> {
-  type: QueryType.CONFIG;
-  dataType: ServiceReturnType['config'];
-  variables: ServiceParameters['config'];
-}
-
-interface FetchPlugin<T = undefined> extends QueryAction<T> {
-  type: QueryType.PLUGIN;
-  dataType: ServiceReturnType['plugin'];
-  variables: ServiceParameters['plugin'];
-}
-
-interface FetchPluginUpdate<T = undefined> extends QueryAction<T> {
-  type: QueryType.PLUGIN_UPDATE;
-  dataType: ServiceReturnType['check_plugin_update'];
-  variables: ServiceParameters['check_plugin_update'];
-}
-
-interface FetchPlugins<T = undefined> extends QueryAction<T> {
-  type: QueryType.PLUGINS;
-  dataType: ServiceReturnType['list_plugins'];
-  variables: ServiceParameters['list_plugins'];
-}
-
-interface FetchCommandProgress<T = undefined> extends QueryAction<T> {
-  type: QueryType.COMMAND_PROGRESS;
-  dataType: ServiceReturnType['command_progress'];
-  variables: ServiceParameters['command_progress'];
-}
-
-interface FetchCommandState<T = undefined> extends QueryAction<T> {
-  type: QueryType.COMMAND_STATE;
-  dataType: ServiceReturnType['command_state'];
-  variables: ServiceParameters['command_state'];
-}
-
-interface FetchCommandValue<T = undefined> extends QueryAction<T> {
-  type: QueryType.COMMAND_VALUE;
-  dataType: ServiceReturnType['command_value'];
-  variables: ServiceParameters['command_value'];
-}
-interface FetchActivities<T = undefined> extends QueryAction<T> {
-  type: QueryType.ACTIVITIES;
-  dataType: ServiceReturnType['activities'];
-  variables: ServiceParameters['activities'];
-}
-
-interface FetchTransientView<T = undefined> extends QueryAction<T> {
-  type: QueryType.TRANSIENT_VIEW;
-  dataType: ServiceReturnType['transient_view'];
-  variables: ServiceParameters['transient_view'];
-}
-
-interface FetchTransientViews<T = undefined> extends QueryAction<T> {
-  type: QueryType.TRANSIENT_VIEWS;
-  dataType: ServiceReturnType['transient_views'];
-  variables: ServiceParameters['transient_views'];
-}
-
-type QueryActions<T = undefined> =
-  | FetchProfile<T>
-  | FetchItem<T>
-  | FetchItems<T>
-  | FetchLibrary<T>
-  | FetchPages<T>
-  | FetchSearchLabels<T>
-  | FetchRelatedItems<T>
-  | FetchSortIndexes<T>
-  | FetchSimilar<T>
-  | FetchSearchItems<T>
-  | FetchQueueItems<T>
-  | FetchQueueState<T>
-  | FetchLog<T>
-  | FetchDownloadInfo<T>
-  | FetchMetadataInfo<T>
-  | FetchConfig<T>
-  | FetchPlugin<T>
-  | FetchPluginUpdate<T>
-  | FetchPlugins<T>
-  | FetchCommandProgress<T>
-  | FetchCommandState<T>
-  | FetchCommandValue<T>
-  | FetchActivities<T>
-  | FetchTransientView<T>
-  | FetchTransientViews<T>
-  | FetchServerStatus<T>;
-
-// ======================== MUTATION ACTIONS ====================================
-
-interface MutationAction<T = undefined> extends Action {
-  type: MutatationType;
-}
-
-interface LoginAction<T = undefined> extends MutationAction<T> {
-  type: MutatationType.LOGIN;
-  dataType: ServiceReturnType['login'];
-  variables: {
-    username: string;
-    password?: string;
-    endpoint?: { host: string; port: number };
-  };
-}
-
-interface UpdateItem<T = undefined> extends MutationAction<T> {
-  type: MutatationType.UPDATE_ITEM;
-  dataType: ServiceReturnType['update_item'];
-  variables: ServiceParameters['update_item'];
-}
-
-interface UpdateMetatags<T = undefined> extends MutationAction<T> {
-  type: MutatationType.UPDATE_METATAGS;
-  dataType: ServiceReturnType['update_metatags'];
-  variables: ServiceParameters['update_metatags'];
-}
-
-interface UpdateConfig<T = undefined> extends MutationAction<T> {
-  type: MutatationType.UPDATE_CONFIG;
-  dataType: ServiceReturnType['set_config'];
-  variables: ServiceParameters['set_config'];
-}
-
-interface StopQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.STOP_QUEUE;
-  dataType: ServiceReturnType['stop_queue'];
-  variables: ServiceParameters['stop_queue'];
-}
-
-interface StartQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.START_QUEUE;
-  dataType: ServiceReturnType['start_queue'];
-  variables: ServiceParameters['start_queue'];
-}
-
-interface ClearQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.CLEAR_QUEUE;
-  dataType: ServiceReturnType['clear_queue'];
-  variables: ServiceParameters['clear_queue'];
-}
-
-interface AddItemToQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.ADD_ITEM_TO_QUEUE;
-  dataType: ServiceReturnType['add_item_to_queue'];
-  variables: ServiceParameters['add_item_to_queue'];
-}
-
-interface RemoveItemFromQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.REMOVE_ITEM_FROM_QUEUE;
-  dataType: ServiceReturnType['remove_item_from_queue'];
-  variables: ServiceParameters['remove_item_from_queue'];
-}
-
-interface AddItemsToMetadataQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.ADD_ITEMS_TO_METADATA_QUEUE;
-  dataType: ServiceReturnType['add_items_to_metadata_queue'];
-  variables: ServiceParameters['add_items_to_metadata_queue'];
-}
-
-interface AddUrlsToDownloadQueue<T = undefined> extends MutationAction<T> {
-  type: MutatationType.ADD_URLS_TO_DOWNLOAD_QUEUE;
-  dataType: ServiceReturnType['add_urls_to_download_queue'];
-  variables: ServiceParameters['add_urls_to_download_queue'];
-}
-
-interface PageReadEvent<T = undefined> extends MutationAction<T> {
-  type: MutatationType.PAGE_READ_EVENT;
-  dataType: ServiceReturnType['page_read_event'];
-  variables: ServiceParameters['page_read_event'];
-}
-
-interface InstallPlugin<T = undefined> extends MutationAction<T> {
-  type: MutatationType.INSTALL_PLUGIN;
-  dataType: ServiceReturnType['install_plugin'];
-  variables: ServiceParameters['install_plugin'];
-}
-
-interface DisablePlugin<T = undefined> extends MutationAction<T> {
-  type: MutatationType.DISABLE_PLUGIN;
-  dataType: ServiceReturnType['disable_plugin'];
-  variables: ServiceParameters['disable_plugin'];
-}
-
-interface RemovePlugin<T = undefined> extends MutationAction<T> {
-  type: MutatationType.REMOVE_PLUGIN;
-  dataType: ServiceReturnType['remove_plugin'];
-  variables: ServiceParameters['remove_plugin'];
-}
-
-interface UpdatePlugin<T = undefined> extends MutationAction<T> {
-  type: MutatationType.UPDATE_CONFIG;
-  dataType: ServiceReturnType['update_plugin'];
-  variables: ServiceParameters['update_plugin'];
-}
-
-interface OpenGallery<T = undefined> extends MutationAction<T> {
-  type: MutatationType.OPEN_GALLERY;
-  dataType: ServiceReturnType['open_gallery'];
-  variables: ServiceParameters['open_gallery'];
-}
-
-interface UpdateFilters<T = undefined> extends MutationAction<T> {
-  type: MutatationType.UPDATE_FILTERS;
-  dataType: ServiceReturnType['update_filters'];
-  variables: ServiceParameters['update_filters'];
-}
-
-interface StartCommand<T = undefined> extends MutationAction<T> {
-  type: MutatationType.START_COMMAND;
-  dataType: ServiceReturnType['start_command'];
-  variables: ServiceParameters['start_command'];
-}
-
-interface StopCommand<T = undefined> extends MutationAction<T> {
-  type: MutatationType.STOP_COMMAND;
-  dataType: ServiceReturnType['stop_command'];
-  variables: ServiceParameters['stop_command'];
-}
-
-interface ResolvePathPattern<T = undefined> extends MutationAction<T> {
-  type: MutatationType.RESOLVE_PATH_PATTERN;
-  dataType: ServiceReturnType['resolve_path_pattern'];
-  variables: ServiceParameters['resolve_path_pattern'];
-}
-
-interface ScanGalleries<T = undefined> extends MutationAction<T> {
-  type: MutatationType.SCAN_GALLERIES;
-  dataType: ServiceReturnType['scan_galleries'];
-  variables: ServiceParameters['scan_galleries'];
-}
-
-interface TransientViewApply<T = undefined> extends MutationAction<T> {
-  type: MutatationType.TRANSIENT_VIEW_ACTION;
-  dataType: ServiceReturnType['transient_view_apply'];
-  variables: ServiceParameters['transient_view_apply'];
-}
-
-type MutationActions<T = undefined> =
-  | LoginAction<T>
-  | UpdateItem<T>
-  | UpdateMetatags<T>
-  | UpdateConfig<T>
-  | AddItemToQueue<T>
-  | RemoveItemFromQueue<T>
-  | AddItemsToMetadataQueue<T>
-  | AddUrlsToDownloadQueue<T>
-  | PageReadEvent<T>
-  | StopQueue<T>
-  | StartQueue<T>
-  | UpdatePlugin<T>
-  | RemovePlugin<T>
-  | DisablePlugin<T>
-  | InstallPlugin<T>
-  | OpenGallery<T>
-  | UpdateFilters<T>
-  | StartCommand<T>
-  | StopCommand<T>
-  | ResolvePathPattern<T>
-  | ScanGalleries<T>
-  | TransientViewApply<T>
-  | ClearQueue<T>;
 
 // ======================== NORMAL QUERY ====================================
 
-type Actions<T = undefined> = MutationActions<T> | QueryActions<T>;
 
 export class Query {
   static mutationObservers: Record<
@@ -1094,34 +442,12 @@ export class Query {
     let obs: MutationObserver<AxiosResponse<R>, E, V> =
       Query.mutationObservers[key];
     if (!obs) {
-      let endpoint = '';
-
-      switch (action) {
-        case MutatationType.UPDATE_ITEM: {
-          endpoint = '/api/item';
-          break;
-        }
-        case MutatationType.UPDATE_METATAGS: {
-          endpoint = '/api/metatags';
-          break;
-        }
-        case MutatationType.START_COMMAND: {
-          endpoint = '/api/start_command';
-          break;
-        }
-        case MutatationType.STOP_COMMAND: {
-          endpoint = '/api/stop_command';
-          break;
-        }
-
-        default:
-          throw Error('Invalid mutation type');
-      }
+      let endpoint = action as string;
 
       const fn = (v: V) => axios.post<R>(urlstring(endpoint), v, reqConfig);
 
       obs = new MutationObserver<AxiosResponse<R>, E, V>(queryClient, {
-        mutationKey: key,
+        mutationKey: [key],
         mutationFn: fn,
       });
 

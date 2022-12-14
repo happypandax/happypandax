@@ -3,12 +3,13 @@ import { useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { ActivityType, ItemType } from '../misc/enums';
+import { QueryType } from '../misc/query';
 import { Activity, ItemID } from '../misc/types';
 import { debounceCollect, isElementInViewport, update } from '../misc/utility';
 import { AppState } from '../state';
 import { GlobalState, useGlobalValue } from '../state/global';
 import { useInterval, useTabActive } from './hooks/utils';
-import { Query, QueryType } from './queries';
+import { Query } from './queries';
 
 export type ActivityMap = { [key in ItemType]?: Record<ItemID, Activity[]> };
 

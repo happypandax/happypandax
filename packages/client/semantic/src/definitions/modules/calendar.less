@@ -127,7 +127,7 @@
   color: @disabledTextColor;
 }
 
-.ui.calendar .ui.table tr .adjacent:not(.disabled) {
+.ui.calendar .ui.table tr .adjacent:not(.disabled):not(.active) {
   color: @adjacentTextColor;
   background: @adjacentBackground;
 }
@@ -166,9 +166,29 @@
     color: @invertedDisabledTextColor;
   }
 
-  .ui.inverted.calendar .ui.inverted.table tr .adjacent:not(.disabled) {
+  .ui.inverted.calendar .ui.inverted.table tr .adjacent:not(.disabled):not(.active) {
     color: @adjacentInvertedTextColor;
     background: @adjacentInvertedBackground;
+  }
+}
+
+& when (@variationCalendarMultiMonth) {
+  .ui.calendar.popup > .ui.ui.grid {
+    margin: @multiMonthMargin;
+    & > .column:not(:first-child) {
+      padding-left: @multiMonthPadding;
+      & > .ui.table {
+        border-top-left-radius:0;
+        border-bottom-left-radius:0;
+      }
+    }
+    & > .column:not(:last-child) {
+      padding-right:@multiMonthPadding;
+      & > .ui.table {
+        border-top-right-radius:0;
+        border-bottom-right-radius:0;
+      }
+    }
   }
 }
 

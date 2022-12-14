@@ -15,9 +15,10 @@ import {
 } from 'semantic-ui-react';
 
 import { useRecentViewedItem } from '../client/hooks/item';
-import { Query, QueryType, useQueryType } from '../client/queries';
+import { Query, useQueryType } from '../client/queries';
 import { DrawerTab, ImageSize, ItemType, QueueType } from '../misc/enums';
 import t from '../misc/lang';
+import { QueryType } from '../misc/query';
 import { DragItemData, ServerGallery } from '../misc/types';
 import { urlstring } from '../misc/utility';
 import { AppState } from '../state';

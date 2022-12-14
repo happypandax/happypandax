@@ -1,11 +1,12 @@
 import { AxiosResponse } from 'axios';
 
 import { ItemType } from '../../misc/enums';
+import { MutatationType } from '../../misc/query';
 import { ServerItem, ServerItemWithMetatags } from '../../misc/types';
 import { update } from '../../misc/utility';
-import type ServerService from '../../services/server';
-import { MutatationType, Query } from '../queries';
+import { Query } from '../queries';
 
+import type ServerService from '../../services/server';
 export class ItemActions {
   static async updateItem<T extends Partial<ServerItem>>(
     item_id: number,

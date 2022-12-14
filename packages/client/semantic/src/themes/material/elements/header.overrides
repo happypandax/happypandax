@@ -2,6 +2,8 @@
            Overrides
 *******************************/
 
+@import (css) url('https://fonts.googleapis.com/css2?family=Roboto');
+
 h1.ui.header,
 .ui.huge.header {
   font-weight: normal;

@@ -17,7 +17,7 @@
   },
   "permission": false,
   "autoInstall": false,
-  "rtl": "both",
+  "rtl": false,
   "components": [
     "reset",
     "site",
@@ -75,5 +75,5 @@
     "state",
     "visibility"
   ],
-  "version": "2.8.7"
+  "version": "2.9.0"
 }
