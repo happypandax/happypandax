@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react';
 import { Tab } from 'semantic-ui-react';
 
 import { QueryType, useQueryType } from '../client/queries';
-import { ItemType } from '../misc/enums';
-import { ServerGallery } from '../misc/types';
+import { ItemType } from '../shared/enums';
+import { ServerGallery } from '../shared/types';
 import CollectionCard, { collectionCardDataFields } from './item/Collection';
 import GalleryCard, { galleryCardDataFields } from './item/Gallery';
 import ListView from './view/ListView';

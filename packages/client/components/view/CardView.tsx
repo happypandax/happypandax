@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
-import { ItemSize } from '../../misc/types';
+import { ItemSize } from '../../shared/types';
 import { PlaceholderItemCard } from '../item/index';
 import styles from './CardView.module.css';
 import { PaginatedView, ViewAutoSizer, ViewBase } from './index';

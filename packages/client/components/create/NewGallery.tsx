@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button, Label, Segment } from 'semantic-ui-react';
 
-import t from '../../misc/lang';
-import { SourceItem } from '../../misc/types';
+import t from '../../client/lang';
+import { SourceItem } from '../../shared/types';
 import { LabelAccordion } from '../misc/index';
 
 export function NewGallery({

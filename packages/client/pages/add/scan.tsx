@@ -16,6 +16,7 @@ import {
   Select,
 } from 'semantic-ui-react';
 
+import t from '../../client/lang';
 import {
   MutatationType,
   QueryType,
@@ -31,10 +32,9 @@ import {
 } from '../../components/misc';
 import { TransientFileView } from '../../components/transient/FileView';
 import { TransientImportView } from '../../components/transient/ImportView';
-import { CommandState, TransientViewType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { ViewID } from '../../misc/types';
 import { ServiceType } from '../../services/constants';
+import { CommandState, TransientViewType } from '../../shared/enums';
+import { ViewID } from '../../shared/types';
 import AddPage from './index';
 
 import type ServerService from '../../services/server';

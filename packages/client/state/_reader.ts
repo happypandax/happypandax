@@ -1,5 +1,5 @@
-import { ImageSize, ItemFit, ReadingDirection } from '../misc/enums';
-import { ReaderData } from '../misc/types';
+import { ImageSize, ItemFit, ReadingDirection } from '../shared/enums';
+import { ReaderData } from '../shared/types';
 import StateBlock, { defineAtom } from './_base';
 import { cookieEffect, localStorageEffect } from './_statehelpers';
 

@@ -44,6 +44,7 @@ import Scroller from '@twiddly/scroller';
 import { DataContext, ReaderContext } from '../client/context';
 import { useSetupDataState } from '../client/hooks/item';
 import { useBodyEvent, useRefEvent, useTabActive } from '../client/hooks/utils';
+import t from '../client/lang';
 import {
   MutatationType,
   Query,
@@ -51,16 +52,21 @@ import {
   useMutationType,
   useQueryType,
 } from '../client/queries';
-import { ImageSize, ItemFit, ItemType, ReadingDirection } from '../misc/enums';
-import t from '../misc/lang';
+import { getClientWidth, update } from '../client/utility';
+import {
+  ImageSize,
+  ItemFit,
+  ItemType,
+  ReadingDirection,
+} from '../shared/enums';
 import {
   FieldPath,
   ReaderData,
   ServerCategory,
   ServerGallery,
   ServerPage,
-} from '../misc/types';
-import { getClientWidth, update, urlparse, urlstring } from '../misc/utility';
+} from '../shared/types';
+import { urlparse, urlstring } from '../shared/utility';
 import {
   AppState,
   ReaderState,

@@ -8,10 +8,10 @@ import {
   SemanticCOLORS,
 } from 'semantic-ui-react';
 
+import t from '../../client/lang';
 import { ServiceReturnType } from '../../client/queries';
-import t from '../../misc/lang';
-import { FileViewItem } from '../../misc/types';
-import { dateFromTimestamp, humanFileSize } from '../../misc/utility';
+import { FileViewItem } from '../../shared/types';
+import { dateFromTimestamp, humanFileSize } from '../../shared/utility';
 import { TransientView } from './';
 
 function typeProp(data: FileViewItem) {

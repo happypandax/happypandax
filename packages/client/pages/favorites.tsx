@@ -2,6 +2,7 @@ import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import t from '../client/lang';
 import {
   FavoriteArtistsMore,
   FavoriteCollections,
@@ -16,12 +17,11 @@ import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import PageLayout from '../components/layout/Page';
 import MainMenu from '../components/Menu';
 import { PageTitle } from '../components/misc';
-import { ItemType, ViewType } from '../misc/enums';
-import t from '../misc/lang';
-import { ServerGallery, ServerItem } from '../misc/types';
-import { urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
+import { ItemType, ViewType } from '../shared/enums';
+import { ServerGallery, ServerItem } from '../shared/types';
+import { urlparse, urlstring } from '../shared/utility';
 
 interface PageProps {
   data: Unwrap<ServerService['library']>;

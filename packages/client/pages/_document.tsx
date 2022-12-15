@@ -25,7 +25,7 @@ const IS_SERVER = typeof window === 'undefined';
 
 if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
   if (IS_SERVER) {
-    const { serverInitialize } = await import('../misc/initialize/server');
+    const { serverInitialize } = await import('../server/initialize');
     await serverInitialize();
   }
 }

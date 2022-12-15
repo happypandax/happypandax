@@ -1,5 +1,5 @@
-import { ItemSort, ItemType, ViewType } from '../misc/enums';
-import { ServerItem } from '../misc/types';
+import { ItemSort, ItemType, ViewType } from '../shared/enums';
+import { ServerItem } from '../shared/types';
 import StateBlock, { defineAtom } from './_base';
 import { cookieEffect, localStorageEffect } from './_statehelpers';
 

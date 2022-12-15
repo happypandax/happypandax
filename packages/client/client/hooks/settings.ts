@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilState } from 'recoil';
 
-import { MutatationType, QueryType } from '../../misc/query';
-import { update } from '../../misc/utility';
+import { MutatationType, QueryType } from '../../shared/query';
 import { MiscState } from '../../state';
 import { useMutationType, useQueryType } from '../queries';
+import { update } from '../utility';
 
 export function useConfig<T extends Record<string, any> = Record<string, any>>(
   cfg?: T,

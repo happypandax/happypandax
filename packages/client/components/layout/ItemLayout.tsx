@@ -7,9 +7,9 @@ import { Container, Menu } from 'semantic-ui-react';
 import { DataContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
 import { useRefEvent } from '../../client/hooks/utils';
-import { ItemType } from '../../misc/enums';
-import { ServerGallery, ServerItemWithProfile } from '../../misc/types';
-import { animateCSS } from '../../misc/utility';
+import { animateCSS } from '../../client/utility';
+import { ItemType } from '../../shared/enums';
+import { ServerGallery, ServerItemWithProfile } from '../../shared/types';
 import { AppState } from '../../state';
 import MainMenu, { ConnectionItem, MenuItem } from '../Menu';
 import styles from './ItemLayout.module.css';
@@ -67,9 +67,10 @@ export function ParallaxDiv({
             return;
           }
 
-          ref.current.style.transform = `translate(0, ${runningAnimationRef.current.startPos -
+          ref.current.style.transform = `translate(0, ${
+            runningAnimationRef.current.startPos -
             runningAnimationRef.current.lastOffset
-            }px)`;
+          }px)`;
 
           runningAnimationRef.current.lastOffset += delta;
           requestAnimationFrame(loop);
@@ -234,7 +235,7 @@ export function BlurryBackgroundContainer({
       const c = colorThief.getColor(imgRef.current);
       containerRef.current.style.backgroundColor = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
     };
-    imgRef.current.src = data.profile.data
+    imgRef.current.src = data.profile.data;
     if (imgRef.current.complete) {
       setColor();
     } else {
@@ -244,7 +245,11 @@ export function BlurryBackgroundContainer({
 
   return (
     <div className={styles.blurry_background_parent}>
-      <div ref={containerRef} className={styles.blurry_background_container} style={{ backgroundImage: `url(${data.profile.data})` }} />
+      <div
+        ref={containerRef}
+        className={styles.blurry_background_container}
+        style={{ backgroundImage: `url(${data.profile.data})` }}
+      />
       <Container {...props} />
     </div>
   );

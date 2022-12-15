@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Container, Grid, Icon, Label, Segment } from 'semantic-ui-react';
 
 import { useUpdateRecentlyViewedItem } from '../../../../client/hooks/item';
+import t from '../../../../client/lang';
 import { QueryType, useQueryType } from '../../../../client/queries';
 import CollectionCard, {
   CollectionCardData,
@@ -28,16 +29,15 @@ import {
 } from '../../../../components/misc/Slider';
 import CardView from '../../../../components/view/CardView';
 import ListView from '../../../../components/view/ListView';
-import { ImageSize, ItemType } from '../../../../misc/enums';
-import t from '../../../../misc/lang';
+import { ServiceType } from '../../../../services/constants';
+import { ImageSize, ItemType } from '../../../../shared/enums';
 import {
   ServerCollection,
   ServerGallery,
   ServerGrouping,
   ServerItem,
-} from '../../../../misc/types';
-import { urlparse } from '../../../../misc/utility';
-import { ServiceType } from '../../../../services/constants';
+} from '../../../../shared/types';
+import { urlparse } from '../../../../shared/utility';
 
 interface PageProps {
   item: GalleryHeaderData;

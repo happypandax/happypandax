@@ -1,6 +1,6 @@
-import { ActivityType } from '../../misc/enums';
-import { handler } from '../../misc/requests';
+import { handler } from '../../server/requests';
 import { ServiceType } from '../../services/constants';
+import { ActivityType } from '../../shared/enums';
 
 export default handler().post(async (req, res) => {
   const server = global.app.service.get(ServiceType.Server);

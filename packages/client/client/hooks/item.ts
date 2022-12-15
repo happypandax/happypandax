@@ -2,11 +2,11 @@ import _ from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { SetterOrUpdater, useRecoilState } from 'recoil';
 
-import { ItemType } from '../../misc/enums';
-import { ServerItem, ServerItemWithProfile } from '../../misc/types';
-import { update } from '../../misc/utility';
+import { ItemType } from '../../shared/enums';
+import { ServerItem, ServerItemWithProfile } from '../../shared/types';
 import { DataState } from '../../state';
 import { DataContextT, useDataContext } from '../context';
+import { update } from '../utility';
 import { useSetting } from './settings';
 
 const defaultImage = '/img/default.png';
@@ -26,10 +26,10 @@ export function useImage(initialSrc?: ImageSource) {
     const s = !initialSrc
       ? noImage
       : typeof initialSrc === 'string'
-      ? initialSrc
-      : initialSrc.data
-      ? initialSrc.data
-      : noImage;
+        ? initialSrc
+        : initialSrc.data
+          ? initialSrc.data
+          : noImage;
 
     if (loaded) {
       return s;

@@ -16,7 +16,7 @@ declare type DeepPick<
   K extends DeepPickPath<T, G>,
   G extends DeepPickGrammar = DefaultGrammar
 > = PrettifyObject<import('ts-deep-pick').DeepPick<T, K, G>>;
-declare type Logger = import('./misc/logger').Logger;
+declare type Logger = import('./shared/logger').Logger;
 declare type ServiceLocator = import('./services/base').ServiceLocator;
 
 declare type MakeOptional<T, K extends keyof T> = Omit<T, K> &
@@ -42,14 +42,14 @@ declare interface Opaque {
 // like DeepPickPath but without tokens also with globs
 declare type DeepPickPathPlain<T, Glob extends string = '.*'> = (
   | (T extends Opaque
-      ? never
-      : T extends Primitive
-      ? never
-      : T extends Array<infer T>
-      ? _InnerKey<T, '', Glob>
-      : {
-          [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
-        }[_KeyOfUnion<T>])
+    ? never
+    : T extends Primitive
+    ? never
+    : T extends Array<infer T>
+    ? _InnerKey<T, '', Glob>
+    : {
+      [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
+    }[_KeyOfUnion<T>])
   | '*'
 ) &
   string;
@@ -61,21 +61,21 @@ type _InnerKey<
   parentType = undefined
 > = (
   T extends Opaque
-    ? never
-    : T extends Primitive
-    ? never
-    : T extends Array<infer T>
-    ? T extends Primitive
-      ? never
-      : `${key}${_InnerKey<T, '', Glob> & string}` | `${key}${Glob}`
-    : T extends parentType
-    ? `${key}`
-    : {
-        [key2 in _KeyOfUnion<T>]:
-          | `${key}${Glob}`
-          | `${key}${'.'}${key2}`
-          | `${key}${'.'}${_InnerKey<T[key2], key2, Glob> & string}`;
-      }[_KeyOfUnion<T>]
+  ? never
+  : T extends Primitive
+  ? never
+  : T extends Array<infer T>
+  ? T extends Primitive
+  ? never
+  : `${key}${_InnerKey<T, '', Glob> & string}` | `${key}${Glob}`
+  : T extends parentType
+  ? `${key}`
+  : {
+    [key2 in _KeyOfUnion<T>]:
+    | `${key}${Glob}`
+    | `${key}${'.'}${key2}`
+    | `${key}${'.'}${_InnerKey<T[key2], key2, Glob> & string}`;
+  }[_KeyOfUnion<T>]
 ) extends infer key
   ? key
   : never;

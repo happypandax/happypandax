@@ -12,10 +12,10 @@ import {
 } from 'semantic-ui-react';
 
 import { useCommand } from '../../client/command';
+import t from '../../client/lang';
 import { MutatationType, useMutationType } from '../../client/queries';
-import t from '../../misc/lang';
-import { FieldPath, ServerFilter } from '../../misc/types';
-import { urlstring } from '../../misc/utility';
+import { FieldPath, ServerFilter } from '../../shared/types';
+import { urlstring } from '../../shared/utility';
 import { LabelAccordion } from '../misc';
 
 export type FilterCardData = DeepPick<
@@ -75,7 +75,10 @@ export default function FilterCard({
             title={t`Update`}
             as="a"
           />
-          <Link href={urlstring('/library', { filter: data.id })} passHref legacyBehavior>
+          <Link
+            href={urlstring('/library', { filter: data.id })}
+            passHref
+            legacyBehavior>
             <Label
               size="small"
               empty

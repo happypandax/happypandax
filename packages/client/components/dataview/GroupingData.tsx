@@ -4,8 +4,8 @@ import { Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { QueryType, useQueryType } from '../../client/queries';
-import { ItemType } from '../../misc/enums';
-import { ServerGallery, ServerGrouping } from '../../misc/types';
+import { ItemType } from '../../shared/enums';
+import { ServerGallery, ServerGrouping } from '../../shared/types';
 import { DataState } from '../../state';
 import {
   DateAddedLabel,

@@ -8,7 +8,7 @@ import Client, {
   ServerMsg,
 } from 'happypandax-client';
 
-import { QueryClient, QueryFunctionContext } from '@tanstack/react-query';
+import { QueryClient, QueryFunctionContext } from '@tanstack/query-core';
 
 import {
   ActivityType,
@@ -21,7 +21,7 @@ import {
   QueueType,
   TransientViewAction,
   TransientViewType,
-} from '../misc/enums';
+} from '../shared/enums';
 import {
   Activity,
   CommandID,
@@ -46,7 +46,7 @@ import {
   SortOptions,
   Version,
   ViewID,
-} from '../misc/types';
+} from '../shared/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
 

@@ -19,6 +19,7 @@ import {
 
 import { ItemActivityManager } from '../../client/activity';
 import { useConfig, useSetting } from '../../client/hooks/settings';
+import t from '../../client/lang';
 import {
   MutatationType,
   QueryType,
@@ -31,9 +32,12 @@ import {
   ItemType,
   LogType,
   QueueType,
-} from '../../misc/enums';
-import t from '../../misc/lang';
-import { MetadataHandler, MetadataItem, ServerGallery } from '../../misc/types';
+} from '../../shared/enums';
+import {
+  MetadataHandler,
+  MetadataItem,
+  ServerGallery,
+} from '../../shared/types';
 import GalleryCard, { galleryCardDataFields } from '../item/Gallery';
 import {
   ItemCardActionContent,

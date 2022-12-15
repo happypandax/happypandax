@@ -1,10 +1,10 @@
 import { AxiosResponse } from 'axios';
 
-import { ItemType } from '../../misc/enums';
-import { MutatationType } from '../../misc/query';
-import { ServerItem, ServerItemWithMetatags } from '../../misc/types';
-import { update } from '../../misc/utility';
+import { ItemType } from '../../shared/enums';
+import { MutatationType } from '../../shared/query';
+import { ServerItem, ServerItemWithMetatags } from '../../shared/types';
 import { Query } from '../queries';
+import { update } from '../utility';
 
 import type ServerService from '../../services/server';
 export class ItemActions {

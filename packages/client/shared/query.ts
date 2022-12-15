@@ -1,5 +1,5 @@
 import type ServerService from '../services/server';
-import type { RequestOptions } from './requests';
+import type { RequestOptions } from '../server/requests';
 import { FieldPath, ServerSortIndex } from './types';
 
 export enum QueryType {
@@ -464,3 +464,24 @@ export type MutationActions<T = undefined> =
     | ClearQueue<T>;
 
 export type Actions<T = undefined> = MutationActions<T> | QueryActions<T>;
+
+
+// ======================== SERVER QUERIES ====================================
+
+
+export enum MomoType {
+    SAME_MACHINE = 1,
+}
+
+interface MomoAction<T = undefined> extends Action {
+    type: MomoType;
+}
+
+interface FetchSameMachine<T = undefined> extends MomoAction<T> {
+    type: MomoType.SAME_MACHINE;
+    dataType: {
+        data: boolean
+    };
+}
+
+export type MomoActions<T = undefined> = FetchSameMachine<T>

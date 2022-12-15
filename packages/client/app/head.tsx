@@ -1,7 +1,7 @@
 export default function Head() {
-    return (
-      <>
-        <title>HappyPanda X</title>
-      </>
-    )
-  }
+  return (
+    <>
+      <title>{global?.app?.title ?? 'HappyPanda X'}</title>
+    </>
+  );
+}

@@ -1,6 +1,6 @@
 import AddPage from '../';
+import t from '../../../client/lang';
 import { PageTitle } from '../../../components/misc/index';
-import t from '../../../misc/lang';
 import { Header } from './';
 
 export default function Page() {

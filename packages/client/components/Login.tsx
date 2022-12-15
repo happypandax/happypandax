@@ -1,3 +1,4 @@
+'use client';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Button,
@@ -8,8 +9,8 @@ import {
   Segment,
 } from 'semantic-ui-react';
 
+import t from '../client/lang';
 import { MutatationType, useMutationType } from '../client/queries';
-import t from '../misc/lang';
 import { useGlobalState, useSetGlobalState } from '../state/global';
 import { LabelAccordion } from './misc';
 

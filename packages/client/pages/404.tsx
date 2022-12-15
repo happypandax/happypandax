@@ -1,7 +1,7 @@
 import { Grid, Header, Icon } from 'semantic-ui-react';
 
+import t from '../client/lang';
 import PageLayout from '../components/layout/Page';
-import t from '../misc/lang';
 
 export default function Page() {
   return (

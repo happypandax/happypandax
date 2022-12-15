@@ -29,15 +29,15 @@ import SwiperCore, { Mousewheel } from 'swiper/core';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
 import { SearchContext } from '../client/context';
+import t from '../client/lang';
 import { Query, QueryType, useQueryType } from '../client/queries';
 import { replaceTextAtPosition } from '../client/search_utils';
-import { ItemType } from '../misc/enums';
-import t from '../misc/lang';
+import { ItemType } from '../shared/enums';
 import {
   SearchItem,
   SearchOptions as SearchOptionsType,
   ServerNamespaceTag,
-} from '../misc/types';
+} from '../shared/types';
 import { AppState, SearchState, useInitialRecoilValue } from '../state';
 import styles from './Search.module.css';
 
@@ -586,7 +586,7 @@ export function ItemSearch({
   const ref = useRef<HTMLElement>();
   const refTimeoutId = useRef<NodeJS.Timeout>();
   const [query, setQuery] = useState(defaultValue);
-  const deferredQuery = useDeferredValue(query)
+  const deferredQuery = useDeferredValue(query);
   const [resultsVisible, setResultsVisible] = useState(false);
   const [focused, setFocused] = useState(false);
   const options = useRecoilValue(SearchState.options(stateKey));

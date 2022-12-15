@@ -1,6 +1,6 @@
 import type { ActivityMap } from '../client/activity';
-import { DrawerTab, ItemType } from '../misc/enums';
-import { ItemID, NotificationData, ThemeValue } from '../misc/types';
+import { DrawerTab, ItemType } from '../shared/enums';
+import { ItemID, NotificationData, ThemeValue } from '../shared/types';
 import StateBlock, { defineAtom, defineSelector } from './_base';
 import { localStorageEffect } from './_statehelpers';
 

@@ -14,10 +14,10 @@ import SwiperCore, { Autoplay, Navigation } from 'swiper/core';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
 import { useCommand } from '../../client/command';
+import t from '../../client/lang';
 import { QueryType, useQueryType } from '../../client/queries';
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { ServerGallery, ServerItem } from '../../misc/types';
+import { ItemType } from '../../shared/enums';
+import { ServerGallery, ServerItem } from '../../shared/types';
 import { MiscState } from '../../state';
 import { useInitialRecoilState } from '../../state/index';
 import GalleryCard, { galleryCardDataFields } from '../item/Gallery';

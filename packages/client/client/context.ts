@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 
-import { ItemType } from '../misc/enums';
-import { ItemSize, ServerGallery, ServerItem } from '../misc/types';
+import { ItemType } from '../shared/enums';
+import { ItemSize, ServerGallery, ServerItem } from '../shared/types';
 
 export const LibraryContext = React.createContext(undefined);
 
@@ -86,5 +86,5 @@ export const ItemContext = React.createContext({
 
 export const NewItemContext = React.createContext({
   data: ServerItem,
-  
+
 });

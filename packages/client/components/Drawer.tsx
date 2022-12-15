@@ -15,12 +15,12 @@ import {
 } from 'semantic-ui-react';
 
 import { useRecentViewedItem } from '../client/hooks/item';
+import t from '../client/lang';
 import { Query, useQueryType } from '../client/queries';
-import { DrawerTab, ImageSize, ItemType, QueueType } from '../misc/enums';
-import t from '../misc/lang';
-import { QueryType } from '../misc/query';
-import { DragItemData, ServerGallery } from '../misc/types';
-import { urlstring } from '../misc/utility';
+import { DrawerTab, ImageSize, ItemType, QueueType } from '../shared/enums';
+import { QueryType } from '../shared/query';
+import { DragItemData, ServerGallery } from '../shared/types';
+import { urlstring } from '../shared/utility';
 import { AppState } from '../state';
 import GalleryCard, {
   GalleryCardData,
@@ -188,11 +188,14 @@ export function RecentViewed() {
       {!data?.data?.length && <EmptySegment />}
       {data?.data?.length && (
         <Slider>
-          {(data?.data as ServerGallery[]).slice().reverse().map((v) => (
-            <SliderElement key={v.id}>
-              <GalleryCard size="small" data={v} />
-            </SliderElement>
-          ))}
+          {(data?.data as ServerGallery[])
+            .slice()
+            .reverse()
+            .map((v) => (
+              <SliderElement key={v.id}>
+                <GalleryCard size="small" data={v} />
+              </SliderElement>
+            ))}
         </Slider>
       )}
     </Segment>

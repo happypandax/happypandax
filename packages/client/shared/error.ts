@@ -45,9 +45,9 @@ export class UnknownError extends Error {
   }
 }
 
-export class NoOpError extends UnknownError {}
-export class ClientError extends UnknownError {}
-export class ServerError extends NoOpError {}
+export class NoOpError extends UnknownError { }
+export class ClientError extends UnknownError { }
+export class ServerError extends NoOpError { }
 
 // HPX SERVER ERRORS ---------------------------------------------------------------
 

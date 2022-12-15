@@ -5,7 +5,7 @@ import { Header, Icon, Label, List, Segment, Table } from 'semantic-ui-react';
 
 import { ItemActions } from '../../client/actions/item';
 import { useUpdateDataState } from '../../client/hooks/item';
-import t from '../../misc/lang';
+import t from '../../client/lang';
 import {
   FieldPath,
   ServerCollection,
@@ -15,8 +15,8 @@ import {
   ServerItemWithUrls,
   ServerMetaTags,
   ServerNamespaceTag,
-} from '../../misc/types';
-import { dateFromTimestamp } from '../../misc/utility';
+} from '../../shared/types';
+import { dateFromTimestamp } from '../../shared/utility';
 import { AppState } from '../../state';
 import Rating from '../misc/Rating';
 import styles from './Common.module.css';

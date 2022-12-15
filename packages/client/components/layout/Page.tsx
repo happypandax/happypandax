@@ -4,7 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useRecoilValue } from 'recoil';
 import { Button, Container, Dimmer, Sidebar } from 'semantic-ui-react';
 
-import t from '../../misc/lang';
+import t from '../../client/lang';
 import { AppState } from '../../state';
 import DrawerPortal, { DrawerButton } from '../Drawer';
 import { ScrollUpButton } from '../misc';

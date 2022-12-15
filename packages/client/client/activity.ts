@@ -2,14 +2,15 @@ import _ from 'lodash';
 import { useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 
-import { ActivityType, ItemType } from '../misc/enums';
-import { QueryType } from '../misc/query';
-import { Activity, ItemID } from '../misc/types';
-import { debounceCollect, isElementInViewport, update } from '../misc/utility';
+import { ActivityType, ItemType } from '../shared/enums';
+import { QueryType } from '../shared/query';
+import { Activity, ItemID } from '../shared/types';
+import { debounceCollect } from '../shared/utility';
 import { AppState } from '../state';
 import { GlobalState, useGlobalValue } from '../state/global';
 import { useInterval, useTabActive } from './hooks/utils';
 import { Query } from './queries';
+import { isElementInViewport, update } from './utility';
 
 export type ActivityMap = { [key in ItemType]?: Record<ItemID, Activity[]> };
 

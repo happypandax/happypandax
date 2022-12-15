@@ -1,5 +1,5 @@
-import { GlobalState } from '../../state/global';
-import setupLogger from '../logger';
+import setupLogger from '../shared/logger';
+import { GlobalState } from '../state/global';
 
 export async function clientInitialize() {
   global.app = global?.app ?? ({} as any);

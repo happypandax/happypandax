@@ -2,9 +2,9 @@ import classNames from 'classnames';
 import Link from 'next/link';
 import { Card, Icon, Label, Segment } from 'semantic-ui-react';
 
-import t from '../../misc/lang';
-import { FieldPath, ServerStatus } from '../../misc/types';
-import { urlstring } from '../../misc/utility';
+import t from '../../client/lang';
+import { FieldPath, ServerStatus } from '../../shared/types';
+import { urlstring } from '../../shared/utility';
 
 export type StatusCardLabelData = DeepPick<ServerStatus, 'id' | 'name'>;
 

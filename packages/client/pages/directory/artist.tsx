@@ -3,17 +3,17 @@ import { useRouter } from 'next/router';
 import { useCallback, useMemo } from 'react';
 import { Container, Grid, Segment, Statistic } from 'semantic-ui-react';
 
+import t from '../../client/lang';
 import ArtistCardLabel, {
   artistCardLabelDataFields,
 } from '../../components/item/Artist';
 import { ItemSearch } from '../../components/Search';
 import { PaginatedView } from '../../components/view/index';
-import { ItemSort, ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { ServerArtist } from '../../misc/types';
-import { urlparse, urlstring } from '../../misc/utility';
 import { ServiceType } from '../../services/constants';
 import ServerService from '../../services/server';
+import { ItemSort, ItemType } from '../../shared/enums';
+import { ServerArtist } from '../../shared/types';
+import { urlparse, urlstring } from '../../shared/utility';
 import DirectoryPage from './';
 
 interface PageProps {

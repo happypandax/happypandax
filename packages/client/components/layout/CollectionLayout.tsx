@@ -4,9 +4,9 @@ import { Divider, Header, Icon, Image, Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { useImage, useSetupDataState } from '../../client/hooks/item';
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { FieldPath, ServerCollection } from '../../misc/types';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
+import { FieldPath, ServerCollection } from '../../shared/types';
 import { AppState } from '../../state';
 import {
   CategoryLabel,
@@ -70,7 +70,8 @@ export function CollectionItemHeader({
   return (
     <DataContext.Provider value={dataContext}>
       <BlurryBackgroundContainer data={data}>
-        <Segment className={classNames("no-margins no-top-padding no-right-padding")}>
+        <Segment
+          className={classNames('no-margins no-top-padding no-right-padding')}>
           <div className={classNames(styles.header_content)}>
             <div className={styles.cover_collection}>
               <Image

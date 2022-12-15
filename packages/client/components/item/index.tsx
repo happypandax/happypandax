@@ -37,15 +37,15 @@ import {
   LibraryContext,
 } from '../../client/context';
 import { useImage } from '../../client/hooks/item';
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
 import {
   DragItemData,
   ItemSize,
   ServerItem,
   ServerItemWithProfile,
-} from '../../misc/types';
-import { maskText } from '../../misc/utility';
+} from '../../shared/types';
+import { maskText } from '../../shared/utility';
 import { AppState, LibraryState } from '../../state';
 import { ActivityList } from '../misc/ActivityList';
 import { GalleryCardData } from './Gallery';
@@ -360,7 +360,10 @@ export function ItemCardContent({
   const El = itemContext.horizontal && itemContext.href ? Link : React.Fragment;
 
   return (
-    <El href={itemContext.horizontal ? itemContext.href : undefined} passHref legacyBehavior>
+    <El
+      href={itemContext.horizontal ? itemContext.href : undefined}
+      passHref
+      legacyBehavior>
       <Dimmer.Dimmable
         as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
         onClick={useCallback(
@@ -745,11 +748,7 @@ export const ItemCard = React.forwardRef(
             </Dimmer>
             {!horizontal && (
               <ItemCardLabels>
-                {href && (
-                  <Link href={href}>
-                    {imageElement}
-                  </Link>
-                )}
+                {href && <Link href={href}>{imageElement}</Link>}
                 {!!!href && !!imageElement && imageElement}
                 {labelContent}
               </ItemCardLabels>

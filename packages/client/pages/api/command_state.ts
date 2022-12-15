@@ -1,4 +1,4 @@
-import { handler } from '../../misc/requests';
+import { handler } from '../../server/requests';
 import { ServiceType } from '../../services/constants';
 
 export default handler().post(async (req, res) => {

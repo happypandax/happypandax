@@ -30,7 +30,9 @@ import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { LibraryContext } from '../client/context';
+import t from '../client/lang';
 import { QueryType, useQueryType } from '../client/queries';
+import { getCookies } from '../client/utility';
 import GalleryDataTable from '../components/dataview/GalleryData';
 import CollectionCard, {
   collectionCardDataFields,
@@ -62,12 +64,11 @@ import { ItemSearch } from '../components/Search';
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
-import { ItemSort, ItemType, ViewType } from '../misc/enums';
-import t from '../misc/lang';
-import { ServerGallery, ServerItem, ServerMetaTags } from '../misc/types';
-import { getCookies, urlparse, urlstring } from '../misc/utility';
 import { ServiceType } from '../services/constants';
 import ServerService from '../services/server';
+import { ItemSort, ItemType, ViewType } from '../shared/enums';
+import { ServerGallery, ServerItem, ServerMetaTags } from '../shared/types';
+import { urlparse, urlstring } from '../shared/utility';
 import { AppState, getStateKey, LibraryState, SearchState } from '../state';
 import { useGlobalValue } from '../state/global';
 

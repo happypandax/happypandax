@@ -11,7 +11,7 @@ import {
   Step,
 } from 'semantic-ui-react';
 
-import t from '../misc/lang';
+import t from '../client/lang';
 import { Markdown } from './misc';
 
 function StepBody({

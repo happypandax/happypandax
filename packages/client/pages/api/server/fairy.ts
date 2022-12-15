@@ -1,6 +1,6 @@
 import { createSession } from 'better-sse';
 
-import { getSession, handler } from '../../../misc/requests';
+import { getSession, handler } from '../../../server/requests';
 import { ServiceType } from '../../../services/constants';
 
 export default handler().all(async (req, res) => {

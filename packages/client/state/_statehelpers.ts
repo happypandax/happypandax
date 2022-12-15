@@ -1,6 +1,6 @@
 import { RecoilState } from 'recoil';
 
-import { getCookies, removeCookies, setCookies } from '../misc/utility';
+import { getCookies, removeCookies, setCookies } from '../client/utility';
 
 export const localStorageEffect = (
   key?: string | ((node: RecoilState<any>) => string),

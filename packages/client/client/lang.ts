@@ -1,6 +1,6 @@
 import { msgid as tmsgid, ngettext, t as tt } from 'ttag';
 
-import { ItemSort } from './enums';
+import { ItemSort } from '../shared/enums';
 
 export const t = tt;
 export default t;

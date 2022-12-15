@@ -27,8 +27,8 @@ import {
 } from 'semantic-ui-react/dist/commonjs/generic';
 
 import { useDocumentEvent } from '../client/hooks/utils';
-import t from '../misc/lang';
-import { urlparse } from '../misc/utility';
+import t from '../client/lang';
+import { urlparse } from '../shared/utility';
 import { AppState, useInitialRecoilState } from '../state/index';
 import AboutModal from './About';
 import SettingsModal from './Settings';

@@ -6,10 +6,10 @@ import {
   collectionHeaderDataFields,
   CollectionItemHeader,
 } from '../../../components/layout/CollectionLayout';
-import { ImageSize, ItemType } from '../../../misc/enums';
-import { ServerCollection } from '../../../misc/types';
-import { urlparse } from '../../../misc/utility';
 import { ServiceType } from '../../../services/constants';
+import { ImageSize, ItemType } from '../../../shared/enums';
+import { ServerCollection } from '../../../shared/types';
+import { urlparse } from '../../../shared/utility';
 import LibraryPage, {
   getServerSideProps as libraryServerSideProps,
   libraryArgs,
@@ -20,7 +20,7 @@ const stateKey = 'collection_page';
 
 interface PageProps extends LibraryPageProps {
   collection: CollectionHeaderData &
-  DeepPick<ServerCollection, 'gallery_count'>;
+    DeepPick<ServerCollection, 'gallery_count'>;
 }
 
 export async function getServerSideProps(

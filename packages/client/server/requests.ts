@@ -2,11 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import nextConnect, { NextHandler, Options } from 'next-connect';
 import nextSession from 'next-session';
 
-import { FetchQueryOptions, QueryClient } from '@tanstack/react-query';
+import { FetchQueryOptions, QueryClient } from '@tanstack/query-core';
 
 import { ServiceType } from '../services/constants';
-import { QueryActions } from './query';
-import { urlparse } from './utility';
+import { MomoActions, MomoType, QueryActions } from '../shared/query';
+import { urlparse, urlstring } from '../shared/utility';
 
 import type { CallOptions } from '../services/server';
 export interface RequestOptions extends CallOptions {
@@ -67,10 +67,11 @@ const serverQueryClient = new QueryClient({
   },
 })
 
+type Actions<A> = MomoActions<A> | QueryActions<A>;
 
 export async function fetchQuery<
   A = undefined,
-  T extends QueryActions<A> = QueryActions<A>,
+  T extends Actions<A> = Actions<A>,
   K extends T['type'] = T['type'],
   V extends Extract<T, { type: K }>['variables'] = Extract<
     T,
@@ -79,16 +80,56 @@ export async function fetchQuery<
   R extends Extract<T, { type: K }>['dataType'] = Extract<
     T,
     { type: K }
-  >['dataType']>(
+  >['dataType']>
+  (
     action: K,
     variables?: V,
-    options?: FetchQueryOptions<Response>,
+    options?: FetchQueryOptions<R | null>,
     config?: RequestInit
-  ) {
-    const key = [action.toString(), variables];
+  ): Promise<R | null> {
+  const key = [action.toString(), variables];
 
+  let endpoint = action.toString();
+
+  let params: Partial<V> = variables;
+
+  let method: RequestInit['method'] = 'GET'
+  let data: Record<string, any> = undefined;
+
+  switch (action as unknown as MomoType) {
+    case MomoType.SAME_MACHINE: {
+      endpoint = '/api/server/momo'
+      method = 'POST'
+      data = { action, ...variables }
+      params = {}
+      break;
+    }
+  }
+
+  const url = urlstring(endpoint, params as any)
+
+
+  const cfg: RequestInit = {
+    method,
+    body: JSON.stringify(data),
+    ...config
+  }
+
+  return serverQueryClient.fetchQuery(
+    key,
+    ({ signal }): Promise<R | null> => {
+      return fetch(url, cfg).then(async (response) => {
+        const is_json = response.headers.get('content-type')?.includes('application/json');
+        const data = is_json ? await response.json() : null;
+
+        if (!response.ok) {
+          const error = (data && data.error) || response.status;
+          throw Error(error)
+        }
+        return data;
+      })
+
+    },
+    options
+  );
 }
-
-
-
-fetch

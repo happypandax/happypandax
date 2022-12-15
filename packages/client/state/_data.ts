@@ -1,5 +1,5 @@
-import { DataMode, ItemType } from '../misc/enums';
-import { ServerItem } from '../misc/types';
+import { DataMode, ItemType } from '../shared/enums';
+import { ServerItem } from '../shared/types';
 import StateBlock, { defineAtom } from './_base';
 
 export default class _DataState extends StateBlock {

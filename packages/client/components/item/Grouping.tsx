@@ -4,15 +4,15 @@ import { useCallback, useMemo } from 'react';
 import { useRecoilValue } from 'recoil';
 import { Divider, Popup, Segment } from 'semantic-ui-react';
 
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
 import {
   FieldPath,
   ItemSize,
   ServerGallery,
   ServerGrouping,
-} from '../../misc/types';
-import { maskText } from '../../misc/utility';
+} from '../../shared/types';
+import { maskText } from '../../shared/utility';
 import { AppState } from '../../state';
 import { FavoriteLabel, GalleryCountLabel } from '../dataview/Common';
 import GroupingDataTable from '../dataview/GroupingData';
@@ -49,7 +49,7 @@ export const groupingCardDataFields: FieldPath<ServerGrouping>[] = [
   ...(galleryCardDataFields.map((f) => 'galleries.' + f) as any),
 ];
 
-function GroupingMenu({ }: { hasProgress: boolean; read: boolean }) {
+function GroupingMenu({}: { hasProgress: boolean; read: boolean }) {
   return (
     <ItemMenuLabel>
       <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
@@ -99,7 +99,6 @@ export function GroupingCard({
   fluid?: boolean;
   actionContent?: React.ComponentProps<typeof ItemCard>['actionContent'];
   horizontal?: boolean;
-
 } & React.ComponentProps<typeof GalleryCard>) {
   const blur = useRecoilValue(AppState.blur);
   const readingQueue = useRecoilValue(AppState.readingQueue);
@@ -113,10 +112,10 @@ export function GroupingCard({
       <ItemCardActionContent>
         {(horizontal ||
           !(['tiny', 'small', 'mini'] as ItemSize[]).includes(size)) && (
-            <ItemCardActionContentItem>
-              <AddToQueueButton itemType={ItemType.Grouping} data={data} />
-            </ItemCardActionContentItem>
-          )}
+          <ItemCardActionContentItem>
+            <AddToQueueButton itemType={ItemType.Grouping} data={data} />
+          </ItemCardActionContentItem>
+        )}
       </ItemCardActionContent>
     ),
     [data, size, horizontal]
@@ -127,36 +126,36 @@ export function GroupingCard({
       is_gallery
         ? []
         : [
-          <ItemLabel key="fav" x="left" y="top">
-            <FavoriteLabel
-              defaultRating={
-                data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
-              }
-            />
-          </ItemLabel>,
-          <ItemLabel key="icons" x="right" y="top">
-            {data?.galleries?.every?.((g) => readingQueue.includes(g.id)) && (
-              <QueueIconLabel />
-            )}
-            {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
-              <InboxIconLabel />
-            )}
-            <ActivityLabel />
-          </ItemLabel>,
-          <ItemLabel key="menu" x="right" y="bottom">
-            {horizontal && (
-              <GalleryCountLabel as={TranslucentLabel}>
-                {data?.gallery_count}
-              </GalleryCountLabel>
-            )}
-            {!horizontal && (
-              <TranslucentLabel circular>
-                {data?.gallery_count}
-              </TranslucentLabel>
-            )}
-            <GroupingMenu />
-          </ItemLabel>,
-        ],
+            <ItemLabel key="fav" x="left" y="top">
+              <FavoriteLabel
+                defaultRating={
+                  data?.galleries?.every((d) => d?.metatags?.favorite) ? 1 : 0
+                }
+              />
+            </ItemLabel>,
+            <ItemLabel key="icons" x="right" y="top">
+              {data?.galleries?.every?.((g) => readingQueue.includes(g.id)) && (
+                <QueueIconLabel />
+              )}
+              {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
+                <InboxIconLabel />
+              )}
+              <ActivityLabel />
+            </ItemLabel>,
+            <ItemLabel key="menu" x="right" y="bottom">
+              {horizontal && (
+                <GalleryCountLabel as={TranslucentLabel}>
+                  {data?.gallery_count}
+                </GalleryCountLabel>
+              )}
+              {!horizontal && (
+                <TranslucentLabel circular>
+                  {data?.gallery_count}
+                </TranslucentLabel>
+              )}
+              <GroupingMenu />
+            </ItemLabel>,
+          ],
     [horizontal, data, readingQueue]
   );
 

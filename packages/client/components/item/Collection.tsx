@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { FieldPath, ItemSize, ServerCollection } from '../../misc/types';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
+import { FieldPath, ItemSize, ServerCollection } from '../../shared/types';
 import { FavoriteLabel, GalleryCountLabel } from '../dataview/Common';
 import {
   ActivityLabel,

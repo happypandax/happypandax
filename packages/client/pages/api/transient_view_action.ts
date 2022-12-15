@@ -1,7 +1,7 @@
-import { TransientViewAction } from '../../misc/enums';
-import { handler, RequestOptions } from '../../misc/requests';
-import { ViewID } from '../../misc/types';
+import { handler, RequestOptions } from '../../server/requests';
 import { ServiceType } from '../../services/constants';
+import { TransientViewAction } from '../../shared/enums';
+import { ViewID } from '../../shared/types';
 
 export default handler().post(async (req, res) => {
   const server = global.app.service.get(ServiceType.Server);

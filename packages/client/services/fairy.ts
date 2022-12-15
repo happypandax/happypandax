@@ -1,7 +1,7 @@
 import { Channel, Session } from 'better-sse';
 import { NextApiRequest } from 'next';
 
-import { NotificationData } from '../misc/types';
+import { NotificationData } from '../shared/types';
 import { Service } from './base';
 import { ServiceType } from './constants';
 

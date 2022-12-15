@@ -4,7 +4,7 @@ import path from 'path';
 import sanitize from 'sanitize-filename';
 import { Readable } from 'stream';
 
-import { handler } from '../../../misc/requests';
+import { handler } from '../../../server/requests';
 import {
   ITEM_THUMB_STATIC_FOLDER,
   PAGE_STATIC_FOLDER,

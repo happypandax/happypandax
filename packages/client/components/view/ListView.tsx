@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { List } from 'react-virtualized';
 
-import { ItemSize } from '../../misc/types';
+import { ItemSize } from '../../shared/types';
 import { PlaceholderItemCard } from '../item/index';
 import { PaginatedView, ViewAutoSizer, ViewBase } from './';
 import styles from './ListView.module.css';

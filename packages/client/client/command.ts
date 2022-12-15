@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { CommandState } from '../misc/enums';
-import { ServerErrorCode } from '../misc/error';
-import { MutatationType, QueryType } from '../misc/query';
-import { CommandID, CommandIDKey } from '../misc/types';
 import ServerService from '../services/server';
+import { CommandState } from '../shared/enums';
+import { ServerErrorCode } from '../shared/error';
+import { MutatationType, QueryType } from '../shared/query';
+import { CommandID, CommandIDKey } from '../shared/types';
 import { Query } from './queries';
 
 type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;

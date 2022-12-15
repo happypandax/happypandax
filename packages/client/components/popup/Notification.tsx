@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { Header, Icon, Menu, Popup, Segment } from 'semantic-ui-react';
 
-import t from '../../misc/lang';
+import t from '../../client/lang';
 import { AppState } from '../../state';
 import { useGlobalValue } from '../../state/global';
 import { EmptySegment } from '../misc';

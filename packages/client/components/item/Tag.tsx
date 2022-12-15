@@ -5,10 +5,10 @@ import { Card, Label } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { FieldPath, ServerNamespaceTag } from '../../misc/types';
-import { urlstring } from '../../misc/utility';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
+import { FieldPath, ServerNamespaceTag } from '../../shared/types';
+import { urlstring } from '../../shared/utility';
 import { AppState } from '../../state';
 import { FavoriteLabel } from '../dataview/Common';
 

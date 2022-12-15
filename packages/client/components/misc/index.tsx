@@ -24,11 +24,12 @@ import {
   SemanticCOLORS,
 } from 'semantic-ui-react';
 
+import t from '../../client/lang';
 import { QueryType, useQueryType } from '../../client/queries';
-import { LogType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { FileT } from '../../misc/types';
-import { humanFileSize, parseMarkdown, scrollToTop } from '../../misc/utility';
+import { parseMarkdown, scrollToTop } from '../../client/utility';
+import { LogType } from '../../shared/enums';
+import { FileT } from '../../shared/types';
+import { humanFileSize } from '../../shared/utility';
 import { MiscState } from '../../state';
 import { useInitialRecoilState } from '../../state/index';
 import styles from './Misc.module.css';

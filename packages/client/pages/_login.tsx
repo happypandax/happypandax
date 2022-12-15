@@ -4,9 +4,9 @@ import { useCallback, useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 import { Divider, Grid, Segment } from 'semantic-ui-react';
 
+import t from '../client/lang';
 import { LoginForm } from '../components/Login';
 import { PageTitle } from '../components/misc';
-import t from '../misc/lang';
 import { ServiceType } from '../services/constants';
 import { AppState } from '../state';
 import { useSetGlobalState } from '../state/global';

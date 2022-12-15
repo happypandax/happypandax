@@ -19,9 +19,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
-import { getSession } from '../misc/requests';
-import { NotificationData, ServerUser } from '../misc/types';
+import { getSession } from '../server/requests';
 import { ServiceType } from '../services/constants';
+import { NotificationData, ServerUser } from '../shared/types';
 import { AppState } from '../state';
 import { useGlobalValue, useSetGlobalState } from '../state/global';
 
@@ -282,7 +282,7 @@ const IS_SERVER = typeof window === 'undefined';
 
 if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
   if (!IS_SERVER) {
-    const { clientInitialize } = await import('../misc/initialize/client');
+    const { clientInitialize } = await import('../client/initialize');
     await clientInitialize();
   }
 }

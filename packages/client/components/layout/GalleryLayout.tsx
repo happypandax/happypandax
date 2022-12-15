@@ -20,16 +20,16 @@ import {
 
 import { DataContext } from '../../client/context';
 import { useImage, useSetupDataState } from '../../client/hooks/item';
+import t, { sortIndexName } from '../../client/lang';
 import { QueryType, useQueryType } from '../../client/queries';
-import { ItemSort, ItemType, ViewType } from '../../misc/enums';
-import t, { sortIndexName } from '../../misc/lang';
+import { ItemSort, ItemType, ViewType } from '../../shared/enums';
 import {
   FieldPath,
   ServerFilter,
   ServerGallery,
   ServerSortIndex,
-} from '../../misc/types';
-import { urlstring } from '../../misc/utility';
+} from '../../shared/types';
+import { urlstring } from '../../shared/utility';
 import { AppState } from '../../state';
 import { useGlobalValue } from '../../state/global';
 import {
@@ -445,168 +445,170 @@ export function GalleryItemHeader({
 
   const inReadingQueue = readingQueue?.includes?.(data?.id);
 
-  return <>
-    <ItemHeaderParallax data={data} />
-    <DataContext.Provider value={dataContext}>
-      <Container>
-        <Segment basic className="no-margins no-top-padding no-right-padding">
-          <div className={classNames(styles.header_content)}>
-            <div className={styles.cover_column}>
-              <Image
-                centered
-                rounded
-                className={classNames({ blur: blur }, styles.cover_hero)}
-                alt="cover image"
-                id={styles.cover}
-                src={src}
-                width={data?.profile?.size?.[0]}
-                height={data?.profile?.size?.[1]}
-              />
-              <Divider hidden />
-              <Divider fitted horizontal>
-                <Header as="h5">
-                  <Button size="mini" basic>
-                    <Icon name="cogs" /> {t`Configuration`}
-                  </Button>
-                  <Button size="mini" basic>
-                    <Icon name="file alternate" /> {t`Log`}
-                  </Button>
-                </Header>
-              </Divider>
-              <Divider hidden />
-              <Grid>
-                {hasProgress && (
-                  <Grid.Row centered textAlign="center">
-                    <Button as="div" labelPosition="right">
-                      <ContinueButton data={data} size="small">
-                        <Icon className="play" /> {t`Continue`} 「
-                        {data?.times_read}」
-                      </ContinueButton>
-                      <Label basic color="orange" pointing="left">
-                        {Math.round(data?.progress?.percent)}%
-                      </Label>
+  return (
+    <>
+      <ItemHeaderParallax data={data} />
+      <DataContext.Provider value={dataContext}>
+        <Container>
+          <Segment basic className="no-margins no-top-padding no-right-padding">
+            <div className={classNames(styles.header_content)}>
+              <div className={styles.cover_column}>
+                <Image
+                  centered
+                  rounded
+                  className={classNames({ blur: blur }, styles.cover_hero)}
+                  alt="cover image"
+                  id={styles.cover}
+                  src={src}
+                  width={data?.profile?.size?.[0]}
+                  height={data?.profile?.size?.[1]}
+                />
+                <Divider hidden />
+                <Divider fitted horizontal>
+                  <Header as="h5">
+                    <Button size="mini" basic>
+                      <Icon name="cogs" /> {t`Configuration`}
                     </Button>
-                  </Grid.Row>
-                )}
-                <Grid.Row centered textAlign="center">
-                  <Button.Group size="small">
-                    {sameMachine && (
-                      <Button
-                        icon="external"
-                        toggle
-                        title={t`Open in external viewer`}
-                      />
-                    )}
-                    <Link
-                      href={urlstring(`/item/gallery/${data?.id}/page/1`)}
-                      passHref
-                      legacyBehavior>
-                      <Button as="a" primary>
-                        <Icon className="book open" /> {t`Read`} 「
-                        {data?.times_read}」
+                    <Button size="mini" basic>
+                      <Icon name="file alternate" /> {t`Log`}
+                    </Button>
+                  </Header>
+                </Divider>
+                <Divider hidden />
+                <Grid>
+                  {hasProgress && (
+                    <Grid.Row centered textAlign="center">
+                      <Button as="div" labelPosition="right">
+                        <ContinueButton data={data} size="small">
+                          <Icon className="play" /> {t`Continue`} 「
+                          {data?.times_read}」
+                        </ContinueButton>
+                        <Label basic color="orange" pointing="left">
+                          {Math.round(data?.progress?.percent)}%
+                        </Label>
                       </Button>
-                    </Link>
-                    <Button.Or text={t`Or`} />
-                    <Button
-                      color="red"
-                      basic={!inReadingQueue}
-                      onClick={useCallback(() => {
-                        if (inReadingQueue) {
-                          setReadingQueue(
-                            readingQueue.filter((i) => i !== data?.id)
-                          );
-                        } else {
-                          setReadingQueue([...readingQueue, data?.id]);
-                        }
-                      }, [readingQueue, data?.id, inReadingQueue])}
-                      title={
-                        inReadingQueue
-                          ? t`Remove from reading queue`
-                          : t`Add to reading queue`
-                      }>
+                    </Grid.Row>
+                  )}
+                  <Grid.Row centered textAlign="center">
+                    <Button.Group size="small">
+                      {sameMachine && (
+                        <Button
+                          icon="external"
+                          toggle
+                          title={t`Open in external viewer`}
+                        />
+                      )}
+                      <Link
+                        href={urlstring(`/item/gallery/${data?.id}/page/1`)}
+                        passHref
+                        legacyBehavior>
+                        <Button as="a" primary>
+                          <Icon className="book open" /> {t`Read`} 「
+                          {data?.times_read}」
+                        </Button>
+                      </Link>
+                      <Button.Or text={t`Or`} />
+                      <Button
+                        color="red"
+                        basic={!inReadingQueue}
+                        onClick={useCallback(() => {
+                          if (inReadingQueue) {
+                            setReadingQueue(
+                              readingQueue.filter((i) => i !== data?.id)
+                            );
+                          } else {
+                            setReadingQueue([...readingQueue, data?.id]);
+                          }
+                        }, [readingQueue, data?.id, inReadingQueue])}
+                        title={
+                          inReadingQueue
+                            ? t`Remove from reading queue`
+                            : t`Add to reading queue`
+                        }>
+                        <Icon
+                          name={
+                            inReadingQueue ? 'bookmark' : 'bookmark outline'
+                          }
+                        />{' '}
+                        {t`Queue`}
+                      </Button>
+                    </Button.Group>
+                  </Grid.Row>
+                  <Grid.Row>
+                    <LabelFields>
+                      <LabelField label={t`Rating`}>
+                        <RatingLabel size="massive" />
+                      </LabelField>
+                      <LabelField label={t`Artist`}>
+                        <ArtistLabels />
+                      </LabelField>
+
+                      <LabelField label={t`Circle`}>
+                        <CircleLabels />
+                      </LabelField>
+                      <LabelField label={t`Language`}>
+                        <LanguageLabel>{data?.language?.name}</LanguageLabel>
+                      </LabelField>
+                      <LabelField label={t`Category`}>
+                        <CategoryLabel />
+                      </LabelField>
+
+                      <LabelField label={t`Published`}>
+                        <DatePublishedLabel />
+                      </LabelField>
+                    </LabelFields>
+                  </Grid.Row>
+                </Grid>
+              </div>
+              <Segment className="no-margins no-right-padding" basic>
+                <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
+                  <FavoriteLabel
+                    defaultRating={data?.metatags?.favorite ? 1 : 0}
+                    size="gigantic"
+                    className="float-left"
+                  />
+                  <GalleryMenu
+                    hasProgress={hasProgress}
+                    read={data?.metatags?.read}
+                    trigger={
                       <Icon
-                        name={
-                          inReadingQueue ? 'bookmark' : 'bookmark outline'
-                        }
-                      />{' '}
-                      {t`Queue`}
-                    </Button>
-                  </Button.Group>
-                </Grid.Row>
-                <Grid.Row>
-                  <LabelFields>
-                    <LabelField label={t`Rating`}>
-                      <RatingLabel size="massive" />
-                    </LabelField>
-                    <LabelField label={t`Artist`}>
-                      <ArtistLabels />
-                    </LabelField>
-
-                    <LabelField label={t`Circle`}>
-                      <CircleLabels />
-                    </LabelField>
-                    <LabelField label={t`Language`}>
-                      <LanguageLabel>{data?.language?.name}</LanguageLabel>
-                    </LabelField>
-                    <LabelField label={t`Category`}>
-                      <CategoryLabel />
-                    </LabelField>
-
-                    <LabelField label={t`Published`}>
-                      <DatePublishedLabel />
-                    </LabelField>
-                  </LabelFields>
-                </Grid.Row>
-              </Grid>
+                        link
+                        size="large"
+                        className="float-right"
+                        name="ellipsis vertical"
+                      />
+                    }
+                  />
+                </NamesTable>
+                <Header textAlign="center">
+                  <LastReadLabel timestamp={data?.last_read} />
+                  <LastUpdatedLabel timestamp={data?.last_updated} />
+                  <DateAddedLabel timestamp={data?.timestamp} />
+                </Header>
+                {data?.info && <InfoSegment fluid />}
+                <Divider hidden className="small" />
+                <LabelFields>
+                  <LabelField label={t`Series`} padded={false}>
+                    <Label.Group>
+                      <GroupingLabel />
+                      <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
+                    </Label.Group>
+                  </LabelField>
+                  <LabelField label={t`Parody`} padded={false}>
+                    <ParodyLabels />
+                  </LabelField>
+                  <LabelField label={t`Tags`} padded={false}>
+                    <TagsTable />
+                  </LabelField>
+                  <LabelField label={t`External links`} padded={false}>
+                    <UrlList />
+                  </LabelField>
+                </LabelFields>
+              </Segment>
             </div>
-            <Segment className="no-margins no-right-padding" basic>
-              <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
-                <FavoriteLabel
-                  defaultRating={data?.metatags?.favorite ? 1 : 0}
-                  size="gigantic"
-                  className="float-left"
-                />
-                <GalleryMenu
-                  hasProgress={hasProgress}
-                  read={data?.metatags?.read}
-                  trigger={
-                    <Icon
-                      link
-                      size="large"
-                      className="float-right"
-                      name="ellipsis vertical"
-                    />
-                  }
-                />
-              </NamesTable>
-              <Header textAlign="center">
-                <LastReadLabel timestamp={data?.last_read} />
-                <LastUpdatedLabel timestamp={data?.last_updated} />
-                <DateAddedLabel timestamp={data?.timestamp} />
-              </Header>
-              {data?.info && <InfoSegment fluid />}
-              <Divider hidden className="small" />
-              <LabelFields>
-                <LabelField label={t`Series`} padded={false}>
-                  <Label.Group>
-                    <GroupingLabel />
-                    <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
-                  </Label.Group>
-                </LabelField>
-                <LabelField label={t`Parody`} padded={false}>
-                  <ParodyLabels />
-                </LabelField>
-                <LabelField label={t`Tags`} padded={false}>
-                  <TagsTable />
-                </LabelField>
-                <LabelField label={t`External links`} padded={false}>
-                  <UrlList />
-                </LabelField>
-              </LabelFields>
-            </Segment>
-          </div>
-        </Segment>
-      </Container>
-    </DataContext.Provider>
-  </>;
+          </Segment>
+        </Container>
+      </DataContext.Provider>
+    </>
+  );
 }

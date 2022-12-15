@@ -1,7 +1,7 @@
-import { handler, RequestOptions } from '../../misc/requests';
-import { ViewID } from '../../misc/types';
-import { urlparse } from '../../misc/utility';
+import { handler, RequestOptions } from '../../server/requests';
 import { ServiceType } from '../../services/constants';
+import { ViewID } from '../../shared/types';
+import { urlparse } from '../../shared/utility';
 
 export default handler().get(async (req, res) => {
   const server = global.app.service.get(ServiceType.Server);

@@ -11,6 +11,7 @@ import {
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import t from '../client/lang';
 import {
   getQueryTypeKey,
   MutatationType,
@@ -18,9 +19,8 @@ import {
   useMutationType,
   useQueryType,
 } from '../client/queries';
-import { PluginState } from '../misc/enums';
-import t from '../misc/lang';
-import { PluginData } from '../misc/types';
+import { PluginState } from '../shared/enums';
+import { PluginData } from '../shared/types';
 import { LabelAccordion } from './misc';
 
 function getPluginState(state) {

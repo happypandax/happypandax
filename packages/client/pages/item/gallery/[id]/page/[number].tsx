@@ -6,6 +6,8 @@ import { useRecoilState } from 'recoil';
 import { Button, Icon } from 'semantic-ui-react';
 
 import { ReaderContext } from '../../../../../client/context';
+import t from '../../../../../client/lang';
+import { getCookies, replaceURL } from '../../../../../client/utility';
 import {
   CollectionCardData,
   collectionCardDataFields,
@@ -18,24 +20,17 @@ import PageLayout, {
   BottomZoneItem,
 } from '../../../../../components/layout/Page';
 import { PageTitle } from '../../../../../components/misc';
-import { ItemSort, ItemType } from '../../../../../misc/enums';
-import t from '../../../../../misc/lang';
+import { ServiceType } from '../../../../../services/constants';
+import ServerService, { GroupCall } from '../../../../../services/server';
+import { ItemSort, ItemType } from '../../../../../shared/enums';
 import {
   ReaderData,
   ServerCollection,
   ServerGallery,
   ServerGrouping,
   ServerPage,
-} from '../../../../../misc/types';
-import {
-  getCookies,
-  JSONSafe,
-  replaceURL,
-  urlparse,
-  urlstring,
-} from '../../../../../misc/utility';
-import { ServiceType } from '../../../../../services/constants';
-import ServerService, { GroupCall } from '../../../../../services/server';
+} from '../../../../../shared/types';
+import { JSONSafe, urlparse, urlstring } from '../../../../../shared/utility';
 import { ReaderState } from '../../../../../state';
 
 const Reader = dynamic(() => import('../../../../../components/Reader'), {

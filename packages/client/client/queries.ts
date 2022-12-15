@@ -30,17 +30,17 @@ import {
   MutationActions,
   QueryActions,
   QueryType,
-} from '../misc/query';
-import { pauseUntil, urlstring } from '../misc/utility';
+} from '../shared/query';
+import { pauseUntil, urlstring } from '../shared/utility';
 import {
   GlobalState,
   onGlobalStateChange,
   useGlobalValue,
 } from '../state/global';
 
-import type { ErrorResponseData } from '../misc/requests';
+import type { ErrorResponseData } from '../server/requests';
 
-export { QueryType, MutatationType } from '../misc/query'
+export { QueryType, MutatationType } from '../shared/query'
 
 export const queryClient = new QueryClient({
   defaultOptions: {

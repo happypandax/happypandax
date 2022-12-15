@@ -1,4 +1,4 @@
-import { ClientError } from '../misc/error';
+import { ClientError } from '../shared/error';
 import { ServiceType } from './constants';
 
 import type FairyService from './fairy';

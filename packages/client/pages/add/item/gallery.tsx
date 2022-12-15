@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Button, Divider } from 'semantic-ui-react';
 
+import t from '../../../client/lang';
 import { NewGallery } from '../../../components/create/NewGallery';
 import { PageTitle } from '../../../components/misc/index';
-import t from '../../../misc/lang';
-import { SourceItem } from '../../../misc/types';
+import { SourceItem } from '../../../shared/types';
 import { FileSegment, Header, ItemBasePage } from './';
 
 export default function Page() {

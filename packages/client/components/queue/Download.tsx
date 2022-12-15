@@ -17,15 +17,20 @@ import {
 } from 'semantic-ui-react';
 
 import { useConfig, useSetting } from '../../client/hooks/settings';
+import t from '../../client/lang';
 import {
   MutatationType,
   QueryType,
   useMutationType,
   useQueryType,
 } from '../../client/queries';
-import { CommandState, DrawerTab, LogType, QueueType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { DownloadHandler, DownloadItem } from '../../misc/types';
+import {
+  CommandState,
+  DrawerTab,
+  LogType,
+  QueueType,
+} from '../../shared/enums';
+import { DownloadHandler, DownloadItem } from '../../shared/types';
 import { AppState } from '../../state';
 import { EmptyMessage } from '../misc';
 import { Progress } from '../misc/Progress';

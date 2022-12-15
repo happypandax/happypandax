@@ -6,9 +6,9 @@ import { autorun, get, makeAutoObservable, set, toJS } from 'mobx';
 import { enableStaticRendering } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 
-import type { ActivityMap } from '../client/activity';
-import { ServerUser } from '../misc/types';
+import { ServerUser } from '../shared/types';
 
+import type { ActivityMap } from '../client/activity';
 /**
  * Call enableStaticRendering(true) when running in an SSR environment, in which observer wrapped components should never re-render,
  * but cleanup after the first rendering automatically. Use isUsingStaticRendering() to inspect the current setting.

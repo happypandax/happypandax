@@ -1,4 +1,4 @@
-import { SearchOptions } from '../misc/types';
+import { SearchOptions } from '../shared/types';
 import StateBlock, { defineAtom } from './_base';
 import { cookieEffect, localStorageEffect } from './_statehelpers';
 

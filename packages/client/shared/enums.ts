@@ -329,7 +329,3 @@ export enum ActivityType {
   // sync item source activity
   SyncWithSource = 10,
 }
-
-export enum MomoAction {
-  SAME_MACHINE = 1
-}

@@ -5,7 +5,7 @@ import onFinished from 'on-finished';
 import path from 'path';
 import send from 'send';
 
-import { handler } from '../../../../../misc/requests';
+import { handler } from '../../../../../server/requests';
 import { getPixie } from '../../../../../services/pixie';
 
 let engine: Liquid;
@@ -194,7 +194,7 @@ export default handler().all((req, res, next) => {
         }
 
         const file = send(req, pathname, {});
-        sendfile(res, file, {}, () => {});
+        sendfile(res, file, {}, () => { });
       } else {
         res.status(404).end(errTxt);
       }

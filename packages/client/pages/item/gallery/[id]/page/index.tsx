@@ -1,6 +1,6 @@
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 
-import { urlstring } from '../../../../../misc/utility';
+import { urlstring } from '../../../../../shared/utility';
 
 export async function getServerSideProps(
   context: NextPageContext

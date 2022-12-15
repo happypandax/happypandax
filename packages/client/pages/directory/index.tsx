@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 
+import t from '../../client/lang';
 import PageLayout from '../../components/layout/Page';
 import MainMenu, { MenuItem } from '../../components/Menu';
 import { PageTitle } from '../../components/misc';
-import t from '../../misc/lang';
 
 interface PageProps {
   children?: React.ReactNode;

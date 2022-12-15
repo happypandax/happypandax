@@ -14,6 +14,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useSetting } from '../../client/hooks/settings';
+import t from '../../client/lang';
 import {
   getQueryTypeKey,
   MutatationType,
@@ -21,9 +22,8 @@ import {
   useMutationType,
   useQueryType,
 } from '../../client/queries';
-import { LogType, QueueType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { DownloadHandler, MetadataHandler } from '../../misc/types';
+import { LogType, QueueType } from '../../shared/enums';
+import { DownloadHandler, MetadataHandler } from '../../shared/types';
 import { AppState } from '../../state';
 import { ServerLog } from '../misc';
 import { Progress } from '../misc/Progress';

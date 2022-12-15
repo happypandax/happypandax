@@ -6,16 +6,16 @@ import { Button, Icon, Label, Popup } from 'semantic-ui-react';
 import { ItemActions } from '../../client/actions/item';
 import { useLibraryContext } from '../../client/context';
 import { useSetupDataState, useUpdateDataState } from '../../client/hooks/item';
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
 import {
   FieldPath,
   ItemSize,
   ServerGallery,
   ServerItem,
   ServerItemWithMetatags,
-} from '../../misc/types';
-import { maskText } from '../../misc/utility';
+} from '../../shared/types';
+import { maskText } from '../../shared/utility';
 import { AppState } from '../../state';
 import {
   FavoriteLabel,

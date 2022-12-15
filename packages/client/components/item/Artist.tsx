@@ -4,10 +4,10 @@ import { Card, Icon, Image, Label, Segment } from 'semantic-ui-react';
 
 import { DataContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
-import { ItemType } from '../../misc/enums';
-import t from '../../misc/lang';
-import { FieldPath, ServerArtist } from '../../misc/types';
-import { urlstring } from '../../misc/utility';
+import t from '../../client/lang';
+import { ItemType } from '../../shared/enums';
+import { FieldPath, ServerArtist } from '../../shared/types';
+import { urlstring } from '../../shared/utility';
 import { FavoriteLabel, FolllowLabel } from '../dataview/Common';
 
 export type ArtistCardLabelData = DeepPick<

@@ -14,6 +14,7 @@ import {
 } from 'semantic-ui-react';
 
 import { useCommand } from '../../client/command';
+import t from '../../client/lang';
 import {
   MutatationType,
   QueryType,
@@ -21,15 +22,14 @@ import {
   useMutationType,
   useQueryType,
 } from '../../client/queries';
-import { CommandState, TransientViewAction } from '../../misc/enums';
-import t from '../../misc/lang';
-import { CommandID, FileViewItem } from '../../misc/types';
-import { dateFromTimestamp } from '../../misc/utility';
-import type ServerService from '../../services/server';
+import { CommandState, TransientViewAction } from '../../shared/enums';
+import { CommandID, FileViewItem } from '../../shared/types';
+import { dateFromTimestamp } from '../../shared/utility';
 import { ImportState } from '../../state';
 import { EmptyMessage, LabelAccordion } from '../misc';
 import { Progress } from '../misc/Progress';
 
+import type ServerService from '../../services/server';
 function typeProp(data: FileViewItem) {
   let color: SemanticCOLORS = undefined;
   let type = data.type;

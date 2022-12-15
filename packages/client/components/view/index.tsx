@@ -15,8 +15,8 @@ import {
 } from 'semantic-ui-react';
 
 import { ArrayContext, ArrayContextT } from '../../client/context';
-import t from '../../misc/lang';
-import { getClientHeight } from '../../misc/utility';
+import t from '../../client/lang';
+import { getClientHeight } from '../../client/utility';
 import { AppState } from '../../state';
 import { PlaceholderItemCard } from '../item/index';
 
@@ -287,8 +287,7 @@ export function PaginatedView({
       ? _.throttle(() => {
           loadMore();
           setCanLoadMore(false);
-          setHasSCrolled(false)
-
+          setHasSCrolled(false);
         }, 3000)
       : undefined,
     [loadMore]
@@ -359,8 +358,7 @@ export function PaginatedView({
             (e, { calculations: { pixelsPassed, height, direction } }) => {
               const pixelsLeft = height - pixelsPassed - getClientHeight();
               if (direction === 'down') {
-                setHasSCrolled(true)
-
+                setHasSCrolled(true);
               }
               if (
                 infinite &&

@@ -16,11 +16,11 @@ import {
 } from 'semantic-ui-react';
 
 import AddPage from '../';
+import t from '../../../client/lang';
 import { FileDropZone } from '../../../components/misc';
 import { StickySidebar } from '../../../components/Sidebar';
 import { TransientImportView } from '../../../components/transient/ImportView';
-import t from '../../../misc/lang';
-import { FileT, SourceItem } from '../../../misc/types';
+import { FileT, SourceItem } from '../../../shared/types';
 
 export async function getServerSideProps(context) {
   return {

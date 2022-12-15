@@ -1,5 +1,5 @@
-import setupServices from '../../services/index';
-import setupLogger from '../logger';
+import setupServices from '../services/index';
+import setupLogger from '../shared/logger';
 
 export async function serverInitialize() {
   global.app = global?.app ?? ({} as any);

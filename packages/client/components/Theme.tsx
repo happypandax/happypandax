@@ -1,3 +1,5 @@
+'use client';
+
 import {
   auto as followSystemColorScheme,
   disable as disableDarkMode,
@@ -6,7 +8,7 @@ import {
 import React, { useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 
-import { ThemeValue } from '../misc/types';
+import { ThemeValue } from '../shared/types';
 import { AppState } from '../state';
 
 export default function Theme({

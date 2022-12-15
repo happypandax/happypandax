@@ -1,10 +1,10 @@
 import classNames from 'classnames';
 import { Label, List } from 'semantic-ui-react';
 
-import { ActivityType, CommandState } from '../../misc/enums';
-import t from '../../misc/lang';
-import { Activity, CommandProgress } from '../../misc/types';
-import { dateFromTimestamp } from '../../misc/utility';
+import t from '../../client/lang';
+import { ActivityType, CommandState } from '../../shared/enums';
+import { Activity, CommandProgress } from '../../shared/types';
+import { dateFromTimestamp } from '../../shared/utility';
 import { Progress } from './Progress';
 
 export function ActivityList({
