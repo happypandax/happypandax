@@ -1,8 +1,8 @@
 'use client';
 import dynamic from 'next/dynamic';
-import Router, { useRouter } from 'next/router';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
@@ -12,6 +12,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { clientInitialize } from '../client/initialize';
 import { queryClient } from '../client/queries';
+import { LoginModal } from '../components/Login';
 import { NotificationData, ServerUser } from '../shared/types';
 import { AppState } from '../state';
 import { useGlobalValue, useSetGlobalState } from '../state/global';
@@ -97,18 +98,19 @@ function AppProgress() {
     },
   });
   const [started, setStarted] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  useEffect(() => {
+  useMemo(() => {
     NProgress.configure({ showSpinner: false });
-
-    router.events.on('routeChangeStart', () => {
-      NProgress.start();
-    });
-
-    router.events.on('routeChangeComplete', () => {
+    window.addEventListener('DOMContentLoaded', (event) => {
       NProgress.done();
     });
   }, []);
+
+  useEffect(() => {
+    NProgress.start();
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     if (isFetching) {
@@ -157,6 +159,8 @@ export function AppRoot({
   children: React.ReactNode;
   pageProps?: PageProps;
 }) {
+  const pathname = usePathname();
+
   const setConnected = useSetGlobalState('connected');
   const setLoggedIn = useSetGlobalState('loggedIn');
   const setSameMachine = useSetGlobalState('sameMachine');
@@ -174,6 +178,7 @@ export function AppRoot({
       <RecoilRoot initializeState={(snapshot) => {}}>
         <DndProvider backend={HTML5Backend}>
           <AppInit />
+          {!pageProps.loggedIn && pathname !== '/login' && <LoginModal />}
           {children}
         </DndProvider>
       </RecoilRoot>

@@ -22,9 +22,9 @@ import {
   useMutationType,
   useQueryType,
 } from '../../client/queries';
+import { dateFromTimestamp } from '../../client/utility';
 import { CommandState, TransientViewAction } from '../../shared/enums';
 import { CommandID, FileViewItem } from '../../shared/types';
-import { dateFromTimestamp } from '../../shared/utility';
 import { ImportState } from '../../state';
 import { EmptyMessage, LabelAccordion } from '../misc';
 import { Progress } from '../misc/Progress';
@@ -225,7 +225,8 @@ export function TransientView({
           <Label size="small">
             {countLabel ?? viewData?.data?.count ?? data?.count}
             <Label.Detail>
-              {dateFromTimestamp(data?.timestamp, { relative: true })}
+              {dateFromTimestamp(data?.timestamp, { relative: true }) ||
+                t`Unknown`}
             </Label.Detail>
           </Label>
           <Label size="small">{headerLabel}</Label>

@@ -238,6 +238,8 @@ export default class ServerService extends Service {
       this.endpoint = endpoint;
     }
 
+    global.app.log.d("Logging in to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+
     if (!this.#main_client.is_connected()) {
       this._close_clients();
       for (const client of Object.values(this.#clients)) {

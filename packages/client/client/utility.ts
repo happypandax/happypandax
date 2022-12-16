@@ -1,11 +1,12 @@
 'use client'
 import cookie from 'cookie';
+import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
 import imupdate, { CustomCommands, extend, Spec } from 'immutability-helper';
 import { NextPageContext } from 'next';
 
 import { Marked, Renderer } from '@ts-stack/markdown';
 
-
+import t from './lang';
 
 Marked.setOptions({
   renderer: new Renderer(),
@@ -237,3 +238,18 @@ export function removeCookies(
   return setCookies(ctx, key, '', { ...options, expires: -1 });
 }
 
+
+export function dateFromTimestamp(
+  timestamp: number,
+  {
+    relative = false,
+    addSuffix = true,
+    format: dateFormat = 'PPpp',
+  }: { relative?: boolean; addSuffix?: boolean; format?: 'PPpp' | 'PPP' }
+) {
+  if (!timestamp) return t`Unknown`;
+  const d = fromUnixTime(timestamp);
+  return relative
+    ? formatDistanceToNowStrict(d, { addSuffix })
+    : format(d, dateFormat);
+}

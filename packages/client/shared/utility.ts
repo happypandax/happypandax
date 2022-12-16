@@ -213,29 +213,13 @@ export function JSONSafe<T extends Record<any, any>>(obj: T) {
 
 export function maskText(text: string) {
     return text
-      .split(' ')
-      .map((s) =>
-        s
-          .split('')
-          .map((c) => _.sample(['▀', '█', '▍', '▆', '▃']))
-          .join()
-      )
-      .join(' ');
-  }
-  
-  
-  export function dateFromTimestamp(
-    timestamp: number,
-    {
-      relative = false,
-      addSuffix = true,
-      format: dateFormat = 'PPpp',
-    }: { relative?: boolean; addSuffix?: boolean; format?: 'PPpp' | 'PPP' }
-  ) {
-    if (!timestamp) return t`Unknown`;
-    const d = fromUnixTime(timestamp);
-    return relative
-      ? formatDistanceToNowStrict(d, { addSuffix })
-      : format(d, dateFormat);
-  }
-  
+        .split(' ')
+        .map((s) =>
+            s
+                .split('')
+                .map((c) => _.sample(['▀', '█', '▍', '▆', '▃']))
+                .join()
+        )
+        .join(' ');
+}
+

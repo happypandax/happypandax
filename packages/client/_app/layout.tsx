@@ -5,9 +5,6 @@ import 'animate.css';
 import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
-import { redirect } from 'next/navigation';
-
-import { LoginModal } from '../components/Login';
 import Theme from '../components/Theme';
 import { serverInitialize } from '../server/initialize';
 import { fetchQuery } from '../server/requests';
@@ -35,11 +32,11 @@ async function getInitiallProps() {
 
   // notifications = fairy.get(session?.id);
 
-  if (!loggedIn) {
-    // No way to get the current path in NextJS app 'directory' yet
-    const n = ''; // encodeURIComponent(context.router.asPath)
-    redirect(`/login?next=${n}`);
-  }
+  // if (!loggedIn) {
+  //   // No way to get the current path in NextJS app 'directory' yet
+  //   const n = ''; // encodeURIComponent(context.router.asPath)
+  //   redirect(`/login?next=${n}`);
+  // }
 
   return {
     connected,
@@ -64,10 +61,7 @@ export default async function RootLayout({
       <body>
         {
           <AppRoot pageProps={pageProps}>
-            <Theme>
-              <LoginModal />
-              {children}
-            </Theme>
+            <Theme>{children}</Theme>
           </AppRoot>
         }
       </body>

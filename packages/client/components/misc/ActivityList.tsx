@@ -2,9 +2,9 @@ import classNames from 'classnames';
 import { Label, List } from 'semantic-ui-react';
 
 import t from '../../client/lang';
+import { dateFromTimestamp } from '../../client/utility';
 import { ActivityType, CommandState } from '../../shared/enums';
 import { Activity, CommandProgress } from '../../shared/types';
-import { dateFromTimestamp } from '../../shared/utility';
 import { Progress } from './Progress';
 
 export function ActivityList({

@@ -6,6 +6,7 @@ import { MomoType } from '../../../shared/query';
 export default handler().post(async (req, res) => {
     const { action } = req.body
 
+
     switch (action as MomoType) {
         case MomoType.SAME_MACHINE: {
             const data = req.socket.localAddress === req.socket.remoteAddress
@@ -14,7 +15,7 @@ export default handler().post(async (req, res) => {
 
         }
         default:
-            res.status(404).end("no.");
+            res.status(404).json({ error: "no.", code: 0 });
     }
 
-});
+})

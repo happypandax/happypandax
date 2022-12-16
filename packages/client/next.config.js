@@ -1,4 +1,3 @@
-
 const { merge } = require('webpack-merge');
 
 /** @type {import('next').NextConfig} */

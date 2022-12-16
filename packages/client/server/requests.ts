@@ -4,7 +4,7 @@ import nextSession from 'next-session';
 
 import { FetchQueryOptions, QueryClient } from '@tanstack/query-core';
 
-import { ServiceType } from '../services/constants';
+import { DOMAIN_URL, ServiceType } from '../services/constants';
 import { MomoActions, MomoType, QueryActions } from '../shared/query';
 import { urlparse, urlstring } from '../shared/utility';
 
@@ -106,13 +106,20 @@ export async function fetchQuery<
     }
   }
 
-  const url = urlstring(endpoint, params as any)
+  const headers = { ...config?.headers }
+
+  if (data) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  const url = urlstring(DOMAIN_URL + endpoint, params as any)
 
 
   const cfg: RequestInit = {
     method,
     body: JSON.stringify(data),
-    ...config
+    ...config,
+    headers,
   }
 
   return serverQueryClient.fetchQuery(

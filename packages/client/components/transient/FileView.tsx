@@ -10,8 +10,9 @@ import {
 
 import t from '../../client/lang';
 import { ServiceReturnType } from '../../client/queries';
+import { dateFromTimestamp } from '../../client/utility';
 import { FileViewItem } from '../../shared/types';
-import { dateFromTimestamp, humanFileSize } from '../../shared/utility';
+import { humanFileSize } from '../../shared/utility';
 import { TransientView } from './';
 
 function typeProp(data: FileViewItem) {
