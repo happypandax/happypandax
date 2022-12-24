@@ -1,8 +1,8 @@
 import classNames from 'classnames';
-import _ from 'lodash';
+import _, { throttle } from 'lodash';
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import Router, { useRouter } from 'next/router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEffectOnce, useUpdateEffect } from 'react-use';
 import {
   useRecoilState,
@@ -26,8 +26,6 @@ import {
   Select,
 } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
-
-import { useQueryClient } from '@tanstack/react-query';
 
 import { LibraryContext } from '../client/context';
 import t from '../client/lang';
@@ -661,43 +659,54 @@ export default function Page({
     ...defaultLibraryArgs,
   });
 
-  const [infiniteKey, setInfiniteKey] = useState('');
+  const generateInfiniteKey = useCallback(
+    () => (infinite ? new Date().getTime().toString(36) : ''),
+    [infinite]
+  );
 
-  const activePage = infiniteKey
-    ? page
+  const [infiniteKey, setInfiniteKey] = useState('');
+  const [infiniteDirty, setInfiniteDirty] = useState(false);
+
+  const activePage = infiniteDirty
+    ? page ?? initialPage ?? 1
     : libraryargs.page !== undefined
     ? libraryargs.page + 1
     : page;
 
   const errorLimited = errorLimit || initialErrorLimit;
 
-  const { data, fetchNextPage, isFetching, queryKey, remove } = useQueryType(
+  const {
+    data,
+    fetchNextPage,
+    isFetching,
+    isFetchingNextPage,
+    queryKey,
+    remove,
+  } = useQueryType(
     QueryType.LIBRARY,
     {
       ...libraryargs,
       item: itemType,
-      page: infiniteKey ? initialPage - 1 : activePage - 1,
+      page: infiniteDirty ? initialPage - 1 : activePage - 1,
     },
     {
       enabled: !errorLimited,
-      initialData: global.app.IS_SERVER ? undefined : initialData,
+      initialData,
       initialDataUpdatedAt: requestTime,
       infinite: true,
-      infinitePageParam: (variables, ctx) => ({
-        ...variables,
-        page: (ctx.pageParam ?? 1) - 1,
-      }),
-      onQueryKey: () => QueryType.LIBRARY.toString() + infiniteKey,
+      infinitePageParam: (variables, ctx) => {
+        return {
+          ...variables,
+          page: (ctx.pageParam ?? 1) - 1, // server expected zero-indexed
+        };
+      },
+      onQueryKey: () => [QueryType.LIBRARY.toString(), infiniteKey],
     }
   );
 
-  const items = infiniteKey
-    ? data?.pages?.flat?.().flatMap?.((i) => i.data.items)
-    : initialData.items;
+  const items = data?.pages?.flat?.().flatMap?.((i) => i.data.items);
 
-  const count = infiniteKey
-    ? data?.pages?.[0]?.data?.count
-    : initialData?.count;
+  const count = data?.pages?.[0]?.data?.count;
 
   const initialQueryState = useRecoilTransaction_UNSTABLE(({ set }) => () => {
     if (urlQuery.query?.fav !== undefined) {
@@ -744,7 +753,10 @@ export default function Page({
     initialQueryState();
   });
 
-  const client = useQueryClient();
+  useEffect(() => {
+    setInfiniteDirty(false);
+    setInfiniteKey(infinite ? generateInfiniteKey() : '');
+  }, [requestTime]);
 
   useUpdateEffect(() => {
     const q = {
@@ -760,7 +772,7 @@ export default function Page({
     };
     router.replace(urlstring(q)).then(() => {
       setPage(1);
-      setInfiniteKey('');
+      setInfiniteKey(generateInfiniteKey());
     });
     // .then(() => client.resetQueries(queryKey));
   }, [view, item, favorites, sortDesc, sort, filter, limit, searchOptions]);
@@ -769,13 +781,12 @@ export default function Page({
     const q = {
       ...routerQuery?.query,
       p: 1,
-      q: query,
     };
     setPage(1);
-    setInfiniteKey('');
+    setInfiniteKey(generateInfiniteKey());
     router.push(urlstring(q)).then(() => {
       setPage(1);
-      setInfiniteKey('');
+      setInfiniteKey(generateInfiniteKey());
     });
 
     // .then(() => client.resetQueries(queryKey));
@@ -810,32 +821,41 @@ export default function Page({
     []
   );
 
-  const fetchNext = useCallback(() => {
-    let key = infiniteKey;
-    if (!infiniteKey) {
-      key = new Date().getTime().toString(36);
-      setInfiniteKey(key);
-    }
+  const fetchNext = useCallback(
+    throttle(() => {
+      if (!infiniteDirty) {
+        setInfiniteDirty(true);
+      }
 
-    if (!isFetching && fetchNextPage) {
-      let p = initialPage + data.pages.length;
-      fetchNextPage({
-        pageParam: p,
-      });
+      if (!infiniteKey) {
+        setInfiniteKey(generateInfiniteKey());
+      }
 
-      setPage(p);
+      if (!isFetchingNextPage && fetchNextPage) {
+        const prev_p =
+          (data.pageParams?.[data.pageParams.length - 1] as
+            | number
+            | undefined) ?? initialPage;
+        const prevPage = data.pages?.[data.pages.length - 1];
 
-      router.replace(urlstring({ p }), undefined, {
-        shallow: true,
-        scroll: false,
-      });
-    }
-  }, [router, initialPage, fetchNextPage, infiniteKey, isFetching, data]);
+        let p = prev_p + 1;
 
-  const onPageChange = useCallback((ev, n) => {
-    setInfiniteKey('');
-    setPage(n);
-  }, []);
+        if (p > Math.ceil(prevPage.data.count / limit)) {
+          return false;
+        }
+
+        fetchNextPage({ pageParam: p });
+
+        setPage(p);
+
+        router.replace(urlstring({ p }), undefined, {
+          shallow: true,
+          scroll: false,
+        });
+      }
+    }, 500),
+    [router, initialPage, infiniteDirty, fetchNextPage, isFetching, data, limit]
+  );
 
   const onItemChange = useRecoilTransaction_UNSTABLE(({ set }) => (i) => {
     set(LibraryState.item(stateKey), i);
@@ -893,7 +913,7 @@ export default function Page({
                   onClear={() => {
                     setQuery('');
                   }}
-                  defaultValue={(urlQuery.query?.q as string) ?? query}
+                  defaultValue={query}
                   placeholder={t`Search using tags, titles, names, artists... Press "/" to search`}
                   showOptions
                   size="small"
@@ -995,8 +1015,7 @@ export default function Page({
               activePage={activePage}
               items={items}
               infinite={infinite}
-              loading={isFetching}
-              onPageChange={onPageChange}
+              loading={isFetchingNextPage}
               onLoadMore={fetchNext}
               paddedChildren
               itemRender={

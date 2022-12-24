@@ -182,11 +182,12 @@ export function AppRoot({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RecoilRoot initializeState={(snapshot) => {}}>
-        <DndProvider backend={HTML5Backend}>
-          <AppInit />
-          {children}
-        </DndProvider>
+      <RecoilRoot>
+        
+          <DndProvider backend={HTML5Backend}>
+            <AppInit />
+            {children}
+          </DndProvider>
       </RecoilRoot>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

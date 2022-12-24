@@ -24,6 +24,7 @@ export class ItemActivityManager {
     activity_type?: ActivityType
   ) {
     if (!ItemActivityManager.fetch) {
+      return
       ItemActivityManager.fetch = debounceCollect(
         async (args) => {
           const items = {} as { [key in ItemType]?: Set<ItemID> };

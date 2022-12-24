@@ -11,6 +11,7 @@
     "start:tools": "yarn workspace @happypandax/tools start",
     "run:client": "yarn workspace @happypandax/client",
     "add:client": "yarn workspace @happypandax/client add",
+    "remove:client": "yarn workspace @happypandax/client remove",
     "start:client": "yarn workspace @happypandax/client dev"
   },
   "devDependencies": {

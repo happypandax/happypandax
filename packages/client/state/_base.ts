@@ -17,13 +17,13 @@ import {
 
 RecoilEnv.RECOIL_DUPLICATE_ATOM_KEY_CHECKING_ENABLED = false
 
+
 export function defineAtom<T>(
-  options: MakeOptional<AtomOptions<T>, 'key'>,
+  options: Optional<AtomOptions<T>, 'key'>,
   family?: false
 ): RecoilState<T>;
-
 export function defineAtom<T, P extends SerializableParam = SerializableParam>(
-  options: MakeOptional<AtomFamilyOptions<T, P>, 'key'>,
+  options: Optional<AtomFamilyOptions<T, P>, 'key'>,
   family: true
 ): (param: P) => RecoilState<T>;
 export function defineAtom<
@@ -32,52 +32,52 @@ export function defineAtom<
   F extends undefined | true = undefined
 >(
   options:
-    | MakeOptional<AtomOptions<T>, 'key'>
-    | MakeOptional<AtomFamilyOptions<T, P>, 'key'>,
+    | Optional<AtomOptions<T>, 'key'>
+    | Optional<AtomFamilyOptions<T, P>, 'key'>,
   family?: F
 ): F extends undefined ? RecoilState<T> : (param: P) => RecoilState<T> {
   return { ...options, family, _type: 'atom' } as any;
 }
 
 export function defineSelector<T>(
-  options: MakeOptional<ReadOnlySelectorOptions<T>, 'key'>,
+  options: Optional<ReadOnlySelectorOptions<T>, 'key'>,
   family?: false
 ): RecoilValueReadOnly<T>;
 export function defineSelector<T>(
-  options: MakeOptional<ReadWriteSelectorOptions<T>, 'key'>,
+  options: Optional<ReadWriteSelectorOptions<T>, 'key'>,
   family?: false
 ): RecoilState<T>;
 export function defineSelector<
   T,
   P extends SerializableParam = SerializableParam
 >(
-  options: MakeOptional<ReadOnlySelectorFamilyOptions<T, P>, 'key'>,
+  options: Optional<ReadOnlySelectorFamilyOptions<T, P>, 'key'>,
   family: true
 ): (param: P) => RecoilValueReadOnly<T>;
 export function defineSelector<
   T,
   P extends SerializableParam = SerializableParam
 >(
-  options: MakeOptional<ReadWriteSelectorOptions<T>, 'key'>,
+  options: Optional<ReadWriteSelectorOptions<T>, 'key'>,
   family: true
 ): (param: P) => RecoilState<T>;
 export function defineSelector<
   T,
   O extends
-  | MakeOptional<ReadOnlySelectorOptions<T>, 'key'>
-  | MakeOptional<ReadOnlySelectorFamilyOptions<T, P>, 'key'>
-  | MakeOptional<ReadWriteSelectorOptions<T>, 'key'>
-  | MakeOptional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>,
+  | Optional<ReadOnlySelectorOptions<T>, 'key'>
+  | Optional<ReadOnlySelectorFamilyOptions<T, P>, 'key'>
+  | Optional<ReadWriteSelectorOptions<T>, 'key'>
+  | Optional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>,
   P extends SerializableParam = SerializableParam,
   F extends undefined | true = undefined
 >(
   options: O,
   family?: F
 ): F extends undefined
-  ? O extends MakeOptional<ReadWriteSelectorOptions<T>, 'key'>
+  ? O extends Optional<ReadWriteSelectorOptions<T>, 'key'>
   ? RecoilState<T>
   : RecoilValueReadOnly<T>
-  : O extends MakeOptional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>
+  : O extends Optional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>
   ? (param: P) => RecoilState<T>
   : (param: P) => RecoilValueReadOnly<T> {
   return { ...options, family, _type: 'selector' } as any;

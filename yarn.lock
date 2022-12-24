@@ -2642,6 +2642,7 @@ __metadata:
     "@grabrinc/isomorphic-logger": ^0.1.59
     "@mdx-js/react": ^1.6.22
     "@msgpack/msgpack": ^2.7.0
+    "@recoiljs/refine": ^0.1.1
     "@storybook/addon-actions": ^6.3.1
     "@storybook/addon-docs": ^6.3.1
     "@storybook/addon-essentials": ^6.3.1
@@ -2705,6 +2706,7 @@ __metadata:
     react-virtualized-auto-sizer: ^1.0.6
     react-window: ^1.8.7
     recoil: ^0.7.6
+    recoil-sync: ^0.2.0
     sanitize-filename: ^1.6.3
     semantic-ui-react: ^2.1.4
     send: ^0.17.2
@@ -3605,6 +3607,13 @@ __metadata:
   version: 2.0.0
   resolution: "@react-dnd/shallowequal@npm:2.0.0"
   checksum: b5bbdc795d65945bb7ba2322bed5cf8d4c6fe91dced98c3b10e3d16822c438f558751135ff296f8d1aa1eaa9d0037dacab2b522ca5eb812175123b9996966dcb
+  languageName: node
+  linkType: hard
+
+"@recoiljs/refine@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@recoiljs/refine@npm:0.1.1"
+  checksum: 63b3e468f4ce7417cd13470f39a85a7318b902d411121759fc0a7ee427cd8882328a2c999ef0913e086f0c99f732e5478378b4ebe514bd811bb6e96333c747c3
   languageName: node
   linkType: hard
 
@@ -19690,6 +19699,18 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"recoil-sync@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "recoil-sync@npm:0.2.0"
+  dependencies:
+    "@recoiljs/refine": ^0.1.1
+    transit-js: ^0.8.874
+  peerDependencies:
+    recoil: ">=0.7.3"
+  checksum: a0bd98acbc92ae58099a283056cb0c3cfcc08312bbe8bccd2662ecb3410b856fe3db33df765c7f5e9f030f73c44630e2c0f39266123eb1fcb7285d0f4b53c52a
+  languageName: node
+  linkType: hard
+
 "recoil@npm:^0.7.6":
   version: 0.7.6
   resolution: "recoil@npm:0.7.6"
@@ -22485,6 +22506,13 @@ resolve@^2.0.0-next.3:
   version: 0.0.3
   resolution: "tr46@npm:0.0.3"
   checksum: 726321c5eaf41b5002e17ffbd1fb7245999a073e8979085dacd47c4b4e8068ff5777142fc6726d6ca1fd2ff16921b48788b87225cbc57c72636f6efa8efbffe3
+  languageName: node
+  linkType: hard
+
+"transit-js@npm:^0.8.874":
+  version: 0.8.874
+  resolution: "transit-js@npm:0.8.874"
+  checksum: a1d3a78a0ce926320ba32cdd59a74104e1b440855497753b91f8e71831302b23adfb21416cdba30153305cf41cf96b75421a607a1799b676572fe6072ee04798
   languageName: node
   linkType: hard
 

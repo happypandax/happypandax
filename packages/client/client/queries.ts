@@ -39,8 +39,8 @@ import {
 } from '../state/global';
 
 import type { ErrorResponseData } from '../server/requests';
-
 export { QueryType, MutatationType } from '../shared/query'
+
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,12 +65,16 @@ const defaultClientOptions = queryClient.getDefaultOptions();
 
 onGlobalStateChange(['connected', 'loggedIn'], (state) => {
   if (!state.connected || !state.loggedIn) {
-    queryClient.cancelQueries();
+    queryClient.cancelQueries().then(() => {
+      console.debug('Cancelled queries');
+    });
     queryClient.setDefaultOptions({
       mutations: {
+        ...defaultClientOptions.mutations,
         retry: () => false,
       },
       queries: {
+        ...defaultClientOptions.queries,
         retry: () => false,
         enabled: false,
       },
@@ -78,9 +82,11 @@ onGlobalStateChange(['connected', 'loggedIn'], (state) => {
   } else {
     queryClient.setDefaultOptions({
       mutations: {
+        ...defaultClientOptions.mutations,
         retry: defaultClientOptions.mutations.retry || true,
       },
       queries: {
+        ...defaultClientOptions.queries,
         retry: defaultClientOptions.queries.retry || true,
         enabled: defaultClientOptions.queries.enabled || true,
       },
@@ -88,7 +94,6 @@ onGlobalStateChange(['connected', 'loggedIn'], (state) => {
   }
 });
 
-queryClient.setDefaultOptions({});
 
 export function useMutationType<
   T extends MutationActions,
@@ -155,9 +160,9 @@ export function CreateInitialData<R>(d: R | InitialDataFunction<R>) {
 export function getQueryTypeKey(
   type: any,
   variables?: any,
-  onQueryKey?: () => any
+  onQueryKey?: () => any[]
 ) {
-  return [onQueryKey?.() ?? type.toString(), variables];
+  return onQueryKey ? [...onQueryKey(), variables] : [type, variables];
 }
 
 // If A is defined, it renders the rest of generics useless
@@ -184,7 +189,7 @@ export function useQueryType<
   options?: {
     initialData?: R | InitialDataFunction<R>;
     placeholderData?: R | PlaceholderDataFunction<R>;
-    onQueryKey?: () => any;
+    onQueryKey?: () => any[];
     infinite?: I;
     infinitePageParam?: I extends Falsy
     ? undefined
@@ -195,21 +200,23 @@ export function useQueryType<
 ): (I extends Falsy ? UseQueryResult<D, E> : UseInfiniteQueryResult<D, E>) & {
   queryKey: QueryKey;
 } {
+
+  const initialData = options?.initialData
+    ? options.infinite
+      ? { pages: [CreateInitialData(options.initialData)], pageParams: [] }
+      : CreateInitialData(options.initialData)
+    : undefined
+
+  const placeholderData = options?.placeholderData
+    ? options.infinite
+      ? { pages: [CreateInitialData(options.placeholderData)], pageParams: [] }
+      : CreateInitialData(options.placeholderData)
+    : undefined
+
   const opts = {
     ...options,
-    initialData: options?.initialData
-      ? options.infinite
-        ? { pages: [CreateInitialData(options.initialData)], pageParams: [] }
-        : CreateInitialData(options.initialData)
-      : undefined,
-    placeholderData: options?.placeholderData
-      ? options.infinite
-        ? {
-          pages: [CreateInitialData(options.placeholderData)],
-          pageParams: [],
-        }
-        : CreateInitialData(options.placeholderData)
-      : undefined,
+    initialData,
+    placeholderData,
   };
 
   const key = getQueryTypeKey(type, variables, options?.onQueryKey);
@@ -254,15 +261,21 @@ export function useQueryType<
     // eslint-disable-next-line react-hooks/rules-of-hooks
     r = useInfiniteQuery(
       key,
-      (ctx) => {
-        return axios.request({
-          method,
-          url: urlstring(
-            endpoint,
-            options.infinitePageParam(variables, ctx) as any
-          ),
-          signal: ctx.signal,
-        });
+      async (ctx) => {
+        try {
+          const rdata = await axios.request({
+            method,
+            url: urlstring(
+              endpoint,
+              options.infinitePageParam(variables, ctx) as any
+            ),
+            signal: ctx.signal,
+          });
+          return rdata
+        } catch (e) {
+          console.error(e)
+          throw e
+        }
       },
       opts
     );

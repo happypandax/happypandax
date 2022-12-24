@@ -3,7 +3,13 @@ import 'swiper/swiper-bundle.css';
 
 import classNames from 'classnames';
 import maxSize from 'popper-max-size-modifier';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useDrop } from 'react-dnd';
 import { NativeTypes } from 'react-dnd-html5-backend';
 import Editor from 'react-simple-code-editor';
@@ -527,4 +533,12 @@ export function FileDropZone({
       </Segment>
     </Ref>
   );
+}
+
+export function NoSSR({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useLayoutEffect(() => {
+    setMounted(true);
+  }, []);
+  return mounted ? <>{children}</> : null;
 }

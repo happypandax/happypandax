@@ -7,7 +7,6 @@ import { useRecoilValue } from 'recoil';
 import {
   Grid,
   Header,
-  Loader,
   Pagination,
   Segment,
   Sidebar,
@@ -172,7 +171,7 @@ export interface ViewProps {
   autoHeight?: any;
 }
 
-// TODO: Does not show anything when having a parent component when disableWindowScroll=true
+// TODO: Does not show anything when having a parent component and disableWindowScroll=true
 export function ViewAutoSizer({
   disableWindowScroll,
   view: View,
@@ -221,7 +220,7 @@ export function ViewAutoSizer({
         </WindowScroller>
       );
     },
-    [items, itemRender]
+    [items, itemRender, ...Object.values(viewProps)]
   );
 
   const func = useCallback(
@@ -236,7 +235,7 @@ export function ViewAutoSizer({
         />
       );
     },
-    [items, itemRender]
+    [items, itemRender, ...Object.values(viewProps)]
   );
 
   const elFunc = !disableWindowScroll ? winFunc : func;
@@ -279,16 +278,16 @@ export function PaginatedView({
   bottomPagination?: boolean;
 } & Omit<React.ComponentProps<typeof ViewPagination>, 'totalPages'> &
   React.ComponentProps<typeof Segment>) {
-  const [hasScrolled, setHasSCrolled] = useState(false);
-  const [canLoadMore, setCanLoadMore] = useState(true);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [canLoadMore, setCanLoadMore] = useState(false);
 
   const onLoadMore = useCallback(
     loadMore
       ? _.throttle(() => {
           loadMore();
           setCanLoadMore(false);
-          setHasSCrolled(false);
-        }, 3000)
+          setHasScrolled(false);
+        }, 1000)
       : undefined,
     [loadMore]
   );
@@ -309,6 +308,7 @@ export function PaginatedView({
 
   let fromCount = (+(activePage ?? 1) - 1) * itemsPerPage + 1;
   let toCount = fromCount + Math.min(itemsPerPage - 1, itemCount - 1);
+  toCount = Math.min(toCount, totalItemCount);
 
   fromCount = itemCount ? toCount + 1 - itemCount : 0;
   toCount = itemCount ? toCount : 0;
@@ -329,13 +329,12 @@ export function PaginatedView({
   );
 
   useEffect(() => {
-    if (itemsPerPage * +(activePage ?? 1) < totalItemCount) {
+    if (!loading && itemsPerPage * +(activePage ?? 1) < totalItemCount) {
       setTimeout(() => {
         setCanLoadMore(true);
-        setHasSCrolled(true);
       }, 500);
     }
-  }, [itemCount, activePage]);
+  }, [itemCount, activePage, loading]);
 
   return (
     <Segment
@@ -358,30 +357,41 @@ export function PaginatedView({
             (e, { calculations: { pixelsPassed, height, direction } }) => {
               const pixelsLeft = height - pixelsPassed - getClientHeight();
               if (direction === 'down') {
-                setHasSCrolled(true);
+                setHasScrolled(true);
               }
+
               if (
                 infinite &&
                 hasScrolled &&
                 canLoadMore &&
                 !loading &&
                 itemCount &&
-                itemCount * +activePage < totalItemCount &&
+                +activePage <= Math.ceil(totalItemCount / itemsPerPage) &&
                 onLoadMore &&
                 pixelsLeft < 500
               ) {
                 onLoadMore();
               }
             },
-            [infinite, onLoadMore, canLoadMore, loading, hasScrolled]
+            [
+              infinite,
+              onLoadMore,
+              canLoadMore,
+              loading,
+              hasScrolled,
+              totalItemCount,
+              itemCount,
+              itemsPerPage,
+              activePage,
+            ]
           )}>
           {children}
         </Visibility>
-        {loading && (
+        {/* {loading && (
           <Grid.Row>
             <Loader active={loading} />
           </Grid.Row>
-        )}
+        )} */}
         {bottomPagination && pagination && (
           <Grid.Row centered>{getPagination()}</Grid.Row>
         )}
