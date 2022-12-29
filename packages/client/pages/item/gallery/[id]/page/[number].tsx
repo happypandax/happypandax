@@ -33,13 +33,16 @@ import {
 import { JSONSafe, urlparse, urlstring } from '../../../../../shared/utility';
 import { ReaderState } from '../../../../../state';
 
-const Reader = dynamic(() => import('../../../../../components/Reader'), {
-  ssr: false,
-});
+const Reader = dynamic(
+  () => import('../../../../../components/reader/Reader'),
+  {
+    ssr: false,
+  }
+);
 
 const ReaderSettingsButton = dynamic(
   () =>
-    import('../../../../../components/Reader').then(
+    import('../../../../../components/reader/ReaderSettings').then(
       (m) => m.ReaderSettingsButton
     ),
   {
@@ -49,7 +52,7 @@ const ReaderSettingsButton = dynamic(
 
 const ReaderAutoNavigateButton = dynamic(
   () =>
-    import('../../../../../components/Reader').then(
+    import('../../../../../components/reader/Misc').then(
       (m) => m.ReaderAutoNavigateButton
     ),
   {
@@ -58,7 +61,10 @@ const ReaderAutoNavigateButton = dynamic(
 );
 
 const EndContent = dynamic(
-  () => import('../../../../../components/Reader').then((m) => m.EndContent),
+  () =>
+    import('../../../../../components/reader/EndContent').then(
+      (m) => m.default
+    ),
   {
     ssr: false,
   }
@@ -66,7 +72,9 @@ const EndContent = dynamic(
 
 const PageInfoPortal = dynamic(
   () =>
-    import('../../../../../components/Reader').then((m) => m.PageInfoPortal),
+    import('../../../../../components/reader/Misc').then(
+      (m) => m.PageInfoPortal
+    ),
   {
     ssr: false,
   }

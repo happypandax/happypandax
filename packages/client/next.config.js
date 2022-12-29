@@ -10,6 +10,9 @@ const config = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  images: {
+    domains: ['via.placeholder.com'],
+  },
   webpack: (wconfig, options) => {
     let cfg = {
       experiments: {

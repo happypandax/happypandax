@@ -1,10 +1,10 @@
 /**
- * Difference between global state and other states is that global state does not depend on the react context
+ * Difference between global state and other states is that global state does not depend on the react context or runtime
  */
 
 import { autorun, get, makeAutoObservable, set, toJS } from 'mobx';
 import { enableStaticRendering } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ServerUser } from '../shared/types';
 

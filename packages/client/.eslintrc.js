@@ -1,10 +1,9 @@
 module.exports = {
   extends: 'next/core-web-vitals',
-  plugins: [
-    "@tanstack/query"
-  ],
+  plugins: ['@tanstack/query'],
 
   rules: {
+    '@next/next/no-img-element': 'off',
     'no-continue': 'off',
     'class-methods-use-this': 'off',
     'no-underscore-dangle': 'off',

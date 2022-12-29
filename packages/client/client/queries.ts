@@ -343,6 +343,11 @@ export class Query {
     let data: AxiosRequestConfig['data'] = undefined;
 
     switch (action) {
+      case QueryType.PAGES:
+      case QueryType.PROFILE: {
+        break
+      }
+
       case QueryType.ACTIVITIES:
       case QueryType.COMMAND_STATE:
       case QueryType.COMMAND_VALUE: {
@@ -353,7 +358,7 @@ export class Query {
       }
 
       default:
-        throw Error('Invalid query type');
+        throw Error('Invalid query type: ' + action);
     }
 
 
