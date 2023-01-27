@@ -7,11 +7,11 @@ _version_: 4
 # Database
 db-item-grouping: 分组
 db-item-gallery: 画廊
-db-item-collection: 收藏
+db-item-collection: 合集
 db-item-page: 页面
 
 db-status-ongoing: 连载中
-db-status-completed: 完结的
+db-status-completed: 完结
 db_status-unknown: 未知
 db_status-unreleased: 未发行
 
