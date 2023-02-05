@@ -123,6 +123,10 @@ export default class ServerService extends Service {
     });
   }
 
+  get client() {
+    return this.#main_client;
+  }
+
   async _query(client: Client, fname: string, args: JsonMap) {
     const key = [fname, args];
     return this.query_client.fetchQuery(key, () => {

@@ -2,18 +2,22 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import { makeAutoObservable, reaction } from 'mobx';
 import { observer } from 'mobx-react-lite';
-import React, { RefObject, useCallback, useEffect, useMemo } from 'react';
+import React, { RefObject, useCallback, useMemo } from 'react';
 import { useUnmount } from 'react-use';
 import { Button, Icon } from 'semantic-ui-react';
 
 import Scroller from '@twiddly/scroller';
 
-import { useBodyEvent, useRefEvent } from '../../client/hooks/utils';
+import {
+    useBodyEvent,
+    useEffectAction,
+    useRefEvent,
+    useTrackDimensions,
+} from '../../client/hooks/utils';
 import t from '../../client/lang';
 import { ItemFit, ReadingDirection } from '../../shared/enums';
 
 import type { CanvasState } from './Canvas';
-
 export function scrollRender(element: HTMLElement, left, top, zoom) {
     if (!element) return;
 
@@ -48,18 +52,21 @@ export function scrollRender(element: HTMLElement, left, top, zoom) {
     var perspectiveProperty = vendorPrefix + 'Perspective';
     var transformProperty = vendorPrefix + 'Transform';
 
-    if (helperElem.style[perspectiveProperty] !== undefined) {
-        element.style[transformProperty] =
-            'translate3d(' + -left + 'px,' + -top + 'px,0) scale(' + zoom + ')';
-    } else if (helperElem.style[transformProperty] !== undefined) {
-        element.style[transformProperty] =
-            'translate(' + -left + 'px,' + -top + 'px) scale(' + zoom + ')';
-    } else {
-        element.style.marginLeft = left ? -left / zoom + 'px' : '';
-        element.style.marginTop = top ? -top / zoom + 'px' : '';
-        // @ts-ignore
-        element.style.zoom = zoom || '';
-    }
+    requestAnimationFrame(() => {
+
+        if (helperElem.style[perspectiveProperty] !== undefined) {
+            element.style[transformProperty] =
+                'translate3d(' + -left + 'px,' + -top + 'px,0) scale(' + zoom + ')';
+        } else if (helperElem.style[transformProperty] !== undefined) {
+            element.style[transformProperty] =
+                'translate(' + -left + 'px,' + -top + 'px) scale(' + zoom + ')';
+        } else {
+            element.style.marginLeft = left ? -left / zoom + 'px' : '';
+            element.style.marginTop = top ? -top / zoom + 'px' : '';
+            // @ts-ignore
+            element.style.zoom = zoom || '';
+        }
+    })
 }
 
 export class CanvasImageState {
@@ -78,10 +85,17 @@ export class CanvasImageState {
     imageWidth = 0;
     imageHeight = 0;
 
+    onEndReachedCallback: () => void | undefined = undefined;
+    onStartReachedCallback: () => void | undefined = undefined;
 
     private _scroller: Scroller;
     private _scrollPanX = 0;
     private _scrollPanY = 0;
+
+    private _scrollOvershoot = {
+        value: 0,
+        dir: ''
+    }
 
     private _preloadImage;
 
@@ -203,9 +217,8 @@ export class CanvasImageState {
     }
 
 
-    canPan(e?: MouseEvent) {
+    canPan(e?: Event) {
         let panPossible = !this.isImageContained(this._scroller.getValues());
-        global.app.log.d('canPan:', panPossible);
 
         if (panPossible) {
             if (e) e.preventDefault();
@@ -281,19 +294,17 @@ export class CanvasImageState {
 
     onMouseUp(e: MouseEvent) {
         if (this._mouseDown) {
-            global.app.log.d('touch end', [e.pageX, e.pageY])
             this._scroller.doTouchEnd(e.timeStamp);
         }
         this._mouseDown = false;
     }
 
     onMouseDown(e: MouseEvent) {
+        console.debug("mouse down")
         if (e.defaultPrevented) {
-            global.app.log.d('default prevented, aborting')
             return;
         }
         if (this.canPan(e)) {
-            global.app.log.d('touch start', [e.pageX, e.pageY])
             this._scroller.doTouchStart(
                 [
                     {
@@ -308,6 +319,62 @@ export class CanvasImageState {
         }
     }
 
+    onTouchStart(e: TouchEvent) {
+        console.debug("start touch")
+        if (e.defaultPrevented) {
+            return;
+        }
+        if (this.canPan(e)) {
+            e.preventDefault();
+            this._scroller.doTouchStart(e.touches, e.timeStamp);
+            this._mouseDown = true;
+        }
+    }
+
+    onTouchMove(e: TouchEvent) {
+        if (!this._mouseDown) {
+            return;
+        }
+        e.preventDefault();
+        this._scroller.doTouchMove(e.touches, e.timeStamp);
+    }
+
+    onTouchEnd(e: TouchEvent) {
+        if (this._mouseDown) {
+            e.preventDefault();
+            this._scroller.doTouchEnd(e.timeStamp);
+        }
+        this._mouseDown = false;
+    }
+
+    private _resetScrollOvershoot = _.debounce(function _resetScrollOvershoot(
+        this: CanvasImageState,
+    ) {
+        this._scrollOvershoot.dir = ''
+        this._scrollOvershoot.value = 0
+    },
+        100);
+
+
+    private endReached = _.debounce(_.throttle(function endReached(
+        this: CanvasImageState,
+    ) {
+        if (this.isFocused) {
+
+            this.onEndReachedCallback?.()
+        }
+    },
+        600), 150);
+
+    private startReached = _.debounce(_.throttle(function startReached(
+        this: CanvasImageState,
+    ) {
+        if (this.isFocused) {
+            this.onStartReachedCallback?.()
+        }
+    },
+        600), 150);
+
     onWheel(e: WheelEvent) {
         const state = this.canvasState;
         const container = this.containerRef.current;
@@ -316,7 +383,6 @@ export class CanvasImageState {
         if (state.wheelZoom || e.ctrlKey) {
             // zoom with scroll
 
-            e.preventDefault();
             e.stopPropagation();
             const { zoom, left, top } = this._scroller.getValues();
             const change = e.deltaY > 0 ? 0.88 : 1.28;
@@ -336,50 +402,78 @@ export class CanvasImageState {
 
             this._scroller.zoomTo(newZoom, true, zoomLeft, zoomTop);
         } else {
+            const { left, top, zoom } = this._scroller.getValues();
+            const {
+                left: scrollMaxLeft,
+                top: scrollMaxTop,
+            } = this._scroller.getScrollMax();
+
+            if (!this.isScrollPanning) {
+                this.isScrollPanning = true;
+                this._scrollPanX = left;
+                this._scrollPanY = top;
+            }
+
+            const force = 0.15;
+
+            const deltaX =
+                e.deltaY > 0
+                    ? container.clientWidth * force
+                    : -container.clientWidth * force;
+
+            const deltaY =
+                e.deltaY > 0
+                    ? container.clientHeight * force
+                    : -container.clientHeight * force;
+
+            const scrollingDown = e.deltaY > 0 ? true : false;
+
+            // check if item has reached boundary (this will always only check the boundary in y-axis since we're assuming height > width for manga)
+            // can be improved to take into account reading direction, item fit and aspect ratio
+            switch (state.direction) {
+                case ReadingDirection.LeftToRight:
+                case ReadingDirection.TopToBottom: {
+                    if (this._scrollPanY === top) {
+                        if (scrollingDown && this._scrollPanY >= scrollMaxTop) {
+                            // calculate overshoot
+                            if (this._scrollOvershoot.dir === 'down') {
+                                this._scrollOvershoot.value += deltaY;
+                            } else {
+                                this._scrollOvershoot.dir = 'down';
+                                this._scrollOvershoot.value = 0;
+                            }
+
+                            console.debug(this._scrollOvershoot)
+
+                            if (this._scrollOvershoot.dir === 'down' && this._scrollOvershoot.value >= 300) {
+                                this.endReached();
+                            }
+
+                            this._resetScrollOvershoot();
+                            return;
+                        }
+                        if (!scrollingDown && this._scrollPanY <= 0) {
+                            // calculate overshoot
+                            if (this._scrollOvershoot.dir === 'top') {
+                                this._scrollOvershoot.value += Math.abs(deltaY);
+                            } else {
+                                this._scrollOvershoot.dir = 'top';
+                                this._scrollOvershoot.value = 0;
+                            }
+
+                            if (this._scrollOvershoot.dir === 'top' && this._scrollOvershoot.value >= 300) {
+                                this.startReached()
+                            }
+
+                            this._resetScrollOvershoot();
+                            return;
+                        }
+                    }
+                    break;
+                }
+            }
             // pan with scroll
             if (this.canPan()) {
-                const { left, top, zoom } = this._scroller.getValues();
-                const {
-                    left: scrollMaxLeft,
-                    top: scrollMaxTop,
-                } = this._scroller.getScrollMax();
-
-                if (!this.isScrollPanning) {
-                    this.isScrollPanning = true;
-                    this._scrollPanX = left;
-                    this._scrollPanY = top;
-                }
-
-                const force = 0.15;
-
-                const deltaX =
-                    e.deltaY > 0
-                        ? container.clientWidth * force
-                        : -container.clientWidth * force;
-
-                const deltaY =
-                    e.deltaY > 0
-                        ? container.clientHeight * force
-                        : -container.clientHeight * force;
-
-                const scrollingDown = e.deltaY > 0 ? true : false;
-
-                // check if item has reached boundary (this will always only check the boundary in y-axis since we're assuming height > width for manga)
-                // can be improved to take into account reading direction, item fit and aspect ratio
-                switch (state.direction) {
-                    case ReadingDirection.LeftToRight:
-                    case ReadingDirection.TopToBottom: {
-                        if (this._scrollPanY === top) {
-                            if (scrollingDown && this._scrollPanY >= scrollMaxTop) {
-                                return;
-                            }
-                            if (!scrollingDown && this._scrollPanY <= 0) {
-                                return;
-                            }
-                        }
-                        break;
-                    }
-                }
 
                 e.preventDefault();
                 e.stopPropagation();
@@ -465,6 +559,7 @@ export class CanvasImageState {
         e: WheelEvent
     ) {
         this.isScrollPanning = false;
+
     },
         150);
 
@@ -488,11 +583,16 @@ const CanvasImage = observer(function CanvasImage({
     href,
     state: canvasState,
     onError,
+    onEndReached,
+    onStartReached,
     focused,
+    ...props
 }: {
     href: string;
     state: CanvasState;
     onError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
+    onEndReached?: () => void;
+    onStartReached?: () => void;
     focused?: boolean;
 }) {
     const state = useMemo(() => {
@@ -503,15 +603,27 @@ const CanvasImage = observer(function CanvasImage({
         state.dispose();
     });
 
-    useEffect(() => {
-        console.debug({ ref: state.containerRef?.current })
-        console.debug({ ref2: state.imageRef?.current })
+    useEffectAction(() => {
         state.setHref(href);
     }, [href]);
 
-    useEffect(() => {
+    useEffectAction(() => {
         state.setFocused(focused);
     }, [focused, state]);
+
+    useEffectAction(() => {
+        setTimeout(() => {
+            state.adjust();
+        }, 350);
+    }, [canvasState.isFullscreen]);
+
+    useEffectAction(() => {
+        state.onEndReachedCallback = onEndReached;
+    }, [onEndReached, state]);
+
+    useEffectAction(() => {
+        state.onStartReachedCallback = onStartReached;
+    }, [onStartReached, state]);
 
     useBodyEvent('mousemove', e => state.onMouseMove(e), {}, [state]);
 
@@ -525,8 +637,43 @@ const CanvasImage = observer(function CanvasImage({
         [state]
     );
 
+    useRefEvent(
+        state.containerRef,
+        'touchstart',
+        e => state.onTouchStart(e),
+        {
+            passive: true
+        },
+        [state]
+    );
+
+    useRefEvent(
+        state.containerRef,
+        'touchmove',
+        e => state.onTouchMove(e),
+        {
+            passive: true
+        },
+        [state]
+    );
+
+    useRefEvent(
+        state.containerRef,
+        'touchend',
+        e => state.onTouchEnd(e),
+        {
+            passive: true
+        },
+        [state]
+    );
+
+    useTrackDimensions(_.debounce(_.throttle((entry) => {
+        state.adjust();
+    }, 500), 250), state.containerRef, [state]);
+
     return (
         <div
+            {...props}
             ref={state.containerRef}
             draggable="false"
             onDragStart={() => false}

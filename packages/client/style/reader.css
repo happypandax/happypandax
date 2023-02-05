@@ -2,6 +2,8 @@
     position: relative;
     max-height: 100vh;
     overflow: hidden;
+    will-change: transform;
+    touch-action: none;
 }
 
 .reader-container .reader-content {
@@ -28,6 +30,8 @@
     min-height: 100vh;
     overflow: hidden;
     position: relative;
+    will-change: transform;
+    touch-action: none;
 
 }
 .reader-container .reader-content .reader-item img {
@@ -42,6 +46,7 @@
 	-o-transform: translateZ(0);
 	transform-origin: left top;
 	transform: translateZ(0);
+    touch-action: none;
 }
 
 .reader-container .reader-content .reader-item img.fit-width {

@@ -1,9 +1,9 @@
 import { JsonMap } from 'happypandax-client';
 import _ from 'lodash';
 import querystring, {
-  ParsedUrl,
-  StringifiableRecord,
-  StringifyOptions,
+    ParsedUrl,
+    StringifiableRecord,
+    StringifyOptions,
 } from 'query-string';
 
 export function getEnumMembers<T>(myEnum: T): (keyof T)[] {
@@ -223,3 +223,34 @@ export function maskText(text: string) {
         .join(' ');
 }
 
+/**
+ * Rounds a number to the nearest multiple of another number
+ */
+export function roundToNearest(n: number, nearest: number = 1) {
+    return Math.round(n / nearest) * nearest;
+}
+
+
+export function asyncDebounce<
+    F extends (...args: any[]) => Promise<any>
+>(func: F, wait?: number) {
+
+    const debounced = _.debounce(async (resolve, reject, bindSelf, args) => {
+        try {
+            const result = await func.bind(bindSelf)(...args);
+            resolve(result);
+        } catch (error) {
+            reject(error);
+        }
+    }, wait);
+
+    // This is the function that will be bound by the caller, so it must contain the `function` keyword.
+    function returnFunc(...args) {
+        return new Promise((resolve, reject) => {
+            debounced(resolve, reject, this, args);
+        });
+    }
+
+    return returnFunc as F;
+
+}

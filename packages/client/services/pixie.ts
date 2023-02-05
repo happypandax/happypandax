@@ -46,6 +46,8 @@ export default class PixieService extends Service {
   #socket: Request;
   #connected: boolean;
 
+  #session: string = '';
+
   constructor(endpoint?: string) {
     super(ServiceType.Pixie);
     this.#queue = new PQueue({ concurrency: 1 });
@@ -60,13 +62,37 @@ export default class PixieService extends Service {
   }
 
   get connected() {
+
+    const server = global.app.service.get(ServiceType.Server);
+    if (!server.status().connected) {
+      if (this.#connected) {
+        this.#socket.disconnect(this.endpoint);
+      }
+      this.#connected = false;
+    }
+
+    if (this.#connected && server.client.session !== this.#session) {
+      this.#connected = false;
+      this.#socket.disconnect(this.endpoint);
+    }
+
     return this.#connected;
+  }
+
+  get isLocal() {
+    return this.endpoint.includes('localhost') || this.endpoint.includes('127.0.0.1');
   }
 
   async connect(endpoint?: string) {
     if (!this.connected) {
-      global.app.log.i('Connecting pixie to ', endpoint);
-      this.#socket.connect(endpoint ?? this.endpoint);
+      const e = endpoint ?? this.endpoint
+      global.app.log.i('Connecting pixie to', e);
+      this.#socket.connect(e);
+      this.endpoint = e;
+      global.app.log.i('Successfully connected pixie to', e);
+
+      const server = global.app.service.get(ServiceType.Server);
+      this.#session = server.client.session;
       this.#connected = true;
     }
   }
@@ -89,6 +115,9 @@ export default class PixieService extends Service {
     l1 = undefined,
     l2 = undefined,
     l3 = undefined,
+    p1 = undefined,
+    p2 = undefined,
+    p3 = undefined,
     i = undefined,
     it = undefined,
     s = undefined,
@@ -109,7 +138,13 @@ export default class PixieService extends Service {
     } else if (l1 && l2 && l3) {
       r = await this.communicate({
         name: 'image_link',
-        link: l1 + '/' + l2 + '/' + l3,
+        link: [l1, l2, l3],
+        type: t,
+      });
+    } else if (p1 && p2 && p3) {
+      r = await this.communicate({
+        name: 'image_path',
+        link: [p1, p2, p3],
         type: t,
       });
     }
@@ -117,8 +152,10 @@ export default class PixieService extends Service {
   }
 
   async communicate(msg: unknown) {
+    global.app.log.d("Sending pixie message", msg)
     await this.#queue.add(async () => {
       await this.#socket.send(this.#encoder.encode(msg));
+      global.app.log.d("Sent pixie message", msg)
     });
     const [r] = await this.#socket.receive();
     const d: any = this.#decoder.decode(r);

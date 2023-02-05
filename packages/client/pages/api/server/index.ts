@@ -46,7 +46,10 @@ async function imageFromPath(path_type, req, res) {
       res.setHeader('Content-Type', type?.mime ? type?.mime : '');
       s.pipe(res);
     });
-    s.on('error', function () {
+    s.on('error', function (e) {
+      if (process.env.NODE_ENV === 'development') {
+        throw e
+      }
       return res.status(404).end(errTxt);
     });
   } else {
@@ -54,21 +57,32 @@ async function imageFromPath(path_type, req, res) {
   }
 }
 
+let LOCAL: boolean | undefined = undefined;
+
 export function createImageHandler(path_type: string) {
   return handler().get(async (req, res) => {
     const { t, ...rest } = req.query;
+    if (LOCAL === undefined) {
+      const pixie = await getPixie();
+      LOCAL = pixie.isLocal
+    }
+
 
     if (t && Object.keys(rest ?? {}).length) {
-      if (t === 'g') {
+      if (!LOCAL || t === 'g' || (rest?.l1 && rest?.l2 && rest?.l3)) {
         const pixie = await getPixie();
         try {
-          const b = await pixie.image({ ...(rest as any) });
+          const b = await pixie.image({ t, ...(rest as any) });
           if (b.data && Buffer.isBuffer(b.data)) {
             const type = await FileType.fromBuffer(b.data);
             const s = new Readable();
             s.push(b.data);
             s.push(null);
-            s.on('error', function () {
+            s.on('error', function (e) {
+              if (process.env.NODE_ENV === 'development') {
+                throw e
+              }
+
               return res.status(404).end(errTxt);
             });
             res.setHeader('Content-Type', type?.mime ? type?.mime : '');
@@ -79,6 +93,9 @@ export function createImageHandler(path_type: string) {
           }
         } catch (err) {
           global.app.log.w('Error on', req.url, err);
+          if (process.env.NODE_ENV === 'development') {
+            throw err
+          }
           return res.status(404).end(errTxt);
         }
       } else {

@@ -1,10 +1,11 @@
 import classNames from 'classnames';
 import _ from 'lodash';
-import { makeAutoObservable, toJS } from 'mobx';
+import { action, autorun, makeAutoObservable, toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, {
   useCallback,
   useContext,
+  useDeferredValue,
   useEffect,
   useMemo,
   useState,
@@ -14,6 +15,10 @@ import { useSetRecoilState } from 'recoil';
 import { Dimmer, Label, Segment } from 'semantic-ui-react';
 
 import { ReaderContext } from '../../client/context';
+import {
+  useEffectAction,
+  useUpdateEffectAction,
+} from '../../client/hooks/utils';
 import {
   MutatationType,
   Query,
@@ -28,7 +33,13 @@ import {
   ItemType,
   ReadingDirection,
 } from '../../shared/enums';
-import { FieldPath, ReaderData, ServerPage } from '../../shared/types';
+import {
+  FieldPath,
+  ReaderData,
+  ServerItem,
+  ServerPage,
+} from '../../shared/types';
+import { asyncDebounce } from '../../shared/utility';
 import {
   ReaderState,
   useInitialRecoilState,
@@ -37,6 +48,15 @@ import {
 import Canvas, { CanvasState } from './Canvas';
 import CanvasImage from './CanvasImage';
 
+/**
+ * Utility function to generate a window of pages around the current page
+ * 
+ * @param page current page
+ * @param size window size
+ * @param total total number of pages
+ * @param startIndex index of first page
+ * @returns 
+ */
 function windowedPages(
   page: number,
   size: number,
@@ -103,7 +123,7 @@ const PLACEHOLDERS = _.range(59).map((p) => ({
 
 class InternalReaderState {
 
-
+  scaling: 0 | ImageSize = 0;
   lastReadPageId: number = 0;
 
   pageFocus: number = 0;
@@ -114,22 +134,33 @@ class InternalReaderState {
   // Two layers of "windows", one for the actual pages fetched from the server (remote), another for the active pages to be loaded (images) for the client (local)
   // When the local window runs out of pages, the remote window readjusts and fetches more pages if needed
 
-  windowSize: number = 10;
+  windowSize: number = 25;
   remoteWindowSize: number = 40;
+
+  // how close to the edge of the window to update the local window
+  windowEdgeOffset: number = 1;
+  // same as above but for the remote window
+  remoteWindowEdgeOffset: number = 4;
 
   fetchingMore = {
     fetching: false,
-    previousNumber: 1,
+
+    previousNumber: 0,
   };
   fetchingImages: number[] = [];
   retryImages: { [k: number]: number } = {};
+
+  private _lastScaling: 0 | ImageSize = 0;
+  private _initialPageNumber: number
 
   // keep track of image refetch retries
   maxRetries = 3;
 
   private _disposers: Array<() => void>;
 
-  constructor() {
+  constructor(initialPageNumber: number = 1) {
+
+    this._initialPageNumber = initialPageNumber;
 
     this._disposers = [];
 
@@ -140,15 +171,188 @@ class InternalReaderState {
     return this.pages?.[this.pageWindow?.[this.pageFocus]]
   }
 
+  setScaling(scaling: 0 | ImageSize) {
+    this.scaling = scaling;
+
+    // fetch images with new scaling
+    if (!this.fetchingImages) {
+      this.fetchingImages = [];
+    }
+
+    this.fetchCurrentWindowImages();
+  }
+
+  setPages(pages: ReaderData[]) {
+    this.pages = pages;
+    this.debouncedUpdateLocalWindow();
+  }
+
+  setPageWindow(window: number[]) {
+    this.pageWindow = window;
+
+    // fetch missing images from the server if needed
+    if (this.pageWindow.length) {
+      this.fetchCurrentWindowImages()
+    }
+  }
+
   setWindowSize(size: number, pageCount?: number) {
     this.windowSize = Math.min(size, this.pages.length || (pageCount ?? 1));
+    this.debouncedUpdateLocalWindow();
   }
 
   setRemoteWindowSize(size: number, pageCount?: number) {
     this.remoteWindowSize = Math.max(40, size ?? Math.ceil(this.windowSize * 2))
+    this.debouncedUpdateLocalWindow();
   }
 
-  fetchImages(scaling: 0 | ImageSize) {
+  setPageFocus(focus: number, pageNumber?: number) {
+    this.pageFocus = focus;
+
+    let needsUpdate = false;
+    if (this.pageFocus <= this.windowEdgeOffset) {
+      needsUpdate = true;
+    } else if (Math.abs(this.pageWindow.length - this.pageFocus) <= this.windowEdgeOffset) {
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      this.updateLocalWindow(pageNumber);
+    }
+  }
+
+  /**
+   * Local window, sets window of active local pages based on page number
+   * @param pageNumber force window around this page number
+   * @returns 
+   */
+  updateLocalWindow(pageNumber?: number) {
+    if (this.fetchingMore.fetching) {
+      return;
+    }
+
+    const currentPageNumber = pageNumber ?? this.currentPage?.number ?? this._initialPageNumber;
+
+    const idx = Math.max(
+      0,
+      this.pages.findIndex((p) => p.number === currentPageNumber)
+    );
+
+    const windowed = windowedPages(
+      idx,
+      this.windowSize,
+      Math.max(this.pages.length - 1, 0)
+    );
+
+    // correct focus, this is after more pages have been fetched, then the focus may point at the wrong page
+    windowed.forEach((n, i) => {
+      if (this.pages[n].number === currentPageNumber && i !== this.pageFocus) {
+        this.pageFocus = i;
+      }
+    });
+
+    if (!_.isEqual(this.pageWindow, windowed)) {
+      this.setPageWindow(windowed);
+    }
+  }
+
+  debouncedUpdateLocalWindow = _.debounce(this.updateLocalWindow, 100);
+
+  resetProfiles() {
+    this.pages = update(this.pages, { $set: i => ({ ...i, profile: undefined }) })
+    this.retryImages = {}
+    this.fetchingImages = []
+    this.fetchingMore.previousNumber = 0
+    this.fetchingMore.fetching = false
+  }
+
+  fetchMoreRemotePages = asyncDebounce(async function fetchMoreRemotePages(this: InternalReaderState, item: Pick<ServerItem, 'id'>, pageCount: number, pageNumber: number) {
+
+    if (isNaN(this.pageFocus)) {
+      return false;
+    }
+
+    const pNumber = this.pageWindow.length
+      ? this.currentPage.number
+      : pageNumber;
+
+    let fetchMore: 'left' | 'right' = undefined;
+
+
+
+    if (this.pageWindow.length) {
+      // how close to the edge of the local window needed to be before more pages should be fetched
+      const offset = Math.min(Math.floor(this.windowSize / 2), 2);
+
+      const leftPageFocusOffset = Math.max(this.pageFocus - (offset - 1), 0);
+      const rightPageFocusOffset = Math.min(
+        this.pageFocus + (offset + 1),
+        this.pageWindow.length - 1
+      );
+
+      // when close to the left side of the remote window and the page on the left side is not the first, fetch more
+      if (
+        this.pageWindow[leftPageFocusOffset] <= this.remoteWindowEdgeOffset &&
+        this.pages[0].number !== 1
+      ) {
+        fetchMore = 'left';
+      }
+      // when close to the right side of the remote window and the page on the right side is not the last, fetch more
+      else if (
+        Math.abs(this.pages.length - this.pageWindow[rightPageFocusOffset]) <= this.remoteWindowEdgeOffset &&
+        this.pages[this.pages.length - 1].number !== pageCount
+      ) {
+        fetchMore = 'right';
+      }
+    } else if (this.pages.length || pageCount) {
+      fetchMore = 'left';
+    }
+
+
+    console.debug('fetching more pages:', fetchMore,)
+    //   {
+    //     pageFocus: this.pageFocus,
+    //     pageWindow: [...this.pageWindow],
+    //     fetching: this.fetchingMore.fetching,
+    //     previousNumber: this.fetchingMore.previousNumber,
+    //     currentPage: pNumber,
+    //     pages: this.pages.length,
+
+    //   })
+
+    if (
+      fetchMore &&
+      !this.fetchingMore.fetching &&
+      (!this.pages.length || this.fetchingMore.previousNumber !== pNumber)
+    ) {
+
+
+      // when the focus gets corrected by the local window, this hook will retrigger so we need to make sure we don't refetch
+      this.fetchingMore.previousNumber = pNumber;
+
+      this.fetchingMore.fetching = true;
+      return await Query.fetch(QueryType.PAGES, {
+        gallery_id: item.id,
+        number: pNumber,
+        fields: pageFields,
+        window_size: this.remoteWindowSize,
+      })
+        .then((r) => {
+          // required, or pageWindow hook won't see it in time
+          this.fetchingMore.fetching = false;
+          this.setPages(r.data.items as ReaderData[])
+          return r.data.count;
+        })
+        .finally(() => {
+          // in case of error
+          this.fetchingMore.fetching = false;
+        });
+    }
+
+    return false
+  }, 100);
+
+  fetchCurrentWindowImages() {
 
 
     // only if not already fetching
@@ -162,7 +366,13 @@ class InternalReaderState {
       const fetch_ids: number[] = [];
       this.pageWindow
         .map((i) => this.pages[i])
-        .filter((p) => !p?.profile?.data)
+        .filter((p) => {
+          if (this._lastScaling !== this.scaling) {
+            return true;
+          }
+
+          return !p?.profile?.data
+        })
         .forEach((p) => {
           if (this.retryImages[p.id] === undefined) {
             this.retryImages[p.id] = -1;
@@ -184,9 +394,11 @@ class InternalReaderState {
         // this updates page with new fetched profile
 
         let size = ImageSize.x1280;
-        if (scaling !== undefined) {
-          size = scaling === 0 ? getOptimalImageSize() : scaling;
+        if (this.scaling !== undefined) {
+          size = this.scaling === 0 ? getOptimalImageSize() : this.scaling;
         }
+
+        this._lastScaling = size;
 
         Query.fetch(
           QueryType.PROFILE,
@@ -251,7 +463,7 @@ class InternalReaderState {
 const Reader = observer(function Reader({
   initialData,
   pageCount: initialPageCount = 0,
-  windowSize: initialWindowSize = 10,
+  windowSize: initialWindowSize = 25,
   remoteWindowSize: initialRemoteWindowSize,
   startPage = 1,
   onPage,
@@ -342,7 +554,7 @@ const Reader = observer(function Reader({
   const setPage = useSetRecoilState(ReaderState.page(stateKey));
 
   const internalState = useMemo(() => {
-    return new InternalReaderState();
+    return new InternalReaderState(pageNumber);
   }, []);
 
   useUnmount(() => {
@@ -351,52 +563,56 @@ const Reader = observer(function Reader({
 
 
   const canvasState = useMemo(() => {
-    return new CanvasState();
+    return new CanvasState(internalState.pageFocus);
   }, []);
 
   useUnmount(() => canvasState.dispose());
 
 
-  useEffect(() => {
-    internalState.pages = initialData
+  useEffectAction(() => {
+    internalState.setScaling(scaling);
+
+  }, [scaling, internalState])
+
+  useEffectAction(() => {
+    internalState.setPages(initialData)
+
   }, [initialData, internalState])
 
 
-  useEffect(() => {
+  useEffectAction(() => {
     internalState.setWindowSize(initialWindowSize, pageCount)
   }, [initialWindowSize, pageCount, internalState])
 
-  useEffect(() => {
+  useEffectAction(() => {
     internalState.setRemoteWindowSize(initialRemoteWindowSize, pageCount)
   }, [initialRemoteWindowSize, internalState])
 
-  useEffect(() => {
+  useEffectAction(() => {
     setPageCount(initialPageCount);
   }, [initialPageCount]);
 
 
-
-
   const [countLabelVisible, setCountLabelVisible] = useState(false);
 
-  // keep track of image refetch retries
 
-  const maxRetries = 3;
-
+  const debouncedPageReadEvent = useCallback(_.debounce(action((lastpage: ReaderData) => {
+    if (internalState.lastReadPageId !== lastpage.id) {
+      pageReadEvent({ item_id: lastpage.id });
+      internalState.lastReadPageId = lastpage.id;
+    }
+  }), 1000), [pageReadEvent]);
 
   // page change
 
-  useEffect(() => {
-    const lastpage = internalState.currentPage;
-    if (lastpage) {
-      return () => {
-        if (internalState.lastReadPageId !== lastpage.id) {
-          pageReadEvent({ item_id: lastpage.id });
-          internalState.lastReadPageId = lastpage.id;
-        }
-      };
+  useEffect(() => autorun(() => {
+    const page = internalState.currentPage;
+    if (page) {
+      setPageNumber(page.number);
+      debouncedPageReadEvent(page);
     }
-  }, [internalState.currentPage]);
+  }), []);
+
 
   //
 
@@ -410,7 +626,7 @@ const Reader = observer(function Reader({
     },
     {
       enabled: !!!initialData, onSuccess(data) {
-        internalState.pages = data.data.items as ReaderData[];
+        internalState.setPages(data.data.items as ReaderData[]);
         setPageCount(data.data.count);
       },
     }
@@ -426,7 +642,6 @@ const Reader = observer(function Reader({
   // on page number change
   useEffect(() => {
     if (internalState.pages.length && internalState.pageWindow.length) {
-      // there should be no issue with the page being wrong here
       const p = toJS(internalState.currentPage);
       setPage(p);
       onPage?.(p);
@@ -434,155 +649,71 @@ const Reader = observer(function Reader({
   }, [pageNumber, internalState]);
 
   // reset page number when page count changes
-  useEffect(() => {
+  useUpdateEffectAction(() => {
     setPageNumber(1);
+    internalState.updateLocalWindow(1);
   }, [pageCount]);
 
 
-  // reset pages when image size or item changes
-  useUpdateEffect(() => {
-    internalState.pages = [];
-    internalState.pageWindow = [];
-  }, [scaling, item, internalState]);
+  // TODO: move this to internal state
+  // resets pages when image size or item changes
+  useUpdateEffect(action(() => {
+    internalState.setPages([]);
+    internalState.setPageWindow([]);
+  }), [scaling, item, internalState]);
 
   // reset page number and current page when item changes
-  useUpdateEffect(() => {
+  useUpdateEffect(action(() => {
     setPageNumber(1);
-    internalState.pageFocus = 0;
+    internalState.setPageFocus(0, 1);
     setIsEnd(false);
-  }, [item, internalState]);
+  }), [item, internalState]);
 
 
+  // TODO: move this to internal state
   // // Remote window, track page focus and fetch missing pages from the server when needed
-  useUpdateEffect(() => {
-    if (isNaN(internalState.pageFocus)) {
-      return;
-    }
+  useUpdateEffect(action(() => {
 
-    let fetchMore: 'left' | 'right' = undefined;
-
-    if (internalState.pageWindow.length) {
-      // how close to the edge of the local window needed to be before more pages should be fetched
-      const offset = Math.min(Math.floor(internalState.windowSize / 2), 3);
-
-      const leftPageFocusOffset = Math.max(internalState.pageFocus - offset, 0);
-      const rightPageFocusOffset = Math.min(
-        internalState.pageFocus + offset,
-        internalState.pageWindow.length - 1
-      );
-
-      // when close to the left side and the page on the left side is not the first, fetch more
-      if (
-        internalState.pageWindow[leftPageFocusOffset] === 0 &&
-        internalState.pages[internalState.pageWindow[leftPageFocusOffset]].number !== 1
-      ) {
-        fetchMore = 'left';
+    internalState.fetchMoreRemotePages(item, pageCount, pageNumber).then(r => {
+      if (r !== false) {
+        setPageCount(r);
       }
-      // when close to the right side and the page on the right side is not the last, fetch more
-      else if (
-        internalState.pageWindow[rightPageFocusOffset] === internalState.pages.length - 1 &&
-        internalState.pages[internalState.pageWindow[rightPageFocusOffset]].number !== pageCount
-      ) {
-        fetchMore = 'right';
-      }
-    } else if (internalState.pages.length || pageCount) {
-      fetchMore = 'left';
-    }
+    })
 
-    console.debug('pages', internalState.pages)
-    console.debug('pageWindow', internalState.pageWindow)
-    console.debug('pageFocus', internalState.pageFocus)
-
-    const pNumber = internalState.pageWindow.length
-      ? internalState.currentPage.number
-      : pageNumber;
-
-    if (
-      fetchMore &&
-      !internalState.fetchingMore.fetching &&
-      (!internalState.pages.length || internalState.fetchingMore.previousNumber !== pNumber)
-    ) {
-      // when the focus gets corrected by the local window, this hook will retrigger so we need to make sure we don't refetch
-      internalState.fetchingMore.previousNumber = pNumber;
-
-      internalState.fetchingMore.fetching = true;
-      Query.fetch(QueryType.PAGES, {
-        gallery_id: item.id,
-        number: pNumber,
-        fields: pageFields,
-        window_size: internalState.remoteWindowSize,
-      })
-        .then((r) => {
-          // required, or pageWindow hook won't see it in time
-          internalState.fetchingMore.fetching = false;
-          internalState.pages = r.data.items as ReaderData[];
-          setPageCount(r.data.count);
-        })
-        .finally(() => {
-          // in case of error
-          internalState.fetchingMore.fetching = false;
-        });
-    }
-  }, [internalState.pageWindow, internalState.pageFocus]);
-
-  // Local window, set window of active local pages based on page number
-  useEffect(() => {
-    if (internalState.fetchingMore.fetching) {
-      return;
-    }
-
-    const idx = Math.max(
-      0,
-      internalState.pages.findIndex((p) => p.number === pageNumber)
-    );
-
-    const windowed = windowedPages(
-      idx,
-      internalState.windowSize,
-      Math.max(internalState.pages.length - 1, 0)
-    );
-
-    // correct focus, this is after more pages have been fetched, then the focus may point at the wrong page
-    windowed.forEach((n, i) => {
-      if (internalState.pages[n].number === pageNumber && i !== internalState.pageFocus) {
-        internalState.pageFocus = i;
-      }
-    });
-
-    if (!_.isEqual(internalState.pageWindow, windowed)) {
-      internalState.pageWindow = windowed;
-    }
-  }, [internalState.windowSize, pageNumber, internalState.pages, internalState.pageWindow]);
+  }), [internalState.pageWindow, internalState.pageFocus]);
 
 
-  // fetch missing images for windowed pages
-
-  useEffect(() => {
-    if (!internalState.fetchingImages) {
-      internalState.fetchingImages = [];
-    }
-
-    internalState.fetchImages(scaling);
-  }, [scaling, internalState]);
-
-  const onFocusChild = useCallback(
+  const onFocusChild = useCallback(action(
     (child) => {
-      const childNumber = Math.max(0, Math.min(child, internalState.pageWindow.length - 1));
-      console.log("page focus", childNumber)
-      internalState.pageFocus = childNumber;
 
-      // make sure page number is in sync
-      if (internalState.pages.length && internalState.pageWindow.length) {
-        const page = internalState.pages[internalState.pageWindow[childNumber]];
-        if (page.number !== pageNumber) {
-          setPageNumber(page.number);
-        }
-      } else {
-        setPageNumber(0);
-      }
-    },
-    [internalState.pageWindow, internalState.pages]
+
+      const childNumber = Math.max(0, Math.min(child, internalState.pageWindow.length - 1));
+      internalState.setPageFocus(childNumber);
+
+      console.debug('focus child', { childNumber, page: internalState.pageWindow[childNumber], window: [...internalState.pageWindow] })
+
+    }),
+    [internalState, canvasState]
   );
+
+  const onImageEndReached = useCallback(() => {
+    canvasState.scrollToChild(canvasState.nextChild);
+
+  }, [canvasState]);
+
+  const onImageStartReached = useCallback(() => {
+    canvasState.scrollToChild(canvasState.previousChild);
+
+  }, [canvasState]);
+
+
+  useEffect(() => {
+    console.debug('page window', [...internalState.pageWindow])
+  }, [internalState.pageWindow, internalState.pageFocus])
+
+  const currentPages = useDeferredValue(internalState.pages)
+  const currentWindow = useDeferredValue(internalState.pageWindow)
+  const currentFocus = useDeferredValue(internalState.pageFocus)
 
   return (
     <Dimmer.Dimmable
@@ -629,23 +760,27 @@ const Reader = observer(function Reader({
           ),
           [pageNumber, pageCount, countLabelVisible]
         )}
-        focusChild={internalState.pageFocus}
+        focusChild={currentFocus}
         onFocusChild={onFocusChild}
-        onEnd={useCallback(() => {
+        onEndReached={useCallback(() => {
           if (!internalState.fetchingMore.fetching) {
             // is probably fetching more pages, don't end yet
-            if (pageCount && !internalState.pageWindow.length) {
+            if (pageCount && !currentWindow.length) {
               return;
             }
             setIsEnd(true);
           }
-        }, [pageCount, internalState.pageWindow])}>
-        {internalState.pageWindow.map((i, idx) => (
+        }, [pageCount, currentWindow])}>
+        {currentWindow.map((i, idx) => (
           <CanvasImage
-            key={`${internalState.pages[i].id}-${stretchFit}`}
-            href={PLACEHOLDERS[i].url} //{pages[i]?.profile?.data}
-            onError={internalState.removePageImage.bind(internalState, internalState.pages[i].id)}
-            focused={idx === internalState.pageFocus}
+            key={`${currentPages[i].id}-${stretchFit}`}
+            data-href={currentPages[i]?.profile?.data}
+            href={currentPages[i]?.profile?.data}
+            // href={PLACEHOLDERS[i].url}
+            onError={internalState.removePageImage.bind(internalState, currentPages[i].id)}
+            onStartReached={onImageStartReached}
+            onEndReached={onImageEndReached}
+            focused={idx === currentFocus}
             state={canvasState}
           />
         ))}
