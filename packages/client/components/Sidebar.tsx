@@ -167,9 +167,9 @@ export function MainSidebar({
           </div>
           <div className="middle-aligned">
             <SidebarItem
-              href="/favorites"
+              href="/dashboard"
               icon={{ name: 'heart', color: 'red' }} // <-- use React.memo
-            >{t`Favorites`}</SidebarItem>
+            >{t`Dashboard`}</SidebarItem>
             <SidebarItem
               href="/library"
               icon={'grid layout'}>{t`Library`}</SidebarItem>
@@ -259,9 +259,8 @@ export const StickySidebar = forwardRef(function StickySidebar(
   }, [visible, menuSelector]);
 
   useEffect(() => {
-    ref.current.style.paddingRight = `calc(${
-      window.innerWidth - document.body.offsetWidth
-    }px + ${ref.current.style.paddingRight ?? 0})`;
+    ref.current.style.paddingRight = `calc(${window.innerWidth - document.body.offsetWidth
+      }px + ${ref.current.style.paddingRight ?? 0})`;
     ref.current.style.transition =
       'transform 300ms ease, -webkit-transform 300ms ease, top 0.15s ease-in 0s';
   }, []);

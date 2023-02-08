@@ -51,22 +51,22 @@ export function IsolationLabel({
         isolation === 'user'
           ? t`This option is isolated to the user`
           : isolation === 'client'
-          ? t`This option is isolated to the client`
-          : t`This option is global`
+            ? t`This option is isolated to the client`
+            : t`This option is global`
       }
       color={
         isolation === 'user'
           ? 'purple'
           : isolation === 'client'
-          ? 'teal'
-          : 'black'
+            ? 'teal'
+            : 'black'
       }
       {...props}>
       {isolation === 'user'
         ? t`User`
         : isolation === 'client'
-        ? t`Client`
-        : t`Global`}
+          ? t`Client`
+          : t`Global`}
     </Label>
   );
 }
@@ -104,16 +104,16 @@ export function OptionField<
   type: I;
 } & Omit<
   I extends 'select'
-    ? React.ComponentProps<typeof Select>
-    : I extends 'boolean'
-    ? React.ComponentProps<typeof Checkbox>
-    : I extends 'number'
-    ? React.ComponentProps<typeof Input>
-    : I extends 'string'
-    ? React.ComponentProps<typeof Input>
-    : I extends 'json'
-    ? React.ComponentProps<typeof JSONTextEditor>
-    : never,
+  ? React.ComponentProps<typeof Select>
+  : I extends 'boolean'
+  ? React.ComponentProps<typeof Checkbox>
+  : I extends 'number'
+  ? React.ComponentProps<typeof Input>
+  : I extends 'string'
+  ? React.ComponentProps<typeof Input>
+  : I extends 'json'
+  ? React.ComponentProps<typeof JSONTextEditor>
+  : never,
   'value' | 'label' | 'type'
 >) {
   return defined(cfg[nskey]) || visible ? (
@@ -547,10 +547,11 @@ function ServerPane() {
             optionChange={optionChange}
           />
           <OptionField
-            label={t`Amount of time a session is valid (set to 0 for always valid)`}
+            label={t`Amount of time a session is valid for`}
             cfg={cfg}
             nskey="server.session_span"
             type="number"
+            help={`Set to 0 for always valid`}
             inputLabel={t`minutes`}
             optionChange={optionChange}
           />
@@ -573,20 +574,24 @@ function ServerPane() {
                 label={t`Automatically download, install and restart when a new update is available`}
                 cfg={cfg}
                 nskey="core.auto_install_release"
+                disabled={!cfg?.['core.check_new_releases']}
                 type="boolean"
                 optionChange={optionChange}
               />
               <OptionField
-                label={t`Interval in minutes between checking for a new update, set 0 to only check once every startup`}
+                label={t`Interval in minutes between checking for a new update`}
                 cfg={cfg}
                 nskey="core.check_release_interval"
                 type="number"
+                disabled={!cfg?.['core.check_new_releases']}
+                help={`Set to 0 to only check once every startup`}
                 inputLabel={t`minutes`}
                 optionChange={optionChange}
               />
               <OptionField
                 label={t`Allow downloading beta releases`}
                 cfg={cfg}
+                disabled={!cfg?.['core.check_new_releases']}
                 nskey="core.allow_beta_releases"
                 type="boolean"
                 optionChange={optionChange}
@@ -594,6 +599,7 @@ function ServerPane() {
               <OptionField
                 label={t`Allow downloading alpha releases`}
                 cfg={cfg}
+                disabled={!cfg?.['core.check_new_releases']}
                 nskey="core.allow_alpha_releases"
                 type="boolean"
                 optionChange={optionChange}
@@ -609,10 +615,11 @@ function ServerPane() {
             </Header>
             <Segment clearing>
               <OptionField
-                label={t`Interval in hours between automatically creating a backup (set to 0 to disable auto backup)`}
+                label={t`Interval in hours between automatically creating a backup`}
                 cfg={cfg}
                 nskey="core.auto_backup_interval"
                 type="number"
+                help={`Set to 0 to disable auto backup`}
                 inputLabel={t`hours`}
                 optionChange={optionChange}
               />
@@ -650,13 +657,16 @@ function ServerPane() {
               <OptionField
                 label={t`Send deleted files to the OS recycle bin when pruned from trash`}
                 cfg={cfg}
+                disabled={!cfg?.['core.trash_item_delete_files']}
                 nskey="core.trash_send_to_systemtrash"
                 type="boolean"
                 optionChange={optionChange}
               />
               <OptionField
-                label={t`How many hours an item should stay in the trash (per item) before it is deleted and removed PERMANENTLY`}
+                label={t`How many hours an item should stay in the trash before it is deleted and removed PERMANENTLY`}
                 cfg={cfg}
+                disabled={!cfg?.['core.trash_item_delete_files']}
+                help={`This is applied on a per-item basis`}
                 nskey="core.trash_item_duration"
                 type="number"
                 inputLabel={t`hours`}
@@ -728,7 +738,7 @@ function ImportPane() {
               />
               <OptionField
                 label={t`Move gallery source`}
-                help={t`Move the gallery files to a new location`}
+                help={t`Move the gallery files to a specified location`}
                 cfg={cfg}
                 nskey="import.move_gallery"
                 type="boolean"
@@ -845,6 +855,7 @@ function AdvancedPane() {
           <OptionField
             label={t`Report critical errors so they can be fixed`}
             cfg={cfg}
+            help={t`Momo: Don't complain about errors if you turn this off! ٩(๑ \`н´๑)۶`}
             nskey="core.report_critical_errors"
             type="boolean"
             optionChange={optionChange}
@@ -866,10 +877,11 @@ function AdvancedPane() {
             optionChange={optionChange}
           />
           <OptionField
-            label={t`Wide thumbnails crop alignment (a number between 0 (left) to 1 (right))`}
+            label={t`Wide thumbnails crop alignment`}
             cfg={cfg}
             nskey="advanced.crop_thumbnail_alignment"
             type="number"
+            help={t`A number between 0 (left) to 1 (right)`}
             optionChange={optionChange}
           />
         </Segment>
@@ -879,6 +891,7 @@ function AdvancedPane() {
             <Header size="small" dividing>
               <IsolationLabel isolation="server" />
               {t`Tasks`}
+              <Header.Subheader>{t`Note that changing these does not necessarily increase perfomance`}</Header.Subheader>
             </Header>
             <Segment clearing>
               <OptionField
@@ -918,6 +931,7 @@ function AdvancedPane() {
                 cfg={cfg}
                 nskey="core.auto_thumb_clean_size"
                 type="number"
+                help={t`For small image thumbnails, like gallery covers`}
                 inputLabel="MB"
                 optionChange={optionChange}
               />
@@ -927,6 +941,7 @@ function AdvancedPane() {
                 nskey="core.auto_pages_clean_size"
                 type="number"
                 inputLabel="MB"
+                help={t`For downsized versions of the original page images`}
                 optionChange={optionChange}
               />
               <OptionField
@@ -934,6 +949,7 @@ function AdvancedPane() {
                 cfg={cfg}
                 nskey="core.auto_temp_clean_size"
                 type="number"
+                help={t`For temporary files, these are usually deleted after a short time`}
                 inputLabel="MB"
                 optionChange={optionChange}
               />
@@ -942,6 +958,7 @@ function AdvancedPane() {
                 cfg={cfg}
                 nskey="core.auto_cache_clean_size"
                 type="number"
+                help={t`For long-term cached files or other files that don't fit in the other categories`}
                 inputLabel="MB"
                 optionChange={optionChange}
               />
@@ -951,10 +968,11 @@ function AdvancedPane() {
               </Form.Field>
 
               <OptionField
-                label={t`Enable cache`}
+                label={t`Enable data cache`}
                 cfg={cfg}
                 nskey="advanced.enable_cache"
                 type="boolean"
+                help={t`This will cache requested data, sometimes reducing the amount of processing done on the server`}
                 optionChange={optionChange}
               />
 
@@ -963,6 +981,7 @@ function AdvancedPane() {
                 cfg={cfg}
                 nskey="core.cache_expiration_time"
                 type="number"
+                disabled={!cfg?.['advanced.enable_cache']}
                 inputLabel={t`seconds`}
                 optionChange={optionChange}
               />
@@ -971,6 +990,7 @@ function AdvancedPane() {
                 cfg={cfg}
                 nskey="core.interface_cache_time"
                 type="number"
+                disabled={!cfg?.['advanced.enable_cache']}
                 inputLabel={t`seconds`}
                 optionChange={optionChange}
               />
@@ -979,6 +999,7 @@ function AdvancedPane() {
                 cfg={cfg}
                 nskey="core.message_cache_time"
                 type="number"
+                disabled={!cfg?.['advanced.enable_cache']}
                 inputLabel={t`seconds`}
                 optionChange={optionChange}
               />
@@ -1144,7 +1165,7 @@ export default function SettingsModal({
         }
       };
     }
-    return () => {};
+    return () => { };
   }, [open]);
 
   return (

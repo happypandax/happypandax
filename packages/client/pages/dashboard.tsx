@@ -12,7 +12,7 @@ import {
   FavoriteTagsMore,
   Suggestions,
   TimeCapsuleGalleries,
-} from '../components/Favorites';
+} from '../components/Dashboard';
 import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import PageLayout from '../components/layout/Page';
 import MainMenu from '../components/Menu';
@@ -54,8 +54,8 @@ export async function getServerSideProps(
       ViewType.Library === view
         ? false
         : ViewType.Inbox === view
-        ? true
-        : undefined,
+          ? true
+          : undefined,
   };
 
   const data = await server.library<ServerGallery>({

@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRecoilState } from 'recoil';
-import { Button, Icon } from 'semantic-ui-react';
+import { Button, Container, Icon } from 'semantic-ui-react';
 
 import { ReaderContext } from '../../../../../client/context';
 import t from '../../../../../client/lang';
@@ -356,14 +356,17 @@ export default function Page(props: PageProps) {
           onPage={useCallback((page: ReaderData) => {
             setNumber(page.number);
           }, [])}>
-          <EndContent
-            series={props.series}
-            collections={props.collections}
-            nextChapter={props.nextChapter}
-            random={props.randomItem}
-            randomItems={props.randomItems}
-            sameArtist={props.sameArtist}
-          />
+          <Container textAlign='center'>
+
+            <EndContent
+              series={props.series}
+              collections={props.collections}
+              nextChapter={props.nextChapter}
+              random={props.randomItem}
+              randomItems={props.randomItems}
+              sameArtist={props.sameArtist}
+            />
+          </Container>
         </Reader>
         <PageInfoPortal
           container

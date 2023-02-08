@@ -98,6 +98,7 @@ export class CanvasImageState {
 
     private _autoSCrollTimerId: any = undefined
     private _autoSCrollFrameId: any = undefined
+    private _lastAutoScrollSpeed: number | undefined = undefined;
 
     private _scrollOvershoot = {
         value: 0,
@@ -109,7 +110,7 @@ export class CanvasImageState {
     private _disposers: Array<() => void>;
 
 
-    private _mouseDown = false;
+    isPanning = false;
 
     constructor(canvasState: CanvasState) {
         this.containerRef = React.createRef();
@@ -292,7 +293,7 @@ export class CanvasImageState {
     }
 
     onMouseMove = (e: MouseEvent) => {
-        if (!this._mouseDown) {
+        if (!this.isPanning) {
             return;
         }
 
@@ -308,10 +309,10 @@ export class CanvasImageState {
     };
 
     onMouseUp(e: MouseEvent) {
-        if (this._mouseDown) {
+        if (this.isPanning) {
             this._scroller.doTouchEnd(e.timeStamp);
         }
-        this._mouseDown = false;
+        this.isPanning = false;
     }
 
     onMouseDown(e: MouseEvent) {
@@ -330,7 +331,7 @@ export class CanvasImageState {
                 e.timeStamp
             );
 
-            this._mouseDown = true;
+            this.isPanning = true;
         }
     }
 
@@ -342,12 +343,12 @@ export class CanvasImageState {
         if (this.canPan(e)) {
             e.preventDefault();
             this._scroller.doTouchStart(e.touches, e.timeStamp);
-            this._mouseDown = true;
+            this.isPanning = true;
         }
     }
 
     onTouchMove(e: TouchEvent) {
-        if (!this._mouseDown) {
+        if (!this.isPanning) {
             return;
         }
         e.preventDefault();
@@ -355,11 +356,11 @@ export class CanvasImageState {
     }
 
     onTouchEnd(e: TouchEvent) {
-        if (this._mouseDown) {
+        if (this.isPanning) {
             e.preventDefault();
             this._scroller.doTouchEnd(e.timeStamp);
         }
-        this._mouseDown = false;
+        this.isPanning = false;
     }
 
     private _resetScrollOvershoot = _.debounce(function _resetScrollOvershoot(
@@ -596,12 +597,19 @@ export class CanvasImageState {
     }
 
 
-    startAutoScroll(speed: number) {
+    startAutoScroll(speed?: number) {
+
+        if (speed === undefined) {
+            speed = this._lastAutoScrollSpeed;
+        }
+
+        if (!speed) {
+            return
+        }
 
         this.stopAutoScroll();
         this.canvasState.stopAutoNavigate();
 
-        let c = speed;
         this.isAutoScrolling = true;
 
         const startAutoNavigate = _.debounce(() => {
@@ -626,9 +634,9 @@ export class CanvasImageState {
                 return;
             };
 
-            if (this.isScrollPanning || this.canvasState.isPanning) {
+            if (this.isScrollPanning || this.canvasState.isPanning || this.isPanning) {
                 console.debug('panning, retrying autoscroll')
-                this._autoSCrollTimerId = setTimeout(boundScroll, 3500);
+                this._autoSCrollTimerId = setTimeout(this.startAutoScroll, 3500);
                 return;
             }
 
@@ -665,6 +673,7 @@ export class CanvasImageState {
                 this._scroller.scrollBy(scrollDir === 'left' ? nextScroll : 0, scrollDir === 'top' ? nextScroll : 0, true);
             }
 
+            // if we're at the end, stop scrolling
             //  minus 1 to account for rounding errors
             if (currentScroll >= (maxScroll - 1)) {
                 console.debug('end reached, skipping autoscroll')
@@ -696,6 +705,10 @@ export class CanvasImageState {
         if (this._autoSCrollFrameId) {
             cancelAnimationFrame(this._autoSCrollFrameId);
             this._autoSCrollFrameId = undefined;
+        }
+
+        if (this.isAutoScrolling) {
+            this.canvasState.stopAutoNavigate();
         }
 
         this.isAutoScrolling = false;

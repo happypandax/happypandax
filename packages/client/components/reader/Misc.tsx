@@ -44,7 +44,7 @@ export function ReaderAutoNavigateButton({
       position="top center"
       trigger={<Button
         icon={
-          autoNavigate ? (pageNumber === pageCount ? 'pause' : 'play') : 'pause'
+          autoNavigate ? (pageNumber >= pageCount ? 'pause' : 'play') : 'pause'
         }
         content={
           autoNavigate && autoNavigateCounter && autoNavigateCounter <= 10
@@ -54,7 +54,7 @@ export function ReaderAutoNavigateButton({
         secondary
         color={
           autoNavigate
-            ? pageNumber === pageCount
+            ? pageNumber >= pageCount
               ? 'orange'
               : 'green'
             : undefined
@@ -74,6 +74,7 @@ export function ReaderAutoScrollButton({
 }: React.ComponentProps<typeof Button>) {
   const { stateKey } = useContext(ReaderContext);
 
+  const endReached = useRecoilValue(ReaderState.endReached(stateKey));
   const [autoScroll, setAutoScroll] = useRecoilState(
     ReaderState.autoScroll(stateKey)
   );
@@ -88,8 +89,8 @@ export function ReaderAutoScrollButton({
         secondary
         color={
           autoScroll
-            ?
-            'green'
+            ? endReached ? 'orange' :
+              'green'
             : undefined
         }
         basic

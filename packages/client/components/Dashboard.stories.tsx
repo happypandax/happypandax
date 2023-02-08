@@ -1,15 +1,15 @@
 import {
-  Favorites as FavoritesComponent,
+  FavoriteCollections,
   FavoriteGalleries,
   FavoritePages,
-  FavoriteCollections,
-} from './Favorites';
+  Favorites as FavoritesComponent,
+} from './Dashboard';
 
 export default {
-  title: 'Components/Favorites',
+  title: 'Components/Dashboard',
 };
 
-export const Favorites = () => (
+export const Dashboard = () => (
   <>
     <FavoritesComponent />
     <FavoriteGalleries />
