@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite';
 import React, {
   useCallback,
   useContext,
-  useDeferredValue,
   useEffect,
   useMemo,
   useState,
@@ -467,6 +466,8 @@ const Reader = observer(function Reader({
   remoteWindowSize: initialRemoteWindowSize,
   startPage = 1,
   onPage,
+  autoScroll: initalAutoScroll,
+  autoScrollSpeed: initalAutoScrollSpeed,
   autoNavigate: initialAutoNavigate,
   autoNavigateInterval: initialAutoNavigateInterval,
   stretchFit: initialStretchfit,
@@ -481,10 +482,12 @@ const Reader = observer(function Reader({
   initialData: ReaderData[];
   pageCount?: number;
   autoNavigateInterval?: number;
+  autoScrollSpeed?: number;
   fit?: ItemFit;
   stretchFit?: boolean;
   blurryBg?: boolean;
   autoNavigate?: boolean;
+  autoScroll?: boolean;
   direction?: ReadingDirection;
   scaling?: ImageSize | 0;
   windowSize?: number;
@@ -517,6 +520,14 @@ const Reader = observer(function Reader({
     ReaderState.stretchFit(stateKey),
     initialStretchfit
   );
+  const autoScroll = useInitialRecoilValue(
+    ReaderState.autoScroll(stateKey),
+    initalAutoScroll
+  );
+  const autoScrollSpeed = useInitialRecoilValue(
+    ReaderState.autoScrollSpeed(stateKey),
+    initalAutoScrollSpeed
+  );
   const autoNavigate = useInitialRecoilValue(
     ReaderState.autoNavigate(stateKey),
     initialAutoNavigate
@@ -525,6 +536,10 @@ const Reader = observer(function Reader({
     ReaderState.autoNavigateInterval(stateKey),
     initialAutoNavigateInterval
   );
+  const setAutoNavigateCounter = useSetRecoilState(
+    ReaderState.autoNavigateCounter(stateKey)
+  );
+
   const direction = useInitialRecoilValue(
     ReaderState.direction(stateKey),
     initialDirection
@@ -687,6 +702,7 @@ const Reader = observer(function Reader({
     (child) => {
 
 
+      console.debug('focusing child', child, 'of', internalState.pageWindow.length, 'pages')
       const childNumber = Math.max(0, Math.min(child, internalState.pageWindow.length - 1));
       internalState.setPageFocus(childNumber);
 
@@ -711,9 +727,9 @@ const Reader = observer(function Reader({
     console.debug('page window', [...internalState.pageWindow])
   }, [internalState.pageWindow, internalState.pageFocus])
 
-  const currentPages = useDeferredValue(internalState.pages)
-  const currentWindow = useDeferredValue(internalState.pageWindow)
-  const currentFocus = useDeferredValue(internalState.pageFocus)
+  const currentPages = internalState.pages
+  const currentWindow = internalState.pageWindow
+  const currentFocus = internalState.pageFocus
 
   return (
     <Dimmer.Dimmable
@@ -721,7 +737,7 @@ const Reader = observer(function Reader({
       inverted
       blurring
       dimmed={isEnd}
-      className={classNames({ 'no-padding-segment': !padded }, 'no-margins')}>
+      className={classNames({ 'no-padding-segment': !padded }, 'no-margins', 'reader')}>
       {blurryBg && (
         <div
           style={{
@@ -748,6 +764,7 @@ const Reader = observer(function Reader({
         direction={direction}
         autoNavigate={autoNavigate}
         autoNavigateInterval={autoNavigateInterval}
+        onAutoNavigateCounter={setAutoNavigateCounter}
         label={useMemo(
           () => (
             <>
@@ -776,10 +793,12 @@ const Reader = observer(function Reader({
             key={`${currentPages[i].id}-${stretchFit}`}
             data-href={currentPages[i]?.profile?.data}
             href={currentPages[i]?.profile?.data}
-            // href={PLACEHOLDERS[i].url}
             onError={internalState.removePageImage.bind(internalState, currentPages[i].id)}
             onStartReached={onImageStartReached}
             onEndReached={onImageEndReached}
+            autoNavigate={autoNavigate}
+            autoScroll={autoScroll}
+            autoScrollSpeed={autoScrollSpeed}
             focused={idx === currentFocus}
             state={canvasState}
           />

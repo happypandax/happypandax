@@ -6,6 +6,7 @@ import {
   Divider,
   Icon,
   Label,
+  Popup,
   Segment,
   Table,
   TransitionablePortal,
@@ -37,30 +38,67 @@ export function ReaderAutoNavigateButton({
   );
 
   return (
-    <Button
-      icon={
-        autoNavigate ? (pageNumber === pageCount ? 'pause' : 'play') : 'pause'
-      }
-      content={
-        autoNavigate && autoNavigateCounter && autoNavigateCounter <= 10
-          ? autoNavigateCounter
-          : undefined
-      }
-      secondary
-      color={
-        autoNavigate
-          ? pageNumber === pageCount
-            ? 'orange'
-            : 'green'
-          : undefined
-      }
-      basic
-      circular
-      {...props}
-      onClick={useCallback(() => {
-        setAutoNavigate(!autoNavigate);
-      }, [autoNavigate])}
-    />
+    <Popup
+      content={t`Auto navigate`}
+      inverted
+      position="top center"
+      trigger={<Button
+        icon={
+          autoNavigate ? (pageNumber === pageCount ? 'pause' : 'play') : 'pause'
+        }
+        content={
+          autoNavigate && autoNavigateCounter && autoNavigateCounter <= 10
+            ? autoNavigateCounter
+            : undefined
+        }
+        secondary
+        color={
+          autoNavigate
+            ? pageNumber === pageCount
+              ? 'orange'
+              : 'green'
+            : undefined
+        }
+        basic
+        circular
+        {...props}
+        onClick={useCallback(() => {
+          setAutoNavigate(!autoNavigate);
+        }, [autoNavigate])}
+      />} />
+  );
+}
+
+export function ReaderAutoScrollButton({
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  const { stateKey } = useContext(ReaderContext);
+
+  const [autoScroll, setAutoScroll] = useRecoilState(
+    ReaderState.autoScroll(stateKey)
+  );
+
+  return (
+    <Popup
+      content={t`Auto scroll`}
+      inverted
+      position="top center"
+      trigger={<Button
+        icon="lightning"
+        secondary
+        color={
+          autoScroll
+            ?
+            'green'
+            : undefined
+        }
+        basic
+        circular
+        {...props}
+        onClick={useCallback(() => {
+          setAutoScroll(!autoScroll);
+        }, [autoScroll])}
+      />} />
   );
 }
 

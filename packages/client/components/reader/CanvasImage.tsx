@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import _ from 'lodash';
-import { makeAutoObservable, reaction } from 'mobx';
+import { makeAutoObservable, reaction, toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { RefObject, useCallback, useMemo } from 'react';
 import { useUnmount } from 'react-use';
@@ -77,6 +77,10 @@ export class CanvasImageState {
     // whether the image is the current child
     isFocused = false;
 
+    autoNavigateEnabled = false;
+
+    isAutoScrolling = false;
+
     isScrollPanning = false;
     imageZoom = 1;
 
@@ -91,6 +95,9 @@ export class CanvasImageState {
     private _scroller: Scroller;
     private _scrollPanX = 0;
     private _scrollPanY = 0;
+
+    private _autoSCrollTimerId: any = undefined
+    private _autoSCrollFrameId: any = undefined
 
     private _scrollOvershoot = {
         value: 0,
@@ -143,7 +150,14 @@ export class CanvasImageState {
         // reset zoom when not current child
         if (!isFocused) {
             this.resetZoom();
+
+            // stop auto scrolling if not focused
+            if (this.isAutoScrolling) {
+                console.debug('stopping auto scroll because not focused');
+                this.stopAutoScroll();
+            }
         }
+
     }
 
     private _onPublish(left: number, top: number, zoom: number) {
@@ -233,6 +247,7 @@ export class CanvasImageState {
     }
 
     update() {
+        this.adjustFit();
         const { left, top, zoom } = this._scroller.getValues();
         this._onPublish(left, top, zoom);
     }
@@ -359,6 +374,8 @@ export class CanvasImageState {
     private endReached = _.debounce(_.throttle(function endReached(
         this: CanvasImageState,
     ) {
+        this.stopAutoScroll()
+
         if (this.isFocused) {
 
             this.onEndReachedCallback?.()
@@ -378,12 +395,14 @@ export class CanvasImageState {
     onWheel(e: WheelEvent) {
         const state = this.canvasState;
         const container = this.containerRef.current;
-        const image = this.imageRef.current;
 
-        if (state.wheelZoom || e.ctrlKey) {
+        if (e.defaultPrevented) {
+            return;
+        }
+
+        if ((e.ctrlKey && !state.wheelZoom) || (state.wheelZoom && !e.ctrlKey)) {
             // zoom with scroll
 
-            e.stopPropagation();
             const { zoom, left, top } = this._scroller.getValues();
             const change = e.deltaY > 0 ? 0.88 : 1.28;
 
@@ -410,6 +429,7 @@ export class CanvasImageState {
 
             if (!this.isScrollPanning) {
                 this.isScrollPanning = true;
+                this.canvasState.isPanning = true;
                 this._scrollPanX = left;
                 this._scrollPanY = top;
             }
@@ -434,7 +454,9 @@ export class CanvasImageState {
                 case ReadingDirection.LeftToRight:
                 case ReadingDirection.TopToBottom: {
                     if (this._scrollPanY === top) {
-                        if (scrollingDown && this._scrollPanY >= scrollMaxTop) {
+                        // minus 1 to account for rounding errors
+                        if (scrollingDown && (this._scrollPanY >= (scrollMaxTop - 1) || !this.canPan())) {
+
                             // calculate overshoot
                             if (this._scrollOvershoot.dir === 'down') {
                                 this._scrollOvershoot.value += deltaY;
@@ -443,7 +465,7 @@ export class CanvasImageState {
                                 this._scrollOvershoot.value = 0;
                             }
 
-                            console.debug(this._scrollOvershoot)
+                            console.debug(toJS(this._scrollOvershoot))
 
                             if (this._scrollOvershoot.dir === 'down' && this._scrollOvershoot.value >= 300) {
                                 this.endReached();
@@ -537,7 +559,7 @@ export class CanvasImageState {
         this.adjust();
     }
 
-    adjust() {
+    adjust = _.debounce(function adjust() {
         this._scroller.setPosition(0, 0);
         const container = this.containerRef.current;
         const image = this.imageRef.current;
@@ -552,13 +574,14 @@ export class CanvasImageState {
             image.offsetWidth * 1.01,
             image.offsetHeight * 1.01
         );
-    }
+    }, 50);
 
     private _onScrollPanEnd = _.debounce(function _onScrollPanEnd(
         this: CanvasImageState,
         e: WheelEvent
     ) {
         this.isScrollPanning = false;
+        this.canvasState.isPanning = false;
 
     },
         150);
@@ -572,7 +595,115 @@ export class CanvasImageState {
         this._scroller.scrollTo(0, 0, true, 1);
     }
 
+
+    startAutoScroll(speed: number) {
+
+        this.stopAutoScroll();
+        this.canvasState.stopAutoNavigate();
+
+        let c = speed;
+        this.isAutoScrolling = true;
+
+        const startAutoNavigate = _.debounce(() => {
+            this.canvasState.startAutoNavigate(
+                this.canvasState._lastAutoNavigateInterval,
+                this.canvasState._lastAutoNavigateCallback
+            );
+        }, 100)
+
+        let start: number
+        let prevtime: number
+
+        function scroll(this: CanvasImageState, time: number) {
+            if (!this.isAutoScrolling || !this.isFocused) {
+                console.debug('not focused or not enabled, skipping autoscroll')
+                return
+            };
+
+            if (!this.canvasState.isTabActive) {
+                console.debug('tab not active, retrying autoscroll')
+                this._autoSCrollTimerId = setTimeout(boundScroll, 5000);
+                return;
+            };
+
+            if (this.isScrollPanning || this.canvasState.isPanning) {
+                console.debug('panning, retrying autoscroll')
+                this._autoSCrollTimerId = setTimeout(boundScroll, 3500);
+                return;
+            }
+
+            if (!this.imageHeight || !this.imageWidth) {
+                console.debug('no image height or width, retrying autoscroll')
+                this._autoSCrollTimerId = setTimeout(boundScroll, 500);
+                return;
+            }
+
+            if (start === undefined) {
+                start = time;
+            }
+
+            const elapsed = time - start;
+            let maxScroll = 0;
+            let currentScroll = 0;
+            let scrollDir: 'top' | 'left' = 'top'
+
+            // scroll in the longest direction
+            if (this.imageHeight > this.imageWidth) {
+                maxScroll = this._scroller.getScrollMax().top;
+                currentScroll = this._scroller.getValues().top;
+                scrollDir = 'top'
+            } else {
+                maxScroll = this._scroller.getScrollMax().left;
+                currentScroll = this._scroller.getValues().left;
+                scrollDir = 'left'
+            }
+
+            // TODO: improve this by easing the speed
+
+            if (prevtime !== time) {
+                const nextScroll = (speed / 60);
+                this._scroller.scrollBy(scrollDir === 'left' ? nextScroll : 0, scrollDir === 'top' ? nextScroll : 0, true);
+            }
+
+            //  minus 1 to account for rounding errors
+            if (currentScroll >= (maxScroll - 1)) {
+                console.debug('end reached, skipping autoscroll')
+                if (this.autoNavigateEnabled && this.canvasState._lastAutoNavigateInterval) {
+                    startAutoNavigate();
+                }
+                return;
+            }
+
+            prevtime = time;
+            this._autoSCrollFrameId = requestAnimationFrame(boundScroll);
+
+        }
+
+        const boundScroll = scroll.bind(this);
+
+        this._autoSCrollTimerId = setTimeout(() => {
+            this._autoSCrollFrameId = requestAnimationFrame(boundScroll);
+        }, 8000);
+
+    }
+
+    stopAutoScroll() {
+        if (this._autoSCrollTimerId) {
+            clearTimeout(this._autoSCrollTimerId);
+            this._autoSCrollTimerId = undefined;
+        }
+
+        if (this._autoSCrollFrameId) {
+            cancelAnimationFrame(this._autoSCrollFrameId);
+            this._autoSCrollFrameId = undefined;
+        }
+
+        this.isAutoScrolling = false;
+    }
+
+
     dispose() {
+        this.stopAutoScroll();
         this._disposers.forEach((d) => d());
     }
 }
@@ -581,6 +712,9 @@ export class CanvasImageState {
 
 const CanvasImage = observer(function CanvasImage({
     href,
+    autoNavigate,
+    autoScroll,
+    autoScrollSpeed,
     state: canvasState,
     onError,
     onEndReached,
@@ -590,6 +724,9 @@ const CanvasImage = observer(function CanvasImage({
 }: {
     href: string;
     state: CanvasState;
+    autoNavigate?: boolean;
+    autoScroll?: boolean;
+    autoScrollSpeed?: number;
     onError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
     onEndReached?: () => void;
     onStartReached?: () => void;
@@ -602,6 +739,19 @@ const CanvasImage = observer(function CanvasImage({
     useUnmount(() => {
         state.dispose();
     });
+
+    useEffectAction(() => {
+        if (autoScroll && focused) {
+            state.startAutoScroll(autoScrollSpeed ?? 50);
+        } else {
+            state.stopAutoScroll();
+        }
+
+    }, [autoScroll, focused, autoScrollSpeed, state]);
+
+    useEffectAction(() => {
+        state.autoNavigateEnabled = autoNavigate;
+    }, [autoNavigate]);
 
     useEffectAction(() => {
         state.setHref(href);

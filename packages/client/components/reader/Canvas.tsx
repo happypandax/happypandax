@@ -3,8 +3,7 @@ import _ from 'lodash';
 import { makeAutoObservable, reaction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { RefObject, useCallback, useEffect } from 'react';
-import { useFullscreen } from 'react-use';
-import { useSetRecoilState } from 'recoil';
+import { useFullscreen, useUnmount } from 'react-use';
 
 import Scroller from '@twiddly/scroller';
 
@@ -16,10 +15,8 @@ import {
     useTrackDimensions,
     useUpdateEffectAction,
 } from '../../client/hooks/utils';
-import t from '../../client/lang';
 import { ItemFit, ReadingDirection } from '../../shared/enums';
 import { roundToNearest } from '../../shared/utility';
-import { ReaderState } from '../../state';
 import { scrollRender } from './CanvasImage';
 
 export class CanvasState {
@@ -35,6 +32,8 @@ export class CanvasState {
     isFullscreen = false;
     isTabActive = true;
 
+    isAutoNavigating = false;
+
     focusChild: number;
 
     containerRef: RefObject<HTMLDivElement>;
@@ -45,6 +44,10 @@ export class CanvasState {
     onFocusChildCallback: ((child: number) => any) | undefined = undefined;
 
     window: any[] = [];
+
+    // semi private, used by canvas image
+    _lastAutoNavigateInterval: number | undefined = undefined;
+    _lastAutoNavigateCallback: (c: number) => void | undefined = undefined;
 
     private _scroller: Scroller;
 
@@ -95,7 +98,7 @@ export class CanvasState {
         let child = this.focusChild
         if (!this._scroller) return child;
 
-        if (!this.containerRef.current.clientHeight) return child;
+        if (!this.containerRef?.current?.clientHeight) return child;
 
         switch (this.direction) {
             case ReadingDirection.TopToBottom: {
@@ -108,7 +111,7 @@ export class CanvasState {
             child = 0;
         };
 
-        console.debug("current child", child, this._scroller.getValues(), this.containerRef.current.clientHeight)
+        // console.debug("current child", child, this._scroller.getValues(), this.containerRef.current.clientHeight)
 
         return roundToNearest(child);
     }
@@ -130,9 +133,14 @@ export class CanvasState {
     }
 
     private _scrollTo(child: number, animate = true) {
+        if (!this._scroller) return;
+        if (!this.containerRef?.current) return;
+
         const { left, top } = this._scroller.getValues();
 
         const container = this.containerRef.current;
+
+        console.debug('_scroll to', child, this._scroller.getValues(), child * container.clientHeight, this._scroller.getDimensions())
 
         switch (this.direction) {
             case ReadingDirection.TopToBottom:
@@ -167,6 +175,12 @@ export class CanvasState {
 
         console.debug("scrolling to child", child, "current child", this.currentChild, "animate", animate)
 
+        if (this.isAutoNavigating) {
+            this.startAutoNavigate(
+                this._lastAutoNavigateInterval,
+                this._lastAutoNavigateCallback
+            );
+        }
 
         this._scrollTo(child, animate);
 
@@ -276,16 +290,19 @@ export class CanvasState {
     initializeValues() {
         const { position, dimensions } = this.adjustments;
 
+        console.debug("initializing values", position, dimensions,
+            this.currentChild, this._scroller.getValues())
 
-        this._scroller.setPosition(
-            position.left,
-            position.top
-        );
+
         this._scroller.setDimensions(
             dimensions.width,
             dimensions.height,
             dimensions.contentWidth,
             dimensions.contentHeight
+        );
+        this._scroller.setPosition(
+            position.left,
+            position.top
         );
 
         const childNumber = Math.max(
@@ -293,7 +310,7 @@ export class CanvasState {
             Math.min(this.focusChild, this.window.length - 1)
         );
 
-        console.debug("initializing values", childNumber, this.focusChild, this.window.length)
+        console.debug("initializing values", childNumber, this.focusChild, this.window.length, position, dimensions, this._scroller.getValues())
 
         this._scrollTo(childNumber, false);
 
@@ -308,7 +325,7 @@ export class CanvasState {
         console.debug('adjustFocus', this.focusChild, this.currentChild)
 
         this._scrollTo(this.focusChild, false);
-    }, 100)
+    }, 105)
 
     needsAdjust() {
         if (!this._scroller) return false;
@@ -352,17 +369,20 @@ export class CanvasState {
         const { position, dimensions } = this.adjustments;
 
 
-        this._scroller.setPosition(
-            position.left,
-            position.top
-        );
         this._scroller.setDimensions(
             dimensions.width,
             dimensions.height,
             dimensions.contentWidth,
             dimensions.contentHeight
         );
+
+        const { left, top } = this._scroller.getValues();
+        if (isNaN(left) || isNaN(top)) {
+            this._scrollTo(this.currentChild, false);
+        }
+
         console.debug('adjust dimensions', 'position', position, 'dimensions', dimensions)
+        console.debug('scroller dimensions', this._scroller.getValues(), this._scroller.getDimensions())
     }, 100)
 
     // private _onCanvasKeyDown = (e: KeyboardEvent) => {
@@ -421,17 +441,28 @@ export class CanvasState {
         }, 150)
 
     onWheel(e: WheelEvent) {
-        // scrolls with wheel when zoom is disabled
 
-        if (e.defaultPrevented || this.wheelZoom) {
+
+        if (e.defaultPrevented) {
             return;
         }
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+
+        if (this.wheelZoom) {
+            return;
+        }
+
+        return;
+
+        // scrolls with wheel when zoom is disabled
 
         const container = this.containerRef.current;
         const content = this.contentRef.current;
 
-        e.preventDefault();
-        e.stopPropagation();
 
         if (!this.isPanning) {
             const { left, top } = this._scroller.getValues();
@@ -485,24 +516,27 @@ export class CanvasState {
     }
 
     startAutoNavigate(interval: number, counterCallback?: (c: number) => void) {
-        if (
-            this.isTabActive &&
-            this.currentChild < this.window.length - 1
-        ) {
-            this.stopAutoNavigate();
-            let c = interval;
-            const t = setInterval(() => {
-                if (this.isPanning) return;
-                c--;
-                counterCallback?.(c);
-                if (!c) {
-                    this.scrollToChild(this.nextChild, true);
-                    c = interval;
-                }
-            }, 1000);
+        this.stopAutoNavigate();
 
-            return () => clearInterval(t);
-        }
+        this._lastAutoNavigateCallback = counterCallback;
+        this._lastAutoNavigateInterval = interval;
+
+        let c = interval;
+        this.isAutoNavigating = true;
+        this._autoNavigateTimerId = setInterval(() => {
+
+            if (!this.isTabActive || !(this.currentChild < this.window.length - 1)) return;
+
+            if (this.isPanning || !this.isAutoNavigating) return;
+
+            c--;
+            counterCallback?.(c);
+            if (!c) {
+                this.scrollToChild(this.nextChild, true);
+                c = interval;
+            }
+
+        }, 1000);
     }
 
     stopAutoNavigate() {
@@ -510,6 +544,7 @@ export class CanvasState {
             clearInterval(this._autoNavigateTimerId);
             this._autoNavigateTimerId = undefined;
         }
+        this.isAutoNavigating = false;
     }
 
     onDoubleClick(e: MouseEvent) {
@@ -586,8 +621,8 @@ export class CanvasState {
     }
 
     dispose() {
-        this._disposers.forEach((d) => d());
         this.stopAutoNavigate();
+        this._disposers.forEach((d) => d());
     }
 }
 
@@ -604,6 +639,7 @@ const Canvas = observer(function Canvas({
     label,
     onFocusChild,
     onEndReached,
+    onAutoNavigateCounter,
     stateKey,
 }: {
     children?: React.ReactNode;
@@ -619,6 +655,7 @@ const Canvas = observer(function Canvas({
     autoNavigate?: boolean;
     onFocusChild?: (number) => void;
     onEndReached?: () => void;
+    onAutoNavigateCounter?: (number) => void;
 }) {
 
     const tabActive = useTabActive();
@@ -626,9 +663,10 @@ const Canvas = observer(function Canvas({
         onClose: () => { state.isFullscreen = false; },
     });
 
-    const setAutoNavigateCounter = useSetRecoilState(
-        ReaderState.autoNavigateCounter(stateKey)
-    );
+    useUnmount(() => {
+        state.dispose();
+    });
+
 
     useUpdateEffectAction(() => {
         state.updateWindow(React.Children.toArray(children))
@@ -666,6 +704,15 @@ const Canvas = observer(function Canvas({
     useEffectAction(() => {
         state.onEndReachedCallback = onEndReached;
     }, [onEndReached, state]);
+
+    useRefEvent(
+        state.containerRef,
+        'wheel',
+        e => state.onWheel(e),
+        { passive: false },
+        [state]
+    );
+
 
     useBodyEvent(
         'mousemove',
@@ -709,11 +756,12 @@ const Canvas = observer(function Canvas({
     // auto navigate
     useEffectAction(() => {
         if (autoNavigate) {
-            state.startAutoNavigate(autoNavigateInterval, setAutoNavigateCounter);
+            state.startAutoNavigate(autoNavigateInterval, onAutoNavigateCounter);
         } else {
             state.stopAutoNavigate();
         }
-    }, [autoNavigate, autoNavigateInterval, setAutoNavigateCounter, state]);
+
+    }, [autoNavigate, autoNavigateInterval, onAutoNavigateCounter]);
 
     // initialize values
 

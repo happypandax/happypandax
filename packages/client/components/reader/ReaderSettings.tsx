@@ -55,6 +55,12 @@ export default function ReaderSettings({
   const [stretchFit, setStretchFit] = useRecoilState(
     ReaderState.stretchFit(stateKey)
   );
+  const [autoScroll, setAutoScroll] = useRecoilState(
+    ReaderState.autoScroll(stateKey)
+  );
+  const [autoScrollSpeed, setAutoScrollSpeed] = useRecoilState(
+    ReaderState.autoScrollSpeed(stateKey)
+  );
   const [autoNavigateInterval, setAutoNavigateInterval] = useRecoilState(
     ReaderState.autoNavigateInterval(stateKey)
   );
@@ -133,12 +139,38 @@ export default function ReaderSettings({
           onChange={useCallback((ev) => {
             ev.preventDefault();
             const v = parseFloat(ev.target.value);
-            setAutoNavigateInterval(Math.max(3, isNaN(v) ? 12 : v));
+            setAutoNavigateInterval(Math.max(0, isNaN(v) ? 15 : v));
           }, [])}>
           <label>{t`Auto navigate interval`}</label>
           <input value={autoNavigateInterval} type="number" min={0} />
           <span className="sub-text">{t`Seconds`}</span>
         </Form.Field>
+
+        <Form.Group>
+          <Form.Field
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+              const v = parseFloat(ev.target.value);
+              setAutoScrollSpeed(Math.max(0, isNaN(v) ? 100 : v));
+            }, [])}
+            width={10}
+            disabled={!autoScroll}
+          >
+            <label>{t`Auto scroll speed`}</label>
+            <input value={autoScrollSpeed} type="number" min={0} />
+          </Form.Field>
+
+          <Form.Field width={6}>
+            <Checkbox
+              label={t`Auto scroll`}
+              checked={autoScroll}
+              onChange={useCallback((ev, data) => {
+                ev.preventDefault();
+                setAutoScroll(data.checked);
+              }, [])}
+            />
+          </Form.Field>
+        </Form.Group>
 
         <Form.Field
           onChange={useCallback((ev) => {
@@ -150,6 +182,8 @@ export default function ReaderSettings({
           <input value={autoReadNextCountdown} type="number" min={0} />
           <span className="sub-text">{t`Set to 0 to disable`}</span>
         </Form.Field>
+
+
 
         <Form.Field>
           <label>{t`Zoom with mouse wheel`}</label>

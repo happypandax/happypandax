@@ -28,6 +28,22 @@ export default class _ReaderState extends StateBlock {
     true
   );
 
+  static autoScroll = defineAtom(
+    {
+      default: false,
+      effects_UNSTABLE: [localStorageEffect('reader_scroll')],
+    },
+    true
+  );
+
+  static autoScrollSpeed = defineAtom(
+    {
+      default: 50,
+      effects_UNSTABLE: [localStorageEffect('reader_scroll_speed')],
+    },
+    true
+  );
+
   static autoNavigateInterval = defineAtom(
     {
       default: 20,

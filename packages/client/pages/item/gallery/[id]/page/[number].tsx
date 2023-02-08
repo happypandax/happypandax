@@ -60,6 +60,16 @@ const ReaderAutoNavigateButton = dynamic(
   }
 );
 
+const ReaderAutoScrollButton = dynamic(
+  () =>
+    import('../../../../../components/reader/Misc').then(
+      (m) => m.ReaderAutoScrollButton
+    ),
+  {
+    ssr: false,
+  }
+);
+
 const EndContent = dynamic(
   () =>
     import('../../../../../components/reader/EndContent').then(
@@ -326,6 +336,7 @@ export default function Page(props: PageProps) {
           return (
             <>
               <BottomZoneItem x="right" y="bottom">
+                <ReaderAutoScrollButton />
                 <ReaderAutoNavigateButton />
                 <ReaderSettingsButton />
               </BottomZoneItem>
