@@ -11,6 +11,12 @@ import {
 
 import t from '../client/lang';
 import { MutatationType, useMutationType } from '../client/queries';
+import {
+  HPX_SERVER_HOST,
+  HPX_SERVER_PORT,
+  LOGIN_ERROR,
+} from '../services/constants';
+import { urlparse } from '../shared/utility';
 import { useGlobalState, useSetGlobalState } from '../state/global';
 import { LabelAccordion } from './misc';
 
@@ -22,8 +28,14 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  type NextAuthErrorData = {
+    url: string;
+  }
+
   const mutation = useMutationType(MutatationType.LOGIN, {
     onSuccess: (data, variables) => {
+      console.debug(data)
+      return
       setEndpoint(variables.endpoint);
       localStorage.setItem(
         'server_endpoint',
@@ -33,22 +45,37 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     },
     onError: (err) => {
       setLoading(false);
-      if (err.response.status) {
-        switch (err.response.status) {
-          case 500:
+
+      const data = err.response?.data as unknown as NextAuthErrorData;
+
+
+      if (err.response.status === 401 && data?.url) {
+        console.debug(err.message, data)
+
+        const error = urlparse(data.url).query?.error as LOGIN_ERROR;
+
+        switch (error) {
+          case LOGIN_ERROR.InvalidCredentials:
+            setError(
+              t`Wrong credentials`
+            );
+            break;
+          case LOGIN_ERROR.ServerNotConnected:
+
             setError(
               t`Failed to connect to server` +
-                ` (${endpoint.host}:${endpoint.port})`
+              ` (${endpoint.host}:${endpoint.port})`
             );
             break;
           default:
-            setError(err.message + ': ' + err.response.data);
+            setError(err.message + ': ' + error);
         }
       } else {
-        setError(err.message + ': ' + err.response.data);
+        setError(err.message + ': ' + t`Unknown error`);
       }
     },
   });
+
 
   useEffect(() => {
     if (!endpoint.host || !endpoint.port) {
@@ -61,8 +88,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
   const getEndpoint = useCallback(() => {
     return {
-      host: endpoint.host || 'localhost',
-      port: endpoint.port || 7007,
+      host: endpoint.host || HPX_SERVER_HOST || 'localhost',
+      port: endpoint.port || HPX_SERVER_PORT || 7007,
     };
   }, [endpoint]);
 
@@ -107,7 +134,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
                 onChange={(e, d) => {
                   setEndpoint({ ...endpoint, host: d.value });
                 }}
-                placeholder={endpoint.host ?? 'localhost'}></Form.Input>
+                placeholder={endpoint.host ?? HPX_SERVER_HOST}></Form.Input>
               <Form.Input
                 name="port"
                 label={t`Port`}
@@ -119,7 +146,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
                     port: d.value ? parseInt(d.value, 10) : undefined,
                   });
                 }}
-                placeholder={endpoint.port ?? '7007'}
+                placeholder={endpoint.port ?? HPX_SERVER_PORT}
                 type="number"></Form.Input>
             </Form.Group>
           </Segment>

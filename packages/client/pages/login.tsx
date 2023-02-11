@@ -23,6 +23,7 @@ export async function getServerSideProps(
     ? decodeURIComponent(context?.query?.next as string)
     : undefined;
 
+
   return {
     props: { next },
     redirect: server.logged_in

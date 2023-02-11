@@ -1,3 +1,4 @@
+import Cors, { CorsOptions } from 'cors';
 import { NextApiRequest, NextApiResponse } from 'next';
 import nextConnect, { NextHandler, Options } from 'next-connect';
 import nextSession from 'next-session';
@@ -9,6 +10,11 @@ import { MomoActions, MomoType, QueryActions } from '../shared/query';
 import { urlparse, urlstring } from '../shared/utility';
 
 import type { CallOptions } from '../services/server';
+
+const corsOptions: CorsOptions = {
+  origin: "*",
+}
+
 export interface RequestOptions extends CallOptions {
   notifyError?: boolean;
 }
@@ -18,7 +24,9 @@ export interface ErrorResponseData {
   code: number;
 }
 
-function onError(
+
+
+function defaultOnError(
   err: any,
   req: NextApiRequest,
   res: NextApiResponse<any>,
@@ -44,11 +52,11 @@ function onError(
   res.status(500).json({ error: err.message, code: err?.code ?? 0 });
 }
 
-export function handler(options?: Options<NextApiRequest, NextApiResponse>) {
+export function handler(options?: Options<NextApiRequest, NextApiResponse>, onError = defaultOnError) {
   return nextConnect<NextApiRequest, NextApiResponse>({
     onError,
     ...options,
-  });
+  }).use(Cors(corsOptions));
 }
 
 export const getSession = nextSession({});

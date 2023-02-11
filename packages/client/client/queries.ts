@@ -4,6 +4,7 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from 'axios';
+import { getCsrfToken } from 'next-auth/react';
 
 import {
   FetchQueryOptions,
@@ -111,8 +112,35 @@ export function useMutationType<
 
   let endpoint = type as string;
   let method: AxiosRequestConfig['method'] = 'POST';
+  let headers: AxiosRequestConfig['headers'] | undefined = undefined;
+  let withCredentials: AxiosRequestConfig['withCredentials'] | undefined = undefined;
+  let dataTransform: ((data: V) => Promise<any>) | undefined = undefined;
+  let endpoointTransform: ((data: V) => Promise<string>) | undefined = undefined;
 
   switch (type) {
+
+    case MutatationType.LOGIN: {
+      withCredentials = true;
+
+      headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+      }
+
+      dataTransform = async (data: MutationActions<MutatationType.LOGIN>['variables']) => {
+        const csrfToken = await getCsrfToken()
+
+        return {
+          json: true,
+          csrfToken,
+          username: data.username,
+          password: data.password,
+          host: data.endpoint.host,
+          port: data.endpoint.port,
+        }
+      };
+
+      break
+    }
 
     case MutatationType.INSTALL_PLUGIN: {
       method = 'POST';
@@ -133,12 +161,14 @@ export function useMutationType<
 
   return useMutation(
     key,
-    (data) => {
-      return axios.request({
+    async (data) => {
+      return await axios.request({
         method,
-        url: endpoint,
-        data,
-      });
+        url: endpoointTransform ? await endpoointTransform(data) : endpoint,
+        data: dataTransform ? await dataTransform(data) : data,
+        headers,
+        withCredentials,
+      })
     },
     options
   );

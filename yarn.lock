@@ -2230,6 +2230,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.16.3":
+  version: 7.20.13
+  resolution: "@babel/runtime@npm:7.20.13"
+  dependencies:
+    regenerator-runtime: ^0.13.11
+  checksum: 09b7a97a05c80540db6c9e4ddf8c5d2ebb06cae5caf3a87e33c33f27f8c4d49d9c67a2d72f1570e796045288fad569f98a26ceba0c4f5fad2af84b6ad855c4fb
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.18.9":
   version: 7.20.6
   resolution: "@babel/runtime@npm:7.20.6"
@@ -2656,6 +2665,7 @@ __metadata:
     "@ts-stack/markdown": ^1.4.0
     "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=08d289ff7ce0d817240769936f7db4dfba9ba2b6"
     "@types/classnames": ^2.2.3
+    "@types/cors": ^2.8.13
     "@types/jest": ^27.0.1
     "@types/lodash": ^4.14.108
     "@types/node": ^14.14.35
@@ -2671,6 +2681,7 @@ __metadata:
     classnames: ^2.2.6
     colorthief: ^2.3.2
     cookie: ^0.4.1
+    cors: ^2.8.5
     darkreader: ^4.9.32
     date-fns: ^2.22.1
     eslint: ^8.29.0
@@ -2678,8 +2689,9 @@ __metadata:
     file-type: ^16.5.2
     fomantic-ui: 2.9.0
     fomantic-ui-less: ^2.8.7
+    generic-pool: ^3.9.0
     gulp: ^4.0.2
-    happypandax-client: ^3.1.0
+    happypandax-client: ^3.2.1
     identity-obj-proxy: ^3.0.0
     immutability-helper: ^3.1.1
     jest: ^27.0.6
@@ -2688,6 +2700,7 @@ __metadata:
     mobx: ^6.6.0
     mobx-react-lite: ^3.4.0
     next: ^13.1.6
+    next-auth: ^4.19.2
     next-connect: ^0.13.0
     next-session: ^4.0.4
     next-transpile-modules: ^8.0.0
@@ -2716,6 +2729,7 @@ __metadata:
     storybook-css-modules-preset: ^1.0.8
     superjson: ^1.12.0
     swiper: ^6.8.1
+    ts-custom-error: ^3.3.1
     ts-deep-pick: ^0.2.2
     ts-jest: ^27.0.5
     ts-typetools: ^0.6.1
@@ -3094,6 +3108,13 @@ __metadata:
   version: 2.7.0
   resolution: "@msgpack/msgpack@npm:2.7.0"
   checksum: 18a991fc5cf12bc7a36a4be85db33888d15349cac29bc4441884842fcafb4604a5f7e089397950c0714a144deac0e5b61eb5717f8cdfc221df544393e2f3d80f
+  languageName: node
+  linkType: hard
+
+"@msgpack/msgpack@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "@msgpack/msgpack@npm:2.8.0"
+  checksum: bead9393f57239007a2fe455df5277cbc03b125f14f310162a652b81471dcf3ab6780eaa24b36e20aa742998910a6840147d08b7267063b8e2de5d40c624360e
   languageName: node
   linkType: hard
 
@@ -3514,6 +3535,13 @@ __metadata:
   dependencies:
     "@octokit/openapi-types": ^14.0.0
   checksum: 1a0197b2c4c522ac90f145e02b3f8cb048a47f71c2c6bdbf021a03db7dd30ca92a899c0186acb401337f218efe44e60d33cc1cc68715b622bb75bc1a4e79515d
+  languageName: node
+  linkType: hard
+
+"@panva/hkdf@npm:^1.0.1":
+  version: 1.0.2
+  resolution: "@panva/hkdf@npm:1.0.2"
+  checksum: 75183b4d5ea816ef516dcea70985c610683579a9e2ac540c2d59b9a3ed27eedaff830a43a1c43c1683556a457c92ac66e09109ee995ab173090e4042c4c4bb03
   languageName: node
   linkType: hard
 
@@ -5282,6 +5310,15 @@ __metadata:
   version: 1.1.1
   resolution: "@types/color-name@npm:1.1.1"
   checksum: b71fcad728cc68abcba1d405742134410c8f8eb3c2ef18113b047afca158ad23a4f2c229bcf71a38f4a818dead375c45b20db121d0e69259c2d81e97a740daa6
+  languageName: node
+  linkType: hard
+
+"@types/cors@npm:^2.8.13":
+  version: 2.8.13
+  resolution: "@types/cors@npm:2.8.13"
+  dependencies:
+    "@types/node": "*"
+  checksum: 7ef197ea19d2e5bf1313b8416baa6f3fd6dd887fd70191da1f804f557395357dafd8bc8bed0ac60686923406489262a7c8a525b55748f7b2b8afa686700de907
   languageName: node
   linkType: hard
 
@@ -8818,6 +8855,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cookie@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "cookie@npm:0.5.0"
+  checksum: 1f4bd2ca5765f8c9689a7e8954183f5332139eb72b6ff783d8947032ec1fdf43109852c178e21a953a30c0dd42257828185be01b49d1eb1a67fd054ca588a180
+  languageName: node
+  linkType: hard
+
 "copy-anything@npm:^2.0.1":
   version: 2.0.3
   resolution: "copy-anything@npm:2.0.3"
@@ -8938,6 +8982,16 @@ __metadata:
   version: 1.0.2
   resolution: "core-util-is@npm:1.0.2"
   checksum: 7a4c925b497a2c91421e25bf76d6d8190f0b2359a9200dbeed136e63b2931d6294d3b1893eda378883ed363cd950f44a12a401384c609839ea616befb7927dab
+  languageName: node
+  linkType: hard
+
+"cors@npm:^2.8.5":
+  version: 2.8.5
+  resolution: "cors@npm:2.8.5"
+  dependencies:
+    object-assign: ^4
+    vary: ^1
+  checksum: ced838404ccd184f61ab4fdc5847035b681c90db7ac17e428f3d81d69e2989d2b680cc254da0e2554f5ed4f8a341820a1ce3d1c16b499f6e2f47a1b9b07b5006
   languageName: node
   linkType: hard
 
@@ -11857,6 +11911,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"generic-pool@npm:^3.9.0":
+  version: 3.9.0
+  resolution: "generic-pool@npm:3.9.0"
+  checksum: 3d89e9b2018d2e3bbf44fec78c76b2b7d56d6a484237aa9daf6ff6eedb14b0899dadd703b5d810219baab2eb28e5128fb18b29e91e602deb2eccac14492d8ca8
+  languageName: node
+  linkType: hard
+
 "gensync@npm:^1.0.0-beta.1, gensync@npm:^1.0.0-beta.2":
   version: 1.0.0-beta.2
   resolution: "gensync@npm:1.0.0-beta.2"
@@ -12833,12 +12894,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"happypandax-client@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "happypandax-client@npm:3.1.0"
+"happypandax-client@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "happypandax-client@npm:3.2.1"
   dependencies:
-    "@msgpack/msgpack": ^2.7.0
-  checksum: 78eb2a4727f26f3f896688e35318330812fd267dba87181e6d95daaa770d366954ba262597792c80bc9dc2edce17b4ddc1a7e4b57d6baa4218b7366f31dbcbbb
+    "@msgpack/msgpack": ^2.8.0
+    ts-custom-error: ^3.3.1
+  checksum: 2a8dc83e4a90ed1dedd93087da65ca2813dc47641d14026067ac3ed5585186e58ad51d816e5a5a2f8168ccd47cc6169d947c824eaf8bb8f0940601ce181a41f0
   languageName: node
   linkType: hard
 
@@ -15158,6 +15220,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"jose@npm:^4.10.0, jose@npm:^4.9.3":
+  version: 4.11.4
+  resolution: "jose@npm:4.11.4"
+  checksum: ab870d61e3721cfa1059b1a79cfc2fce06586c8afd4164362e1725934a635191bd938893ebdfac55a0811efbe9b6fd650bbf82d36d87e8a0b7cb4b0379328dab
+  languageName: node
+  linkType: hard
+
 "jpeg-js@npm:^0.4.1":
   version: 0.4.3
   resolution: "jpeg-js@npm:0.4.3"
@@ -17062,6 +17131,31 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"next-auth@npm:^4.19.2":
+  version: 4.19.2
+  resolution: "next-auth@npm:4.19.2"
+  dependencies:
+    "@babel/runtime": ^7.16.3
+    "@panva/hkdf": ^1.0.1
+    cookie: ^0.5.0
+    jose: ^4.9.3
+    oauth: ^0.9.15
+    openid-client: ^5.1.0
+    preact: ^10.6.3
+    preact-render-to-string: ^5.1.19
+    uuid: ^8.3.2
+  peerDependencies:
+    next: ^12.2.5 || ^13
+    nodemailer: ^6.6.5
+    react: ^17.0.2 || ^18
+    react-dom: ^17.0.2 || ^18
+  peerDependenciesMeta:
+    nodemailer:
+      optional: true
+  checksum: 7067147c80e4ba9ba328f27c548239895b746a04c0c4faa4f1e0c16cf82eb941ef7ed904a7d3bdf423f07791b471b55f5a2959f66b78495af4f02195d1a59c4e
+  languageName: node
+  linkType: hard
+
 "next-connect@npm:^0.13.0":
   version: 0.13.0
   resolution: "next-connect@npm:0.13.0"
@@ -17506,6 +17600,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"oauth@npm:^0.9.15":
+  version: 0.9.15
+  resolution: "oauth@npm:0.9.15"
+  checksum: 957c0d8d85300398dcb0e293953650c0fc3facc795bee8228238414f19f59cef5fd4ee8d17a972c142924c10c5f6ec50ef80f77f4a6cc6e3c98f9d22c027801c
+  languageName: node
+  linkType: hard
+
 "object-assign@npm:^3.0.0":
   version: 3.0.0
   resolution: "object-assign@npm:3.0.0"
@@ -17513,7 +17614,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"object-assign@npm:^4.0.1, object-assign@npm:^4.1.0, object-assign@npm:^4.1.1":
+"object-assign@npm:^4, object-assign@npm:^4.0.1, object-assign@npm:^4.1.0, object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: fcc6e4ea8c7fe48abfbb552578b1c53e0d194086e2e6bbbf59e0a536381a292f39943c6e9628af05b5528aa5e3318bb30d6b2e53cadaf5b8fe9e12c4b69af23f
@@ -17528,6 +17629,13 @@ fsevents@^1.2.7:
     define-property: ^0.2.5
     kind-of: ^3.0.3
   checksum: a9e35f07e3a2c882a7e979090360d1a20ab51d1fa19dfdac3aa8873b328a7c4c7683946ee97c824ae40079d848d6740a3788fa14f2185155dab7ed970a72c783
+  languageName: node
+  linkType: hard
+
+"object-hash@npm:^2.0.1":
+  version: 2.2.0
+  resolution: "object-hash@npm:2.2.0"
+  checksum: 55ba841e3adce9c4f1b9b46b41983eda40f854e0d01af2802d3ae18a7085a17168d6b81731d43fdf1d6bcbb3c9f9c56d22c8fea992203ad90a38d7d919bc28f1
   languageName: node
   linkType: hard
 
@@ -17730,6 +17838,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"oidc-token-hash@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "oidc-token-hash@npm:5.0.1"
+  checksum: d62aa8c665f1a0133a3694785e4cd75f471364e6a2f4fbf7997e193a49ccf8f8de15596f475c7fdf8510d021c3b72f7ff6ab8bc5b07bff4cf21d490177f164a5
+  languageName: node
+  linkType: hard
+
 "omggif@npm:^1.0.5":
   version: 1.0.10
   resolution: "omggif@npm:1.0.10"
@@ -17798,6 +17913,18 @@ fsevents@^1.2.7:
     is-docker: ^2.1.1
     is-wsl: ^2.2.0
   checksum: e9545bec64cdbf30a0c35c1bdc310344adf8428a117f7d8df3c0af0a0a24c513b304916a6d9b11db0190ff7225c2d578885080b761ed46a3d5f6f1eebb98b63c
+  languageName: node
+  linkType: hard
+
+"openid-client@npm:^5.1.0":
+  version: 5.4.0
+  resolution: "openid-client@npm:5.4.0"
+  dependencies:
+    jose: ^4.10.0
+    lru-cache: ^6.0.0
+    object-hash: ^2.0.1
+    oidc-token-hash: ^5.0.1
+  checksum: d198dbcaf0aa1d8b9f0f1d99ae30e90ec594eaf9ae668b5d61f2ee9af94a4460968d8dea7e53bd18903a1fb9c445e05aefca965bb88be3688a4bac273d1634d9
   languageName: node
   linkType: hard
 
@@ -18747,6 +18874,24 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"preact-render-to-string@npm:^5.1.19":
+  version: 5.2.6
+  resolution: "preact-render-to-string@npm:5.2.6"
+  dependencies:
+    pretty-format: ^3.8.0
+  peerDependencies:
+    preact: ">=10"
+  checksum: be8d5d8fb502d422c503e68af7bcccb6facd942f3ae9a4d093ebe3f1d4f0b15c540624bdac434d53a2a8e8fb7afa4606383414e937c40933ca43445470a026ff
+  languageName: node
+  linkType: hard
+
+"preact@npm:^10.6.3":
+  version: 10.12.0
+  resolution: "preact@npm:10.12.0"
+  checksum: bd39721cc76e2ede903a41e30f7997acc1e216910c0fe30face3b6bba0f29133724d766de0068ccd93fbdfabfb10afe6bc32b8ad26529138e6a96f7164c8afce
+  languageName: node
+  linkType: hard
+
 "prelude-ls@npm:^1.2.1":
   version: 1.2.1
   resolution: "prelude-ls@npm:1.2.1"
@@ -18799,6 +18944,13 @@ fsevents@^1.2.7:
     ansi-styles: ^5.0.0
     react-is: ^17.0.1
   checksum: 1584f7fe29da829e3cf5c9090b0a18300c4b7b81510047e1d4ba080f87e19b6ce07f191ecf2354d64c1cec4c331009bde255a272db2c8292657b6acc059e4864
+  languageName: node
+  linkType: hard
+
+"pretty-format@npm:^3.8.0":
+  version: 3.8.0
+  resolution: "pretty-format@npm:3.8.0"
+  checksum: 21a114d43ef06978f8f7f6212be4649b0b094f05d9b30e14e37550bf35c8ca24d8adbca9e5adc4cc15d9eaf7a1e7a30478a4dc37b30982bfdf0292a5b385484c
   languageName: node
   linkType: hard
 
@@ -22555,6 +22707,13 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
+"ts-custom-error@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "ts-custom-error@npm:3.3.1"
+  checksum: 50a1e825fced68d70049bd8d282379a635e43aa023a370fa8e736b12a6edba7f18a2d731fa194ac35303a8b625be56e121bdb31d8a0318250d1a8b277059fce3
+  languageName: node
+  linkType: hard
+
 "ts-dedent@npm:^2.0.0":
   version: 2.1.0
   resolution: "ts-dedent@npm:2.1.0"
@@ -23451,7 +23610,7 @@ typescript@^4.2.3:
   languageName: node
   linkType: hard
 
-"vary@npm:~1.1.2":
+"vary@npm:^1, vary@npm:~1.1.2":
   version: 1.1.2
   resolution: "vary@npm:1.1.2"
   checksum: ae0123222c6df65b437669d63dfa8c36cee20a504101b2fcd97b8bf76f91259c17f9f2b4d70a1e3c6bbcee7f51b28392833adb6b2770b23b01abec84e369660b

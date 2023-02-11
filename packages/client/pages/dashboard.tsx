@@ -102,7 +102,7 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
         ),
         []
       )}>
-      <PageTitle title={t`Favorites`} />
+      <PageTitle title={t`Dashboard`} />
       <Favorites />
       <Suggestions />
       <FavoriteArtistsMore />

@@ -32,7 +32,7 @@ export enum QueryType {
 }
 
 export enum MutatationType {
-    LOGIN = '/api/login',
+    LOGIN = '/api/auth/callback/happypandax',
     UPDATE_ITEM = '/api/item',
     UPDATE_METATAGS = '/api/metatags',
     UPDATE_CONFIG = '/api/config',
