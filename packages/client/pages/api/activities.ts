@@ -1,9 +1,9 @@
+import { ServiceType } from '../../server/constants';
 import { handler } from '../../server/requests';
-import { ServiceType } from '../../services/constants';
 import { ActivityType } from '../../shared/enums';
 
 export default handler().post(async (req, res) => {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
 
   const { items, activity_type, __options } = req.body;
 

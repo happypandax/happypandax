@@ -4,7 +4,7 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from 'axios';
-import { getCsrfToken } from 'next-auth/react';
+import { getCsrfToken, signOut } from 'next-auth/react';
 
 import {
   FetchQueryOptions,
@@ -460,4 +460,10 @@ export class Query {
 
     return obs.mutate(variables, options);
   }
+}
+
+export function logout() {
+  return signOut({
+    redirect: false,
+  });
 }

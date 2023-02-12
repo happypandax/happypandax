@@ -1,9 +1,9 @@
 import { Channel, Session } from 'better-sse';
 import { NextApiRequest } from 'next';
 
+import { ServiceType } from '../server/constants';
 import { NotificationData } from '../shared/types';
 import { Service } from './base';
-import { ServiceType } from './constants';
 
 export default class FairyService extends Service {
   channel: Channel;
@@ -25,8 +25,7 @@ export default class FairyService extends Service {
 
   healthcheck() {
     const server = global.app.service.get(ServiceType.Server);
-
-    this.channel.broadcast('status', server.status());
+    this.channel.broadcast('status', { connected: server.is_connected() });
   }
 
   register(req: NextApiRequest, session: Session, id: string) {

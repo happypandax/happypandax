@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { ServiceType } from '../../services/constants';
+import { ServiceType } from '../../server/constants';
 import LoginSegment from './segment';
 
 export default function Page({

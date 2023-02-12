@@ -3,25 +3,15 @@ import { Request } from 'zeromq';
 
 import { Decoder, Encoder } from '@msgpack/msgpack';
 
+import { PIXIE_ENDPOINT, ServiceType } from '../server/constants';
 import { Service } from './base';
-import { PIXIE_ENDPOINT, ServiceType } from './constants';
+
+import type { Endpoint } from './server';
 
 export async function getPixie() {
   const pixie = global.app.service.get(ServiceType.Pixie);
   if (!pixie.connected) {
-    let addr = PIXIE_ENDPOINT;
-    if (!addr) {
-      const server = global.app.service.get(ServiceType.Server);
-      const s = server.status();
-      if (s.connected && s.loggedIn) {
-        const props = await server.properties({ keys: ['pixie.connect'] });
-        addr = props.pixie.connect;
-      } else {
-        throw Error('server not connected');
-      }
-    }
-
-    await pixie.connect(addr);
+    throw new Error('Pixie is not connected');
   }
   return pixie;
 }
@@ -37,8 +27,26 @@ export interface PluginInfo {
   site: string;
 }
 
+type T = {
+  version: any,
+  user: any,
+  state: any,
+  update: any,
+  guest_allowed: any,
+  no_namespace_key: any,
+  webserver: {
+    host: any,
+    port: any,
+    ssl: any,
+  },
+  pixie: {
+    connect: any,
+  },
+}
+
 export default class PixieService extends Service {
-  endpoint: string;
+  #endpoint: string;
+  #server_endpoint: Endpoint;
 
   #queue: PQueue;
   #decoder: Decoder;
@@ -50,8 +58,9 @@ export default class PixieService extends Service {
 
   constructor(endpoint?: string) {
     super(ServiceType.Pixie);
+    this.#connected = false;
     this.#queue = new PQueue({ concurrency: 1 });
-    this.endpoint = endpoint;
+    this.#endpoint = endpoint;
     this.#encoder = new Encoder();
     this.#decoder = new Decoder();
     this.#socket = new Request();
@@ -61,38 +70,66 @@ export default class PixieService extends Service {
     this.#socket.receiveTimeout = 1000 * 30; // 30 secs
   }
 
-  get connected() {
+  async init(locator: ServiceLocator) {
+    const server = locator.get(ServiceType.Server);
+    server.on('connect', (...args) => this._on_connect(...args));
+    server.on('disconnect', (...args) => this._on_disconnect(...args));
+    server.on('login', (...args) => this._on_login(...args));
+  }
 
-    const server = global.app.service.get(ServiceType.Server);
-    if (!server.status().connected) {
-      if (this.#connected) {
-        this.#socket.disconnect(this.endpoint);
+  private _on_connect(endpoint: Endpoint) {
+    if (PIXIE_ENDPOINT) {
+      this.#server_endpoint = endpoint;
+
+      if (!this.#connected) {
+        global.app.log.d("Pixie connecting after server connect (", endpoint, ")");
+
+        this.connect(PIXIE_ENDPOINT);
       }
-      this.#connected = false;
     }
+  }
 
-    if (this.#connected && server.client.session !== this.#session) {
-      this.#connected = false;
-      this.#socket.disconnect(this.endpoint);
+  private _on_disconnect(endpoint: Endpoint) {
+    if (this.#connected) {
+      this.#socket.disconnect(this.#endpoint);
     }
+    this.#connected = false;
+  }
 
+  private _on_login(endpoint: Endpoint, session: string) {
+    if (!this.#connected || !(endpoint.host === this.#server_endpoint.host && endpoint.port === this.#server_endpoint.port)) {
+      const server = global.app.service.get(ServiceType.Server).session(session);
+
+      this.#connected = false
+      this.#session = session;
+      this.#server_endpoint = endpoint;
+
+      global.app.log.d("Pixie connecting after login (", session, ", ", endpoint, ")");
+
+      server.properties({
+        keys: ['pixie.connect']
+      }).then((props) => {
+        global.app.log.d('Pixie props', props)
+        this.connect(props.pixie.connect);
+      })
+    }
+  }
+
+  get connected() {
     return this.#connected;
   }
 
   get isLocal() {
-    return this.endpoint.includes('localhost') || this.endpoint.includes('127.0.0.1');
+    return this.#endpoint.includes('localhost') || this.#endpoint.includes('127.0.0.1');
   }
 
-  async connect(endpoint?: string) {
+  private async connect(endpoint?: string) {
     if (!this.connected) {
-      const e = endpoint ?? this.endpoint
+      const e = endpoint ?? this.#endpoint
       global.app.log.i('Connecting pixie to', e);
       this.#socket.connect(e);
-      this.endpoint = e;
+      this.#endpoint = e;
       global.app.log.i('Successfully connected pixie to', e);
-
-      const server = global.app.service.get(ServiceType.Server);
-      this.#session = server.client.session;
       this.#connected = true;
     }
   }
@@ -152,6 +189,10 @@ export default class PixieService extends Service {
   }
 
   async communicate(msg: unknown) {
+    if (!this.connected) {
+      throw Error('Pixie not connected');
+    }
+
     global.app.log.d("Sending pixie message", msg)
     await this.#queue.add(async () => {
       await this.#socket.send(this.#encoder.encode(msg));

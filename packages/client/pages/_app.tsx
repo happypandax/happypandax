@@ -4,7 +4,6 @@ import 'animate.css';
 import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
-import { Session } from 'next-session/lib/types';
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
@@ -19,12 +18,12 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
-import { getSession } from '../server/requests';
-import { ServiceType } from '../services/constants';
+import { IS_SERVER, ServiceType } from '../server/constants';
 import { NotificationData, ServerUser } from '../shared/types';
 import { AppState } from '../state';
 import { useGlobalValue, useSetGlobalState } from '../state/global';
 
+import type { GetServerSession } from '../server/requests';
 const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
   pageProps: {
@@ -43,7 +42,6 @@ function Fairy() {
   const [notifications, setNotifications] = useRecoilState(
     AppState.notifications
   );
-  const setLoggedIn = useSetGlobalState('loggedIn');
   const setConnected = useSetGlobalState('connected');
 
   const [fairy, setFairy] = useState<EventSource>();
@@ -56,7 +54,6 @@ function Fairy() {
 
     const onStatus = ({ data }: any) => {
       const d: any = JSON.parse(data);
-      setLoggedIn(d.loggedIn);
       setConnected(d.connected);
     };
     fairy.addEventListener('status', onStatus);
@@ -183,16 +180,16 @@ export function AppRoot({
   return (
     <QueryClientProvider client={queryClient}>
       <RecoilRoot>
-        
-          <DndProvider backend={HTML5Backend}>
-            <AppInit />
-            {children}
-          </DndProvider>
+        <DndProvider backend={HTML5Backend}>
+          <AppInit />
+          {children}
+        </DndProvider>
       </RecoilRoot>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
+
 
 function MyApp({ Component, pageProps }: AppProps<AppPageProps['pageProps']>) {
   const router = useRouter();
@@ -233,22 +230,43 @@ MyApp.getInitialProps = async function (
   let sameMachine = false;
   let connected = false;
   let user: ServerUser | null = null;
-  let session: Session;
   let notifications: NotificationData[] = [];
 
   if (global.app.IS_SERVER) {
+
+
     sameMachine =
       context.ctx.req.socket.localAddress ===
       context.ctx.req.socket.remoteAddress;
-    const server = global.app.service.get(ServiceType.Server);
 
-    const s = server.status();
-    connected = s.connected;
-    loggedIn = s.loggedIn;
+    const service = global.app.service.get(ServiceType.Server)
+    connected = service.is_connected();
 
-    user = s.loggedIn
-      ? await server.user({}, undefined, { cache: true })
-      : null;
+    const session = await global.app.getServerSession(context.ctx)
+
+    if (session) {
+
+      const fairy = global.app.service.get(ServiceType.Fairy);
+      notifications = fairy.get(session.id);
+
+      const server = service.session(session.id);
+
+      if (server) {
+
+        try {
+          user = await server.user({}, undefined, { cache: true })
+        } catch (e) {
+          global.app.log.e('Failed to get user', e)
+        }
+
+      }
+
+      if (user) {
+        loggedIn = true;
+      }
+
+    }
+
 
     if (!loggedIn && !['/login', '/_error'].includes(context.router.pathname)) {
       return redirect({
@@ -257,9 +275,6 @@ MyApp.getInitialProps = async function (
       }) as any;
     }
 
-    session = await getSession(context.ctx.req, context.ctx.res);
-    const fairy = global.app.service.get(ServiceType.Fairy);
-    notifications = fairy.get(session?.id);
   }
 
   const props = await App.getInitialProps(context);
@@ -278,8 +293,6 @@ MyApp.getInitialProps = async function (
 };
 
 export default MyApp;
-
-const IS_SERVER = typeof window === 'undefined';
 
 if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
   if (!IS_SERVER) {

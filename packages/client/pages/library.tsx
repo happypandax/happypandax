@@ -62,7 +62,7 @@ import { ItemSearch } from '../components/Search';
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
-import { ServiceType } from '../services/constants';
+import { ServiceType } from '../server/constants';
 import ServerService from '../services/server';
 import { ItemSort, ItemType, ViewType } from '../shared/enums';
 import { ServerGallery, ServerItem, ServerMetaTags } from '../shared/types';
@@ -133,8 +133,8 @@ export function libraryArgs({
       ViewType.All === view
         ? undefined
         : ViewType.Inbox === view
-        ? true
-        : false,
+          ? true
+          : false,
   };
 
   let search_options = getCookies(
@@ -226,8 +226,8 @@ export function libraryArgs({
         itemType === ItemType.Gallery
           ? galleryCardDataFields
           : itemType === ItemType.Collection
-          ? collectionCardDataFields
-          : groupingCardDataFields,
+            ? collectionCardDataFields
+            : groupingCardDataFields,
     } as Parameters<ServerService['library']>[0],
   };
 }
@@ -376,7 +376,7 @@ function LibrarySettings({
             }, [])}
             value={limit}
             options={itemsPerPage}
-            // width={4}
+          // width={4}
           />
 
           {/* <Form.Field
@@ -488,47 +488,47 @@ function ActionsMenu({
     view?: boolean;
     onClick?: () => void;
   }[] = [
-    {
-      label: t`Select all`,
-      view: false,
-      icon: 'plus',
-      itemTypes: [ItemType.Gallery, ItemType.Grouping],
-    },
-    {
-      label: t`Query metadata`,
-      view: false,
-      icon: 'search',
-      itemTypes: [ItemType.Gallery, ItemType.Grouping],
-    },
-    {
-      label: 'd-1',
-      divider: true,
-      view: false,
-      itemTypes: [ItemType.Gallery, ItemType.Grouping],
-    },
-    { label: t`Favorite all`, metatags: { favorite: true }, icon: 'heart' },
-    {
-      label: t`Unfavorite all`,
-      metatags: { favorite: false },
-      icon: 'heart outline',
-    },
-    { label: 'd-2', divider: true },
-    { label: t`Mark as read`, metatags: { read: true }, icon: 'eye' },
-    {
-      label: t`Mark as unread`,
-      metatags: { read: false },
-      icon: 'eye slash outline',
-    },
-    { label: 'd-3', divider: true },
-    {
-      label: t`Send to Library`,
-      metatags: { inbox: false },
-      icon: 'archive',
-    },
-    { label: t`Send to Inbox`, metatags: { inbox: true }, icon: 'inbox' },
-    { label: 'd-4', divider: true },
-    { label: t`Send to Trash`, metatags: { trash: true }, icon: 'trash' },
-  ];
+      {
+        label: t`Select all`,
+        view: false,
+        icon: 'plus',
+        itemTypes: [ItemType.Gallery, ItemType.Grouping],
+      },
+      {
+        label: t`Query metadata`,
+        view: false,
+        icon: 'search',
+        itemTypes: [ItemType.Gallery, ItemType.Grouping],
+      },
+      {
+        label: 'd-1',
+        divider: true,
+        view: false,
+        itemTypes: [ItemType.Gallery, ItemType.Grouping],
+      },
+      { label: t`Favorite all`, metatags: { favorite: true }, icon: 'heart' },
+      {
+        label: t`Unfavorite all`,
+        metatags: { favorite: false },
+        icon: 'heart outline',
+      },
+      { label: 'd-2', divider: true },
+      { label: t`Mark as read`, metatags: { read: true }, icon: 'eye' },
+      {
+        label: t`Mark as unread`,
+        metatags: { read: false },
+        icon: 'eye slash outline',
+      },
+      { label: 'd-3', divider: true },
+      {
+        label: t`Send to Library`,
+        metatags: { inbox: false },
+        icon: 'archive',
+      },
+      { label: t`Send to Inbox`, metatags: { inbox: true }, icon: 'inbox' },
+      { label: 'd-4', divider: true },
+      { label: t`Send to Trash`, metatags: { trash: true }, icon: 'trash' },
+    ];
 
   const cls = classNames('mini', { inverted });
 
@@ -588,7 +588,7 @@ export async function getServerSideProps(
   context: NextPageContext,
   args?: ReturnType<typeof libraryArgs>
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   const urlQuery = urlparse(context.resolvedUrl);
 
@@ -670,8 +670,8 @@ export default function Page({
   const activePage = infiniteDirty
     ? page ?? initialPage ?? 1
     : libraryargs.page !== undefined
-    ? libraryargs.page + 1
-    : page;
+      ? libraryargs.page + 1
+      : page;
 
   const errorLimited = errorLimit || initialErrorLimit;
 
@@ -894,14 +894,14 @@ export default function Page({
                   itemTypes={
                     [ItemType.Gallery, ItemType.Grouping].includes(itemType)
                       ? [
-                          ItemType.Artist,
-                          ItemType.Category,
-                          ItemType.Circle,
-                          ItemType.Grouping,
-                          ItemType.Language,
-                          ItemType.Parody,
-                          ItemType.NamespaceTag,
-                        ]
+                        ItemType.Artist,
+                        ItemType.Category,
+                        ItemType.Circle,
+                        ItemType.Grouping,
+                        ItemType.Language,
+                        ItemType.Parody,
+                        ItemType.NamespaceTag,
+                      ]
                       : [ItemType.Collection, ItemType.Category]
                   }
                   onSearch={(query) => {
@@ -1022,8 +1022,8 @@ export default function Page({
                 itemType === ItemType.Gallery
                   ? GalleryCard
                   : itemType === ItemType.Collection
-                  ? CollectionCard
-                  : GroupingCard
+                    ? CollectionCard
+                    : GroupingCard
               }
               itemsPerPage={limit}
               onItemKey={onItemKey}

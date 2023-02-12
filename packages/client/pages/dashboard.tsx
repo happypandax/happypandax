@@ -17,7 +17,7 @@ import GalleryCard, { galleryCardDataFields } from '../components/item/Gallery';
 import PageLayout from '../components/layout/Page';
 import MainMenu from '../components/Menu';
 import { PageTitle } from '../components/misc';
-import { ServiceType } from '../services/constants';
+import { ServiceType } from '../server/constants';
 import ServerService from '../services/server';
 import { ItemType, ViewType } from '../shared/enums';
 import { ServerGallery, ServerItem } from '../shared/types';
@@ -32,7 +32,8 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
+
 
   const urlQuery = urlparse(context.resolvedUrl);
 

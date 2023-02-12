@@ -29,7 +29,7 @@ import {
 } from '../../../../components/misc/Slider';
 import CardView from '../../../../components/view/CardView';
 import ListView from '../../../../components/view/ListView';
-import { ServiceType } from '../../../../services/constants';
+import { ServiceType } from '../../../../server/constants';
 import { ImageSize, ItemType } from '../../../../shared/enums';
 import {
   ServerCollection,
@@ -50,7 +50,7 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   let redirect: Redirect;
 

@@ -15,9 +15,9 @@ import {
   HPX_SERVER_HOST,
   HPX_SERVER_PORT,
   LOGIN_ERROR,
-} from '../services/constants';
+} from '../server/constants';
 import { urlparse } from '../shared/utility';
-import { useGlobalState, useSetGlobalState } from '../state/global';
+import { useGlobalState } from '../state/global';
 import { LabelAccordion } from './misc';
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
@@ -168,7 +168,6 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
 export function LoginModal({ open }: { open?: boolean }) {
   const [loggedIn, setLoggedIn] = useGlobalState('loggedIn');
-  const setConnected = useSetGlobalState('connected');
 
   return (
     <Modal open={open ?? !loggedIn}>
@@ -180,7 +179,6 @@ export function LoginModal({ open }: { open?: boolean }) {
         <LoginForm
           onSuccess={useCallback(() => {
             setLoggedIn(true);
-            setConnected(true);
           }, [])}
         />
       </Segment>

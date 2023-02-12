@@ -32,7 +32,7 @@ import {
 } from '../../components/misc';
 import { TransientFileView } from '../../components/transient/FileView';
 import { TransientImportView } from '../../components/transient/ImportView';
-import { ServiceType } from '../../services/constants';
+import { ServiceType } from '../../server/constants';
 import { CommandState, TransientViewType } from '../../shared/enums';
 import { ViewID } from '../../shared/types';
 import AddPage from './index';
@@ -118,7 +118,7 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<{}>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   const views = await server.transient_views({
     view_type: TransientViewType.File,

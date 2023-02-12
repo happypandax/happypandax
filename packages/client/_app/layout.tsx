@@ -6,15 +6,15 @@ import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
 import Theme from '../components/Theme';
+import { ServiceType } from '../server/constants';
 import { serverInitialize } from '../server/initialize';
 import { fetchQuery } from '../server/requests';
-import { ServiceType } from '../services/constants';
 import { MomoType } from '../shared/query';
 import { NotificationData } from '../shared/types';
 import { AppRoot } from './client';
 
 async function getInitiallProps() {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = global.APP.service.get(ServiceType.Server);
   const fairy = global.app.service.get(ServiceType.Fairy);
 
   const s = server.status();

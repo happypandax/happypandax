@@ -9,7 +9,7 @@ import StatusCardLabel, {
 } from '../../components/item/Status';
 import { ItemSearch } from '../../components/Search';
 import { PaginatedView } from '../../components/view/index';
-import { ServiceType } from '../../services/constants';
+import { ServiceType } from '../../server/constants';
 import ServerService from '../../services/server';
 import { ItemSort, ItemType } from '../../shared/enums';
 import { ServerStatus } from '../../shared/types';
@@ -24,7 +24,7 @@ interface PageProps {
 const limit = 100;
 
 export async function getServerSideProps(context: NextPageContext) {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   const urlQuery = urlparse(context.resolvedUrl);
 

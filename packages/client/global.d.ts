@@ -20,6 +20,7 @@ declare type DeepPick<
 > = PrettifyObject<import('ts-deep-pick').DeepPick<T, K, G>>;
 declare type Logger = import('./shared/logger').Logger;
 declare type ServiceLocator = import('./services/base').ServiceLocator;
+declare type GetServerSession = import('./server/requests').GetServerSession;
 
 declare type MakeOptional<T, K extends keyof T> = Omit<T, K> &
   { [SubKey in K]?: Maybe<T[SubKey]> };
@@ -55,6 +56,25 @@ declare type DeepPickPathPlain<T, Glob extends string = '.*'> = (
   | '*'
 ) &
   string;
+
+// like DeepPickPathPlain but without globs
+declare type DeepPickPathPlainWithoutGlob<T, Glob extends string = ''> = (
+  | (T extends Opaque
+    ? never
+    : T extends Primitive
+    ? never
+    : T extends Array<infer T>
+    ? _InnerKey<T, '', Glob>
+    : {
+      [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
+    }[_KeyOfUnion<T>])
+
+) &
+  string;
+
+declare type DeepPartial<T> = T extends object ? {
+  [P in keyof T]?: DeepPartial<T[P]>;
+} : T;
 
 type _InnerKey<
   T,
@@ -162,6 +182,7 @@ declare module NodeJS {
       IS_SERVER: boolean;
       log: Logger;
       service: ServiceLocator;
+      getServerSession: GetServerSession;
     };
     log: Logger;
   }

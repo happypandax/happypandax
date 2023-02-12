@@ -7,7 +7,7 @@ import { Divider, Grid, Segment } from 'semantic-ui-react';
 import t from '../client/lang';
 import { LoginForm } from '../components/Login';
 import { PageTitle } from '../components/misc';
-import { ServiceType } from '../services/constants';
+import { ServiceType } from '../server/constants';
 import { AppState } from '../state';
 import { useSetGlobalState } from '../state/global';
 
@@ -18,15 +18,14 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<{}>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
   const next = context.query?.next
     ? decodeURIComponent(context?.query?.next as string)
     : undefined;
 
-
   return {
     props: { next },
-    redirect: server.logged_in
+    redirect: (server && server.logged_in)
       ? { permanent: false, destination: next ?? '/library' }
       : undefined,
   };

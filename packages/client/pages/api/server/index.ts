@@ -4,12 +4,12 @@ import path from 'path';
 import sanitize from 'sanitize-filename';
 import { Readable } from 'stream';
 
-import { handler } from '../../../server/requests';
 import {
   ITEM_THUMB_STATIC_FOLDER,
   PAGE_STATIC_FOLDER,
   THUMB_STATIC_FOLDER,
-} from '../../../services/constants';
+} from '../../../server/constants';
+import { handler } from '../../../server/requests';
 import { getPixie } from '../../../services/pixie';
 
 // THIS IS SPECIFIC TO WHEN THE WEBSERVER IS STARTED BY HPX SERVER

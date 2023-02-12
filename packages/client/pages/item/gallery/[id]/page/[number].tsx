@@ -20,7 +20,7 @@ import PageLayout, {
   BottomZoneItem,
 } from '../../../../../components/layout/Page';
 import { PageTitle } from '../../../../../components/misc';
-import { ServiceType } from '../../../../../services/constants';
+import { ServiceType } from '../../../../../server/constants';
 import ServerService, { GroupCall } from '../../../../../services/server';
 import { ItemSort, ItemType } from '../../../../../shared/enums';
 import {
@@ -107,7 +107,7 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   let redirect: Redirect;
 

@@ -6,7 +6,7 @@ import {
   collectionHeaderDataFields,
   CollectionItemHeader,
 } from '../../../components/layout/CollectionLayout';
-import { ServiceType } from '../../../services/constants';
+import { ServiceType } from '../../../server/constants';
 import { ImageSize, ItemType } from '../../../shared/enums';
 import { ServerCollection } from '../../../shared/types';
 import { urlparse } from '../../../shared/utility';
@@ -20,13 +20,13 @@ const stateKey = 'collection_page';
 
 interface PageProps extends LibraryPageProps {
   collection: CollectionHeaderData &
-    DeepPick<ServerCollection, 'gallery_count'>;
+  DeepPick<ServerCollection, 'gallery_count'>;
 }
 
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   let redirect: Redirect;
   let r: Unwrap<ReturnType<typeof libraryServerSideProps>>;

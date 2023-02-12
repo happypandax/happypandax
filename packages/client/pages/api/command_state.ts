@@ -1,8 +1,8 @@
+import { ServiceType } from '../../server/constants';
 import { handler } from '../../server/requests';
-import { ServiceType } from '../../services/constants';
 
 export default handler().post(async (req, res) => {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
 
   const { command_ids, __options } = req.body;
 

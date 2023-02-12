@@ -2,15 +2,15 @@ import { NextPageContext } from 'next';
 import { useRouter } from 'next/router';
 import { Container, Segment, Tab } from 'semantic-ui-react';
 
-import { ServiceType } from '../../services/constants';
+import { ServiceType } from '../../server/constants';
 import ManagementPage from './index';
 
-interface PageProps {}
+interface PageProps { }
 
 const limit = 100;
 
 export async function getServerSideProps(context: NextPageContext) {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context(context);
 
   return {
     props: {},
@@ -29,7 +29,7 @@ const panes = [
   },
 ];
 
-export default function Page({}: PageProps) {
+export default function Page({ }: PageProps) {
   const router = useRouter();
 
   return (

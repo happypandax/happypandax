@@ -2691,7 +2691,7 @@ __metadata:
     fomantic-ui-less: ^2.8.7
     generic-pool: ^3.9.0
     gulp: ^4.0.2
-    happypandax-client: ^3.2.1
+    happypandax-client: ^3.5.0
     identity-obj-proxy: ^3.0.0
     immutability-helper: ^3.1.1
     jest: ^27.0.6
@@ -2702,7 +2702,6 @@ __metadata:
     next: ^13.1.6
     next-auth: ^4.19.2
     next-connect: ^0.13.0
-    next-session: ^4.0.4
     next-transpile-modules: ^8.0.0
     nprogress: next
     on-finished: ^2.4.1
@@ -12894,13 +12893,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"happypandax-client@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "happypandax-client@npm:3.2.1"
+"happypandax-client@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "happypandax-client@npm:3.5.0"
   dependencies:
     "@msgpack/msgpack": ^2.8.0
     ts-custom-error: ^3.3.1
-  checksum: 2a8dc83e4a90ed1dedd93087da65ca2813dc47641d14026067ac3ed5585186e58ad51d816e5a5a2f8168ccd47cc6169d947c824eaf8bb8f0940601ce181a41f0
+  checksum: c3dea6a9788f676908795d55909dc1186162d10e942ad5f6eaca32d74b8af6194fea212c438ee61c95e4e68d167f103c18d4aa6cbb0e0e71d44436cbde64eff5
   languageName: node
   linkType: hard
 
@@ -17017,15 +17016,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.1.25":
-  version: 3.1.29
-  resolution: "nanoid@npm:3.1.29"
-  bin:
-    nanoid: bin/nanoid.cjs
-  checksum: 8837bc351ac6d26882d568ce3e1d5e2d5095b0c6ca99aa8f5710eff5153e0aea4c5273681c7642d9d7a6f6e20fb1d32e5eb1125c70b25bdead417f007d30f96f
-  languageName: node
-  linkType: hard
-
 "nanoid@npm:^3.3.4":
   version: 3.3.4
   resolution: "nanoid@npm:3.3.4"
@@ -17162,16 +17152,6 @@ fsevents@^1.2.7:
   dependencies:
     trouter: ^3.2.0
   checksum: 1c63c17eafc94e6c18f2c08d201a81e69f3b24ddc3ba83449204832b4ec2b7b79df9a6cea53d44e7982b1f9e7214053d880b9fea302b8027de6cd49e2877c9b5
-  languageName: node
-  linkType: hard
-
-"next-session@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "next-session@npm:4.0.4"
-  dependencies:
-    cookie: ^0.4.1
-    nanoid: ^3.1.25
-  checksum: d602a2d75aa8b059a304f015eb6c492357f64088a37f1954a98b50f566726e5ab8f0bf3610cf8a74bd37ced5ed1c6c5fe21b964381044f592cbe8ac105029dae
   languageName: node
   linkType: hard
 

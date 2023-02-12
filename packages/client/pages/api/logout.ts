@@ -4,9 +4,9 @@ import { handler } from '../../server/requests';
 export default handler().post(async (req, res) => {
   const server = await global.app.service.get(ServiceType.Server);
 
-  const { username, password } = req.body;
+  const { session } = req.body;
 
-  return server.login(username, password).then((session) => {
-    return res.status(200).json({ session });
+  return server.logout(session).then((status) => {
+    return res.status(200).json({ status });
   });
 });

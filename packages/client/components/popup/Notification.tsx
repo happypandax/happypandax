@@ -4,7 +4,9 @@ import { useCallback } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { Header, Icon, Menu, Popup, Segment } from 'semantic-ui-react';
 
+import { GeneralActions } from '../../client/actions/general';
 import t from '../../client/lang';
+import { logout } from '../../client/queries';
 import { AppState } from '../../state';
 import { useGlobalValue } from '../../state/global';
 import { EmptySegment } from '../misc';
@@ -36,8 +38,8 @@ export function Notification({
             type === 'info'
               ? 'info'
               : type === 'warning'
-              ? 'exclamation'
-              : 'exclamation circle'
+                ? 'exclamation'
+                : 'exclamation circle'
           }
           color={
             type === 'info' ? 'blue' : type === 'warning' ? 'orange' : 'red'
@@ -97,7 +99,9 @@ export function NotificationsPopup({
   const sameMachine = useGlobalValue('sameMachine');
   const user = useGlobalValue('user');
 
-  console.debug({ user });
+  const onLogout = useCallback(() => {
+    GeneralActions.logout();
+  }, [])
 
   return (
     <Popup
@@ -109,33 +113,36 @@ export function NotificationsPopup({
       className={classNames('no-padding-segment', styles.notification_group)}
       trigger={trigger}>
       <Menu size="tiny" attached="top" secondary>
-        <Menu.Item>
+        <Menu.Item header >
           <Icon name="user" color="blue" />
           {user?.name}
         </Menu.Item>
-        <Menu.Item position="right">
-          {sameMachine && (
-            <Popup
-              inverted
-              position="left center"
-              trigger={<Icon name="home" color="green" />}
-              content={t`Connected locally to server`}
-            />
-          )}
-          {!sameMachine && (
-            <Popup
-              inverted
-              position="left center"
-              trigger={
-                <Icon.Group>
-                  <Icon name="dont" size="big" color="red" />
-                  <Icon name="home" />
-                </Icon.Group>
-              }
-              content={t`Connected remotely to server`}
-            />
-          )}
-        </Menu.Item>
+        {sameMachine && (
+          <Popup
+            inverted
+            position="left center"
+            trigger={<Menu.Item icon={<Icon name="home" color="green" />} />}
+            content={t`Connected locally to server`}
+          />
+        )}
+        {!sameMachine && (
+          <Popup
+            inverted
+            position="left center"
+            trigger={<Menu.Item icon={<Icon.Group>
+              <Icon name="dont" size="big" color="red" />
+              <Icon name="home" />
+            </Icon.Group>} />}
+            content={t`Connected remotely to server`}
+          />
+        )}
+        <Popup
+          inverted
+          position="left center"
+          trigger={<Menu.Item position='right' onClick={onLogout} icon={<Icon name="sign out alternate" />} />}
+          content={t`Logout`}
+        />
+
       </Menu>
       <Notifications />
     </Popup>

@@ -1,9 +1,9 @@
+import { ServiceType } from '../../server/constants';
 import { handler, RequestOptions } from '../../server/requests';
-import { ServiceType } from '../../services/constants';
 import { urlparse } from '../../shared/utility';
 
 export default handler().get(async (req, res) => {
-  const server = global.app.service.get(ServiceType.Server);
+  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
 
   const { item_type, item_ids, profile_options, __options } = urlparse(
     req.url

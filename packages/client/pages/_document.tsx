@@ -1,5 +1,6 @@
 import Document, { Head, Html, Main, NextScript } from 'next/document';
 
+import { IS_SERVER } from '../server/constants';
 import setupServices from '../services';
 
 class MyDocument extends Document {
@@ -21,7 +22,7 @@ class MyDocument extends Document {
   }
 }
 
-const IS_SERVER = typeof window === 'undefined';
+
 
 if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
   if (IS_SERVER) {

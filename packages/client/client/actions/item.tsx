@@ -107,7 +107,7 @@ export class ItemActions {
     });
   }
 
-  static updateFilters(filters, type: ItemType, item_ids: number[]) {}
+  static updateFilters(filters, type: ItemType, item_ids: number[]) { }
 
-  static openGallery() {}
+  static openGallery() { }
 }

@@ -1,15 +1,20 @@
+import EventEmitter from 'events';
 import Client, {
   AnyJson,
-  JsonArray,
+  AuthError,
+  exception_codes,
   JsonMap,
   log,
   ServerDisconnectError,
   ServerErrorMsg,
+  ServerFunctionMsg,
   ServerMsg,
 } from 'happypandax-client';
 
 import { QueryClient, QueryFunctionContext } from '@tanstack/query-core';
 
+import { ServiceType } from '../server/constants';
+import { getServerSession } from '../server/requests';
 import {
   ActivityType,
   CommandState,
@@ -48,7 +53,6 @@ import {
   ViewID,
 } from '../shared/types';
 import { Service } from './base';
-import { ServiceType } from './constants';
 
 // We are going to create multiple clients to support parallel requests, HPX supports this
 enum ClientType {
@@ -75,15 +79,55 @@ export interface CallOptions {
 
 const cacheTime = 1000 * 60 * 60 * 6; // 6 hours
 
-export default class ServerService extends Service {
-  endpoint: { host: string; port: number };
+class ClientCluster {
+  public main: Client;
+  public background: Client;
+  public poll: Client;
 
-  query_client: QueryClient;
+  constructor(main: Client, background: Client, poll: Client) {
+    this.main = main;
+    this.background = background;
+    this.poll = poll;
+  }
+
+  get(client: ClientType) {
+    switch (client) {
+      case ClientType.main:
+        return this.main;
+      case ClientType.background:
+        return this.background;
+      case ClientType.poll:
+        return this.poll;
+      default:
+        throw new Error('Invalid client type');
+    }
+  }
+}
+
+export interface Endpoint {
+  host: string;
+  port: number;
+}
+
+export default class ServerService extends Service {
+  endpoint: Endpoint;
+
   #clients: Record<ClientType, Client>;
   #main_client: Client;
+  #emitter: EventEmitter = new EventEmitter();
 
-  constructor(endpoint?: { host: string; port: number }) {
+  // intentionally not using a private field here
+  private _disconnect_listener: () => void;
+
+  #servers = new Map<string, Server>();
+  #sessions: Set<string> = global.app.hpx_sessions ?? new Set();
+
+  constructor(endpoint?: Endpoint) {
     super(ServiceType.Server);
+
+    global.app.hpx_sessions = this.#sessions
+
+    const client_name = 'next-client';
 
     log.enabled = false;
     log.logger = {
@@ -93,7 +137,7 @@ export default class ServerService extends Service {
       error: global.app.log.e,
     };
 
-    const client_name = 'next-client';
+    this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
 
     // this avoiding recreating the hpx client during HMR
     this.#clients = global.app?.hpx_clients ?? {
@@ -106,7 +150,209 @@ export default class ServerService extends Service {
     global.app.hpx_clients = this.#clients;
     this.#main_client = this.#clients[ClientType.main];
 
-    this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
+    this._disconnect_listener = () => {
+      this.emit('disconnect', this.endpoint);
+    }
+
+    this.on('disconnect', () => this._on_disconnect());
+
+  }
+
+  private _on_disconnect() {
+    this.#sessions.clear();
+    global.app.hpx_sessions = this.#sessions;
+    this.#servers.clear();
+    this.#sessions.clear();
+  }
+
+  off(event: string, listener: (...args: any[]) => void): this {
+    this.#emitter.off(event, listener);
+    return this;
+  }
+
+  on(event: 'disconnect', listener: (endpoint: Endpoint) => void): this
+  on(event: 'connect', listener: (endpoint: Endpoint) => void): this
+  on(event: 'login', listener: (endpoint: Endpoint, session: string) => void): this
+  on(event: 'logout', listener: (endpoint: Endpoint, session: string) => void): this
+  on(event: string, listener: (...args: any[]) => void): this {
+    this.#emitter.on(event, listener);
+    return this;
+  }
+
+  emit(event: 'disconnect', endpoint: Endpoint): void;
+  emit(event: 'connect', endpoint: Endpoint): void;
+  emit(event: 'login', endpoint: Endpoint, session: string): void;
+  emit(event: 'logout', endpoint: Endpoint, session: string): void;
+  emit(event: string, ...args: any[]) {
+    this.#emitter.emit(event, ...args);
+  }
+
+  private _close_clients() {
+    for (const client of Object.values(this.#clients)) {
+      client.close();
+      client.off('close', this._disconnect_listener);
+    }
+  }
+
+  async connect(endpoint?: { host: string; port: number }) {
+    if (this.#main_client.is_connected()) {
+
+      if ((endpoint.host === this.endpoint.host && endpoint.port == this.endpoint.port)) {
+        global.app.log.i("Already connected to HPX server at " + this.endpoint.host + ":" + this.endpoint.port)
+        return;
+      } else {
+        global.app.log.i(
+          'New HPX server endpoint specificed while old connection exists, closing old connection'
+        );
+        this._close_clients();
+      }
+    }
+
+    global.app.log.i("Connecting to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+
+    if (!this.#main_client.is_connected()) {
+      for (const client of Object.values(this.#clients)) {
+        await client.connect(this.endpoint);
+      }
+
+      this.#main_client.on('close', this._disconnect_listener);
+
+    }
+
+    this.emit('connect', this.endpoint);
+
+    this.endpoint = endpoint;
+  }
+
+  async login(
+    user?: string,
+    password?: string,
+
+  ) {
+    global.app.log.d("Logging in to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+
+    const s = await this.#main_client.handshake({ user, password });
+    if (s) {
+      const session = this.#main_client.session
+      this._create_server(session);
+      // link the others
+      for (const client of Object.values(this.#clients)) {
+        if (client != this.#main_client) {
+          client.session = session;
+        }
+      }
+
+      this.emit('login', this.endpoint, session)
+      return session
+    }
+    return undefined;
+  }
+
+  async logout(session: string) {
+    const server = this.#servers.get(session);
+    if (server) {
+      global.app.log.d("Logging out of HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+      this.#main_client.session = session;
+      await this.#main_client.drop_auth();
+      const server = this.session(session);
+      if (server) {
+        server.accepted = false;
+      }
+      this.#servers.delete(session);
+      this.#sessions.delete(session);
+      this.emit('logout', this.endpoint, session)
+      global.app.log.d("Successfully logged out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' (', session, ')')
+      return true
+    }
+    global.app.log.d("Failed to log out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' because of invalid session (', session, ')')
+    return false
+  }
+
+  private _create_server(session: string) {
+    const server = new Server(session);
+    server.accepted = true;
+    this.#servers.set(session, server);
+    if (!this.#sessions.has(session)) {
+      this.#sessions.add(session);
+    }
+    return server;
+  }
+
+  get clients() {
+    return [this.#main_client];
+  }
+
+  is_connected() {
+    return this.#main_client.is_connected();
+  }
+
+  session(session: string) {
+    // This supports HMR
+    if (process.env.NODE_ENV === 'development' && this.#sessions.has(session) && !this.#servers.has(session)) {
+      this._create_server(session);
+      this.emit('login', this.endpoint, session)
+    }
+
+    if (!this.is_connected()) {
+      return undefined;
+    }
+
+    return this.#servers.get(session) as Server | undefined;
+  }
+
+  async context(...params: Parameters<typeof getServerSession>) {
+    const s = await getServerSession(...params);
+    if (!s) {
+      return undefined;
+    }
+    return this.session(s.id);
+  }
+}
+
+export class Server {
+
+  public session: string;
+  accepted = false;
+
+  query_client: QueryClient;
+
+  #clients: Record<ClientType, Client>;
+
+
+  constructor(session: string) {
+    this.session = session;
+
+    const client_name = 'next-client';
+
+    // this.#pool = global.app?.hpx_pool ?? GenericPool.createPool({
+    //   async create() {
+    //     return new ClientCluster(
+    //       new Client({ name: client_name }),
+    //       new Client({ name: client_name + '#background' }),
+    //       new Client({ name: client_name + '#poll' })
+    //     );
+    //   },
+    //   async destroy(client) {
+    //     await client.main.close();
+    //     await client.background.close();
+    //     await client.poll.close();
+    //   }
+    // }, {
+    //   max: 10,
+    //   min: 1,
+    // })
+
+    // global.app.hpx_pool = this.#pool;
+
+    // this avoiding recreating the hpx client during HMR
+    this.#clients = global.app?.hpx_clients ?? {
+      [ClientType.main]: new Client({ name: client_name }),
+      [ClientType.background]: new Client({
+        name: client_name + '#background',
+      }),
+      [ClientType.poll]: new Client({ name: client_name + '#poll' }),
+    };
+    global.app.hpx_clients = this.#clients;
 
     this.query_client = new QueryClient({
       defaultOptions: {
@@ -123,151 +369,98 @@ export default class ServerService extends Service {
     });
   }
 
-  get client() {
-    return this.#main_client;
-  }
-
-  async _query(client: Client, fname: string, args: JsonMap) {
-    const key = [fname, args];
-    return this.query_client.fetchQuery(key, () => {
-      return client.send([fname, args]);
-    });
-  }
-
   async _call(
     func: string,
     args: JsonMap,
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const client_type = options?.client ?? ClientType.main;
+    try {
+      const client_type = options?.client ?? ClientType.main;
 
-    const client = this.#clients[client_type];
-    if (!client) {
-      throw Error(`Invalid client from type ${client_type}`);
-    }
+      const client = this.#clients[client_type];
+      if (!client) {
+        throw Error(`Invalid client from type ${client_type}`);
+      }
 
-    if (group) {
-      return await group._group_call(
+      if (group) {
+        return await group._group_call(
+          this,
+          this.query_client,
+          client,
+          func,
+          args,
+          options
+        );
+      }
+
+      const r = await queryClientFetchQuery(
+        this.session,
         this.query_client,
         client,
-        func,
-        args,
+        [[func, args]],
         options
       );
+
+      const data = r?.data?.[0];
+
+      throw_msg_error(data, options);
+
+      global.app.log.d('HPX call', func, args, '->', data)
+
+      return data;
+    } catch (e) {
+      if (e instanceof AuthError || [
+        exception_codes.AuthError,
+        exception_codes.AuthMissingCredentials,
+        exception_codes.AuthRequiredError,
+        exception_codes.AuthWrongCredentialsError].includes(e?.code)) {
+        this.accepted = false;
+      }
+      throw e
     }
-
-    const r = await queryClientFetchQuery(
-      this.query_client,
-      client,
-      [[func, args]],
-      options
-    );
-
-    const data = r?.data?.[0];
-
-    return data;
   }
 
   get logged_in() {
-    return this.#main_client._accepted;
+    return this.accepted;
   }
 
-  status() {
-    if (!this.logged_in) {
-      this.query_client.clear();
-    }
-    return {
-      loggedIn: this.logged_in,
-      // TODO: what if any other client disconnects?
-      connected: this.#main_client.is_connected(),
-    };
-  }
 
   create_group_call() {
     return new GroupCall();
   }
 
   async properties<
-    K extends (
-      | 'version'
-      | 'user'
-      | 'state'
-      | 'update'
-      | 'guest_allowed'
-      | 'no_namespace_key'
-      | 'webserver'
-      | 'webserver.host'
-      | 'webserver.port'
-      | 'webserver.ssl'
-      | 'pixie'
-      | 'pixie.connect'
-    )[]
+    K extends {
+      version: any,
+      user: any,
+      state: any,
+      update: any,
+      guest_allowed: any,
+      no_namespace_key: any,
+      webserver: {
+        host: any,
+        port: any,
+        ssl: any,
+      },
+      pixie: {
+        connect: any,
+      },
+    },
+    P extends DeepPickPathPlain<K>
   >(
     args: {
-      keys: K;
+      keys: P[];
     },
     group?: GroupCall
   ) {
     const data = await this._call('get_properties', args, group);
-    throw_msg_error(data);
-    return data.data as Record<Unwrap<K>, any>;
-  }
-
-  _close_clients() {
-    for (const client of Object.values(this.#clients)) {
-      if (client.is_connected()) {
-        client.close();
-      }
-    }
-    this.query_client.clear();
-  }
-
-  async login(
-    user?: string,
-    password?: string,
-    endpoint?: { host: string; port: number }
-  ) {
-    if (endpoint) {
-      if (
-        this.#main_client.is_connected() &&
-        (endpoint.host !== this.endpoint.host ||
-          endpoint.port !== this.endpoint.port)
-      ) {
-        global.app.log.i(
-          'New HPX server endpoint specificed while old connection exists, closing old connection'
-        );
-        this._close_clients();
-      }
-      this.endpoint = endpoint;
-    }
-
-    global.app.log.d("Logging in to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
-
-    if (!this.#main_client.is_connected()) {
-      this._close_clients();
-      for (const client of Object.values(this.#clients)) {
-        await client.connect(this.endpoint);
-      }
-    }
-
-    const r = await this.#main_client.request_auth().then(async (m) => {
-      const s = await this.#main_client.handshake({ user, password });
-      if (s) {
-        // link the others
-        for (const client of Object.values(this.#clients)) {
-          if (client != this.#main_client) {
-            client.session = this.#main_client.session;
-          }
-        }
-      }
-    });
-    return r;
+    return data.data as DeepPick<K, P>;
   }
 
   async user(args: {}, group?: GroupCall, options?: CallOptions) {
     const data = await this._call('get_user', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as ServerUser;
   }
 
@@ -280,7 +473,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_config', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as JsonMap;
   }
 
@@ -292,7 +485,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('set_config', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as AnyJson;
   }
 
@@ -309,7 +502,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -326,7 +519,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean | number;
   }
 
@@ -344,7 +537,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as R extends undefined ? JsonMap : R;
   }
 
@@ -364,7 +557,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -388,7 +581,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -413,7 +606,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -436,7 +629,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as null | ServerGallery;
   }
 
@@ -450,7 +643,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('open_gallery', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -469,7 +662,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       count: number;
       items: PartialExcept<ServerPage, 'id'>[];
@@ -489,7 +682,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as { [key: string]: number };
   }
 
@@ -515,7 +708,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -537,7 +730,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as CommandID<{
       count: number;
       items: R extends undefined ? JsonMap[] : R[];
@@ -555,7 +748,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as CommandID<boolean>;
   }
 
@@ -572,7 +765,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       count: number;
       items: SearchItem[];
@@ -593,7 +786,7 @@ export default class ServerService extends Service {
       cache: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as ServerSortIndex[];
   }
 
@@ -606,19 +799,19 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as { log: string };
   }
 
   async download_info(args: {}, group?: GroupCall, options?: CallOptions) {
     const data = await this._call('get_download_info', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as DownloadHandler[];
   }
 
   async metadata_info(args: {}, group?: GroupCall, options?: CallOptions) {
     const data = await this._call('get_metadata_info', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as MetadataHandler[];
   }
 
@@ -636,7 +829,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -654,7 +847,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -673,7 +866,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -692,7 +885,7 @@ export default class ServerService extends Service {
       group,
       options
     );
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -702,7 +895,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('stop_queue', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -712,7 +905,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('start_queue', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -725,7 +918,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -743,7 +936,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data, options);
+
 
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
@@ -780,7 +973,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_queue_items', args, group, options);
-    throw_msg_error(data, options);
+
 
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
@@ -800,7 +993,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('start_command', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
@@ -810,7 +1003,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('stop_command', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
@@ -823,7 +1016,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as Record<CommandIDKey, CommandState>;
   }
 
@@ -833,7 +1026,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_command_value', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as Record<CommandIDKey, R>;
   }
 
@@ -846,7 +1039,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as
       | Record<CommandIDKey, CommandProgress>
       | CommandProgress[];
@@ -861,7 +1054,7 @@ export default class ServerService extends Service {
       client: ClientType.background,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as Record<string, Record<string, Activity[]>>;
   }
 
@@ -871,7 +1064,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('list_plugins', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as PluginData[];
   }
 
@@ -881,7 +1074,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('get_plugin', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as PluginData;
   }
 
@@ -893,7 +1086,7 @@ export default class ServerService extends Service {
     const data = await this._call('install_plugin', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as PluginState;
   }
 
@@ -905,7 +1098,7 @@ export default class ServerService extends Service {
     const data = await this._call('disable_plugin', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as PluginState;
   }
 
@@ -915,7 +1108,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('remove_plugin', args, group, { ...options });
-    throw_msg_error(data, options);
+
     return data.data as PluginState;
   }
 
@@ -928,7 +1121,7 @@ export default class ServerService extends Service {
       client: ClientType.poll,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as CommandID<{
       plugin_id: string;
       url: string;
@@ -942,7 +1135,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('update_plugin', args, group, { ...options });
-    throw_msg_error(data, options);
+
     return data.data as CommandID<string[]>;
   }
 
@@ -952,7 +1145,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('send_plugin_message', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as AnyJson;
   }
 
@@ -962,7 +1155,7 @@ export default class ServerService extends Service {
     options?: CallOptions
   ) {
     const data = await this._call('submit_login', args, group, options);
-    throw_msg_error(data, options);
+
     return data.data as CommandID<{
       status: string;
       logged_in: boolean;
@@ -978,7 +1171,7 @@ export default class ServerService extends Service {
       invalidate: true,
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as boolean;
   }
 
@@ -990,7 +1183,7 @@ export default class ServerService extends Service {
     const data = await this._call('resolve_path_pattern', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as (
       | string
       | {
@@ -1020,7 +1213,7 @@ export default class ServerService extends Service {
     const data = await this._call('scan_galleries', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       command_id: string;
       view_id: string;
@@ -1040,7 +1233,7 @@ export default class ServerService extends Service {
     const data = await this._call('transient_view', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       id: ViewID;
       timestamp: number;
@@ -1066,7 +1259,7 @@ export default class ServerService extends Service {
     const data = await this._call('transient_view_action', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as CommandID<boolean>;
   }
 
@@ -1080,7 +1273,7 @@ export default class ServerService extends Service {
     const data = await this._call('transient_views', args, group, {
       ...options,
     });
-    throw_msg_error(data, options);
+
     return data.data as {
       id: ViewID;
       timestamp: number;
@@ -1092,14 +1285,16 @@ export default class ServerService extends Service {
 }
 
 function clientCall(ctx: QueryFunctionContext) {
+  const session = ctx.meta.session as string;
   const client = ctx.meta.client as Client;
   const calls = ctx.meta.calls as [fname: string, args: JsonMap][];
   const fnames = calls.map((v) => v[0]);
 
   global.app.log.d('calling', ...calls.flat());
 
+  client.session = session;
   return client
-    .send(
+    .send('call',
       calls.map((c) => ({
         fname: c[0],
         ...c[1],
@@ -1124,6 +1319,7 @@ function clientCall(ctx: QueryFunctionContext) {
 }
 
 async function queryClientFetchQuery(
+  session: string,
   query_client: QueryClient,
   client: Client,
   calls: [fname: string, args: JsonMap][],
@@ -1139,14 +1335,15 @@ async function queryClientFetchQuery(
   return query_client.fetchQuery(key, clientCall, {
     cacheTime: !call_options?.cache ? 0 : cacheTime,
     meta: {
+      session,
       client,
       calls,
     },
   });
 }
 
-function throw_msg_error(msg: ServerMsg, options?: CallOptions) {
-  if (msg.error && !options?.ignoreError) {
+function throw_msg_error(msg: ServerMsg<any> | ServerFunctionMsg, options?: CallOptions) {
+  if (msg?.error && !options?.ignoreError) {
     const msgerror: ServerErrorMsg = msg.error;
     const err = Error(`${msgerror.code}: ${msgerror.msg}`);
     err.data = msg;
@@ -1171,6 +1368,7 @@ function promiseTimeout(
   ]).finally(() => clearTimeout(timer));
 }
 export class GroupCall {
+  server?: Server;
   #client: Client;
   #query_client: QueryClient;
   #options: CallOptions;
@@ -1195,6 +1393,7 @@ export class GroupCall {
   }
 
   _group_call(
+    server: Server,
     query_client: QueryClient,
     client: Client,
     func: string,
@@ -1204,6 +1403,7 @@ export class GroupCall {
     if (this.#resolved) {
       throw Error('Group call already resolved');
     }
+    this.server = server;
     this.#client = client;
     this.#query_client = query_client;
     this.#functions.push({
@@ -1231,7 +1431,7 @@ export class GroupCall {
       this.#options.invalidate = options?.invalidate;
     }
 
-    const p = new Promise((resolve, reject) => {
+    const p = new Promise<ServerFunctionMsg>((resolve, reject) => {
       this.#promises_resolves.push([resolve, reject]);
     });
 
@@ -1251,12 +1451,16 @@ export class GroupCall {
 
   async call(opt?: { throw_error?: boolean }) {
     try {
+      if (!this.server) {
+        throw Error('No server associated with group');
+      }
       if (this.#resolved) {
         throw Error('Group call already resolved');
       }
       this.#resolved = true;
 
       const data = await queryClientFetchQuery(
+        this.server.session,
         this.#query_client,
         this.#client,
         this.#functions.map((f) => [f.name, f.args]),
@@ -1264,7 +1468,7 @@ export class GroupCall {
       );
 
       throw_msg_error(data);
-      (data?.data as JsonArray)?.forEach?.((r, idx) => {
+      data?.data?.forEach?.((r, idx) => {
         this.#promises_resolves[idx][0](r);
       });
       await Promise.allSettled(this.#promises);

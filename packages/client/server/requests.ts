@@ -1,16 +1,23 @@
 import Cors, { CorsOptions } from 'cors';
+import {
+  AuthWrongCredentialsError,
+  ConnectionError,
+  ServerError,
+} from 'happypandax-client';
+import { IncomingMessage } from 'http';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { NextAuthOptions } from 'next-auth';
+import { getToken } from 'next-auth/jwt';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import nextConnect, { NextHandler, Options } from 'next-connect';
-import nextSession from 'next-session';
 
 import { FetchQueryOptions, QueryClient } from '@tanstack/query-core';
 
-import { DOMAIN_URL, ServiceType } from '../services/constants';
 import { MomoActions, MomoType, QueryActions } from '../shared/query';
 import { urlparse, urlstring } from '../shared/utility';
+import { DOMAIN_URL, HPX_SECRET, LOGIN_ERROR, ServiceType } from './constants';
 
 import type { CallOptions } from '../services/server';
-
 const corsOptions: CorsOptions = {
   origin: "*",
 }
@@ -49,7 +56,13 @@ function defaultOnError(
     });
   }
 
-  res.status(500).json({ error: err.message, code: err?.code ?? 0 });
+  if (process.env.NODE_ENV === 'development') {
+    global.app.log.e(err);
+  }
+
+  if (!res.headersSent) {
+    res.status(500).json({ error: err.message, code: err?.code ?? 0 });
+  }
 }
 
 export function handler(options?: Options<NextApiRequest, NextApiResponse>, onError = defaultOnError) {
@@ -58,8 +71,6 @@ export function handler(options?: Options<NextApiRequest, NextApiResponse>, onEr
     ...options,
   }).use(Cors(corsOptions));
 }
-
-export const getSession = nextSession({});
 
 const serverQueryClient = new QueryClient({
   defaultOptions: {
@@ -148,3 +159,120 @@ export async function fetchQuery<
     options
   );
 }
+
+export const nextAuthOptions: NextAuthOptions = {
+  secret: HPX_SECRET,
+  // Configure one or more authentication providers
+  logger: {
+    error(code, metadata) {
+      global.app.log.e(code, metadata)
+    },
+    warn(code) {
+      global.app.log.w(code)
+    },
+    debug(code, metadata) {
+      global.app.log.d(code, metadata)
+    }
+  },
+  providers: [
+    CredentialsProvider({
+      // The name to display on the sign in form (e.g. 'Sign in with...')
+      name: 'Happy Panda X',
+      id: "happypandax",
+      type: "credentials",
+      // The credentials is used to generate a suitable form on the sign in page.
+      // You can specify whatever fields you are expecting to be submitted.
+      // e.g. domain, username, password, 2FA token, etc.
+      // You can pass any HTML attribute to the <input> tag through the object.
+      credentials: {
+        username: { label: "username", type: "text" },
+        password: { label: "password", type: "password" },
+        host: { label: "host", type: "text" },
+        port: { label: "port", type: "text" }
+      },
+      async authorize(credentials, req) {
+        // You need to provide your own logic here that takes the credentials
+        // submitted and returns either a object representing a user or value
+        // that is false/null if the credentials are invalid.
+        // e.g. return { id: 1, name: 'J Smith', email: 'jsmith@example.com' }
+        // You can also use the `req` object to obtain additional parameters
+        // (i.e., the request IP address)
+
+        const server = global.app.service.get(ServiceType.Server);
+
+        if (credentials?.host && credentials?.port) {
+          await server.connect({ host: credentials?.host, port: credentials?.port ? parseInt(credentials?.port) : undefined }).catch((e: ServerError) => {
+            console.error(e)
+            if (e instanceof ConnectionError) {
+              throw new Error(LOGIN_ERROR.ServerNotConnected)
+            } else {
+              throw new Error(e?.message)
+            }
+          })
+        }
+
+        const r = await server.login(credentials?.username, credentials?.password).catch((e: ServerError) => {
+          console.error(e)
+          if (e instanceof AuthWrongCredentialsError) {
+            throw new Error(LOGIN_ERROR.InvalidCredentials)
+          } else if (e instanceof ConnectionError) {
+            throw new Error(LOGIN_ERROR.ServerNotConnected)
+          } else {
+            throw new Error(e?.message)
+          }
+        })
+
+        if (!r) {
+          throw new Error(LOGIN_ERROR.InvalidCredentials)
+        }
+
+        return {
+          id: r,
+        }
+      }
+    })
+  ],
+  session: {
+    strategy: 'jwt' as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days,
+  },
+  pages: {
+    signIn: '/',
+    signOut: '/',
+    error: '/error', // Error code passed in query string as ?error=
+    verifyRequest: '/',
+    newUser: '/'
+  },
+  callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      return true
+    },
+    async redirect({ url, baseUrl }) {
+      return DOMAIN_URL
+    },
+    async session({ session, token, user }) {
+      return session
+    },
+    async jwt({ token, user, account, profile, isNewUser }) {
+      return { id: account.providerAccountId }
+    }
+  },
+  events: {
+    async signOut(message) {
+      const server = global.app.service.get(ServiceType.Server);
+      const token = message.token as { id: string }
+      await server.logout(token.id)
+    },
+  }
+}
+
+export async function getServerSession({ req }: {
+  req?: (IncomingMessage & {
+    cookies: Partial<{ [key: string]: string }>
+  }) | NextApiRequest
+}) {
+  const s = await getToken({ req, secret: HPX_SECRET })
+  return s as { id: string }
+}
+
+export type GetServerSession = typeof getServerSession
