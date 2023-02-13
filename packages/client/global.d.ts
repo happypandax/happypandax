@@ -183,6 +183,11 @@ declare module NodeJS {
       log: Logger;
       service: ServiceLocator;
       getServerSession: GetServerSession;
+
+      /// dev only
+      hpx_sessions: any;
+      hpx_clients: any;
+      hpx_pool: any;
     };
     log: Logger;
   }

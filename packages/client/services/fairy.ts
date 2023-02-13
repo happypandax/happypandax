@@ -38,7 +38,7 @@ export default class FairyService extends Service {
       data.date = new Date();
     }
 
-    if (id && this.store[id]) {
+    if (id && this.store?.[id]) {
       const l = this.store[id].unshift(data);
       if (l > 10) {
         this.store[id].pop();

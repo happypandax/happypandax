@@ -2691,7 +2691,7 @@ __metadata:
     fomantic-ui-less: ^2.8.7
     generic-pool: ^3.9.0
     gulp: ^4.0.2
-    happypandax-client: ^3.5.0
+    happypandax-client: ^3.5.2
     identity-obj-proxy: ^3.0.0
     immutability-helper: ^3.1.1
     jest: ^27.0.6
@@ -12893,13 +12893,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"happypandax-client@npm:^3.5.0":
-  version: 3.5.0
-  resolution: "happypandax-client@npm:3.5.0"
+"happypandax-client@npm:^3.5.2":
+  version: 3.5.2
+  resolution: "happypandax-client@npm:3.5.2"
   dependencies:
     "@msgpack/msgpack": ^2.8.0
     ts-custom-error: ^3.3.1
-  checksum: c3dea6a9788f676908795d55909dc1186162d10e942ad5f6eaca32d74b8af6194fea212c438ee61c95e4e68d167f103c18d4aa6cbb0e0e71d44436cbde64eff5
+  checksum: 949668059cb94a57a9e12a472477b93d880af8ec8b7f877d3ace5cb9f73144ecfc2242225fd0ec41ce230b831e6b4ef1e1e58d53e451d2dfe443e08e9ec5a51f
   languageName: node
   linkType: hard
 

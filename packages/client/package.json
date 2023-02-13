@@ -40,7 +40,7 @@
     "file-type": "^16.5.2",
     "fomantic-ui-less": "^2.8.7",
     "generic-pool": "^3.9.0",
-    "happypandax-client": "^3.5.0",
+    "happypandax-client": "^3.5.2",
     "immutability-helper": "^3.1.1",
     "liquidjs": "^9.36.0",
     "lodash": "^4.17.21",

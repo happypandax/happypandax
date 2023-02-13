@@ -4,6 +4,7 @@ export enum ServiceType {
   Fairy,
 }
 
+
 export const IS_SERVER = typeof window === 'undefined';
 
 export const THUMB_STATIC_FOLDER = process.env.HPX_THUMB_STATIC_FOLDER

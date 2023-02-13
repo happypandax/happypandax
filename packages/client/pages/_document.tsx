@@ -31,7 +31,7 @@ if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
   }
 }
 
-if (IS_SERVER) {
+if (IS_SERVER && !global?.app?.initialized) {
   if (process.env.NODE_ENV === 'development') {
     global.app.service = await setupServices();
   }

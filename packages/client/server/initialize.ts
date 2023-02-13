@@ -4,17 +4,23 @@ import { getServerSession } from './requests';
 
 export async function serverInitialize() {
   global.app = global?.app ?? ({} as any);
-  global.app.getServerSession = getServerSession
-  global.app.IS_SERVER = true;
-  global.app.title = 'HappyPanda X';
-
   global.app.log = setupLogger();
-  global.log = global.app.log;
+  try {
+    global.app.getServerSession = getServerSession
+    global.app.IS_SERVER = true;
+    global.app.title = 'HappyPanda X';
 
-  global.app.service = await setupServices();
+    global.log = global.app.log;
 
-  global.app.log.i('initialized server');
-  global.app.initialized = true;
+    global.app.service = await setupServices();
+
+    global.app.log.i('initialized server');
+    global.app.initialized = true;
+  } catch (e) {
+    global.app.log.c(e);
+    throw e
+  }
+
 }
 
 export default serverInitialize;
