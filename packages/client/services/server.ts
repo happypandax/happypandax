@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import GenericPool from 'generic-pool';
 import Client, {
   AnyJson,
   AuthError,
@@ -52,22 +53,31 @@ import {
   Version,
   ViewID,
 } from '../shared/types';
-import { Service } from './base';
+import { Service, ServiceLocator } from './base';
+
+const CLIENT_POOL_SIZE = 25;
+const CLIENT_NAME = process.env.NODE_ENV === 'production' ? "webclient" : "next-client";
 
 // We are going to create multiple clients to support parallel requests, HPX supports this
 enum ClientType {
   /**
    * main client, used for most requests
    */
-  main,
+  main = 'main',
   /**
    * background client, used for long running requests
    */
-  background,
+  background = 'background',
   /**
    * poll client, used for poll requests
    */
-  poll,
+  poll = 'poll',
+}
+
+enum PoolPriority {
+  HIGH = 0,
+  MEDIUM = 1,
+  LOW = 2,
 }
 
 export interface CallOptions {
@@ -79,29 +89,51 @@ export interface CallOptions {
 
 const cacheTime = 1000 * 60 * 60 * 6; // 6 hours
 
-class ClientCluster {
-  public main: Client;
-  public background: Client;
-  public poll: Client;
+class ClientNode {
+  client: Client;
+  #name: string;
 
-  constructor(main: Client, background: Client, poll: Client) {
-    this.main = main;
-    this.background = background;
-    this.poll = poll;
+  constructor(client: Client, name: string) {
+    this.client = client;
+    this.#name = name;
   }
 
-  get(client: ClientType) {
-    switch (client) {
+  get(type: ClientType, session: string) {
+    let name = this.#name
+
+    switch (type) {
       case ClientType.main:
-        return this.main;
+        name = this.#name;
+        break
       case ClientType.background:
-        return this.background;
+        name = this.#name + '#background';
+        break
       case ClientType.poll:
-        return this.poll;
+        name = this.#name + '#poll';
+        break;
       default:
-        throw new Error('Invalid client type');
+        throw new Error(`Invalid client from type ${type}`);
     }
+
+    this.client.name = name;
+    this.client.session = session;
+    return this.client;
   }
+
+  release() {
+    const service = global.app.service.get(ServiceType.Server);
+    return service.pool.release(this);
+  }
+
+  destroy() {
+    const service = global.app.service.get(ServiceType.Server);
+    return service.pool.destroy(this);
+  }
+
+  async _destroy() {
+    await this.client.close();
+  }
+
 }
 
 export interface Endpoint {
@@ -112,22 +144,24 @@ export interface Endpoint {
 export default class ServerService extends Service {
   endpoint: Endpoint;
 
-  #clients: Record<ClientType, Client>;
-  #main_client: Client;
-  #emitter: EventEmitter = new EventEmitter();
 
   // intentionally not using a private field here
   private _disconnect_listener: () => void;
 
   #servers = new Map<string, Server>();
-  #sessions: Set<string> = global.app.hpx_sessions ?? new Set();
+  #sessions: Set<string> = global?.app?.hpx_sessions ?? new Set();
+  #clients: Set<ClientNode> = global?.app?.hpx_clients ?? new Set();
+  #emitter: EventEmitter = new EventEmitter();
+
+  // intentionally not using a private field here
+  private _pool: GenericPool.Pool<ClientNode> | undefined;
 
   constructor(endpoint?: Endpoint) {
     super(ServiceType.Server);
 
     global.app.hpx_sessions = this.#sessions
+    global.app.hpx_clients = this.#clients
 
-    const client_name = 'next-client';
 
     log.enabled = false;
     log.logger = {
@@ -139,16 +173,50 @@ export default class ServerService extends Service {
 
     this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
 
-    // this avoiding recreating the hpx client during HMR
-    this.#clients = global.app?.hpx_clients ?? {
-      [ClientType.main]: new Client({ name: client_name }),
-      [ClientType.background]: new Client({
-        name: client_name + '#background',
-      }),
-      [ClientType.poll]: new Client({ name: client_name + '#poll' }),
-    };
-    global.app.hpx_clients = this.#clients;
-    this.#main_client = this.#clients[ClientType.main];
+    this._pool = global?.app?.hpx_pool ?? GenericPool.createPool({
+      create: async () => {
+        const node = new ClientNode(
+          new Client({ name: CLIENT_NAME }),
+          CLIENT_NAME
+        );
+
+        this.#clients.add(node);
+        return node;
+      },
+      validate: async (node) => {
+        if (!node.client.is_connected()) {
+          for (const n of this.#clients) {
+            if (n.client.is_connected()) {
+              const [host, port] = n.client.endpoint
+              await node.client.connect({ host, port })
+              break
+            }
+          }
+        }
+        return true
+      },
+      destroy: async (node) => {
+        await node._destroy();
+        this.#clients.delete(node);
+      }
+    }, {
+      max: CLIENT_POOL_SIZE,
+      min: 1,
+      testOnBorrow: true,
+      priorityRange: 3,
+    })
+
+    if (!global?.app?.hpx_pool) {
+      this._pool.on('factoryCreateError', (err) => {
+        global.app.log.e("Error occurred in client pool:create", err);
+      });
+
+      this._pool.on('factoryDestroyError', (err) => {
+        global.app.log.e("Error occurred in client pool:destroy", err);
+      });
+    }
+
+    global.app.hpx_pool = this._pool;
 
     this._disconnect_listener = () => {
       this.emit('disconnect', this.endpoint);
@@ -158,11 +226,40 @@ export default class ServerService extends Service {
 
   }
 
+  async init(locator: ServiceLocator) {
+    this._pool.start();
+  }
+
+  get pool() {
+    return this._pool;
+  }
+
+  async client(type: ClientType) {
+    let priority: PoolPriority = PoolPriority.MEDIUM;
+
+    switch (type) {
+      case ClientType.main:
+        priority = PoolPriority.MEDIUM;
+        break;
+      case ClientType.background:
+        priority = PoolPriority.LOW;
+        break;
+      case ClientType.poll:
+        priority = PoolPriority.HIGH;
+        break;
+    }
+
+    const node = await this._pool.acquire(priority);
+
+    return node
+  }
+
   private _on_disconnect() {
     this.#sessions.clear();
     global.app.hpx_sessions = this.#sessions;
     this.#servers.clear();
-    this.#sessions.clear();
+    this.#clients.forEach((client) => client.destroy());
+    global.app.hpx_clients = this.#clients;
   }
 
   off(event: string, listener: (...args: any[]) => void): this {
@@ -188,40 +285,45 @@ export default class ServerService extends Service {
   }
 
   private _close_clients() {
-    for (const client of Object.values(this.#clients)) {
-      client.close();
-      client.off('close', this._disconnect_listener);
-    }
+    this.#clients.forEach(async (node) => {
+      await node._destroy()
+      node.client.off('close', this._disconnect_listener);
+    });
   }
 
   async connect(endpoint?: { host: string; port: number }) {
-    if (this.#main_client.is_connected()) {
+    const node = await this.client(ClientType.main);
+    try {
+      const client = node.get(ClientType.main, '');
+      if (client.is_connected()) {
 
-      if ((endpoint.host === this.endpoint.host && endpoint.port == this.endpoint.port)) {
-        global.app.log.i("Already connected to HPX server at " + this.endpoint.host + ":" + this.endpoint.port)
-        return;
-      } else {
-        global.app.log.i(
-          'New HPX server endpoint specificed while old connection exists, closing old connection'
-        );
-        this._close_clients();
-      }
-    }
-
-    global.app.log.i("Connecting to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
-
-    if (!this.#main_client.is_connected()) {
-      for (const client of Object.values(this.#clients)) {
-        await client.connect(this.endpoint);
+        if ((endpoint.host === this.endpoint.host && endpoint.port == this.endpoint.port)) {
+          global.app.log.i("Already connected to HPX server at " + this.endpoint.host + ":" + this.endpoint.port)
+          return;
+        } else {
+          global.app.log.i(
+            'New HPX server endpoint specificed while old connection exists, closing old connection'
+          );
+          this._close_clients();
+        }
       }
 
-      this.#main_client.on('close', this._disconnect_listener);
+      global.app.log.i("Connecting to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
 
+      if (!client.is_connected()) {
+        for (const n of this.#clients) {
+          await n.client.connect(this.endpoint);
+        }
+
+        client.on('close', this._disconnect_listener);
+
+        this.emit('connect', this.endpoint);
+        this.endpoint = endpoint;
+      }
+
+    } finally {
+      await node.release();
     }
-
-    this.emit('connect', this.endpoint);
-
-    this.endpoint = endpoint;
   }
 
   async login(
@@ -229,40 +331,55 @@ export default class ServerService extends Service {
     password?: string,
 
   ) {
-    global.app.log.d("Logging in to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+    const node = await this.client(ClientType.main);
 
-    const s = await this.#main_client.handshake({ user, password });
-    if (s) {
-      const session = this.#main_client.session
-      this._create_server(session);
-      // link the others
-      for (const client of Object.values(this.#clients)) {
-        if (client != this.#main_client) {
-          client.session = session;
+    try {
+      global.app.log.d("Logging in to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+
+      const client = node.get(ClientType.main, '');
+
+      const s = await client.handshake({ user, password });
+      if (s) {
+        const session = client.session
+        this._create_server(session);
+        // link the others
+        for (const n of this.#clients) {
+          if (n.client != client) {
+            n.client.session = session;
+          }
         }
-      }
 
-      this.emit('login', this.endpoint, session)
-      return session
+        this.emit('login', this.endpoint, session)
+        return session
+      }
+      return null;
+    } finally {
+      await node.release();
     }
-    return undefined;
   }
 
   async logout(session: string) {
     const server = this.#servers.get(session);
     if (server) {
-      global.app.log.d("Logging out of HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
-      this.#main_client.session = session;
-      await this.#main_client.drop_auth();
-      const server = this.session(session);
-      if (server) {
+      const node = await this.client(ClientType.main);
+
+      try {
+        global.app.log.d("Logging out of HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+
+        const client = node.get(ClientType.main, session);
+
+        await client.drop_auth();
         server.accepted = false;
+        this.#servers.delete(session);
+        this.#sessions.delete(session);
+
+        this.emit('logout', this.endpoint, session)
+        global.app.log.d("Successfully logged out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' (', session, ')')
+        return true
+      } finally {
+        await node.release();
       }
-      this.#servers.delete(session);
-      this.#sessions.delete(session);
-      this.emit('logout', this.endpoint, session)
-      global.app.log.d("Successfully logged out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' (', session, ')')
-      return true
+
     }
     global.app.log.d("Failed to log out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' because of invalid session (', session, ')')
     return false
@@ -278,16 +395,16 @@ export default class ServerService extends Service {
     return server;
   }
 
-  get clients() {
-    return [this.#main_client];
-  }
-
   is_connected() {
-    return this.#main_client.is_connected();
+    const [node] = this.#clients;
+    if (node) {
+      return node.client.is_connected();
+    }
+    return false
   }
 
   session(session: string) {
-    // This supports HMR
+    // This adds HMR support
     if (process.env.NODE_ENV === 'development' && this.#sessions.has(session) && !this.#servers.has(session)) {
       this._create_server(session);
       this.emit('login', this.endpoint, session)
@@ -312,47 +429,13 @@ export default class ServerService extends Service {
 export class Server {
 
   public session: string;
+
   accepted = false;
 
   query_client: QueryClient;
 
-  #clients: Record<ClientType, Client>;
-
-
   constructor(session: string) {
     this.session = session;
-
-    const client_name = 'next-client';
-
-    // this.#pool = global.app?.hpx_pool ?? GenericPool.createPool({
-    //   async create() {
-    //     return new ClientCluster(
-    //       new Client({ name: client_name }),
-    //       new Client({ name: client_name + '#background' }),
-    //       new Client({ name: client_name + '#poll' })
-    //     );
-    //   },
-    //   async destroy(client) {
-    //     await client.main.close();
-    //     await client.background.close();
-    //     await client.poll.close();
-    //   }
-    // }, {
-    //   max: 10,
-    //   min: 1,
-    // })
-
-    // global.app.hpx_pool = this.#pool;
-
-    // this avoiding recreating the hpx client during HMR
-    this.#clients = global.app?.hpx_clients ?? {
-      [ClientType.main]: new Client({ name: client_name }),
-      [ClientType.background]: new Client({
-        name: client_name + '#background',
-      }),
-      [ClientType.poll]: new Client({ name: client_name + '#poll' }),
-    };
-    global.app.hpx_clients = this.#clients;
 
     this.query_client = new QueryClient({
       defaultOptions: {
@@ -375,19 +458,13 @@ export class Server {
     group?: GroupCall,
     options?: CallOptions
   ) {
+    const client_type = options?.client ?? ClientType.main;
     try {
-      const client_type = options?.client ?? ClientType.main;
-
-      const client = this.#clients[client_type];
-      if (!client) {
-        throw Error(`Invalid client from type ${client_type}`);
-      }
-
       if (group) {
         return await group._group_call(
           this,
+          client_type,
           this.query_client,
-          client,
           func,
           args,
           options
@@ -397,7 +474,7 @@ export class Server {
       const r = await queryClientFetchQuery(
         this.session,
         this.query_client,
-        client,
+        client_type,
         [[func, args]],
         options
       );
@@ -406,7 +483,7 @@ export class Server {
 
       throw_msg_error(data, options);
 
-      global.app.log.d('HPX call', func, args, '->', data)
+      // global.app.log.d('HPX call', func, args, '->', data)
 
       return data;
     } catch (e) {
@@ -1284,44 +1361,49 @@ export class Server {
   }
 }
 
-function clientCall(ctx: QueryFunctionContext) {
+async function clientCall(ctx: QueryFunctionContext) {
   const session = ctx.meta.session as string;
-  const client = ctx.meta.client as Client;
+  const type = ctx.meta.type as ClientType;
   const calls = ctx.meta.calls as [fname: string, args: JsonMap][];
   const fnames = calls.map((v) => v[0]);
 
   global.app.log.d('calling', ...calls.flat());
+  const node = await global.app.service.get(ServiceType.Server).client(type);
+  try {
+    const client = node.get(type, session);
 
-  client.session = session;
-  return client
-    .send('call',
-      calls.map((c) => ({
-        fname: c[0],
-        ...c[1],
-      }))
-    )
-    .then((d) => {
-      global.app.log.d(fnames, 'received data');
-      throw_msg_error(d);
-      return d;
-    })
-    .catch((e) => {
-      if (
-        e instanceof ServerDisconnectError ||
-        e.message.includes('not connected')
-      ) {
-        const fairy = global.app.service.get(ServiceType.Fairy);
-        fairy.healthcheck();
-      }
+    const d = await client
+      .send('call',
+        calls.map((c) => ({
+          fname: c[0],
+          ...c[1],
+        }))
+      )
 
-      throw e;
-    });
+    global.app.log.d(fnames, 'received data');
+    throw_msg_error(d);
+
+    return d;
+
+  } catch (e) {
+    if (
+      e instanceof ServerDisconnectError ||
+      e.message.includes('not connected')
+    ) {
+      const fairy = global.app.service.get(ServiceType.Fairy);
+      fairy.healthcheck();
+    }
+
+    throw e;
+  } finally {
+    await node.release();
+  }
 }
 
 async function queryClientFetchQuery(
   session: string,
   query_client: QueryClient,
-  client: Client,
+  client_type: ClientType,
   calls: [fname: string, args: JsonMap][],
   call_options?: CallOptions
 ) {
@@ -1336,7 +1418,7 @@ async function queryClientFetchQuery(
     cacheTime: !call_options?.cache ? 0 : cacheTime,
     meta: {
       session,
-      client,
+      type: client_type,
       calls,
     },
   });
@@ -1369,8 +1451,8 @@ function promiseTimeout(
 }
 export class GroupCall {
   server?: Server;
-  #client: Client;
   #query_client: QueryClient;
+  #client_type: ClientType;
   #options: CallOptions;
   #functions: {
     name: string;
@@ -1394,8 +1476,8 @@ export class GroupCall {
 
   _group_call(
     server: Server,
+    client_type: ClientType,
     query_client: QueryClient,
-    client: Client,
     func: string,
     args: JsonMap,
     options?: CallOptions
@@ -1403,8 +1485,13 @@ export class GroupCall {
     if (this.#resolved) {
       throw Error('Group call already resolved');
     }
+
+    if (this.server && this.server !== server && this.server.session !== server.session) {
+      throw Error('Trying to assign a server belonging to a different client to a group call; This is likely a bug');
+    }
+
     this.server = server;
-    this.#client = client;
+    this.#client_type = client_type;
     this.#query_client = query_client;
     this.#functions.push({
       name: func,
@@ -1462,7 +1549,7 @@ export class GroupCall {
       const data = await queryClientFetchQuery(
         this.server.session,
         this.#query_client,
-        this.#client,
+        this.#client_type,
         this.#functions.map((f) => [f.name, f.args]),
         this.#options
       );
