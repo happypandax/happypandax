@@ -1,19 +1,22 @@
+import { JsonMap } from 'happypandax-client';
+
 import { ServiceType } from '../../server/constants';
 import { handler, RequestOptions } from '../../server/requests';
-import { TransientViewAction } from '../../shared/enums';
+import { TransientViewType } from '../../shared/enums';
 import { ViewID } from '../../shared/types';
 
 export default handler().post(async (req, res) => {
   const server = await global.app.service.get(ServiceType.Server).context({ req, res });
 
-  const { view_id, action, value, __options } = req.body;
+  const { type, view_id, options, properties, __options } = req.body;
 
   return server
-    .transient_view_action(
+    .create_transient_view(
       {
+        type: type as TransientViewType,
         view_id: view_id as ViewID,
-        action: action as TransientViewAction,
-        value,
+        options: options as JsonMap,
+        properties: properties as JsonMap,
       },
       undefined,
       __options as RequestOptions

@@ -55,6 +55,7 @@ export function TrashView({
       dynamicRowHeight
       disableWindowScroll
       pagination
+      paginationSize='mini'
       activePage={page + 1}
       onPageChange={useCallback((ev, p) => setPage(p - 1), [])}
       itemsPerPage={limit}

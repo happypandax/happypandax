@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
+import { useRecoilState } from 'recoil';
 import {
   Button,
+  Divider,
   Grid,
   Header,
   Icon,
@@ -10,10 +12,15 @@ import {
 } from 'semantic-ui-react';
 
 import t from '../../client/lang';
-import { ServiceReturnType } from '../../client/queries';
+import { QueryType, useQueryType } from '../../client/queries';
 import { dateFromTimestamp } from '../../client/utility';
-import { FileViewItem } from '../../shared/types';
+import { TransientViewType } from '../../shared/enums';
+import {
+  FileViewItem,
+  TransientView as TransientViewT,
+} from '../../shared/types';
 import { humanFileSize } from '../../shared/utility';
+import { ImportState } from '../../state';
 import { TransientView } from './';
 
 function typeProp(data: FileViewItem) {
@@ -130,16 +137,14 @@ export function TransientImportView({
   ...props
 }: React.ComponentProps<typeof TransientView>) {
   const [viewData, setViewData] = useState<
-    ServiceReturnType['transient_view']
+    TransientViewT<TransientViewType.Import>
   >();
 
   return (
     <TransientView
       {...props}
       data={data}
-      headerColor="blue"
       submitText={t`Add all`}
-      submitColor="green"
       onData={useCallback(
         (d) => {
           setViewData(d);
@@ -161,4 +166,55 @@ export function TransientImportView({
       </Segment.Group>
     </TransientView>
   );
+}
+
+
+export function ImportViews(
+  { data: cData, onRemove: otherOnRemove, labelButtons, submitAction, label, stateKey, submitValue, headerLabel, ...props }: 
+  { data?: TransientViewT<TransientViewType.Import>[], stateKey: string } 
+  & React.ComponentProps<typeof TransientImportView>
+  & React.ComponentProps<typeof Segment>) {
+
+  const enabled = cData === undefined
+
+  const { data: uData, refetch } = useQueryType(
+    QueryType.TRANSIENT_VIEWS,
+    { view_type: TransientViewType.Import },
+    { enabled }
+  );
+
+  const data = cData ?? uData?.data;
+
+  const [active, setActive] = useRecoilState(ImportState.activeImportView(stateKey))
+
+  const view = (d: TransientViewT<TransientViewType.Import>) => (
+    <TransientImportView onRemove={(...args) => {
+      if (enabled) {
+        refetch();
+      }
+      otherOnRemove?.(...args);
+  }} 
+  label={label ?? t`Items`}
+  headerColor={d.id === active ? "blue" : "grey"}
+  labelButtons={
+    <>
+    {d.id !== active && <Button onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setActive(d.id)
+    }} size="mini" floated='right' compact>{t`Make active`}</Button>}
+    {labelButtons}
+    </>
+  }
+  {...props} 
+  key={d.id} data={d} submitAction={submitAction} submitValue={submitValue}  />
+  )
+
+
+  return <Segment {...props}>
+    <Divider horizontal>{t`Active import view`}</Divider>
+    {data?.filter?.(d => d.id === active).map?.(view)}
+    <Divider horizontal>{t`Others`}</Divider>
+    {data?.filter?.(d => d.id !== active).map?.(view)}
+  </Segment>
 }

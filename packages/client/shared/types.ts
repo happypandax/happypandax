@@ -1,4 +1,4 @@
-import { AnyJson } from 'happypandax-client';
+import { AnyJson, JsonMap } from 'happypandax-client';
 
 import {
   ActivityType,
@@ -9,6 +9,7 @@ import {
   PluginState,
   Priority,
   ProgressType,
+  TransientViewType,
 } from './enums';
 
 export type ItemSize = 'tiny' | 'mini' | 'small' | 'medium' | 'large';
@@ -309,9 +310,31 @@ export interface DownloadItem extends QueueItem {
   thumbnail_url: string;
 }
 
-export interface FileViewItem {
+export interface TransientView<T extends TransientViewType> {
+  id: ViewID;
+  timestamp: number;
+  type: T;
+  deleted: boolean;
+  processed: boolean;
+  processing: boolean;
+  submitting?: boolean;
+  options: {};
+  count: number;
+  state: CommandState;
+  properties: JsonMap;
+  roots: string[];
+  items: (T extends TransientViewType.File ? FileViewItem : TransientViewItem)[];
+  progress: CommandProgress;
+}
+
+export interface TransientViewItem {
   id: ViewID;
   name: string;
+  processed: boolean;
+  error: string
+}
+
+export interface FileViewItem extends TransientViewItem {
   type: string;
   path: string;
   size: number;

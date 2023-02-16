@@ -1,5 +1,3 @@
-
-
 type UnionKeyOf<T> = import('ts-typetools').UnionKeyOf<T>;
 type Primitive = import('ts-typetools').Primitive;
 type DefaultGrammar = import('ts-deep-pick').DefaultGrammar;
@@ -22,6 +20,7 @@ declare type Logger = import('./shared/logger').Logger;
 declare type ServiceLocator = import('./services/base').ServiceLocator;
 declare type GetServerSession = import('./server/requests').GetServerSession;
 
+
 declare type MakeOptional<T, K extends keyof T> = Omit<T, K> &
   { [SubKey in K]?: Maybe<T[SubKey]> };
 
@@ -29,6 +28,8 @@ declare type MakeOptional<T, K extends keyof T> = Omit<T, K> &
 declare type Unwrap<T> = T extends Array<infer U>
   ? U
   : T extends Promise<infer U>
+  ? U
+  : T extends React.MutableRefObject<infer U>
   ? U
   : T extends (...args: any) => Promise<infer U>
   ? U
@@ -151,7 +152,7 @@ declare type RecordFromUnionWithOmit<
   };
 
 // A better Omit
-declare type DistributiveOmit<T, K extends keyof any> = T extends any
+declare type DistributiveOmit<T, K extends keyof T> = T extends unknown
   ? Omit<T, K>
   : never;
 

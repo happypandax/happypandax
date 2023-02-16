@@ -32,7 +32,7 @@ import { DownloadLabel, DownloadQueue } from './queue/Download';
 import { MetadataLabel, MetadataQueue } from './queue/Metadata';
 import ListView from './view/ListView';
 
-export function SelectedBoard({}: {}) {
+export function SelectedBoard({ }: {}) {
   const [items, setItems] = useState([]);
 
   const [{ isOver }, dropRef] = useDrop(
@@ -71,7 +71,7 @@ export function SelectedBoard({}: {}) {
   );
 }
 
-export function QueueBoard({}: {}) {
+export function QueueBoard({ }: {}) {
   const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
   const [items, setItems] = useState<GalleryCardData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -153,6 +153,7 @@ export function QueueBoard({}: {}) {
           loading={loading}
           basic
           items={ritems}
+          paginationSize='mini'
           tertiary
           className="no-margins no-padding-segment"
           itemRender={GalleryCard}
@@ -422,8 +423,8 @@ export function DrawerButton({ basic }: { basic?: boolean }) {
             !metadataData?.data?.running && !downloadData?.data?.running
               ? 'red'
               : metadataData?.data?.running && downloadData?.data?.running
-              ? 'green'
-              : 'orange'
+                ? 'green'
+                : 'orange'
           }
           size="tiny"
           floating

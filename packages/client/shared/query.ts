@@ -55,6 +55,9 @@ export enum MutatationType {
     RESOLVE_PATH_PATTERN = '/api/resolve_path_pattern',
     SCAN_GALLERIES = '/api/scan_galleries',
     TRANSIENT_VIEW_ACTION = '/api/transient_view_action',
+    TRANSIENT_VIEW_SUBMIT_ACTION = '/api/transient_view_submit_action',
+    CREATE_TRANSIENT_VIEW = '/api/create_transient_view',
+    UPDATE_TRANSIENT_VIEW = '/api/update_transient_view',
 }
 
 // ======================== ACTIONS ====================================
@@ -433,10 +436,28 @@ interface ScanGalleries<T = undefined> extends MutationAction<T> {
     variables: ServerParameters['scan_galleries'];
 }
 
-interface TransientViewApply<T = undefined> extends MutationAction<T> {
+interface TransientViewAction<T = undefined> extends MutationAction<T> {
     type: MutatationType.TRANSIENT_VIEW_ACTION;
-    dataType: ServerReturnType['transient_view_apply'];
-    variables: ServerParameters['transient_view_apply'];
+    dataType: ServerReturnType['transient_view_action'];
+    variables: ServerParameters['transient_view_action'];
+}
+
+interface TransientViewSubmitAction<T = undefined> extends MutationAction<T> {
+    type: MutatationType.TRANSIENT_VIEW_SUBMIT_ACTION;
+    dataType: ServerReturnType['transient_view_submit_action'];
+    variables: ServerParameters['transient_view_submit_action'];
+}
+
+interface CreateTransientViewAction<T = undefined> extends MutationAction<T> {
+    type: MutatationType.CREATE_TRANSIENT_VIEW;
+    dataType: ServerReturnType['create_transient_view'];
+    variables: ServerParameters['create_transient_view'];
+}
+
+interface UpdateTransientViewAction<T = undefined> extends MutationAction<T> {
+    type: MutatationType.UPDATE_TRANSIENT_VIEW;
+    dataType: ServerReturnType['update_transient_view'];
+    variables: ServerParameters['update_transient_view'];
 }
 
 export type MutationActions<T = undefined> =
@@ -461,7 +482,10 @@ export type MutationActions<T = undefined> =
     | StopCommand<T>
     | ResolvePathPattern<T>
     | ScanGalleries<T>
-    | TransientViewApply<T>
+    | TransientViewAction<T>
+    | TransientViewSubmitAction<T>
+    | CreateTransientViewAction<T>
+    | UpdateTransientViewAction<T>
     | ClearQueue<T>;
 
 export type Actions<T = undefined> = MutationActions<T> | QueryActions<T>;

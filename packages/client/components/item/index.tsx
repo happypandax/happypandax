@@ -404,11 +404,11 @@ export function ItemCardContent({
         {itemContext.horizontal && (
           <ItemCardLabels>{itemContext.labels}</ItemCardLabels>
         )}
-        <Card.Header className="text-ellipsis card-header">
+        <Card.Header className="text-ellipsis text-center card-header">
           {blur && typeof title === 'string' ? maskText(title) : title}
         </Card.Header>
         {subtitle && (
-          <Card.Meta className="text-ellipsis card-meta">
+          <Card.Meta className="text-ellipsis text-center card-meta">
             {blur && typeof subtitle === 'string'
               ? maskText(subtitle)
               : subtitle}
@@ -722,8 +722,8 @@ export const ItemCard = React.forwardRef(
             style={
               isDragging
                 ? {
-                    opacity: 0.5,
-                  }
+                  opacity: 0.5,
+                }
                 : {}
             }
             className={classNames(

@@ -1,7 +1,13 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { AutoSizer, WindowScroller } from 'react-virtualized';
 import { useRecoilValue } from 'recoil';
 import {
@@ -20,12 +26,14 @@ import { AppState } from '../../state';
 import { PlaceholderItemCard } from '../item/index';
 
 export function ViewPagination({
+  size = "small",
   onPageChange,
   activePage,
   totalPages,
   hrefTemplate,
 }: {
   onPageChange?: (ev, n: number) => void;
+  size?: React.ComponentProps<typeof Pagination>['size'];
   activePage?: React.ComponentProps<typeof Pagination>['activePage'];
   totalPages?: React.ComponentProps<typeof Pagination>['totalPages'];
   hrefTemplate?: string;
@@ -153,7 +161,7 @@ export function ViewPagination({
       }, [hrefTemplate, activePage, totalPages, onPageChange])}
       pointing
       secondary
-      size="small"
+      size={size}
     />
   );
 }
@@ -256,6 +264,7 @@ export function PaginatedView({
   itemCount = 0,
   activePage = 1,
   onPageChange,
+  paginationSize,
   fluid,
   loading,
   hrefTemplate,
@@ -267,6 +276,7 @@ export function PaginatedView({
   children: React.ReactNode | React.ReactNode[];
   paddedChildren?: boolean;
   pagination?: boolean;
+  paginationSize?: React.ComponentProps<typeof Pagination>['size'];
   fluid?: boolean;
   infinite?: boolean;
   onLoadMore?: () => void;
@@ -284,10 +294,10 @@ export function PaginatedView({
   const onLoadMore = useCallback(
     loadMore
       ? _.throttle(() => {
-          loadMore();
-          setCanLoadMore(false);
-          setHasScrolled(false);
-        }, 1000)
+        loadMore();
+        setCanLoadMore(false);
+        setHasScrolled(false);
+      }, 1000)
       : undefined,
     [loadMore]
   );
@@ -299,6 +309,7 @@ export function PaginatedView({
 
   const getPagination = () => (
     <ViewPagination
+      size={paginationSize}
       totalPages={totalPages}
       onPageChange={onPageChange}
       activePage={activePage}
@@ -420,7 +431,7 @@ export function SidebarPaginatedView({
         direction="top">
         {sidebarContent}
       </Sidebar>
-      <Sidebar.Pusher>{{ children }}</Sidebar.Pusher>
+      <Sidebar.Pusher>{children}</Sidebar.Pusher>
     </PaginatedView>
   );
 }

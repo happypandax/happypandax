@@ -1,6 +1,6 @@
 import { ServiceType } from '../../server/constants';
 import { handler, RequestOptions } from '../../server/requests';
-import { TransientViewAction } from '../../shared/enums';
+import { TransientViewSubmitAction } from '../../shared/enums';
 import { ViewID } from '../../shared/types';
 
 export default handler().post(async (req, res) => {
@@ -9,10 +9,10 @@ export default handler().post(async (req, res) => {
   const { view_id, action, value, __options } = req.body;
 
   return server
-    .transient_view_action(
+    .transient_view_submit_action(
       {
         view_id: view_id as ViewID,
-        action: action as TransientViewAction,
+        action: action as TransientViewSubmitAction,
         value,
       },
       undefined,

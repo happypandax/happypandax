@@ -92,11 +92,11 @@ i.medium-size {
 .float-left, .left:not(.icon) {
     float: left;
 }
+
 .text-ellipsis {
     text-overflow: ellipsis;
     white-space: nowrap;
-    overflow: hidden;
-    text-align: center;
+    overflow: clip;
 }
 
 .card-item {
@@ -607,6 +607,60 @@ h6 {
     max-height: 1000pt;
     overflow-y: auto;
 }
+
+/*--------------
+     Maximum Width
+---------------*/
+
+.max-50-w {
+    max-width: 50pt;
+}
+
+.max-100-w {
+    max-width: 100pt;
+}
+
+.max-200-w {
+    max-width: 200pt;
+}
+
+.max-250-w {
+    max-width: 250pt;
+}
+
+.max-300-w {
+    max-width: 300pt;
+}
+
+.max-400-w {
+    max-width: 400pt;
+}
+
+.max-500-w {
+    max-width: 500pt;
+}
+
+.max-600-w {
+    max-width: 600pt;
+}
+
+.max-700-w {
+    max-width: 700pt;
+}
+
+.max-800-w {
+    max-width: 800pt;
+}
+
+.max-900-w {
+    max-width: 900pt;
+}
+
+.max-1000-w {
+    max-width: 1000pt;
+}
+
+
 
 .editable {
     padding: 2.5pt;

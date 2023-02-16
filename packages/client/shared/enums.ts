@@ -8,11 +8,26 @@ export enum TransientViewType {
 
 export enum TransientViewAction {
 
+  //: Process transient view
+  Process = 1,
+
   //: Clear transient view from items
-  Clear = 1,
+  Clear = 2,
 
   //: Remove transient view
-  Remove = 2,
+  Remove = 3,
+
+  //: Discard an item from the transient view, requires an item id
+  Discard = 4,
+}
+
+export enum TransientViewSubmitAction {
+
+  //: Send the contents of this transient view to an import transient view, requires a transient view id
+  SendToView = 1,
+
+  //: Send the contents of this transient view to the database
+  SendToDatabase = 2
 }
 
 export enum CommandState {

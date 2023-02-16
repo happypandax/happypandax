@@ -34,8 +34,6 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
   const mutation = useMutationType(MutatationType.LOGIN, {
     onSuccess: (data, variables) => {
-      console.debug(data)
-      return
       setEndpoint(variables.endpoint);
       localStorage.setItem(
         'server_endpoint',

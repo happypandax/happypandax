@@ -26,6 +26,7 @@ import {
   Priority,
   QueueType,
   TransientViewAction,
+  TransientViewSubmitAction,
   TransientViewType,
 } from '../shared/enums';
 import {
@@ -36,7 +37,6 @@ import {
   DownloadHandler,
   DownloadItem,
   FieldPath,
-  FileViewItem,
   MetadataHandler,
   MetadataItem,
   PluginData,
@@ -50,6 +50,7 @@ import {
   ServerSortIndex,
   ServerUser,
   SortOptions,
+  TransientView,
   Version,
   ViewID,
 } from '../shared/types';
@@ -1098,7 +1099,7 @@ export class Server {
   }
 
   async command_value<R = AnyJson>(
-    args: { command_ids: string[] },
+    args: { command_ids: string[], raise_error?: boolean },
     group?: GroupCall,
     options?: CallOptions
   ) {
@@ -1279,7 +1280,7 @@ export class Server {
     args: {
       path: string;
       patterns?: string[];
-      options?: {};
+      options?: JsonMap;
       view_id?: ViewID;
       limit?: number;
       offset?: number;
@@ -1291,10 +1292,10 @@ export class Server {
       ...options,
     });
 
-    return data.data as {
+    return data.data as CommandID<{
       command_id: string;
       view_id: string;
-    };
+    }>;
   }
 
   async transient_view<T extends TransientViewType>(
@@ -1311,24 +1312,14 @@ export class Server {
       ...options,
     });
 
-    return data.data as {
-      id: ViewID;
-      timestamp: number;
-      type: TransientViewType;
-      options: {};
-      count: number;
-      state: CommandState;
-      properties: JsonMap;
-      roots: string[];
-      items: (T extends TransientViewType.File ? FileViewItem : never)[];
-      progress: CommandProgress;
-    };
+    return data.data as TransientView<T>;
   }
 
   async transient_view_action(
     args: {
       view_id: ViewID;
       action: TransientViewAction;
+      value?: AnyJson
     },
     group?: GroupCall,
     options?: CallOptions
@@ -1340,9 +1331,58 @@ export class Server {
     return data.data as CommandID<boolean>;
   }
 
-  async transient_views(
+  async transient_view_submit_action(
     args: {
-      view_type?: TransientViewType;
+      view_id: ViewID;
+      action: TransientViewSubmitAction;
+      value?: AnyJson
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('transient_view_submit_action', args, group, {
+      ...options,
+    });
+
+    return data.data as CommandID<boolean>;
+  }
+
+  async create_transient_view(
+    args: {
+      type: TransientViewType;
+      view_id?: ViewID;
+      options?: JsonMap;
+      properties?: JsonMap;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('create_transient_view', args, group, {
+      ...options,
+    });
+
+    return data.data as ViewID;
+  }
+
+  async update_transient_view(
+    args: {
+      view_id: ViewID;
+      options?: JsonMap;
+      properties?: JsonMap;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('update_transient_view', args, group, {
+      ...options,
+    });
+
+    return data.data as boolean;
+  }
+
+  async transient_views<T extends TransientViewType>(
+    args: {
+      view_type?: T;
     },
     group?: GroupCall,
     options?: CallOptions
@@ -1351,13 +1391,7 @@ export class Server {
       ...options,
     });
 
-    return data.data as {
-      id: ViewID;
-      timestamp: number;
-      state: CommandState;
-      type: TransientViewType;
-      count: number;
-    }[];
+    return data.data as TransientView<T>[];
   }
 }
 

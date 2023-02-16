@@ -16,11 +16,11 @@ import {
   Select,
 } from 'semantic-ui-react';
 
+import { useCommand } from '../../client/command';
 import t from '../../client/lang';
 import {
   MutatationType,
   QueryType,
-  ServiceReturnType,
   useMutationType,
   useQueryType,
 } from '../../client/queries';
@@ -31,13 +31,21 @@ import {
   PageTitle,
 } from '../../components/misc';
 import { TransientFileView } from '../../components/transient/FileView';
-import { TransientImportView } from '../../components/transient/ImportView';
+import { ImportViews } from '../../components/transient/ImportView';
+import { TransientView } from '../../components/transient/index';
 import { ServiceType } from '../../server/constants';
-import { CommandState, TransientViewType } from '../../shared/enums';
-import { ViewID } from '../../shared/types';
+import {
+  CommandState,
+  TransientViewSubmitAction,
+  TransientViewType,
+} from '../../shared/enums';
+import {
+  CommandID,
+  TransientView as TransientViewT,
+  ViewID,
+} from '../../shared/types';
 import AddPage from './index';
 
-import type ServerService from '../../services/server';
 function PathPattern({ onChange }: { onChange?: (value: string) => void }) {
   const {
     mutate,
@@ -112,7 +120,7 @@ function PathPattern({ onChange }: { onChange?: (value: string) => void }) {
 }
 
 interface PageProps {
-  views: Unwrap<ReturnType<ServerService['transient_views']>>;
+  views: TransientViewT<any>[];
 }
 
 export async function getServerSideProps(
@@ -130,16 +138,24 @@ export async function getServerSideProps(
 }
 
 export default function Page({ views }: PageProps) {
+
+  const [error, setError] = useState('');
   const [path, setPath] = useState('');
   const [scanViewId, setScanViewId] = useState<ViewID>();
+  const [scanCmdId, setScanCmdId] = useState<CommandID<any>>();
   const [submitting, setSubmitting] = useState(false);
   const [reScanLoading, { set: setRescanLoading }] = useMap<
     Record<ViewID, boolean>
   >({});
   const [patterns, { removeAt, updateAt, push }] = useList([] as string[]);
-  const viewsMap = useRef<Record<ViewID, ServiceReturnType['transient_view']>>(
-    {}
-  );
+
+  const actions = useRef<Unwrap<React.ComponentProps<typeof TransientView>['actions']>>()
+
+  // have to use useRef and NOT useMap or we risk causing a state change update loop
+  const viewsMap = useRef(views.reduce((acc, v) => {
+    acc[v.id] = v;
+    return acc;
+  }, {} as Record<ViewID, Unwrap<typeof views>>))
 
   const { data, refetch } = useQueryType(
     QueryType.TRANSIENT_VIEWS,
@@ -150,24 +166,55 @@ export default function Page({ views }: PageProps) {
   const {
     mutateAsync: scanGalleriesAsync,
     mutate: scanGalleries,
-    error: scanError,
+    data: scanData,
   } = useMutationType(MutatationType.SCAN_GALLERIES, {
-    onSuccess: (data) => {
-      refetch();
-      setPath('');
+    onMutate: () => {
+      setError('');
     },
-    onSettled: () => {
-      setSubmitting(false);
+    onError: (e) => {
+      setError(e?.response?.data?.error);
     },
   });
 
-  useEffect(() => {
-    data?.data?.forEach?.((v) => {
+  const checkRescanLoading = useCallback((d: typeof views) => {
+    d.forEach?.((v) => {
       const loading = v.state === CommandState.Started;
-      if (loading !== reScanLoading?.[v.id]) {
+      if (reScanLoading[v.id] !== loading) {
         setRescanLoading(v.id, loading);
       }
     });
+  }, [reScanLoading]);
+
+  useCommand(scanData?.data, {
+    onError: (e) => {
+      setError(e.error)
+      setSubmitting(false);
+    },
+    requestOptions:  { notifyError: false },
+  }, (r) => {
+    setScanCmdId(r.command_id);
+    setSubmitting(false);
+    refetch().then(() => {
+      // try again for good measure
+      setTimeout(() => {
+        refetch();
+      }, 1500);
+    });
+    setPath('');
+  }, [])
+
+  useCommand(scanCmdId, {
+    onError: (e) => {
+      setError(e.error)
+    },
+    requestOptions:  { notifyError: false },
+  }, (r) => {
+    refetch();
+  }, [])
+
+
+  useEffect(() => {
+    checkRescanLoading(data?.data);
   }, [data]);
 
   useEffect(() => {
@@ -197,7 +244,7 @@ export default function Page({ views }: PageProps) {
       <PageTitle title={t`Scan directories`} />
       <Container as={Segment}>
         <Form
-          error={!!scanError}
+          error={!!error}
           onSubmit={useCallback(
             (e) => {
               e.preventDefault();
@@ -244,7 +291,7 @@ export default function Page({ views }: PageProps) {
               {t`Scan`}
             </Button>
           </Form.Input>
-          <Message error>{scanError?.response?.data?.error} sdsd</Message>
+          <Message error>{error}</Message>
         </Form>
         <Divider />
         <List size="tiny" relaxed>
@@ -268,7 +315,7 @@ export default function Page({ views }: PageProps) {
               trigger={<Button circular basic size="mini" icon="help" />}>
               <Markdown>
                 {t`#### Path patterns
-                    Path patterns are used as rules to match directories and files in the scanning process. See [the documentation](https://happypandax.github.io/faq.html#scanning-for-galleries) for details.
+                    Path patterns are rules used to match directories and files in the scanning process. See [the documentation](https://happypandax.github.io/faq.html#scanning-for-galleries) for details.
                     
                     A pattern must be enclosed in curly braces to be recognized. 
 
@@ -305,7 +352,7 @@ export default function Page({ views }: PageProps) {
                     - \`root/{gallery}/momo/\`: **ERROR** - The last component must be the gallery item token.
                     - \`root/{artist}/momo/{gallery}\`: **OK** - The last component is the gallery item token.
                     - \`*/{gallery}\`: **WARNING** - \`*\` will not be treated as a wildcard character because it is not enclosed in curly braces.
-                    - \`{**}/{gallery}\`: This is the default pattern. It traverses all directories recursively matching files and directories that could pass off as galleries.
+                    - \`{**}/{gallery}\`: This is the default pattern. It traverses all directories recursively to the last component that could pass off as gallery.
                     `}
               </Markdown>
             </Popup>
@@ -326,7 +373,7 @@ export default function Page({ views }: PageProps) {
           ))}
         </List>
         <Segment>
-          <Label basic attached="top">{t`Views`}</Label>
+          <Label basic attached="top">{t`Scan views`}</Label>
           <List divided relaxed>
             {!data?.data?.length && <EmptySegment />}
             {!!data &&
@@ -334,11 +381,17 @@ export default function Page({ views }: PageProps) {
                 <TransientFileView
                   defaultOpen={data.data.length === 1}
                   key={view.id}
+                  submitAction={TransientViewSubmitAction.SendToView}
+                  actions={actions}
                   data={view}
-                  refetchToggle={view.state}
+                  onDeleteItem={() => {
+                    refetch()
+                    actions.current?.refetch?.()
+                  }}
                   onRemove={() => refetch()}
                   onData={(v) => {
-                    viewsMap.current[view.id] = v;
+                    viewsMap[view.id] = v;
+                    checkRescanLoading(Object.values(viewsMap));
                   }}
                   label={t`Scanned items`}
                   labelButtons={
@@ -352,7 +405,7 @@ export default function Page({ views }: PageProps) {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        const v = viewsMap.current[view.id];
+                        const v = viewsMap.current?.[view.id];
                         if (v) {
                           const patterns =
                             (v.properties?.patterns as string[]) ?? [];
@@ -376,9 +429,9 @@ export default function Page({ views }: PageProps) {
                 />
               ))}
 
-            <TransientImportView />
           </List>
         </Segment>
+        <ImportViews />
       </Container>
     </AddPage>
   );

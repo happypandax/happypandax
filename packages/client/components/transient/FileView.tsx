@@ -5,13 +5,21 @@ import {
   Header,
   Icon,
   Label,
+  Message,
   SemanticCOLORS,
 } from 'semantic-ui-react';
 
+import { useCommand } from '../../client/command';
 import t from '../../client/lang';
-import { ServiceReturnType } from '../../client/queries';
+import { MutatationType, useMutationType } from '../../client/queries';
 import { dateFromTimestamp } from '../../client/utility';
-import { FileViewItem } from '../../shared/types';
+import { TransientViewAction, TransientViewType } from '../../shared/enums';
+import {
+  CommandID,
+  FileViewItem,
+  TransientView as TransientViewT,
+  ViewID,
+} from '../../shared/types';
 import { humanFileSize } from '../../shared/utility';
 import { TransientView } from './';
 
@@ -67,10 +75,28 @@ function typeProp(data: FileViewItem) {
   };
 }
 
-function FileItemTitle({ data }: { data: FileViewItem }) {
+
+function FileItemTitle({ data, viewId, onDeleteItem }: { data: FileViewItem, viewId: ViewID, onDeleteItem?: (id: string, command: CommandID<any>) => void }) {
+  const [deleted, setDeleted] = useState(false);
+
+  const { mutate, data: deleteData } = useMutationType(
+    MutatationType.TRANSIENT_VIEW_ACTION,
+    {
+      onSuccess: (r) => {
+        setDeleted(true);
+
+      },
+    }
+  );
+
+  useCommand(deleteData?.data, undefined, () => {
+    onDeleteItem?.(data.id, deleteData?.data)
+  }, [deleteData?.data])
+
   return (
-    <>
+    <span>
       <Icon name={data.is_directory ? 'folder' : 'file'} />
+      {(data.processed || !!data.error) && <Icon name={data.error ? "close" : "check"} color={data.error ? "red" : "green"} />}
       {data.name}
       {data.children.map((child) => {
         let n = child.name;
@@ -87,12 +113,22 @@ function FileItemTitle({ data }: { data: FileViewItem }) {
           </Label>
         );
       })}
-    </>
+      <Icon loading={deleted} onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        mutate({
+          view_id: viewId,
+          action: TransientViewAction.Discard,
+          value: data.id,
+        })
+      }} name='close' className='float-right' />
+    </span>
   );
 }
 
 function FileItemContent({ data }: { data: FileViewItem }) {
   const { type } = typeProp(data);
+
 
   return (
     <Grid className="no-top-padding">
@@ -103,8 +139,20 @@ function FileItemContent({ data }: { data: FileViewItem }) {
           </Label>
         </Grid.Column>
       </Grid.Row>
+      {data.error &&
+        <Grid.Row>
+          <Grid.Column>
+            <Message error size="tiny">
+              Some error here
+            </Message>
+          </Grid.Column>
+        </Grid.Row>
+      }
       <Grid.Row>
         <Grid.Column>
+          <Label color={data.processed ? 'green' : 'grey'} basic={data.processed}>
+            {data.processed ? t`Processed` : t`Unprocessed`}
+          </Label>
           <Label basic>
             {t`Size`}: <span className="muted">{humanFileSize(data.size)}</span>{' '}
             | {t`Created`}:{' '}
@@ -137,6 +185,7 @@ function FileItemContent({ data }: { data: FileViewItem }) {
               </>
             );
           })}
+
         </Grid.Column>
       </Grid.Row>
     </Grid>
@@ -146,11 +195,14 @@ function FileItemContent({ data }: { data: FileViewItem }) {
 export function TransientFileView({
   data,
   onData,
+  onDeleteItem,
   ...props
-}: React.ComponentProps<typeof TransientView>) {
+}: React.ComponentProps<typeof TransientView> & {
+  onDeleteItem?: (id: string, commmand: CommandID<any>) => void;
+}) {
   const [viewData, setViewData] = useState<
-    ServiceReturnType['transient_view']
-  >();
+    TransientViewT<TransientViewType.File>
+  >(data);
 
   let root = viewData?.roots?.[0] ?? data?.id;
 
@@ -172,13 +224,6 @@ export function TransientFileView({
       headerLabel={root}
       headerContent={
         <Grid>
-          <Grid.Row>
-            <Grid.Column>
-              <Label size="tiny">
-                {t`ID`}: <Label.Detail>{viewData?.id}</Label.Detail>
-              </Label>
-            </Grid.Column>
-          </Grid.Row>
           <Grid.Row>
             {viewData?.roots?.map((root) => (
               <Grid.Column key={root} width="16">
@@ -206,7 +251,7 @@ export function TransientFileView({
         panels={viewData?.items?.map?.((file) => ({
           key: file.id,
           title: {
-            content: <FileItemTitle data={file} />,
+            content: <FileItemTitle viewId={data?.id} data={file} onDeleteItem={onDeleteItem} />,
           },
           content: {
             content: <FileItemContent data={file} />,

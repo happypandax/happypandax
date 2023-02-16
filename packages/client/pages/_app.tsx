@@ -4,6 +4,7 @@ import 'animate.css';
 import 'react-virtualized/styles.css';
 import 'nprogress/css/nprogress.css';
 
+import axios from 'axios';
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
@@ -234,7 +235,6 @@ MyApp.getInitialProps = async function (
 
   if (global.app.IS_SERVER) {
 
-
     sameMachine =
       context.ctx.req.socket.localAddress ===
       context.ctx.req.socket.remoteAddress;
@@ -277,17 +277,44 @@ MyApp.getInitialProps = async function (
 
   }
 
+  let propsData: AppPageProps['pageProps'] = {
+    loggedIn,
+    user,
+    sameMachine,
+    connected,
+    notifications,
+  }
+
+  if (global.app.IS_SERVER) {
+    if (context.ctx.req?.method === 'POST') {
+      context.ctx.res?.writeHead(200, {
+        'Content-Type': 'application/json',
+      })
+      context.ctx.res?.end(JSON.stringify(propsData))
+      return null
+    }
+  } else {
+    const res = await axios.post(location.origin, {}, {
+      withCredentials: true,
+    })
+    const data: AppPageProps['pageProps'] = res.data
+
+    propsData = {
+      loggedIn: data.loggedIn,
+      user: data.user,
+      sameMachine: data.sameMachine,
+      connected: data.connected,
+      notifications: data.notifications,
+    }
+  }
+
   const props = await App.getInitialProps(context);
 
   return {
     ...props,
     pageProps: {
       ...props.pageProps,
-      loggedIn,
-      user,
-      sameMachine,
-      connected,
-      notifications,
+      ...propsData
     },
   };
 };

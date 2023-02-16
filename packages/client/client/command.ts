@@ -1,36 +1,51 @@
+import { AxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
 
-import ServerService from '../services/server';
 import { CommandState } from '../shared/enums';
 import { ServerErrorCode } from '../shared/error';
 import { MutatationType, QueryType } from '../shared/query';
 import { CommandID, CommandIDKey } from '../shared/types';
 import { Query } from './queries';
 
-type ValueCallback<R = unknown> = (values: Record<CommandIDKey, R>) => void;
+import type { ErrorResponseData, RequestOptions } from '../server/requests';
+import type { Server } from '../services/server';
+type CommandValueMap<R = unknown> = Record<CommandIDKey, R>
 
-type CommandIDs<T> = CommandID<T> | CommandID<T>[] | string[];
+type ValueCallback<R = unknown, Scalar = false> = (values: Scalar extends true ? R : CommandValueMap<R>) => void;
+type ErrorCallback<Scalar = false> = (error: Scalar extends true ? ErrorResponseData : Record<CommandIDKey, ErrorResponseData>) => void;
 
-interface CommandOptions<T> {
+export type CommandIDs<T> = CommandID<T> | CommandID<T>[] | string[];
+
+declare type UnwrapCommandType<T> = T extends CommandIDs<infer U>
+  ? U
+  : T;
+
+interface CommandOptions<T, Scalar = false> {
   track?: boolean;
   interval?: number;
-  callback?: ValueCallback<T>;
+  requestOptions?: RequestOptions;
+  onValue?: ValueCallback<T, Scalar>;
+  onError?: ErrorCallback<Scalar>;
 }
 
-export class Command<T = unknown> {
+type IsScalar<T> = T extends CommandID<any> ? true : false;
+
+export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> = UnwrapCommandType<C>> {
   interval: number;
   command_ids: string[];
   scalar: boolean;
   #callbacks: {
-    any: ValueCallback[];
-    all: ValueCallback[];
+    any: ValueCallback<T, IsScalar<C>>[];
+    all: ValueCallback<T, IsScalar<C>>[];
   };
+  #errorCallbacks: ErrorCallback<IsScalar<C>>[];
 
+  #requestOptions: RequestOptions | undefined;
   #resolved_ids: { [key: CommandIDKey]: any };
   #state: { [key: CommandIDKey]: CommandState };
   #poll_id: NodeJS.Timeout | undefined;
 
-  constructor(command_ids?: CommandIDs<T>, options?: CommandOptions<T>) {
+  constructor(command_ids?: C, options?: CommandOptions<T, IsScalar<C>>) {
     this.#state = {};
     this.#resolved_ids = {};
 
@@ -49,10 +64,18 @@ export class Command<T = unknown> {
       all: [],
     };
 
+    this.#errorCallbacks = [];
+
     this.interval = options?.interval ?? 1500;
 
-    if (options?.callback) {
-      this.setCallback(options.callback);
+    this.#requestOptions = options?.requestOptions;
+
+    if (options?.onValue) {
+      this.addCallback(options.onValue);
+    }
+
+    if (options?.onError) {
+      this.addErrorCallback(options.onError);
     }
 
     if (options?.track ?? true) {
@@ -68,13 +91,35 @@ export class Command<T = unknown> {
     }
   }
 
-  setCallback(callback: ValueCallback, options?: { onAnyValue?: boolean }) {
+  addCallback(callback: ValueCallback<T, IsScalar<C>>, options?: { onAnyValue?: boolean, clearExisting?: boolean }) {
+    if (options?.clearExisting) {
+      this.clearCallbacks();
+    }
+
     if (!options?.onAnyValue) {
       this.#callbacks.any.push(callback);
     } else {
       this.#callbacks.all.push(callback);
     }
   }
+
+  clearCallbacks() {
+    this.#callbacks.any = [];
+    this.#callbacks.all = [];
+  }
+
+  addErrorCallback(callback: ErrorCallback<IsScalar<C>>, options?: { clearExisting?: boolean }) {
+    if (options?.clearExisting) {
+      this.#errorCallbacks = [];
+    }
+
+    this.#errorCallbacks.push(callback);
+  }
+
+  clearErrorCallbacks() {
+    this.#errorCallbacks = [];
+  }
+
 
   stopTracking() {
     this._end_poll();
@@ -155,31 +200,60 @@ export class Command<T = unknown> {
       .filter(Boolean);
   }
 
-  _on_state(state: Unwrap<ReturnType<ServerService['command_state']>>) {
+  _commands_failed(unresolved = true) {
+    return this.command_ids
+      .map((i) => {
+        if ([CommandState.Failed].includes(this.#state[i])) {
+          if (unresolved) {
+            if (!Object.keys(this.#resolved_ids).includes(i)) {
+              return i;
+            }
+          } else {
+            return i;
+          }
+        }
+      })
+      .filter(Boolean);
+  }
+
+  _on_state(state: Unwrap<ReturnType<Server['command_state']>>) {
     Object.entries(state).forEach(([k, v]) => (this.#state[k] = v));
 
     const c = this._commands_finished_successfully();
     if (c.length) {
-      this.value(c).then((r) => {
+      this.value(c, { raise_error: false }).then((r) => {
         Object.entries(r).forEach(([k, v]) => {
           this.#resolved_ids[k] = v;
 
-          this.#callbacks.any.forEach((c) => c(r));
+          this.#callbacks.any.forEach((c) => c(this.scalar ? v : r));
 
           if (
             Object.keys(this.#resolved_ids).length === this.command_ids.length
           ) {
-            this.#callbacks.all.forEach((c) => c(this.#resolved_ids));
+            this.#callbacks.all.forEach((c) => c(this.scalar ? v : this.#resolved_ids));
           }
+        });
+      });
+    }
+
+    const e = this._commands_failed();
+    if (e.length) {
+      this.error(e).then((r) => {
+        Object.entries(r).forEach(([k, v]) => {
+          this.#resolved_ids[k] = v;
+
+          console.debug({ e, v, r, scalar: this.scalar })
+
+          this.#errorCallbacks.forEach((c) => c(this.scalar ? v : r));
         });
       });
     }
   }
 
-  _return(
-    data: Record<CommandIDKey, any>,
+  _return<D extends Record<CommandIDKey, any>>(
+    data: D,
     command_ids: string[] | string = undefined
-  ) {
+  ): IsScalar<C> extends true ? D[CommandIDKey] : D {
     if (command_ids) {
       return typeof command_ids == 'string' ? data[command_ids] : data;
     } else {
@@ -225,22 +299,40 @@ export class Command<T = unknown> {
     return this._return(r.data, command_ids);
   }
 
-  async value(command_ids: string[] = undefined) {
+  async value(command_ids: string[] = undefined, args?: { raise_error?: boolean }) {
     const r = await Query.fetch(QueryType.COMMAND_VALUE, {
       command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
+      ...args,
+      __options: { ...this.#requestOptions }
     });
 
     return this._return(r.data, command_ids);
   }
+
+  async error(command_ids: string[] = undefined) {
+    let data: Record<CommandIDKey, ErrorResponseData | null> = {};
+
+    for (const i of command_ids) {
+      try {
+        await this.value(command_ids, { raise_error: true });
+        data[i] = null;
+      } catch (e) {
+        const err: AxiosError<ErrorResponseData> = e;
+        data[i] = err.response.data;
+      }
+    }
+
+    return this._return(data, command_ids);
+  }
 }
 
-export function useCommand<T = unknown>(
-  command_ids: CommandIDs<T>,
-  options?: CommandOptions<T> & {
+export function useCommand<C extends CommandIDs<any>, T extends UnwrapCommandType<C> = UnwrapCommandType<C>>(
+  command_ids: C,
+  options?: Omit<CommandOptions<T, IsScalar<C>>, 'callback'> & {
     stopOnUnmount?: boolean;
     stopOnUpdate?: boolean;
   },
-  callback?: () => void,
+  callback?: CommandOptions<T, IsScalar<C>>['onValue'],
   deps: React.DependencyList = []
 ) {
   const optionsRef = useRef<{
@@ -303,9 +395,25 @@ export function useCommand<T = unknown>(
 
   useEffect(() => {
     if (cmd && callback) {
-      cmd.setCallback(callback);
+      cmd.addCallback(callback);
+    }
+    return () => {
+      if (cmd) {
+        cmd.clearCallbacks();
+      }
     }
   }, [cmd, ...deps]);
+
+  useEffect(() => {
+    if (cmd && options?.onError) {
+      cmd.addErrorCallback(options.onError);
+    }
+    return () => {
+      if (cmd) {
+        cmd.clearErrorCallbacks();
+      }
+    }
+  }, [cmd, options?.onError, ...deps]);
 
   return cmd;
 }
