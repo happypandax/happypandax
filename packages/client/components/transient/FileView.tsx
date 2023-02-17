@@ -2,9 +2,9 @@ import React, { useCallback, useState } from 'react';
 import {
   Accordion,
   Grid,
-  Header,
   Icon,
   Label,
+  List,
   Message,
   SemanticCOLORS,
 } from 'semantic-ui-react';
@@ -13,7 +13,12 @@ import { useCommand } from '../../client/command';
 import t from '../../client/lang';
 import { MutatationType, useMutationType } from '../../client/queries';
 import { dateFromTimestamp } from '../../client/utility';
-import { TransientViewAction, TransientViewType } from '../../shared/enums';
+import {
+  CommandState,
+  ItemType,
+  TransientViewAction,
+  TransientViewType,
+} from '../../shared/enums';
 import {
   CommandID,
   FileViewItem,
@@ -21,6 +26,7 @@ import {
   ViewID,
 } from '../../shared/types';
 import { humanFileSize } from '../../shared/utility';
+import { itemColor, itemText } from '../item/index';
 import { TransientView } from './';
 
 function typeProp(data: FileViewItem) {
@@ -29,42 +35,43 @@ function typeProp(data: FileViewItem) {
 
   switch (data.type) {
     case 'Gallery': {
-      type = t`Gallery`;
+      type = itemText(ItemType.Gallery);
+      color = itemColor(ItemType.Gallery);
       break;
     }
     case 'Collection': {
-      color = 'violet';
-      type = t`Collection`;
+      type = itemText(ItemType.Collection);
+      color = itemColor(ItemType.Collection);
       break;
     }
     case 'Parody': {
-      type = t`Parody`;
-      color = 'violet';
+      type = itemText(ItemType.Parody);
+      color = itemColor(ItemType.Parody);
       break;
     }
     case 'Artist': {
-      type = t`Artist`;
-      color = 'blue';
+      type = itemText(ItemType.Artist);
+      color = itemColor(ItemType.Artist);
       break;
     }
     case 'Language': {
-      type = t`Language`;
-      color = 'blue';
+      type = itemText(ItemType.Language);
+      color = itemColor(ItemType.Language);
       break;
     }
     case 'Circle': {
-      type = t`Circle`;
-      color = 'teal';
+      type = itemText(ItemType.Circle);
+      color = itemColor(ItemType.Circle);
       break;
     }
     case 'Grouping': {
-      type = t`Series`;
-      color = 'teal';
+      type = itemText(ItemType.Grouping);
+      color = itemColor(ItemType.Grouping);
       break;
     }
     case 'Category': {
-      type = t`Category`;
-      color = 'black';
+      type = itemText(ItemType.Category);
+      color = itemColor(ItemType.Category);
       break;
     }
   }
@@ -75,8 +82,15 @@ function typeProp(data: FileViewItem) {
   };
 }
 
-
-function FileItemTitle({ data, viewId, onDeleteItem }: { data: FileViewItem, viewId: ViewID, onDeleteItem?: (id: string, command: CommandID<any>) => void }) {
+function FileItemTitle({
+  data,
+  viewId,
+  onDeleteItem,
+}: {
+  data: FileViewItem;
+  viewId: ViewID;
+  onDeleteItem?: (id: string, command: CommandID<any>) => void;
+}) {
   const [deleted, setDeleted] = useState(false);
 
   const { mutate, data: deleteData } = useMutationType(
@@ -84,19 +98,31 @@ function FileItemTitle({ data, viewId, onDeleteItem }: { data: FileViewItem, vie
     {
       onSuccess: (r) => {
         setDeleted(true);
-
       },
     }
   );
 
-  useCommand(deleteData?.data, undefined, () => {
-    onDeleteItem?.(data.id, deleteData?.data)
-  }, [deleteData?.data])
+  useCommand(
+    deleteData?.data,
+    undefined,
+    () => {
+      onDeleteItem?.(data.id, deleteData?.data);
+    },
+    [deleteData?.data]
+  );
 
   return (
-    <span>
+    <span className="w-full">
       <Icon name={data.is_directory ? 'folder' : 'file'} />
-      {(data.processed || !!data.error) && <Icon name={data.error ? "close" : "check"} color={data.error ? "red" : "green"} />}
+      {(data.processed || !!data.error) && (
+        <Icon
+          name={data.error ? 'close' : 'check'}
+          color={data.error ? 'red' : 'green'}
+        />
+      )}
+      {[CommandState.Started].includes(data.state) && (
+        <Icon loading name="circle notch" />
+      )}
       {data.name}
       {data.children.map((child) => {
         let n = child.name;
@@ -113,22 +139,26 @@ function FileItemTitle({ data, viewId, onDeleteItem }: { data: FileViewItem, vie
           </Label>
         );
       })}
-      <Icon loading={deleted} onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        mutate({
-          view_id: viewId,
-          action: TransientViewAction.Discard,
-          value: data.id,
-        })
-      }} name='close' className='float-right' />
+      <Icon
+        loading={deleted}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          mutate({
+            view_id: viewId,
+            action: TransientViewAction.Discard,
+            value: data.id,
+          });
+        }}
+        name="close"
+        className="float-right"
+      />
     </span>
   );
 }
 
 function FileItemContent({ data }: { data: FileViewItem }) {
   const { type } = typeProp(data);
-
 
   return (
     <Grid className="no-top-padding">
@@ -139,18 +169,20 @@ function FileItemContent({ data }: { data: FileViewItem }) {
           </Label>
         </Grid.Column>
       </Grid.Row>
-      {data.error &&
+      {data.error && (
         <Grid.Row>
           <Grid.Column>
             <Message error size="tiny">
-              Some error here
+              {data.error}
             </Message>
           </Grid.Column>
         </Grid.Row>
-      }
+      )}
       <Grid.Row>
         <Grid.Column>
-          <Label color={data.processed ? 'green' : 'grey'} basic={data.processed}>
+          <Label
+            color={data.processed ? 'green' : 'grey'}
+            basic={data.processed}>
             {data.processed ? t`Processed` : t`Unprocessed`}
           </Label>
           <Label basic>
@@ -169,23 +201,46 @@ function FileItemContent({ data }: { data: FileViewItem }) {
       </Grid.Row>
       <Grid.Row>
         <Grid.Column>
-          <Header size="tiny" dividing>
-            {t`Attached items`}
-          </Header>
-          {data.children.map((child) => {
-            const { color, type } = typeProp(child);
+          <Accordion
+            fluid
+            styled
+            defaultActiveIndex={data?.children?.length ? 0 : undefined}
+            panels={[
+              {
+                title: {
+                  content: (
+                    <>
+                      {t`Attached items`}{' '}
+                      <Label size="mini" circular>
+                        {data.children.length}
+                      </Label>
+                    </>
+                  ),
+                },
+                content: {
+                  content: (
+                    <>
+                      <List>
+                        {data.children.map((child) => {
+                          const { color, type } = typeProp(child);
 
-            return (
-              <>
-                <Label basic color={color} key={data.id}>
-                  {type}
-                  <Label.Detail>{child.path}</Label.Detail>
-                </Label>
-                <br />
-              </>
-            );
-          })}
-
+                          return (
+                            <List.Item key={child.id}>
+                              <Label basic color={color}>
+                                {type}
+                                <Label.Detail>{child.path}</Label.Detail>
+                              </Label>
+                              <br />
+                            </List.Item>
+                          );
+                        })}
+                      </List>
+                    </>
+                  ),
+                },
+              },
+            ]}
+          />
         </Grid.Column>
       </Grid.Row>
     </Grid>
@@ -212,6 +267,7 @@ export function TransientFileView({
 
   return (
     <TransientView
+      limit={70}
       {...props}
       data={data}
       onData={useCallback(
@@ -251,7 +307,13 @@ export function TransientFileView({
         panels={viewData?.items?.map?.((file) => ({
           key: file.id,
           title: {
-            content: <FileItemTitle viewId={data?.id} data={file} onDeleteItem={onDeleteItem} />,
+            content: (
+              <FileItemTitle
+                viewId={data?.id}
+                data={file}
+                onDeleteItem={onDeleteItem}
+              />
+            ),
           },
           content: {
             content: <FileItemContent data={file} />,

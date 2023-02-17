@@ -1,3 +1,9 @@
 /*******************************
         User Overrides
 *******************************/
+/* Title */
+.ui.accordion.menu .item > .title,
+.ui.accordion > .title,
+.ui.accordion .accordion > .title {
+  display: flex;
+}

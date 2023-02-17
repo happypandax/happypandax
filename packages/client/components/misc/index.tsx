@@ -315,31 +315,39 @@ export function LabelAccordion({
   basicLabel,
   label,
   detail,
-  show: initialShow,
-  defaultShow,
+  visible: initialVisible,
+  defaultVisible,
+  onVisible,
   color,
   segmentColor,
   attached = 'top',
   ...props
 }: {
   stateKey?: string;
-  show?: boolean;
+  visible?: boolean;
   segmentColor?: SemanticCOLORS;
   basicLabel?: boolean;
-  defaultShow?: boolean;
+  defaultVisible?: boolean;
+  onVisible?: (show: boolean) => void;
   attached?: React.ComponentProps<typeof Label>['attached'];
   color?: React.ComponentProps<typeof Label>['color'];
   label?: React.ReactNode;
   detail?: React.ReactNode;
 } & React.ComponentProps<typeof Segment>) {
-  const [show, setShow] = stateKey
+  const [show, setVisible] = stateKey
     ? // eslint-disable-next-line react-hooks/rules-of-hooks
       useInitialRecoilState(
         MiscState.labelAccordionOpen(stateKey),
-        initialShow ?? defaultShow
+        initialVisible ?? defaultVisible
       )
     : // eslint-disable-next-line react-hooks/rules-of-hooks
-      useState(initialShow ?? defaultShow);
+      useState(initialVisible ?? defaultVisible);
+
+  const visible = initialVisible ?? show;
+
+  useUpdateEffect(() => {
+      onVisible?.(visible);
+  }, [visible]);
 
   return (
     <Segment
@@ -355,18 +363,18 @@ export function LabelAccordion({
         onClick={useCallback(
           (e) => {
             e.preventDefault();
-            if (initialShow === undefined) {
-              setShow(!show);
+            if (initialVisible === undefined) {
+              setVisible(!visible);
             }
           },
-          [show]
+          [visible]
         )}>
-        <Icon name={show ? 'caret down' : 'caret right'} />
+        <Icon name={visible ? 'caret down' : 'caret right'} />
         {label}
         {!!detail && <Label.Detail>{detail}</Label.Detail>}
       </Label>
-      {show && children}
-      {!show && <Divider hidden fitted />}
+      {visible && children}
+      {!visible && <Divider hidden fitted />}
     </Segment>
   );
 }

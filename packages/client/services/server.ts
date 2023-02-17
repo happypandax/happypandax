@@ -1331,7 +1331,7 @@ export class Server {
     return data.data as CommandID<boolean>;
   }
 
-  async transient_view_submit_action(
+  async transient_view_submit(
     args: {
       view_id: ViewID;
       action: TransientViewSubmitAction;
@@ -1340,7 +1340,7 @@ export class Server {
     group?: GroupCall,
     options?: CallOptions
   ) {
-    const data = await this._call('transient_view_submit_action', args, group, {
+    const data = await this._call('transient_view_submit', args, group, {
       ...options,
     });
 

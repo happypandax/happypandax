@@ -76,6 +76,7 @@ export function TransientView({
   defaultOpen,
   submitAction,
   submitValue,
+  limit = 100,
   children,
   headerContent,
   submitText,
@@ -89,11 +90,11 @@ export function TransientView({
   headerLabel,
   countLabel,
   actions,
-
 }: React.ComponentProps<typeof Segment> & {
   submitAction: TransientViewSubmitAction;
   submitValue: AnyJson;
   label?: string;
+  limit?: number;
   submitText?: string;
   submitColor?: SemanticCOLORS;
   headerLabel?: React.ReactNode;
@@ -109,13 +110,13 @@ export function TransientView({
   onData?: (data: TransientViewT<any>) => void;
   data: TransientViewT<any>;
 }) {
-  const limit = 100;
-
   const [descView, setDescView] = useRecoilState(
     ImportState.descendingView(data?.id)
   );
 
   const [page, setPage] = useState(1);
+
+  const [showing, setShowing] = useState(defaultOpen ?? false);
 
   const [state, setState] = useState<CommandState>();
   const [clearLoading, setClearLoading] = useState(false);
@@ -129,6 +130,7 @@ export function TransientView({
   const [processCmdId, setProcessCmdId] = useState<CommandID<boolean>>();
 
   const doneState = [
+    0,
     CommandState.Failed,
     CommandState.Stopped,
     CommandState.Finished,
@@ -140,18 +142,31 @@ export function TransientView({
     {
       enabled: !!data?.id,
       refetchInterval:
-        doneState.includes(state) || submitLoading ? false : 1000,
+        doneState.includes(state) || submitLoading
+          ? false
+          : showing
+          ? 1000
+          : 5000,
     }
   );
 
   const { mutateAsync: viewAction } = useMutationType(
-    MutatationType.TRANSIENT_VIEW_ACTION
+    MutatationType.TRANSIENT_VIEW_ACTION,
+    {
+      onSettled: () => {
+        refetch();
+      },
+    }
   );
 
-  const { mutateAsync: viewSubmitAction } = useMutationType(
-    MutatationType.TRANSIENT_VIEW_SUBMIT_ACTION
+  const { mutate: viewSubmitAction } = useMutationType(
+    MutatationType.TRANSIENT_VIEW_SUBMIT_ACTION,
+    {
+      onSuccess: (r) => {
+        setSubmitCmdId(r.data);
+      },
+    }
   );
-
 
   useCommand(
     clearCmdId,
@@ -232,13 +247,12 @@ export function TransientView({
   if (viewData?.data?.processed) {
     statusLabel.text = t`Processed`;
     statusLabel.color = 'green';
-    statusLabel.basic = true
+    statusLabel.basic = true;
   } else {
     statusLabel.text = t`Unprocessed`;
     statusLabel.color = 'grey';
     statusLabel.basic = false;
   }
-
 
   const pagRow = () => {
     return (
@@ -258,95 +272,124 @@ export function TransientView({
     );
   };
 
-  const prog = viewData ? (
-    <Progress
-      size="tiny"
-      indeterminate={doneState.includes(state) ? undefined : 'filling'}
-      percent={100}
-      color="blue"
-      error={state === CommandState.Failed}
-      success={state == CommandState.Finished}>
-      {viewData?.data?.progress?.text}
-    </Progress>
-  ) : null;
+  const prog =
+    viewData && state ? (
+      <Progress
+        size="tiny"
+        indeterminate={doneState.includes(state) ? undefined : 'filling'}
+        percent={viewData?.data?.progress?.percent}
+        color="blue"
+        error={state === CommandState.Failed}
+        warning={state === CommandState.Stopped}
+        success={state == CommandState.Finished}>
+        {viewData?.data?.progress?.text}
+      </Progress>
+    ) : null;
 
-  const onSubmitClick = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSubmitLoading(true);
-    viewSubmitAction({
-      view_id: viewData?.data?.id,
-      action: submitAction,
-      value: submitValue,
-    }).then((r) => {
-      setSubmitCmdId(r.data);
-    });
-  }, [viewData, submitAction])
+  const onSubmitClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setSubmitLoading(true);
+      viewSubmitAction({
+        view_id: viewData?.data?.id,
+        action: submitAction,
+        value: submitValue,
+      });
+    },
+    [viewData, submitAction]
+  );
 
-  const onProcessClick = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSubmitLoading(true);
-    viewAction({
-      view_id: viewData?.data?.id,
-      action: TransientViewAction.Process,
-    }).then((r) => {
-      setSubmitCmdId(r.data);
-    });
-  }, [viewData])
+  const onProcessClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setSubmitLoading(true);
+      viewAction({
+        view_id: viewData?.data?.id,
+        action: TransientViewAction.Process,
+      }).then((r) => {
+        setSubmitCmdId(r.data);
+      });
+    },
+    [viewData]
+  );
 
   const submitButton = (props: React.ComponentProps<typeof Button>) => {
-    let text = submitText ?? t`Submit`
-    let color = submitColor
+    let text = submitText ?? t`Submit`;
+    let color = submitColor;
     if (!viewData?.data?.processed) {
-      text = t`Process`
-      color = 'blue'
+      text = t`Process`;
+      color = 'blue';
     }
 
-    let disabled = false
+    let disabled = false;
 
     if (viewData?.data?.processed) {
       if (submitValue === undefined) {
-        disabled = true
+        disabled = true;
       }
     }
 
-    return <Button
-      primary
-      loading={submitLoading}
-      disabled={disabled || submitLoading || viewData?.data?.deleted || ![CommandState.Finished, CommandState.Failed, CommandState.Stopped].includes(state)}
-      onClick={viewData?.data?.processed ? onSubmitClick : onProcessClick}
-      color={color}
-      {...props}
-    >
-      {text}
-    </Button>
-  }
+    return (
+      <Button
+        primary
+        loading={submitLoading}
+        disabled={
+          disabled ||
+          submitLoading ||
+          viewData?.data?.deleted ||
+          ![
+            CommandState.Finished,
+            CommandState.Failed,
+            CommandState.Stopped,
+          ].includes(state)
+        }
+        onClick={viewData?.data?.processed ? onSubmitClick : onProcessClick}
+        color={color}
+        {...props}>
+        {text}
+      </Button>
+    );
+  };
 
   return (
     <LabelAccordion
       basic={false}
-      show={viewData?.data?.deleted ? false : undefined}
-      defaultShow={defaultOpen}
+      visible={viewData?.data?.deleted ? false : undefined}
+      defaultVisible={defaultOpen}
+      onVisible={setShowing}
       progress
       color={headerColor}
       segmentColor={headerColor}
       basicLabel
       label={
         <>
-          {viewData?.data?.deleted && <Label size="small" color='red'>{t`Deleted`}</Label>}
+          {viewData?.data?.deleted && (
+            <Label size="small" color="red">{t`Deleted`}</Label>
+          )}
 
           {label}
-          <Label size="tiny">
+          <Label size="tiny" circular>
             {countLabel ?? viewData?.data?.count ?? data?.count}
-            <Label.Detail>
-              {dateFromTimestamp(data?.timestamp, { relative: true }) ||
-                t`Unknown`}
-            </Label.Detail>
           </Label>
-          {!!statusLabel.text && !viewData?.data?.deleted && <Label size="tiny" basic={statusLabel.basic} color={statusLabel.color}>{statusLabel.text}</Label>}
-          <Label size="small" className='text-ellipsis max-250-w'>{headerLabel}</Label>
-
+          <Label size="tiny">
+            {dateFromTimestamp(data?.timestamp, { relative: true }) ||
+              t`Unknown`}
+          </Label>
+          {!!statusLabel.text && !viewData?.data?.deleted && (
+            <Label
+              size="tiny"
+              basic={statusLabel.basic}
+              color={statusLabel.color}>
+              {statusLabel.text}
+            </Label>
+          )}
+          {headerLabel && (
+            <Label size="small" className="text-ellipsis max-250-w">
+              {headerLabel}
+            </Label>
+          )}
 
           {submitButton({ size: 'mini', compact: true, floated: 'right' })}
           <Button
@@ -361,9 +404,12 @@ export function TransientView({
         </>
       }>
       <Divider hidden section />
-      <Segment disabled={viewData?.data?.deleted} basic className='no-padding-segment'>
-        <Grid >
-          <Grid.Row className='small-padding-segment'>
+      <Segment
+        disabled={viewData?.data?.deleted}
+        basic
+        className="no-padding-segment">
+        <Grid>
+          <Grid.Row className="small-padding-segment">
             <Grid.Column>
               <Label size="tiny">
                 {t`ID`}: <Label.Detail>{data?.id}</Label.Detail>
@@ -421,7 +467,7 @@ export function TransientView({
                 )}
                 compact>
                 <Icon name="close" />
-                {t`Clear`}
+                {t`Clear all`}
               </Button>
 
               <Button
@@ -462,15 +508,15 @@ export function TransientView({
               <Loader active={isLoading} />
               {children}
               {!viewData?.data?.items?.length && (
-                <EmptyMessage title={t`No items found`} />
+                <EmptyMessage title={t`No items`} />
               )}
             </Grid.Column>
           </Grid.Row>
-          {(viewData?.data?.items?.length ?? 0) > 25 && <Grid.Row textAlign='center'>
-            <Grid.Column>
-              {submitButton({})}
-            </Grid.Column>
-          </Grid.Row>}
+          {(viewData?.data?.items?.length ?? 0) > 25 && (
+            <Grid.Row textAlign="center">
+              <Grid.Column>{submitButton({})}</Grid.Column>
+            </Grid.Row>
+          )}
           {(viewData?.data?.items?.length ?? 0) > 25 && pagRow()}
           <Grid.Row>
             <Grid.Column>

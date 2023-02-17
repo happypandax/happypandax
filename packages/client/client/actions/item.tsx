@@ -6,12 +6,12 @@ import { ServerItem, ServerItemWithMetatags } from '../../shared/types';
 import { Query } from '../queries';
 import { update } from '../utility';
 
-import type ServerService from '../../services/server';
+import type {Server} from '../../services/server';
 export class ItemActions {
   static async updateItem<T extends Partial<ServerItem>>(
     item_id: number,
     data: T,
-    args: Parameters<ServerService['update_item']>[0],
+    args: Parameters<Server['update_item']>[0],
     onUpdatedData?: (data: T, mutated: boolean) => void
   ) {
     return new Promise<AxiosResponse<boolean>>((resolve, reject) => {
@@ -61,7 +61,7 @@ export class ItemActions {
     T extends RecursivePartial<ServerItemWithMetatags>
   >(
     data: T[],
-    args: Parameters<ServerService['update_metatags']>[0],
+    args: Parameters<Server['update_metatags']>[0],
     onUpdatedData?: (data: T[], mutated: boolean) => void
   ) {
     return new Promise<AxiosResponse<boolean | number>>((resolve, reject) => {

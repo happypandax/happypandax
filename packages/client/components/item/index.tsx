@@ -27,6 +27,7 @@ import {
   Popup,
   Ref,
   Segment,
+  SemanticCOLORS,
 } from 'semantic-ui-react';
 
 import { useItemActivity } from '../../client/activity';
@@ -51,6 +52,85 @@ import { ActivityList } from '../misc/ActivityList';
 import { GalleryCardData } from './Gallery';
 import { GroupingCardData } from './Grouping';
 import styles from './Item.module.css';
+
+export function itemText(type: ItemType) {
+  let txt = '';
+  switch (type) {
+    case ItemType.Gallery: {
+      txt = t`Gallery`;
+      break;
+    }
+    case ItemType.Collection: {
+      txt = t`Collection`;
+      break;
+    }
+    case ItemType.Parody: {
+      txt = t`Parody`;
+      break;
+    }
+    case ItemType.Artist: {
+      txt = t`Artist`;
+      break;
+    }
+    case ItemType.Language: {
+      txt = t`Language`;
+      break;
+    }
+    case ItemType.Circle: {
+      txt = t`Circle`;
+      break;
+    }
+    case ItemType.Grouping: {
+      txt = t`Series`;
+      break;
+    }
+    case ItemType.Category: {
+      txt = t`Category`;
+      break;
+    }
+  }
+
+  return txt;
+}
+
+export function itemColor(type: ItemType) {
+  let color: SemanticCOLORS = undefined;
+  switch (type) {
+    case ItemType.Gallery: {
+      break;
+    }
+    case ItemType.Collection: {
+      color = 'violet';
+      break;
+    }
+    case ItemType.Parody: {
+      color = 'violet';
+      break;
+    }
+    case ItemType.Artist: {
+      color = 'blue';
+      break;
+    }
+    case ItemType.Language: {
+      color = 'blue';
+      break;
+    }
+    case ItemType.Circle: {
+      color = 'teal';
+      break;
+    }
+    case ItemType.Grouping: {
+      color = 'teal';
+      break;
+    }
+    case ItemType.Category: {
+      color = 'black';
+      break;
+    }
+  }
+
+  return color;
+}
 
 export function AddToQueueButton<T extends ItemType>({
   data,
@@ -639,7 +719,7 @@ export const ItemCard = React.forwardRef(
       centered?: boolean;
       link?: boolean;
       dataContext?: DataContextT;
-    },
+    } & React.ComponentProps<typeof Card>,
     forwardRef
   ) => {
     const [hover, setHover] = useState(false);
@@ -722,8 +802,8 @@ export const ItemCard = React.forwardRef(
             style={
               isDragging
                 ? {
-                  opacity: 0.5,
-                }
+                    opacity: 0.5,
+                  }
                 : {}
             }
             className={classNames(
@@ -784,15 +864,17 @@ export function PlaceholderItemCard({
   horizontal,
   centered = true,
   type = ItemType.Gallery,
+  ...props
 }: {
   size?: ItemSize;
   fluid?: boolean;
   centered?: boolean;
   type?: ItemType;
   horizontal?: boolean;
-}) {
+} & React.ComponentProps<typeof ItemCard>) {
   return (
     <ItemCard
+      {...props}
       type={type}
       draggable={false}
       centered={centered}

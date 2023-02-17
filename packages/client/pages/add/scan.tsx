@@ -1,6 +1,7 @@
 import { GetServerSidePropsResult, NextPageContext } from 'next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDebounce, useList, useMap } from 'react-use';
+import { useRecoilValue } from 'recoil';
 import {
   Button,
   Container,
@@ -44,6 +45,7 @@ import {
   TransientView as TransientViewT,
   ViewID,
 } from '../../shared/types';
+import { ImportState } from '../../state';
 import AddPage from './index';
 
 function PathPattern({ onChange }: { onChange?: (value: string) => void }) {
@@ -126,11 +128,11 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<{}>> {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
 
-  const views = await server.transient_views({
-    view_type: TransientViewType.File,
-  });
+  const views = await server.transient_views({});
 
   return {
     props: { views },
@@ -138,28 +140,38 @@ export async function getServerSideProps(
 }
 
 export default function Page({ views }: PageProps) {
+  const stateKey = 'import';
 
   const [error, setError] = useState('');
   const [path, setPath] = useState('');
   const [scanViewId, setScanViewId] = useState<ViewID>();
   const [scanCmdId, setScanCmdId] = useState<CommandID<any>>();
   const [submitting, setSubmitting] = useState(false);
+
+  const activeImportView = useRecoilValue(
+    ImportState.activeImportView(stateKey)
+  );
+
   const [reScanLoading, { set: setRescanLoading }] = useMap<
     Record<ViewID, boolean>
   >({});
   const [patterns, { removeAt, updateAt, push }] = useList([] as string[]);
 
-  const actions = useRef<Unwrap<React.ComponentProps<typeof TransientView>['actions']>>()
+  const actions = useRef<
+    Unwrap<React.ComponentProps<typeof TransientView>['actions']>
+  >();
 
   // have to use useRef and NOT useMap or we risk causing a state change update loop
-  const viewsMap = useRef(views.reduce((acc, v) => {
-    acc[v.id] = v;
-    return acc;
-  }, {} as Record<ViewID, Unwrap<typeof views>>))
+  const viewsMap = useRef(
+    views.reduce((acc, v) => {
+      acc[v.id] = v;
+      return acc;
+    }, {} as Record<ViewID, Unwrap<typeof views>>)
+  );
 
   const { data, refetch } = useQueryType(
     QueryType.TRANSIENT_VIEWS,
-    { view_type: TransientViewType.File },
+    {},
     { initialData: views }
   );
 
@@ -176,42 +188,54 @@ export default function Page({ views }: PageProps) {
     },
   });
 
-  const checkRescanLoading = useCallback((d: typeof views) => {
-    d.forEach?.((v) => {
-      const loading = v.state === CommandState.Started;
-      if (reScanLoading[v.id] !== loading) {
-        setRescanLoading(v.id, loading);
-      }
-    });
-  }, [reScanLoading]);
+  const checkRescanLoading = useCallback(
+    (d: typeof views) => {
+      d.forEach?.((v) => {
+        const loading = v.state === CommandState.Started;
+        if (reScanLoading[v.id] !== loading) {
+          setRescanLoading(v.id, loading);
+        }
+      });
+    },
+    [reScanLoading]
+  );
 
-  useCommand(scanData?.data, {
-    onError: (e) => {
-      setError(e.error)
+  useCommand(
+    scanData?.data,
+    {
+      onError: (e) => {
+        setError(e.error);
+        setSubmitting(false);
+      },
+      requestOptions: { notifyError: false },
+    },
+    (r) => {
+      setScanCmdId(r.command_id);
       setSubmitting(false);
+      refetch().then(() => {
+        // try again for good measure
+        setTimeout(() => {
+          refetch();
+        }, 1500);
+      });
+      setPath('');
     },
-    requestOptions:  { notifyError: false },
-  }, (r) => {
-    setScanCmdId(r.command_id);
-    setSubmitting(false);
-    refetch().then(() => {
-      // try again for good measure
-      setTimeout(() => {
-        refetch();
-      }, 1500);
-    });
-    setPath('');
-  }, [])
+    []
+  );
 
-  useCommand(scanCmdId, {
-    onError: (e) => {
-      setError(e.error)
+  useCommand(
+    scanCmdId,
+    {
+      onError: (e) => {
+        setError(e.error);
+      },
+      requestOptions: { notifyError: false },
     },
-    requestOptions:  { notifyError: false },
-  }, (r) => {
-    refetch();
-  }, [])
-
+    (r) => {
+      refetch();
+    },
+    []
+  );
 
   useEffect(() => {
     checkRescanLoading(data?.data);
@@ -377,61 +401,88 @@ export default function Page({ views }: PageProps) {
           <List divided relaxed>
             {!data?.data?.length && <EmptySegment />}
             {!!data &&
-              data.data.map((view) => (
-                <TransientFileView
-                  defaultOpen={data.data.length === 1}
-                  key={view.id}
-                  submitAction={TransientViewSubmitAction.SendToView}
-                  actions={actions}
-                  data={view}
-                  onDeleteItem={() => {
-                    refetch()
-                    actions.current?.refetch?.()
-                  }}
-                  onRemove={() => refetch()}
-                  onData={(v) => {
-                    viewsMap[view.id] = v;
-                    checkRescanLoading(Object.values(viewsMap));
-                  }}
-                  label={t`Scanned items`}
-                  labelButtons={
-                    <Button
-                      secondary
-                      floated="right"
-                      size="mini"
-                      loading={reScanLoading?.[view.id]}
-                      disabled={reScanLoading?.[view.id]}
-                      compact
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const v = viewsMap.current?.[view.id];
-                        if (v) {
-                          const patterns =
-                            (v.properties?.patterns as string[]) ?? [];
+              data.data
+                .filter((d) => d.type === TransientViewType.File)
+                .map((view) => (
+                  <TransientFileView
+                    defaultOpen={data.data.length === 1}
+                    submitAction={TransientViewSubmitAction.SendToView}
+                    submitValue={activeImportView}
+                    key={view.id}
+                    actions={actions}
+                    data={view}
+                    onDeleteItem={() => {
+                      refetch();
+                      actions.current?.refetch?.();
+                    }}
+                    onRemove={() =>
+                      refetch().then(() =>
+                        // try again for good measure
+                        setTimeout(() => {
+                          refetch();
+                        }, 1500)
+                      )
+                    }
+                    onSubmit={() =>
+                      refetch().then(() =>
+                        // try again for good measure
+                        setTimeout(() => {
+                          refetch();
+                        }, 1500)
+                      )
+                    }
+                    onData={(v) => {
+                      viewsMap[view.id] = v;
+                      checkRescanLoading(Object.values(viewsMap));
+                    }}
+                    label={t`Scanned items`}
+                    labelButtons={
+                      <Button
+                        secondary
+                        floated="right"
+                        size="mini"
+                        loading={reScanLoading?.[view.id]}
+                        disabled={reScanLoading?.[view.id]}
+                        compact
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const v = viewsMap.current?.[view.id];
+                          if (v) {
+                            const patterns =
+                              (v.properties?.patterns as string[]) ?? [];
 
-                          v.roots.forEach((path) => {
-                            scanGalleriesAsync({
-                              path,
-                              patterns,
-                              options: v.options,
-                              view_id: v.id,
-                            }).finally(() => refetch());
-                          });
+                            v.roots.forEach((path) => {
+                              scanGalleriesAsync({
+                                path,
+                                patterns,
+                                options: v.options,
+                                view_id: v.id,
+                              }).finally(() => refetch());
+                            });
 
-                          setRescanLoading(v.id, true);
-                        }
-                      }}>
-                      <Icon name="refresh" />
-                      {t`Rescan`}
-                    </Button>
-                  }
-                />
-              ))}
-
+                            setRescanLoading(v.id, true);
+                          }
+                        }}>
+                        <Icon name="refresh" />
+                        {t`Rescan`}
+                      </Button>
+                    }
+                  />
+                ))}
           </List>
         </Segment>
-        <ImportViews />
+        <ImportViews
+          onRemove={() => refetch()}
+          onSubmit={() => refetch()}
+          submitAction={TransientViewSubmitAction.SendToDatabase}
+          submitValue={activeImportView}
+          data={data?.data?.filter?.(
+            (d) => d.type === TransientViewType.Import
+          )}
+          stateKey={stateKey}
+          onCreate={() => refetch()}
+        />
       </Container>
     </AddPage>
   );

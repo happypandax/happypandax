@@ -55,7 +55,7 @@ export enum MutatationType {
     RESOLVE_PATH_PATTERN = '/api/resolve_path_pattern',
     SCAN_GALLERIES = '/api/scan_galleries',
     TRANSIENT_VIEW_ACTION = '/api/transient_view_action',
-    TRANSIENT_VIEW_SUBMIT_ACTION = '/api/transient_view_submit_action',
+    TRANSIENT_VIEW_SUBMIT_ACTION = '/api/transient_view_submit',
     CREATE_TRANSIENT_VIEW = '/api/create_transient_view',
     UPDATE_TRANSIENT_VIEW = '/api/update_transient_view',
 }

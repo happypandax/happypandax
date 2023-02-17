@@ -48,7 +48,7 @@ export function NewGallery({
         />
       )}
       <Label className="right" basic color="orange">{t`Already exists`}</Label>
-      <LabelAccordion defaultShow={defaultOpen} label={t`Details`}>
+      <LabelAccordion defaultVisible={defaultOpen} label={t`Details`}>
         <Segment basic>gdfg</Segment>
       </LabelAccordion>
       <Button color="green" size="tiny" floated="right">{t`Add`}</Button>

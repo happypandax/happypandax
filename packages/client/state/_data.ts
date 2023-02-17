@@ -8,6 +8,8 @@ export default class _DataState extends StateBlock {
     true
   );
 
+  static persistent = defineAtom({ default: true }, true);
+
   static mode = defineAtom({ default: DataMode.DEFAULT }, true);
 
   static getKey(type: ItemType, data: { id: number }) {

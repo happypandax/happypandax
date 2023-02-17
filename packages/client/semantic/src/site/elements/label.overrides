@@ -12,3 +12,38 @@
     top: 1.5em;
     transform: unset;
 }
+
+& when (@variationLabelImage) {
+    .ui.image.label.item {
+        display: flex;
+    }
+
+    .ui.image.label.item .content {
+        display: inline-block;
+        flex-grow: 1;
+    }
+
+
+  
+    .ui.image.label.item img {
+        height: @medium * 5.5;
+        min-width: @medium * 5;
+        object-fit: cover;
+    }
+
+
+    & when not (@variationLabelSizes = false) {
+        each(@variationLabelSizes, {
+          @s: @@value;
+          .ui.@{value}.image.label.item img{
+            height: @s * 5.5;
+        }
+        .ui.@{value}.label {
+              font-size: @medium + (@s * 0.1);
+          }
+        })
+      }
+      
+
+  }
+
