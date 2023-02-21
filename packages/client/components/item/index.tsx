@@ -53,8 +53,8 @@ import { GalleryCardData } from './Gallery';
 import { GroupingCardData } from './Grouping';
 import styles from './Item.module.css';
 
-export function itemText(type: ItemType) {
-  let txt = '';
+export function itemText(type: ItemType): string {
+  let txt = undefined;
   switch (type) {
     case ItemType.Gallery: {
       txt = t`Gallery`;

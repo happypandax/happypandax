@@ -30,7 +30,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 
 import { SearchContext } from '../client/context';
 import t from '../client/lang';
-import { Query, QueryType, useQueryType } from '../client/queries';
+import { QueryType, useQueryType } from '../client/queries';
 import { replaceTextAtPosition } from '../client/search_utils';
 import { ItemType } from '../shared/enums';
 import {
@@ -39,6 +39,7 @@ import {
   ServerNamespaceTag,
 } from '../shared/types';
 import { AppState, SearchState, useInitialRecoilValue } from '../state';
+import { itemColor, itemText } from './item/index';
 import styles from './Search.module.css';
 
 SwiperCore.use([Mousewheel]);
@@ -245,39 +246,42 @@ function SearchResults({
 }) {
   const context = useContext(SearchContext);
 
-  const [data, setData] = useState<SearchItem[]>([]);
+  const [_searchQuery, setSearchQuery] = useState('');
+  const searchQuery = useDeferredValue(_searchQuery);
+
+  const { data } = useQueryType(
+    QueryType.SEARCH_LABELS,
+    {
+      search_query: searchQuery,
+      limit: 25,
+      item_types: itemTypes ?? [
+        ItemType.Artist,
+        ItemType.Category,
+        ItemType.Circle,
+        ItemType.Grouping,
+        ItemType.Language,
+        ItemType.Parody,
+        ItemType.NamespaceTag,
+      ],
+    },
+    {
+      enabled: !!searchQuery,
+    }
+  );
 
   const searchItems = useCallback(
-    _.debounce(
-      (query: string, position: number) => {
-        if (query) {
-          const t = replaceTextAtPosition(query, '', position, {
-            quotation: true,
-          });
+    _.debounce((query: string, position: number) => {
+      if (query) {
+        const t = replaceTextAtPosition(query, '', position, {
+          quotation: true,
+        });
 
-          const q = query.slice(t.startPosition, t.endPosition);
+        const q = query.slice(t.startPosition, t.endPosition);
 
-          Query.fetch(QueryType.SEARCH_LABELS, {
-            item_types: itemTypes ?? [
-              ItemType.Artist,
-              ItemType.Category,
-              ItemType.Circle,
-              ItemType.Grouping,
-              ItemType.Language,
-              ItemType.Parody,
-              ItemType.NamespaceTag,
-            ],
-            search_query: q.toString(),
-            limit: 25,
-          }).then((r) => {
-            setData(r.data.items);
-          });
-        }
-      },
-      200,
-      { maxWait: 1000 }
-    ),
-    [itemTypes]
+        setSearchQuery(q.toString());
+      }
+    }, 150),
+    []
   );
 
   useEffect(() => {
@@ -300,47 +304,27 @@ function SearchResults({
         selection
         className="no-margins small-padding-segment max-200-h overflow-y-auto">
         {!!context.query &&
-          data?.map?.((i) => {
+          data?.data?.items?.map?.((i) => {
+            const color = itemColor(i.__type__);
+
+            let type = itemText(i.__type__) ?? t`Unknown`;
             let basic = false;
-            let type = t`Unknown`;
-            let text = i?.name as string;
-            let color: React.ComponentProps<typeof Label>['color'];
+            let text = type
+              ? `${type.toLowerCase()}:"${i?.name}"`
+              : (i?.name as string);
+
             switch (i.__type__) {
-              case ItemType.Category: {
-                type = t`Category`;
-                text = `category:"${text}"`;
-                color = 'black';
-                break;
-              }
-              case ItemType.Circle: {
-                type = t`Circle`;
-                text = `circle:"${text}"`;
-                color = 'teal';
-                break;
-              }
               case ItemType.Collection: {
                 type = '';
                 text = `"${text}"`;
                 break;
               }
               case ItemType.Grouping: {
-                type = t`Series`;
                 basic = true;
-                text = `series:"${text}"`;
-                color = 'black';
                 break;
               }
               case ItemType.Language: {
-                type = t`Language`;
-                color = 'blue';
-                text = `language:"${text}"`;
                 basic = true;
-                break;
-              }
-              case ItemType.Parody: {
-                type = t`Parody`;
-                text = `parody:"${text}"`;
-                color = 'violet';
                 break;
               }
             }
@@ -377,7 +361,7 @@ function SearchResults({
             }
           })}
       </List>
-      {(!context.query || !data?.length) && (
+      {(!context.query || !data?.data?.items?.length) && (
         <Header
           textAlign="center"
           className="sub-text no-margins"

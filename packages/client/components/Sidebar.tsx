@@ -259,8 +259,9 @@ export const StickySidebar = forwardRef(function StickySidebar(
   }, [visible, menuSelector]);
 
   useEffect(() => {
-    ref.current.style.paddingRight = `calc(${window.innerWidth - document.body.offsetWidth
-      }px + ${ref.current.style.paddingRight ?? 0})`;
+    ref.current.style.paddingRight = `calc(${
+      window.innerWidth - document.body.offsetWidth
+    }px + ${ref.current.style.paddingRight ?? 0})`;
     ref.current.style.transition =
       'transform 300ms ease, -webkit-transform 300ms ease, top 0.15s ease-in 0s';
   }, []);

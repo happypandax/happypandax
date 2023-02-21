@@ -31,7 +31,9 @@ interface PageProps {
 const limit = 100;
 
 export async function getServerSideProps(context: NextPageContext) {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
 
   const urlQuery = urlparse(context.resolvedUrl);
 

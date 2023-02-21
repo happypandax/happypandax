@@ -4,16 +4,32 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 7088",
-    "build": "next build",
+    "build": "cross-env NODE_ENV=production next build",
     "test": "jest -i",
     "test:watch": "jest -i --watch",
     "build:css": "cd ./semantic && gulp build-css && gulp build-assets",
     "watch:css": "cd ./semantic && gulp watch",
     "install:prebuilds": "cp ../../node_modules/zeromq/prebuilds ./.next/server/app/prebuilds",
     "install:fomantic": "yarn --cwd ../../node_modules/fomantic-ui run install",
-    "start": "next start",
+    "start": "cross-env NODE_ENV=production node main.js",
+    "compile": "ncc build main.js -o dist/build",
+    "package": "cross-env NODE_ENV=production pkg  -t host package.json",
+    "package:debug": "cross-env DEBUG_PKG=1 pkg --debug -t host package.json",
     "storybook": "cross-env BROWSER=none start-storybook -p 7020 -s ./public",
     "build-storybook": "build-storybook"
+  },
+  "bin": {
+    "happypandax": "./.next/standalone/server.js"
+  },
+  "pkg": {
+    "scripts": [
+      "./.next/standalone/.next/**/*.js"
+    ],
+    "assets": [
+      "public/**/*",
+      "./.next/standalone/.next/**/*"
+    ],
+    "outputPath": "dist"
   },
   "dependencies": {
     "@brainhubeu/react-carousel": "^2.0.4",
@@ -71,7 +87,7 @@
     "serve-static": "^1.15.0",
     "server-only": "^0.0.1",
     "superjson": "^1.12.0",
-    "swiper": "^6.8.1",
+    "swiper": "^9.0.5",
     "ts-custom-error": "^3.3.1",
     "ts-jest": "^27.0.5",
     "ttag": "^1.7.24",
@@ -96,6 +112,7 @@
     "@types/node": "^14.14.35",
     "@types/react": "^18.0.26",
     "@types/serve-static": "^1.15.0",
+    "@vercel/ncc": "^0.36.1",
     "@vjpr/babel-plugin-parameter-decorator": "^1.0.15",
     "babel-jest": "^27.0.6",
     "babel-loader": "^8.2.2",
@@ -106,7 +123,7 @@
     "gulp": "^4.0.2",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.0.6",
-    "next-transpile-modules": "^8.0.0",
+    "pkg": "^5.8.0",
     "storybook-addon-themes": "^6.1.0",
     "storybook-css-modules-preset": "^1.0.8",
     "ts-deep-pick": "^0.2.2",

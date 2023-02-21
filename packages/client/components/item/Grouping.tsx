@@ -33,6 +33,7 @@ import {
   ItemCardActionContent,
   ItemCardActionContentItem,
   ItemCardContent,
+  itemColor,
   QueueIconLabel,
   TranslucentLabel,
 } from './index';
@@ -76,6 +77,7 @@ function GroupingContent({
       <Divider />
       <View
         dynamicRowHeight
+        paginationSize="mini"
         className="no-padding-segment"
         items={data?.galleries}
         size={horizontal ? 'tiny' : 'small'}
@@ -100,6 +102,8 @@ export function GroupingCard({
   actionContent?: React.ComponentProps<typeof ItemCard>['actionContent'];
   horizontal?: boolean;
 } & React.ComponentProps<typeof GalleryCard>) {
+  const color = itemColor(ItemType.Grouping);
+
   const blur = useRecoilValue(AppState.blur);
   const readingQueue = useRecoilValue(AppState.readingQueue);
 
@@ -140,7 +144,7 @@ export function GroupingCard({
               {!!data?.galleries?.every((d) => d?.metatags?.inbox) && (
                 <InboxIconLabel />
               )}
-              <ActivityLabel />
+              <ActivityLabel type={ItemType.Grouping} data={data} />
             </ItemLabel>,
             <ItemLabel key="menu" x="right" y="bottom">
               {horizontal && (
@@ -188,9 +192,9 @@ export function GroupingCard({
       on="click"
       flowing
       as={Segment}
-      color="teal"
+      color={color}
       wide="very"
-      position="bottom left"
+      position="bottom center"
       className="no-padding-segment modal"
       trigger={
         <ItemCard
@@ -200,7 +204,7 @@ export function GroupingCard({
           centered
           className={classNames({
             stacked: is_series,
-            teal: is_series,
+            [color]: is_series,
           })}
           link
           fluid={fluid}

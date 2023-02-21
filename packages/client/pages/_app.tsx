@@ -33,6 +33,7 @@ interface AppPageProps extends AppInitialProps {
     loggedIn: boolean;
     connected: boolean;
     sameMachine: boolean;
+    pathname: string;
   };
 }
 
@@ -191,13 +192,10 @@ export function AppRoot({
   );
 }
 
-
 function MyApp({ Component, pageProps }: AppProps<AppPageProps['pageProps']>) {
-  const router = useRouter();
-
   return (
     <AppRoot pageProps={pageProps}>
-      {!['/login', '/_error'].includes(router.pathname) && <LoginModal />}
+      {!['/login', '/_error'].includes(pageProps.pathname) && <LoginModal />}
       <Theme>
         <Component {...pageProps} />
       </Theme>
@@ -232,41 +230,38 @@ MyApp.getInitialProps = async function (
   let connected = false;
   let user: ServerUser | null = null;
   let notifications: NotificationData[] = [];
+  let pathname = '';
 
   if (global.app.IS_SERVER) {
+    pathname = context.router.pathname;
 
     sameMachine =
       context.ctx.req.socket.localAddress ===
       context.ctx.req.socket.remoteAddress;
 
-    const service = global.app.service.get(ServiceType.Server)
+    const service = global.app.service.get(ServiceType.Server);
     connected = service.is_connected();
 
-    const session = await global.app.getServerSession(context.ctx)
+    const session = await global.app.getServerSession(context.ctx);
 
     if (session) {
-
       const fairy = global.app.service.get(ServiceType.Fairy);
       notifications = fairy.get(session.id);
 
       const server = service.session(session.id);
 
       if (server) {
-
         try {
-          user = await server.user({}, undefined, { cache: true })
+          user = await server.user({}, undefined, { cache: true });
         } catch (e) {
-          global.app.log.e('Failed to get user', e)
+          global.app.log.e('Failed to get user', e);
         }
-
       }
 
       if (user) {
         loggedIn = true;
       }
-
     }
-
 
     if (!loggedIn && !['/login', '/_error'].includes(context.router.pathname)) {
       return redirect({
@@ -274,38 +269,43 @@ MyApp.getInitialProps = async function (
         ctx: context.ctx,
       }) as any;
     }
-
   }
 
   let propsData: AppPageProps['pageProps'] = {
+    pathname,
     loggedIn,
     user,
     sameMachine,
     connected,
     notifications,
-  }
+  };
 
   if (global.app.IS_SERVER) {
     if (context.ctx.req?.method === 'POST') {
       context.ctx.res?.writeHead(200, {
         'Content-Type': 'application/json',
-      })
-      context.ctx.res?.end(JSON.stringify(propsData))
-      return null
+      });
+      context.ctx.res?.end(JSON.stringify(propsData));
+      return null;
     }
   } else {
-    const res = await axios.post(location.origin, {}, {
-      withCredentials: true,
-    })
-    const data: AppPageProps['pageProps'] = res.data
+    const res = await axios.post(
+      location.origin,
+      {},
+      {
+        withCredentials: true,
+      }
+    );
+    const data: AppPageProps['pageProps'] = res.data;
 
     propsData = {
+      pathname: data.pathname,
       loggedIn: data.loggedIn,
       user: data.user,
       sameMachine: data.sameMachine,
       connected: data.connected,
       notifications: data.notifications,
-    }
+    };
   }
 
   const props = await App.getInitialProps(context);
@@ -314,7 +314,7 @@ MyApp.getInitialProps = async function (
     ...props,
     pageProps: {
       ...props.pageProps,
-      ...propsData
+      ...propsData,
     },
   };
 };

@@ -51,22 +51,22 @@ export function IsolationLabel({
         isolation === 'user'
           ? t`This option is isolated to the user`
           : isolation === 'client'
-            ? t`This option is isolated to the client`
-            : t`This option is global`
+          ? t`This option is isolated to the client`
+          : t`This option is global`
       }
       color={
         isolation === 'user'
           ? 'purple'
           : isolation === 'client'
-            ? 'teal'
-            : 'black'
+          ? 'teal'
+          : 'black'
       }
       {...props}>
       {isolation === 'user'
         ? t`User`
         : isolation === 'client'
-          ? t`Client`
-          : t`Global`}
+        ? t`Client`
+        : t`Global`}
     </Label>
   );
 }
@@ -104,16 +104,16 @@ export function OptionField<
   type: I;
 } & Omit<
   I extends 'select'
-  ? React.ComponentProps<typeof Select>
-  : I extends 'boolean'
-  ? React.ComponentProps<typeof Checkbox>
-  : I extends 'number'
-  ? React.ComponentProps<typeof Input>
-  : I extends 'string'
-  ? React.ComponentProps<typeof Input>
-  : I extends 'json'
-  ? React.ComponentProps<typeof JSONTextEditor>
-  : never,
+    ? React.ComponentProps<typeof Select>
+    : I extends 'boolean'
+    ? React.ComponentProps<typeof Checkbox>
+    : I extends 'number'
+    ? React.ComponentProps<typeof Input>
+    : I extends 'string'
+    ? React.ComponentProps<typeof Input>
+    : I extends 'json'
+    ? React.ComponentProps<typeof JSONTextEditor>
+    : never,
   'value' | 'label' | 'type'
 >) {
   return defined(cfg[nskey]) || visible ? (
@@ -1165,7 +1165,7 @@ export default function SettingsModal({
         }
       };
     }
-    return () => { };
+    return () => {};
   }, [open]);
 
   return (

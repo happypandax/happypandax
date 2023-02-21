@@ -16,7 +16,7 @@ import {
 
 import { useRecentViewedItem } from '../client/hooks/item';
 import t from '../client/lang';
-import { Query, useQueryType } from '../client/queries';
+import { useQueryType } from '../client/queries';
 import { DrawerTab, ImageSize, ItemType, QueueType } from '../shared/enums';
 import { QueryType } from '../shared/query';
 import { DragItemData, ServerGallery } from '../shared/types';
@@ -32,7 +32,7 @@ import { DownloadLabel, DownloadQueue } from './queue/Download';
 import { MetadataLabel, MetadataQueue } from './queue/Metadata';
 import ListView from './view/ListView';
 
-export function SelectedBoard({ }: {}) {
+export function SelectedBoard({}: {}) {
   const [items, setItems] = useState([]);
 
   const [{ isOver }, dropRef] = useDrop(
@@ -71,7 +71,7 @@ export function SelectedBoard({ }: {}) {
   );
 }
 
-export function QueueBoard({ }: {}) {
+export function QueueBoard({}: {}) {
   const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
   const [items, setItems] = useState<GalleryCardData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -91,24 +91,33 @@ export function QueueBoard({ }: {}) {
     [items, readingQueue]
   );
 
+  const f_ids = readingQueue.filter((i) => !items.find((i2) => i2.id === i));
+
   useEffect(() => {
-    const f_ids = readingQueue.filter((i) => !items.find((i2) => i2.id === i));
-    if (f_ids.length) {
-      setLoading(true);
-      Query.fetch(QueryType.ITEM, {
-        item_id: f_ids,
-        item_type: ItemType.Gallery,
-        profile_options: {
-          size: ImageSize.Small,
-        },
-        fields: galleryCardDataFields,
-      })
-        .then((r) => {
-          setItems([...items, ...(r.data as GalleryCardData[])]);
-        })
-        .finally(() => setLoading(false));
+    setLoading(true);
+  }, [...f_ids]);
+
+  const { data } = useQueryType(
+    QueryType.ITEM,
+    {
+      item_id: f_ids,
+      item_type: ItemType.Gallery,
+      profile_options: {
+        size: ImageSize.Small,
+      },
+      fields: galleryCardDataFields,
+    },
+    {
+      enabled: !!f_ids.length,
+      onSettled: () => setLoading(false),
     }
-  }, [readingQueue]);
+  );
+
+  useEffect(() => {
+    if (data?.data) {
+      setItems([...items, ...(data.data as GalleryCardData[])]);
+    }
+  }, [data]);
 
   const reverse = useCallback(() => {
     setReadingQueue(readingQueue.slice().reverse());
@@ -153,7 +162,7 @@ export function QueueBoard({ }: {}) {
           loading={loading}
           basic
           items={ritems}
-          paginationSize='mini'
+          paginationSize="mini"
           tertiary
           className="no-margins no-padding-segment"
           itemRender={GalleryCard}
@@ -423,8 +432,8 @@ export function DrawerButton({ basic }: { basic?: boolean }) {
             !metadataData?.data?.running && !downloadData?.data?.running
               ? 'red'
               : metadataData?.data?.running && downloadData?.data?.running
-                ? 'green'
-                : 'orange'
+              ? 'green'
+              : 'orange'
           }
           size="tiny"
           floating

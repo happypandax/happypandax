@@ -1,5 +1,5 @@
 import '@brainhubeu/react-carousel/lib/style.css';
-import 'swiper/swiper-bundle.css';
+import 'swiper/css/bundle';
 
 import classNames from 'classnames';
 import React, {
@@ -22,8 +22,6 @@ import { MiscState } from '../../state';
 import { useInitialRecoilState } from '../../state/index';
 import GalleryCard, { galleryCardDataFields } from '../item/Gallery';
 import { EmptySegment, Visible } from './index';
-
-SwiperCore.use([Navigation, Autoplay]);
 
 export const SliderElement = SwiperSlide;
 
@@ -174,6 +172,7 @@ export function Slider({
         {items && (
           <Swiper
             onSwiper={onSwiper}
+            modules={[Autoplay, Navigation]}
             autoplay={onAutoplay}
             loop={infinite}
             slidesPerView={3}

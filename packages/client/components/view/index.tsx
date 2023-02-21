@@ -26,7 +26,7 @@ import { AppState } from '../../state';
 import { PlaceholderItemCard } from '../item/index';
 
 export function ViewPagination({
-  size = "small",
+  size = 'small',
   onPageChange,
   activePage,
   totalPages,
@@ -294,10 +294,10 @@ export function PaginatedView({
   const onLoadMore = useCallback(
     loadMore
       ? _.throttle(() => {
-        loadMore();
-        setCanLoadMore(false);
-        setHasScrolled(false);
-      }, 1000)
+          loadMore();
+          setCanLoadMore(false);
+          setHasScrolled(false);
+        }, 1000)
       : undefined,
     [loadMore]
   );

@@ -32,8 +32,9 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
-
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
 
   const urlQuery = urlparse(context.resolvedUrl);
 
@@ -55,8 +56,8 @@ export async function getServerSideProps(
       ViewType.Library === view
         ? false
         : ViewType.Inbox === view
-          ? true
-          : undefined,
+        ? true
+        : undefined,
   };
 
   const data = await server.library<ServerGallery>({

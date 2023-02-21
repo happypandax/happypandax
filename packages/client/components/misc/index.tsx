@@ -1,5 +1,4 @@
 import '@brainhubeu/react-carousel/lib/style.css';
-import 'swiper/swiper-bundle.css';
 
 import classNames from 'classnames';
 import maxSize from 'popper-max-size-modifier';
@@ -346,7 +345,7 @@ export function LabelAccordion({
   const visible = initialVisible ?? show;
 
   useUpdateEffect(() => {
-      onVisible?.(visible);
+    onVisible?.(visible);
   }, [visible]);
 
   return (

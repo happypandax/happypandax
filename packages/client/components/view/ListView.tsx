@@ -57,20 +57,13 @@ function ListViewList<T>({
       itemsPerRow
   );
 
-  console.debug({ rowCount, itemsPerRow, itemsPerPage, items: items?.length });
-
   const resize = useCallback(() => {
     if (itemRef.current) {
-      console.debug('resizing');
       if (dynamicRowHeight) {
         const margin = size === 'small' ? 7 : 15;
-        console.debug('width', itemRef.current.children[0].offsetWidth);
-        console.debug('height', itemRef.current.children[0].offsetHeight);
         setItemWidth(itemRef.current.children[0].offsetWidth);
         setRowHeight(itemRef.current.children[0].offsetHeight + margin);
       } else {
-        console.debug('width 2', itemRef.current.offsetWidth);
-        console.debug('height 2', itemRef.current.offsetHeight);
         setItemWidth(itemRef.current.offsetWidth);
         setRowHeight(itemRef.current.offsetHeight);
       }

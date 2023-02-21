@@ -80,7 +80,7 @@ export function CollectionCard({
           </ItemLabel>,
           <ItemLabel key="icons" x="right" y="top">
             {!!data?.metatags?.inbox && <InboxIconLabel />}
-            <ActivityLabel />
+            <ActivityLabel type={ItemType.Collection} data={data} />
           </ItemLabel>,
           <ItemLabel key="menu" x="right" y="bottom">
             {horizontal && (
