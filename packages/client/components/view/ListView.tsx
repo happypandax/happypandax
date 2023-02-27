@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { List } from 'react-virtualized';
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { areEqual, VariableSizeList as List } from 'react-window';
 
 import { ItemSize } from '../../shared/types';
 import { PlaceholderItemCard } from '../item/index';
@@ -23,28 +30,102 @@ interface ListViewProps<T> {
   dynamicRowHeight?: boolean;
 }
 
-function ListViewList<T>({
-  width: initialWidth,
-  height,
-  items,
-  dynamicRowHeight,
-  size,
-  itemRender: ItemRender,
-  isScrolling,
-  loading,
-  itemsPerPage,
-  onScroll,
-  scrollTop,
-  autoHeight,
-  onItemKey,
+type ListViewRenderData = {
+  onSetDims: (dims: boolean) => void;
+  itemRef: React.Ref<HTMLDivElement>;
+  itemsPerRow: number;
+} & ListViewProps<any>;
+
+const ListViewRender = memo(function ListViewRender({
+  index,
+  key,
+  style,
+  data: {
+    onSetDims,
+    itemRef,
+    items,
+    itemsPerRow,
+    loading,
+    itemRender: ItemRender,
+    onItemKey,
+    size,
+  },
 }: {
-  width: number;
-  height: number;
-  isScrolling?: any;
-  onScroll?: any;
-  scrollTop?: any;
-  autoHeight?: any;
-} & ListViewProps<T>) {
+  index: number;
+  key: any;
+  style: React.CSSProperties;
+  data: ListViewRenderData;
+}) {
+  const cols = [];
+
+  if (items?.length) {
+    const fromIndex = index * itemsPerRow;
+    const toIndex = fromIndex + itemsPerRow;
+
+    for (let i = fromIndex; i < toIndex; i++) {
+      if (i >= items.length) {
+        if (loading) {
+          cols.push(
+            <div
+              ref={itemRef}
+              key={`loading-${i}`}
+              className={styles.item}
+              style={{ flexGrow: 1 }}>
+              <PlaceholderItemCard horizontal fluid size={size} />
+            </div>
+          );
+        }
+        continue;
+      }
+
+      cols.push(
+        <div
+          ref={itemRef}
+          key={onItemKey(items[i])}
+          className={styles.item}
+          style={{ flexGrow: 1 }}>
+          <ItemRender data={items[i]} horizontal size={size} fluid />
+        </div>
+      );
+    }
+
+    onSetDims(true);
+  }
+
+  return (
+    <div className={styles.row} key={key} style={style}>
+      {cols}
+    </div>
+  );
+},
+areEqual);
+
+const ListViewList = forwardRef(function ListViewList<T>(
+  {
+    outerRef,
+    style,
+    width: initialWidth,
+    height,
+    items,
+    dynamicRowHeight,
+    size,
+    itemRender: ItemRender,
+    loading,
+    itemsPerPage,
+    onScroll,
+    scrollTop,
+    onItemKey,
+  }: {
+    outerRef?: React.Ref<any>;
+    style?: React.CSSProperties;
+    width: number;
+    height: number;
+    onScroll?: any;
+    scrollTop?: any;
+    autoHeight?: any;
+  } & ListViewProps<T>,
+  ref
+) {
   const itemRef = useRef<HTMLDivElement>();
   const [itemWidth, setItemWidth] = useState(600);
   const [rowHeight, setRowHeight] = useState(140);
@@ -57,15 +138,41 @@ function ListViewList<T>({
       itemsPerRow
   );
 
+  const [data, setData] = useState<ListViewRenderData>({
+    items,
+    itemsPerRow,
+    itemRender: ItemRender,
+    loading,
+    size,
+    onSetDims: setDims,
+    onItemKey,
+    itemRef,
+  });
+
+  useEffect(() => {
+    setData({
+      items,
+      itemsPerRow,
+      itemRender: ItemRender,
+      size,
+      loading,
+      onSetDims: setDims,
+      onItemKey,
+      itemRef,
+    });
+  }, [items, itemsPerRow, ItemRender, loading, onItemKey]);
+
   const resize = useCallback(() => {
     if (itemRef.current) {
       if (dynamicRowHeight) {
         const margin = size === 'small' ? 7 : 15;
-        setItemWidth(itemRef.current.children[0].offsetWidth);
-        setRowHeight(itemRef.current.children[0].offsetHeight + margin);
+        setItemWidth(itemRef.current.children[0].offsetWidth || itemWidth);
+        setRowHeight(
+          itemRef.current.children[0].offsetHeight + margin || rowHeight
+        );
       } else {
-        setItemWidth(itemRef.current.offsetWidth);
-        setRowHeight(itemRef.current.offsetHeight);
+        setItemWidth(itemRef.current.offsetWidth || itemWidth);
+        setRowHeight(itemRef.current.offsetHeight || rowHeight);
       }
     }
   }, [dynamicRowHeight]);
@@ -97,65 +204,24 @@ function ListViewList<T>({
 
   return (
     <List
+      ref={ref}
+      outerRef={outerRef}
+      style={style}
       className="listview"
-      autoHeight={autoHeight}
-      isScrolling={isScrolling}
-      scrollTop={scrollTop}
+      overscanCount={5}
+      initialScrollOffset={scrollTop}
       onScroll={onScroll}
+      itemKey={(index, data) => onItemKey(data.items[index])}
+      itemData={data}
       width={width}
       height={height}
-      rowCount={rowCount}
-      rowHeight={rowHeight}
-      overscanRowCount={2}
-      rowRenderer={useCallback(
-        ({ index, key, style }) => {
-          const cols = [];
-
-          if (items?.length) {
-            const fromIndex = index * itemsPerRow;
-            const toIndex = fromIndex + itemsPerRow;
-
-            for (let i = fromIndex; i < toIndex; i++) {
-              if (i >= items.length) {
-                if (loading) {
-                  cols.push(
-                    <div
-                      ref={itemRef}
-                      key={`loading-${i}`}
-                      className={styles.item}
-                      style={{ flexGrow: 1 }}>
-                      <PlaceholderItemCard horizontal fluid size={size} />
-                    </div>
-                  );
-                }
-                continue;
-              }
-
-              cols.push(
-                <div
-                  ref={itemRef}
-                  key={onItemKey(items[i])}
-                  className={styles.item}
-                  style={{ flexGrow: 1 }}>
-                  <ItemRender data={items[i]} horizontal size={size} fluid />
-                </div>
-              );
-            }
-
-            setDims(true);
-          }
-
-          return (
-            <div className={styles.row} key={key} style={style}>
-              {cols}
-            </div>
-          );
-        },
-        [items, itemsPerRow, ItemRender]
-      )}
-    />
+      itemCount={rowCount}
+      itemSize={() => rowHeight}
+      estimatedItemSize={rowHeight}>
+      {ListViewRender}
+    </List>
   );
-}
+});
 
 export default function ListView<T>({
   itemRender,
@@ -175,7 +241,7 @@ export default function ListView<T>({
     'children' | 'itemCount' | 'paddedChildren'
   >) {
   return (
-    <ViewBase arrayContext={arrayContext} items={items}>
+    <ViewBase arrayContext={arrayContext}>
       <PaginatedView {...props} itemCount={items?.length} paddedChildren>
         <ViewAutoSizer
           items={items}

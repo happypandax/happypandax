@@ -166,7 +166,7 @@ export function QueueBoard({}: {}) {
           tertiary
           className="no-margins no-padding-segment"
           itemRender={GalleryCard}
-          onItemKey={useCallback((i) => i.id, [])}
+          onItemKey={useCallback((i) => i?.id, [])}
         />
         {!items.length && <EmptySegment />}
       </Dimmer.Dimmable>

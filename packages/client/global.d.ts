@@ -20,6 +20,7 @@ declare type Logger = import('./shared/logger').Logger;
 declare type ServiceLocator = import('./services/base').ServiceLocator;
 declare type GetServerSession = import('./server/requests').GetServerSession;
 
+declare type MakeRequired<T, Key extends keyof T> = T & Required<Pick<T, Key>>;
 
 declare type MakeOptional<T, K extends keyof T> = Omit<T, K> &
   { [SubKey in K]?: Maybe<T[SubKey]> };
@@ -192,4 +193,13 @@ declare module NodeJS {
     };
     log: Logger;
   }
+}
+
+import React from 'react';
+
+// Redecalare forwardRef to support generics
+declare module "react" {
+  function forwardRef<T, P = {}>(
+    render: (props: P, ref: React.Ref<T>) => React.ReactElement | null
+  ): (props: P & React.RefAttributes<T>) => React.ReactElement | null;
 }

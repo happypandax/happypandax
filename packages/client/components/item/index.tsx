@@ -871,7 +871,7 @@ export function PlaceholderItemCard({
   centered?: boolean;
   type?: ItemType;
   horizontal?: boolean;
-} & React.ComponentProps<typeof ItemCard>) {
+} & Omit<React.ComponentProps<typeof ItemCard>, 'type'>) {
   return (
     <ItemCard
       {...props}

@@ -1,14 +1,16 @@
 import classNames from 'classnames';
 import _ from 'lodash';
+import throttle from 'lodash/throttle';
 import { useRouter } from 'next/router';
 import React, {
+  CSSProperties,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { AutoSizer, WindowScroller } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { useRecoilValue } from 'recoil';
 import {
   Grid,
@@ -24,6 +26,108 @@ import t from '../../client/lang';
 import { getClientHeight } from '../../client/utility';
 import { AppState } from '../../state';
 import { PlaceholderItemCard } from '../item/index';
+
+const windowScrollPositionKey = {
+  y: 'pageYOffset',
+  x: 'pageXOffset',
+};
+
+const documentScrollPositionKey = {
+  y: 'scrollTop',
+  x: 'scrollLeft',
+};
+
+const elementScrollPositionKey = documentScrollPositionKey;
+
+export function ElementScroller({
+  children,
+  throttleTime = 10,
+  isGrid = false,
+  horizontal = false,
+  scrollElementRef = window,
+}) {
+  const ref = useRef<HTMLDivElement>();
+  const outerRef = useRef<HTMLDivElement>();
+
+  const getScrollPositionWindow = useCallback(
+    (axis) =>
+      window[windowScrollPositionKey[axis]] ||
+      document.documentElement[documentScrollPositionKey[axis]] ||
+      document.body[documentScrollPositionKey[axis]] ||
+      0,
+    []
+  );
+
+  const getScrollPositionElement = useCallback(
+    (ref, axis) => ref[elementScrollPositionKey[axis]],
+    []
+  );
+
+  const getScrollPosition = useCallback((ref, axis) => {
+    if (ref === window) {
+      return getScrollPositionWindow(axis);
+    }
+    return getScrollPositionElement(ref, axis);
+  }, []);
+
+  useEffect(() => {
+    const handleWindowScroll = throttle(() => {
+      const { offsetTop = 0, offsetLeft = 0 } = outerRef.current || {};
+
+      const scrollTop = getScrollPosition(scrollElementRef, 'y') - offsetTop;
+      const scrollLeft = getScrollPosition(scrollElementRef, 'x') - offsetLeft;
+      if (isGrid)
+        ref.current && ref.current.scrollTo({ scrollLeft, scrollTop });
+      if (!isGrid) ref.current && ref.current.scrollTo(scrollTop);
+    }, throttleTime);
+
+    scrollElementRef.addEventListener('scroll', handleWindowScroll);
+    return () => {
+      handleWindowScroll.cancel();
+      scrollElementRef.removeEventListener('scroll', handleWindowScroll);
+    };
+  }, [isGrid, scrollElementRef, throttleTime]);
+
+  const onScroll = useCallback(
+    ({
+      scrollLeft = 0, // This is not provided by react-window
+      scrollTop = 0, // This is not provided by react-window
+      scrollOffset,
+      scrollUpdateWasRequested,
+    }) => {
+      if (!scrollUpdateWasRequested) return;
+      const top = getScrollPosition(scrollElementRef, 'y');
+      const left = getScrollPosition(scrollElementRef, 'x');
+      const { offsetTop = 0, offsetLeft = 0 } = outerRef.current || {};
+
+      scrollOffset += Math.min(top, offsetTop);
+      scrollTop += Math.min(top, offsetTop);
+      scrollLeft += Math.min(left, offsetLeft);
+
+      if (!isGrid && scrollOffset !== top)
+        scrollElementRef.scrollTo(0, scrollOffset);
+      if (isGrid && (scrollTop !== top || scrollLeft !== left)) {
+        scrollElementRef.scrollTo(scrollLeft, scrollTop);
+      }
+    },
+    [isGrid, scrollElementRef]
+  );
+
+  const style = {
+    width: isGrid ? 'auto' : horizontal ? '100%' : undefined,
+    height: horizontal ? undefined : '100%',
+    display: 'inline-block',
+  };
+
+  return children({
+    ref,
+    outerRef,
+    height: scrollElementRef.innerHeight,
+    width: scrollElementRef.innerWidth,
+    style: _.omitBy(style, _.isNil),
+    onScroll,
+  });
+}
 
 export function ViewPagination({
   size = 'small',
@@ -169,14 +273,14 @@ export function ViewPagination({
 type ItemRender = React.ComponentType<{ data: any }>;
 
 export interface ViewProps {
-  width: number;
+  ref?: any;
+  outerRef?: any;
   height: number;
-  isScrolling?: any;
+  width: number;
   itemRender: ItemRender;
   items?: any;
   onScroll?: any;
-  scrollTop?: any;
-  autoHeight?: any;
+  style?: CSSProperties;
 }
 
 // TODO: Does not show anything when having a parent component and disableWindowScroll=true
@@ -211,21 +315,21 @@ export function ViewAutoSizer({
   const winFunc = useCallback(
     ({ width }) => {
       return (
-        <WindowScroller>
-          {({ height, isScrolling, onChildScroll, scrollTop }) => (
+        <ElementScroller>
+          {({ ref, outerRef, style, height, onScroll }) => (
             <View
+              ref={ref}
+              outerRef={outerRef}
+              style={style}
               items={items}
               itemRender={itemRender}
               height={height}
               width={width}
-              isScrolling={isScrolling}
-              onScroll={onChildScroll}
-              scrollTop={scrollTop}
-              autoHeight
+              onScroll={onScroll}
               {...viewProps}
             />
           )}
-        </WindowScroller>
+        </ElementScroller>
       );
     },
     [items, itemRender, ...Object.values(viewProps)]
@@ -253,6 +357,8 @@ export function ViewAutoSizer({
     </AutoSizer>
   );
 }
+
+// TODO: Consider switching infinite scrolling to https://github.com/bvaughn/react-window-infinite-loader
 
 export function PaginatedView({
   children,
