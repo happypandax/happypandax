@@ -27,13 +27,15 @@ export const HPX_SERVER_HOST = process.env.HPX_SERVER_HOST
   ? process.env.HPX_SERVER_HOST
   : 'localhost';
 
-export const HPX_SECRET = process.env.HPX_SECRET
-  ? process.env.HPX_SECRET
-  : 'secret';
-
 export const HPX_SERVER_PORT = process.env.HPX_SERVER_PORT
   ? parseInt(process.env.HPX_SERVER_PORT, 10)
   : 7007;
+
+export const DISABLE_SERVER_CONNECT = (['true', '1'].includes(process.env?.HPX_DISABLE_SERVER_CONNECT?.toLocaleLowerCase?.()))
+
+export const HPX_SECRET = process.env.HPX_SECRET
+  ? process.env.HPX_SECRET
+  : 'secret';
 
 export const DOMAIN_URL = process.env.PUBLIC_DOMAIN_URL ? process.env.PUBLIC_DOMAIN_URL : 'http://localhost:7008';
 

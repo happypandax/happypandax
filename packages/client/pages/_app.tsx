@@ -18,7 +18,13 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
-import { IS_SERVER, ServiceType } from '../server/constants';
+import {
+  DISABLE_SERVER_CONNECT,
+  HPX_SERVER_HOST,
+  HPX_SERVER_PORT,
+  IS_SERVER,
+  ServiceType,
+} from '../server/constants';
 import { NotificationData, ServerUser } from '../shared/types';
 import { AppState } from '../state';
 import { useGlobalValue, useSetGlobalState } from '../state/global';
@@ -36,6 +42,9 @@ interface AppPageProps extends AppInitialProps {
     connected: boolean;
     sameMachine: boolean;
     pathname: string;
+    serverHost: string;
+    serverPort: number;
+    disableServerConnect: boolean;
   };
 }
 
@@ -173,12 +182,18 @@ export function AppRoot({
   const setLoggedIn = useSetGlobalState('loggedIn');
   const setSameMachine = useSetGlobalState('sameMachine');
   const setUser = useSetGlobalState('user');
+  const setServerHost = useSetGlobalState('serverHost');
+  const setServerPort = useSetGlobalState('serverPort');
+  const setDisableServerConnect = useSetGlobalState('disableServerConnect');
 
   useEffect(() => {
     setConnected(pageProps.connected);
     setLoggedIn(pageProps.loggedIn);
     setSameMachine(pageProps.sameMachine);
     setUser(pageProps.user);
+    setServerHost(pageProps.serverHost);
+    setServerPort(pageProps.serverPort);
+    setDisableServerConnect(pageProps.disableServerConnect);
   }, [pageProps]);
 
   return (
@@ -229,6 +244,9 @@ function redirect(params: {
 MyApp.getInitialProps = async function (
   context: AppContext
 ): Promise<AppPageProps> {
+  let serverHost = HPX_SERVER_HOST;
+  let serverPort = HPX_SERVER_PORT;
+  let disableServerConnect = DISABLE_SERVER_CONNECT;
   let loggedIn = false;
   let sameMachine = false;
   let connected = false;
@@ -276,6 +294,9 @@ MyApp.getInitialProps = async function (
   }
 
   let propsData: AppPageProps['pageProps'] = {
+    disableServerConnect,
+    serverHost,
+    serverPort,
     pathname,
     loggedIn,
     user,
@@ -303,6 +324,9 @@ MyApp.getInitialProps = async function (
     const data: AppPageProps['pageProps'] = res.data;
 
     propsData = {
+      disableServerConnect: data.disableServerConnect,
+      serverHost: data.serverHost,
+      serverPort: data.serverPort,
       pathname: data.pathname,
       loggedIn: data.loggedIn,
       user: data.user,

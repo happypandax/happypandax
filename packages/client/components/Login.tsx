@@ -11,16 +11,16 @@ import {
 
 import t from '../client/lang';
 import { MutatationType, useMutationType } from '../client/queries';
-import {
-  HPX_SERVER_HOST,
-  HPX_SERVER_PORT,
-  LOGIN_ERROR,
-} from '../server/constants';
+import { LOGIN_ERROR } from '../server/constants';
 import { urlparse } from '../shared/utility';
-import { useGlobalState } from '../state/global';
+import { useGlobalState, useGlobalValue } from '../state/global';
 import { LabelAccordion } from './misc';
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const serverHost = useGlobalValue('serverHost');
+  const serverPort = useGlobalValue('serverPort');
+  const disableServerConnect = useGlobalValue('disableServerConnect');
+
   const [endpoint, setEndpoint] = useState({
     host: undefined as string,
     port: undefined as number,
@@ -30,7 +30,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
   type NextAuthErrorData = {
     url: string;
-  }
+  };
 
   const mutation = useMutationType(MutatationType.LOGIN, {
     onSuccess: (data, variables) => {
@@ -44,25 +44,21 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     onError: (err) => {
       setLoading(false);
 
-      const data = err.response?.data as unknown as NextAuthErrorData;
-
+      const data = (err.response?.data as unknown) as NextAuthErrorData;
 
       if (err.response.status === 401 && data?.url) {
-        console.debug(err.message, data)
+        console.debug(err.message, data);
 
         const error = urlparse(data.url).query?.error as LOGIN_ERROR;
 
         switch (error) {
           case LOGIN_ERROR.InvalidCredentials:
-            setError(
-              t`Wrong credentials`
-            );
+            setError(t`Wrong credentials`);
             break;
           case LOGIN_ERROR.ServerNotConnected:
-
             setError(
               t`Failed to connect to server` +
-              ` (${endpoint.host}:${endpoint.port})`
+                ` (${endpoint.host}:${endpoint.port})`
             );
             break;
           default:
@@ -74,7 +70,6 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     },
   });
 
-
   useEffect(() => {
     if (!endpoint.host || !endpoint.port) {
       const ep = localStorage.getItem('server_endpoint');
@@ -85,9 +80,16 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   }, []);
 
   const getEndpoint = useCallback(() => {
+    if (disableServerConnect) {
+      return {
+        host: undefined,
+        port: undefined,
+      };
+    }
+
     return {
-      host: endpoint.host || HPX_SERVER_HOST || 'localhost',
-      port: endpoint.port || HPX_SERVER_PORT || 7007,
+      host: endpoint.host || serverHost || 'localhost',
+      port: endpoint.port || serverPort || 7007,
     };
   }, [endpoint]);
 
@@ -121,34 +123,36 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             endpoint: getEndpoint(),
           });
         }}>
-        <LabelAccordion label="Server">
-          <Segment basic>
-            <Form.Group>
-              <Form.Input
-                name="host"
-                label={t`Host`}
-                width={11}
-                value={endpoint?.host ?? ''}
-                onChange={(e, d) => {
-                  setEndpoint({ ...endpoint, host: d.value });
-                }}
-                placeholder={endpoint.host ?? HPX_SERVER_HOST}></Form.Input>
-              <Form.Input
-                name="port"
-                label={t`Port`}
-                width={5}
-                value={endpoint?.port ?? ''}
-                onChange={(e, d) => {
-                  setEndpoint({
-                    ...endpoint,
-                    port: d.value ? parseInt(d.value, 10) : undefined,
-                  });
-                }}
-                placeholder={endpoint.port ?? HPX_SERVER_PORT}
-                type="number"></Form.Input>
-            </Form.Group>
-          </Segment>
-        </LabelAccordion>
+        {!disableServerConnect && (
+          <LabelAccordion label="Server">
+            <Segment basic>
+              <Form.Group>
+                <Form.Input
+                  name="host"
+                  label={t`Host`}
+                  width={11}
+                  value={endpoint?.host ?? ''}
+                  onChange={(e, d) => {
+                    setEndpoint({ ...endpoint, host: d.value });
+                  }}
+                  placeholder={endpoint.host ?? serverHost}></Form.Input>
+                <Form.Input
+                  name="port"
+                  label={t`Port`}
+                  width={5}
+                  value={endpoint?.port ?? ''}
+                  onChange={(e, d) => {
+                    setEndpoint({
+                      ...endpoint,
+                      port: d.value ? parseInt(d.value, 10) : undefined,
+                    });
+                  }}
+                  placeholder={endpoint.port ?? serverPort}
+                  type="number"></Form.Input>
+              </Form.Group>
+            </Segment>
+          </LabelAccordion>
+        )}
         <Form.Input
           name="username"
           label={t`Username`}

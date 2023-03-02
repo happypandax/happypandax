@@ -3,6 +3,8 @@
 
 # custom
 **/public/semantic/
+**/*/.env
+**/*/.env.development
 
 *cache
 *.pyproj

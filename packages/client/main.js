@@ -17,7 +17,7 @@ let hostname = 'localhost';
 let port = 7008;
 
 const {
-  values: { host: cliHost, port: cliPort, env, help },
+  values: { host: cliHost, port: cliPort, env, help, cwd },
 } = parseArgs({
   options: {
     host: {
@@ -34,6 +34,10 @@ const {
       type: 'string',
       default: '',
     },
+    cwd: {
+      type: 'string',
+      default: '',
+    },
     help: {
       type: 'boolean',
       default: false,
@@ -47,6 +51,7 @@ if (help) {
 Options:
   -h, --host      Hostname to listen on
   -p, --port      Port to listen on
+  --cwd           Working directory (defaults to where the executable is)
   --env           Environment variables to load
   --help          Displays this message
 `);
@@ -59,16 +64,23 @@ if (env) {
   if (envConfig) {
     Object.entries(envConfig).forEach(([key, value]) => {
       process.env[key] = value;
-
-      if (key === 'HOST') {
-        hostname = value;
-      }
-
-      if (key === 'PORT') {
-        port = parseInt(value, 10);
-      }
     });
   }
+}
+
+Object.entries(process.env).forEach(([key, value]) => {
+  if (key === 'HPX_HOST') {
+    hostname = value;
+  }
+
+  if (key === 'HPX_PORT') {
+    port = parseInt(value, 10);
+  }
+});
+
+if (cwd) {
+  console.log(`> Changing working directory to ${cwd}`);
+  process.chdir(cwd);
 }
 
 if (cliHost) {
@@ -131,6 +143,6 @@ server.listen(port, (err) => {
     '> Listening on port',
     port,
     '\n> url: http://' + hostname + ':' + port,
-    '\n („• ᴗ •„)'
+    '\n Ready! („• ᴗ •„)'
   );
 });

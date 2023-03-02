@@ -15,7 +15,15 @@ import { FetchQueryOptions, QueryClient } from '@tanstack/query-core';
 
 import { MomoActions, MomoType, QueryActions } from '../shared/query';
 import { urlparse, urlstring } from '../shared/utility';
-import { DOMAIN_URL, HPX_SECRET, LOGIN_ERROR, ServiceType } from './constants';
+import {
+  DISABLE_SERVER_CONNECT,
+  DOMAIN_URL,
+  HPX_SECRET,
+  HPX_SERVER_HOST,
+  HPX_SERVER_PORT,
+  LOGIN_ERROR,
+  ServiceType,
+} from './constants';
 
 import type { CallOptions } from '../services/server';
 const corsOptions: CorsOptions = {
@@ -200,9 +208,17 @@ export const nextAuthOptions: NextAuthOptions = {
 
         const server = global.app.service.get(ServiceType.Server);
 
-        if (credentials?.host && credentials?.port) {
-          await server.connect({ host: credentials?.host, port: credentials?.port ? parseInt(credentials?.port) : undefined }).catch((e: ServerError) => {
-            console.error(e)
+        let host = credentials?.host;
+        let port = credentials?.port ? parseInt(credentials?.port) : undefined;
+
+        if (DISABLE_SERVER_CONNECT) {
+          host = HPX_SERVER_HOST
+          port = HPX_SERVER_PORT
+        }
+
+        if (host && port) {
+          await server.connect({ host, port }).catch((e: ServerError) => {
+            global.app.log.e(e)
             if (e instanceof ConnectionError) {
               throw new Error(LOGIN_ERROR.ServerNotConnected)
             } else {
@@ -212,12 +228,12 @@ export const nextAuthOptions: NextAuthOptions = {
         }
 
         const r = await server.login(credentials?.username, credentials?.password).catch((e: ServerError) => {
-          console.error(e)
           if (e instanceof AuthWrongCredentialsError) {
             throw new Error(LOGIN_ERROR.InvalidCredentials)
           } else if (e instanceof ConnectionError) {
             throw new Error(LOGIN_ERROR.ServerNotConnected)
           } else {
+            global.app.log.e(e)
             throw new Error(e?.message)
           }
         })

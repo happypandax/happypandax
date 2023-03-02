@@ -6,6 +6,11 @@ import { autorun, get, makeAutoObservable, set, toJS } from 'mobx';
 import { enableStaticRendering } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 
+import {
+  DISABLE_SERVER_CONNECT,
+  HPX_SERVER_HOST,
+  HPX_SERVER_PORT,
+} from '../server/constants';
 import { ServerUser } from '../shared/types';
 
 import type { ActivityMap } from '../client/activity';
@@ -17,6 +22,10 @@ enableStaticRendering(typeof window === 'undefined');
 
 class State {
   initialized = false;
+
+  disableServerConnect = DISABLE_SERVER_CONNECT;
+  serverHost: string = HPX_SERVER_HOST;
+  serverPort: number = HPX_SERVER_PORT;
 
   connected = false;
   debug = process.env.NODE_ENV !== 'production';
