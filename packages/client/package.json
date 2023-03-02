@@ -39,7 +39,7 @@
     "darkreader": "^4.9.32",
     "date-fns": "^2.22.1",
     "dotenv": "^16.0.3",
-    "file-type": "^16.5.2",
+    "file-type": "^16.5.4",
     "fomantic-ui-less": "^2.8.7",
     "generic-pool": "^3.9.0",
     "happypandax-client": "^3.5.2",
