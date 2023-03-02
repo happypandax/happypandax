@@ -67,8 +67,7 @@ jobs:
         run: corepack enable && corepack prepare yarn@stable --activate
       - name: Install production dependencies
         run:
-          - yarn plugin import workspace-tools
-          - yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
+          - yarn plugin import workspace-tools && yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
       - name: Build
         run: yarn run:client build
 
