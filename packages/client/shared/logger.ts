@@ -1,12 +1,12 @@
 /* eslint-disable global-require */
 /* eslint-disable no-console */
 import {
+  createConsoleProcessor,
+  createDateAndLevelPrependProcessor,
+  createStackTraceTransformProcessor,
+  createThrottleProcessor,
   Logger,
   LogLevel,
-  createStackTraceTransformProcessor,
-  createDateAndLevelPrependProcessor,
-  createThrottleProcessor,
-  createConsoleProcessor,
   Processor,
   Record,
 } from '@grabrinc/isomorphic-logger';
@@ -54,11 +54,11 @@ export default function setupLogger() {
   }
   // eslint-disable-next-line no-underscore-dangle
   log._logger = logger;
-  log.i = logger.info;
-  log.w = logger.warn;
-  log.e = logger.error;
-  log.c = logger.error;
-  log.d = logger.debug;
+  log.i = logger.info.bind(logger);
+  log.w = logger.warn.bind(logger);
+  log.e = logger.error.bind(logger);
+  log.c = logger.error.bind(logger);
+  log.d = logger.debug.bind(logger);
 
   return log as {
     (...args: any[]): void;
