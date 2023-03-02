@@ -2706,7 +2706,7 @@ __metadata:
     identity-obj-proxy: ^3.0.0
     immutability-helper: ^3.1.1
     jest: ^27.0.6
-    liquidjs: ^9.36.0
+    liquidjs: ^10.0.0
     lodash: ^4.17.21
     mobx: ^6.6.0
     mobx-react-lite: ^3.4.0
@@ -8896,6 +8896,13 @@ __metadata:
   version: 1.0.8
   resolution: "comma-separated-tokens@npm:1.0.8"
   checksum: 0adcb07174fa4d08cf0f5c8e3aec40a36b5ff0c2c720e5e23f50fe02e6789d1d00a67036c80e0c1e1539f41d3e7f0101b074039dd833b4e4a59031b659d6ca0d
+  languageName: node
+  linkType: hard
+
+"commander@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "commander@npm:10.0.0"
+  checksum: 9f6495651f878213005ac744dd87a85fa3d9f2b8b90d1c19d0866d666bda7f735adfd7c2f10dfff345782e2f80ea258f98bb4efcef58e4e502f25f883940acfd
   languageName: node
   linkType: hard
 
@@ -16365,13 +16372,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"liquidjs@npm:^9.36.0":
-  version: 9.36.0
-  resolution: "liquidjs@npm:9.36.0"
+"liquidjs@npm:^10.0.0":
+  version: 10.6.1
+  resolution: "liquidjs@npm:10.6.1"
+  dependencies:
+    commander: ^10.0.0
   bin:
     liquid: bin/liquid.js
     liquidjs: bin/liquid.js
-  checksum: b92c7971efe5ce7d69a92f16f38b1129449d45fcd0abf955931bf009494c16217a4e44e6d922d1533d1a34072f0bd84a9b9f11d35a009b94d7d21a9825d1dad1
+  checksum: fabb179a61c409dbda49e9f1da8dce643bcc562f0ef82a67fc35762b505c8d26d955a76211404e52835941f4fd2face8960b99b6d5766244fce232b65f836b29
   languageName: node
   linkType: hard
 

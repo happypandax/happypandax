@@ -44,7 +44,7 @@
     "generic-pool": "^3.9.0",
     "happypandax-client": "^3.5.2",
     "immutability-helper": "^3.1.1",
-    "liquidjs": "^9.36.0",
+    "liquidjs": "^10.0.0",
     "lodash": "^4.17.21",
     "mobx": "^6.6.0",
     "mobx-react-lite": "^3.4.0",
