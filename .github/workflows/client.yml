@@ -95,7 +95,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install global dependencies
-        run: npm install -g rimraf cross-env
+        run: npm install -g rimraf cross-env nexe
       - name: Install production dependencies
         run: yarn plugin import workspace-tools && yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
       - name: Load build
