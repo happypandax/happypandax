@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 7088",
-    "build": "cross-env NODE_ENV=production next build",
+    "build": "rimraf .next && cross-env NODE_ENV=production next build",
     "test": "jest -i",
     "test:watch": "jest -i --watch",
     "build:css": "cd ./semantic && gulp build-css && gulp build-assets",

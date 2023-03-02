@@ -13,7 +13,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { RecoilRoot, useRecoilState, useSetRecoilState } from 'recoil';
 
-import { QueryClientProvider, useIsFetching } from '@tanstack/react-query';
+import { useIsFetching } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { queryClient } from '../client/queries';
@@ -23,7 +23,10 @@ import { NotificationData, ServerUser } from '../shared/types';
 import { AppState } from '../state';
 import { useGlobalValue, useSetGlobalState } from '../state/global';
 
-import type { GetServerSession } from '../server/requests';
+const QueryClientProvider = dynamic(
+  () => import('@tanstack/react-query').then((m) => m.QueryClientProvider),
+  { ssr: false }
+);
 const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
   pageProps: {
@@ -186,7 +189,9 @@ export function AppRoot({
           {children}
         </DndProvider>
       </RecoilRoot>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   );
 }

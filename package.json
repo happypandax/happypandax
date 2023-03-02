@@ -15,7 +15,8 @@
     "start:client": "yarn workspace @happypandax/client dev"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "rimraf": "^4.1.3"
   },
   "workspaces": {
     "packages": [

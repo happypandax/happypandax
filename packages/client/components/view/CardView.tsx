@@ -201,7 +201,13 @@ const CardViewGrid = forwardRef(function CardViewGrid<T>(
       onScroll={onScroll}
       itemCount={rowCount}
       itemData={data}
-      itemKey={(index, data) => onItemKey(data.items[index])}
+      itemKey={(index, data) =>
+        onItemKey
+          ? data?.items?.length
+            ? onItemKey(data.items[index])
+            : index
+          : index
+      }
       itemSize={() => rowHeight}
       estimatedItemSize={rowHeight}>
       {CardViewRender}

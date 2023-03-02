@@ -211,7 +211,13 @@ const ListViewList = forwardRef(function ListViewList<T>(
       overscanCount={5}
       initialScrollOffset={scrollTop}
       onScroll={onScroll}
-      itemKey={(index, data) => onItemKey(data.items[index])}
+      itemKey={(index, data) =>
+        onItemKey
+          ? data?.items?.length
+            ? onItemKey(data.items[index])
+            : index
+          : index
+      }
       itemData={data}
       width={width}
       height={height}
