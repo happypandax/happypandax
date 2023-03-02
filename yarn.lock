@@ -2680,6 +2680,7 @@ __metadata:
     "@types/react": ^18.0.26
     "@types/react-window": ^1.8.5
     "@types/serve-static": ^1.15.0
+    "@vercel/ncc": ^0.36.1
     "@vjpr/babel-plugin-parameter-decorator": ^1.0.15
     animate.css: ^4.1.1
     axios: ^1.2.1
@@ -5958,6 +5959,17 @@ __metadata:
     "@typescript-eslint/types": 5.46.0
     eslint-visitor-keys: ^3.3.0
   checksum: 83ec2514b2469db395f006576c934bd60b21e74e2e67c183f8d9249954119c56074de286ce8c55d42e20b06d0083d4665f3baf0eed720712203796be488f0944
+  languageName: node
+  linkType: hard
+
+"@vercel/ncc@npm:^0.36.1":
+  version: 0.36.1
+  resolution: "@vercel/ncc@npm:0.36.1"
+  dependencies:
+    node-gyp: latest
+  bin:
+    ncc: dist/ncc/cli.js
+  checksum: dcb8db089b07a8fad64c24eef25be6bc2db7ba30582a03236e3a6d332c8653d93a45aba7fe0e01b6d64f3c5b54d23467539ac3664c113f54a9e59341ded79bf9
   languageName: node
   linkType: hard
 
