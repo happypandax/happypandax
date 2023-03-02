@@ -32,6 +32,7 @@ downloads
 .vs/
 CMakeSettings.json
 
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -252,3 +253,5 @@ _deps
 
 vcpkg_installed
 Screenshot 2022-09-01 163235.png
+
+!**/semantic/tasks/build
