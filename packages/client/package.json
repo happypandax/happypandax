@@ -21,7 +21,7 @@
     "@dnd-kit/core": "^5.0.3",
     "@dnd-kit/sortable": "^6.0.1",
     "@dnd-kit/utilities": "^3.1.0",
-    "@grabrinc/isomorphic-logger": "^0.1.59",
+    "@grabrinc/isomorphic-logger": "https://github.com/twiddli/isomorphic-logger#commit=c49fbe2d479ca12ec68937e4cc010963554708b2",
     "@msgpack/msgpack": "^2.7.0",
     "@recoiljs/refine": "^0.1.1",
     "@tanstack/react-query": "^4.19.1",

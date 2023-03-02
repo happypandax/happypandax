@@ -2631,16 +2631,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grabrinc/isomorphic-logger@npm:^0.1.59":
-  version: 0.1.59
-  resolution: "@grabrinc/isomorphic-logger@npm:0.1.59"
+"@grabrinc/isomorphic-logger@https://github.com/twiddli/isomorphic-logger#commit=c49fbe2d479ca12ec68937e4cc010963554708b2":
+  version: 0.1.60
+  resolution: "@grabrinc/isomorphic-logger@https://github.com/twiddli/isomorphic-logger.git#commit=c49fbe2d479ca12ec68937e4cc010963554708b2"
   dependencies:
-    moment: 2.20.1
-    object-inspect: ^1.5.0
-    safe-json-stringify: ^1.0.4
-    stacktrace-js: ^2.0.0
-    wolfy87-eventemitter: ^5.2.4
-  checksum: 0db1bb2a084816a2101bfe95472fdb7bd3f27910c8db801bb7bc7e0070ab4044531a42155d6c7e2d7f3bfdef6a3740423032909ff8756edd93cc19f26c3237d2
+    moment: 2.29.1
+    object-inspect: ^1.12.0
+    safe-json-stringify: ^1.2.0
+    stacktrace-js: ^2.0.2
+    wolfy87-eventemitter: ^5.2.9
+  checksum: 2452545da26619de8275b3a06b0515fd63650b5aaec53dbcf56b1f83c9fac853aeb9e86e6e13af66792cb7e466db75878c913d2764151dbabbfe7d8306ecb935
   languageName: node
   linkType: hard
 
@@ -2655,7 +2655,7 @@ __metadata:
     "@dnd-kit/core": ^5.0.3
     "@dnd-kit/sortable": ^6.0.1
     "@dnd-kit/utilities": ^3.1.0
-    "@grabrinc/isomorphic-logger": ^0.1.59
+    "@grabrinc/isomorphic-logger": "https://github.com/twiddli/isomorphic-logger#commit=c49fbe2d479ca12ec68937e4cc010963554708b2"
     "@mdx-js/react": ^1.6.22
     "@msgpack/msgpack": ^2.7.0
     "@recoiljs/refine": ^0.1.1
@@ -17615,10 +17615,10 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"moment@npm:2.20.1":
-  version: 2.20.1
-  resolution: "moment@npm:2.20.1"
-  checksum: fd9168502ff282762a3e13ca26216078adf824a6f0cc6bcefa7601d98dad54de11c766c763cfd90b48ebeadea7a208b2ace0ca5b089512d4bf1c8039dbb900f1
+"moment@npm:2.29.1":
+  version: 2.29.1
+  resolution: "moment@npm:2.29.1"
+  checksum: 1e14d5f422a2687996be11dd2d50c8de3bd577c4a4ca79ba5d02c397242a933e5b941655de6c8cb90ac18f01cc4127e55b4a12ae3c527a6c0a274e455979345e
   languageName: node
   linkType: hard
 
@@ -18382,6 +18382,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"object-inspect@npm:^1.12.0":
+  version: 1.12.3
+  resolution: "object-inspect@npm:1.12.3"
+  checksum: dabfd824d97a5f407e6d5d24810d888859f6be394d8b733a77442b277e0808860555176719c5905e765e3743a7cada6b8b0a3b85e5331c530fd418cc8ae991db
+  languageName: node
+  linkType: hard
+
 "object-inspect@npm:^1.12.2":
   version: 1.12.2
   resolution: "object-inspect@npm:1.12.2"
@@ -18389,7 +18396,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"object-inspect@npm:^1.5.0, object-inspect@npm:^1.9.0":
+"object-inspect@npm:^1.9.0":
   version: 1.9.0
   resolution: "object-inspect@npm:1.9.0"
   checksum: 715d2ef5beebfecd5c6d5b29dd370b11bb37d46284d4c1e38463c1ab5dd182cb9d1b543b3f0ea682c84a1883863ea2fe6e6b7599a65a6ab043545189b06e8800
@@ -21499,7 +21506,7 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"safe-json-stringify@npm:^1.0.4":
+"safe-json-stringify@npm:^1.2.0":
   version: 1.2.0
   resolution: "safe-json-stringify@npm:1.2.0"
   checksum: 5bb32db6d6a3ceb3752df51f4043a412419cd3d4fcd5680a865dfa34cd7e575ba659c077d13f52981ced084061df9c75c7fb12e391584d4264e6914c1cd3d216
@@ -22452,7 +22459,7 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"stacktrace-js@npm:^2.0.0, stacktrace-js@npm:^2.0.2":
+"stacktrace-js@npm:^2.0.2":
   version: 2.0.2
   resolution: "stacktrace-js@npm:2.0.2"
   dependencies:
@@ -25222,7 +25229,7 @@ typescript@^4.2.3:
   languageName: node
   linkType: hard
 
-"wolfy87-eventemitter@npm:^5.2.4":
+"wolfy87-eventemitter@npm:^5.2.9":
   version: 5.2.9
   resolution: "wolfy87-eventemitter@npm:5.2.9"
   checksum: 753b03fb876d5704378b08c02926b2040eb5c4c27288bee66b6d9b6e5bf7b194072d36afd33d80bdd94f3c4316dd72064ef1aa3629a514a6df5473187a304622
