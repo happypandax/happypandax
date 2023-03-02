@@ -63,8 +63,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup yarn
-        run: corepack enable && corepack prepare yarn@stable --activate
       - name: Install production dependencies
         run: npm install -g rimraf cross-env && yarn plugin import workspace-tools && yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
       - name: Build
