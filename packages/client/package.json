@@ -12,24 +12,9 @@
     "install:prebuilds": "cp ../../node_modules/zeromq/prebuilds ./.next/server/app/prebuilds",
     "install:fomantic": "yarn --cwd ../../node_modules/fomantic-ui run install",
     "start": "cross-env NODE_ENV=production node main.js",
-    "compile": "ncc build main.js -o dist/build",
-    "package": "cross-env NODE_ENV=production pkg  -t host package.json",
-    "package:debug": "cross-env DEBUG_PKG=1 pkg --debug -t host package.json",
+    "package": "node ./build.js",
     "storybook": "cross-env BROWSER=none start-storybook -p 7020 -s ./public",
     "build-storybook": "build-storybook"
-  },
-  "bin": {
-    "happypandax": "./.next/standalone/server.js"
-  },
-  "pkg": {
-    "scripts": [
-      "./.next/standalone/.next/**/*.js"
-    ],
-    "assets": [
-      "public/**/*",
-      "./.next/standalone/.next/**/*"
-    ],
-    "outputPath": "dist"
   },
   "dependencies": {
     "@brainhubeu/react-carousel": "^2.0.4",
@@ -53,6 +38,7 @@
     "cors": "^2.8.5",
     "darkreader": "^4.9.32",
     "date-fns": "^2.22.1",
+    "dotenv": "^16.0.3",
     "file-type": "^16.5.2",
     "fomantic-ui-less": "^2.8.7",
     "generic-pool": "^3.9.0",
@@ -106,6 +92,7 @@
     "@storybook/react": "^6.3.1",
     "@tanstack/eslint-plugin-query": "^4.15.1",
     "@types/classnames": "^2.2.3",
+    "@types/dotenv": "^8.2.0",
     "@types/jest": "^27.0.1",
     "@types/lodash": "^4.14.108",
     "@types/node": "^14.14.35",
@@ -123,7 +110,7 @@
     "gulp": "^4.0.2",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.0.6",
-    "pkg": "^5.8.0",
+    "nexe": "^4.0.0-rc.2",
     "storybook-addon-themes": "^6.1.0",
     "storybook-css-modules-preset": "^1.0.8",
     "ts-deep-pick": "^0.2.2",

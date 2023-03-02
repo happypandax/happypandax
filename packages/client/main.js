@@ -1,71 +1,136 @@
-// const { createServer } = require('http');
-// const { parse } = require('url');
-// const next = require('next');
-
-// const dev = false;
-// const hostname = 'localhost';
-// const port = 7088;
-// // when using middleware `hostname` and `port` must be provided below
-// const app = next({
-//   dev,
-//   hostname,
-//   port,
-//   queit: false,
-//   dir: '.',
-//   conf: {
-//     poweredByHeader: false,
-//     experimental: {
-//       appDir: false,
-//     },
-//   },
-// });
-// const handle = app.getRequestHandler();
-
-// app
-//   .prepare()
-//   .then(() => {
-//     createServer(async (req, res) => {
-//       try {
-//         // Be sure to pass `true` as the second argument to `url.parse`.
-//         // This tells it to parse the query portion of the URL.
-//         const parsedUrl = parse(req.url, true);
-//         await handle(req, res, parsedUrl);
-//       } catch (err) {
-//         console.error('Error occurred handling', req.url, err);
-//         res.statusCode = 500;
-//         res.end('internal server error');
-//       }
-//     }).listen(port, (err) => {
-//       if (err) throw err;
-//       console.log(`> Ready on http://${hostname}:${port}`);
-//     });
-//   })
-//   .catch((ex) => {
-//     console.error('Failed to start');
-//     console.error(ex.stack);
-//     process.exit(1);
-//   });
-
-const { startServer } = require('next/dist/server/lib/start-server');
-const path = require('path');
+const { defaultConfig } = require('next/dist/server/config-shared');
+const NextServer = require('next/dist/server/next-server').default;
+const http = require('http');
+const dotenv = require('dotenv');
+const { parseArgs } = require('util');
+const nextConfigs = require('./next.config');
+const _ = require('lodash');
 
 const dir = __dirname;
 
-const hostname = 'localhost';
-const port = 7088;
+process.env.NODE_ENV = 'production';
+process.chdir(dir);
 
-// log current working directory
+dotenv.config();
 
-startServer({
-  dir,
-  hostname,
-  port,
-})
-  .then(() => {
-    console.log(`> Ready on http://${hostname}:${port}`);
-  })
-  .catch((ex) => {
-    console.error('Failed to start');
-    console.error(ex.stack);
+let hostname = 'localhost';
+let port = 7008;
+
+const {
+  values: { host: cliHost, port: cliPort, env, help },
+} = parseArgs({
+  options: {
+    host: {
+      type: 'string',
+      short: 'h',
+      default: '',
+    },
+    port: {
+      type: 'string',
+      short: 'p',
+      default: '',
+    },
+    env: {
+      type: 'string',
+      default: '',
+    },
+    help: {
+      type: 'boolean',
+      default: false,
+    },
+  },
+});
+
+if (help) {
+  console.log(`Usage: happypandax_client [options]
+
+Options:
+  -h, --host      Hostname to listen on
+  -p, --port      Port to listen on
+  --env           Environment variables to load
+  --help          Displays this message
+`);
+  process.exit(0);
+}
+
+if (env) {
+  console.log(`> Loading environment variables from given env`);
+  const envConfig = dotenv.parse(Buffer.from(env, 'utf8'));
+  if (envConfig) {
+    Object.entries(envConfig).forEach(([key, value]) => {
+      process.env[key] = value;
+
+      if (key === 'HOST') {
+        hostname = value;
+      }
+
+      if (key === 'PORT') {
+        port = parseInt(value, 10);
+      }
+    });
+  }
+}
+
+if (cliHost) {
+  hostname = cliHost;
+}
+
+if (cliPort) {
+  port = parseInt(cliPort, 10);
+}
+
+// Make sure commands gracefully respect termination signals (e.g. from Docker)
+// Allow the graceful termination to be manually configurable
+if (!process.env.NEXT_MANUAL_SIG_HANDLE) {
+  process.on('SIGTERM', () => process.exit(0));
+  process.on('SIGINT', () => process.exit(0));
+}
+
+let handler;
+
+const server = http.createServer(async (req, res) => {
+  try {
+    await handler(req, res);
+  } catch (err) {
+    console.error(err);
+    res.statusCode = 500;
+    res.end('Internal Momo Error (×﹏×)');
+  }
+});
+
+const config = _.mergeWith(
+  {},
+  defaultConfig,
+  nextConfigs(undefined, { defaultConfig: {} }),
+  (objValue, srcValue) => {
+    if (_.isArray(objValue)) {
+      return srcValue;
+    }
+  }
+);
+
+server.listen(port, (err) => {
+  if (err) {
+    console.error('Failed to start server (×_×)', err);
     process.exit(1);
+  }
+  const nextServer = new NextServer({
+    hostname,
+    port,
+    dir,
+    dev: false,
+    customServer: false,
+    conf: {
+      configFileName: 'next.config.js',
+      ...config,
+    },
   });
+  handler = nextServer.getRequestHandler();
+
+  console.log(
+    '> Listening on port',
+    port,
+    '\n> url: http://' + hostname + ':' + port,
+    '\n („• ᴗ •„)'
+  );
+});

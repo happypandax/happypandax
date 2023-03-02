@@ -1,42 +1,19 @@
-const path = require('path');
 const { merge } = require('webpack-merge');
-const {
-  PHASE_PRODUCTION_BUILD,
-  PHASE_PRODUCTION_SERVER,
-} = require('next/constants');
 
 const nextConfig = (phase, { defaultConfig }) => {
   /** @type {import('next').NextConfig} */
   const config = {
-    output: phase === PHASE_PRODUCTION_BUILD ? 'standalone' : undefined,
+    // output: phase === PHASE_PRODUCTION_BUILD ? 'standalone' : undefined,
     poweredByHeader: false,
     swcMinify: true,
     experimental: {
       appDir: false,
-      // this includes files from the monorepo base two directories up
-      // outputFileTracingRoot: path.join(__dirname, '../../'),
-      // outputFileTracingIncludes: {
-      //   '*': ['../../node_modules/next/dist/server/**/*'],
-      // },
     },
-    transpilePackages: [
-      PHASE_PRODUCTION_BUILD,
-      PHASE_PRODUCTION_SERVER,
-    ].includes(phase)
-      ? [
-          '@tanstack/query-core',
-          '@tanstack/react-query',
-          '@tanstack/react-query-devtools',
-          'next-connect',
-          'axios',
-        ]
-      : [],
+    transpilePackages: [],
     typescript: {
       ignoreBuildErrors: true,
     },
-    images: {
-      // domains: ['via.placeholder.com'],
-    },
+    images: {},
     webpack: (wconfig, options) => {
       let cfg = {
         experiments: {
