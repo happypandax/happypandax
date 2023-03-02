@@ -1,10 +1,10 @@
 const path = require('path');
 const glob = require('glob');
 const fs = require('fs');
+const { compile } = require('nexe');
+const { version } = require('./package.json');
 
 const name = 'happypandax_client';
-const { compile } = require('nexe');
-
 const outputDir = 'dist';
 const nodeVersion = '18.14.0';
 
