@@ -2,7 +2,7 @@ const path = require('path');
 const glob = require('glob');
 const fs = require('fs');
 const { compile } = require('nexe');
-const { version } = require('./package.json');
+// const { version } = require('./package.json');
 
 const name = 'happypandax_client';
 const outputDir = 'dist';
