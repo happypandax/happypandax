@@ -2,10 +2,11 @@ name: CI for client
 on:
   pull_request:
     branches:
-      - main
+      - master
   push:
     branches:
-      - main
+      - master
+      - dev
 env:
   NODE_VERSION: "18.14.0"
 
