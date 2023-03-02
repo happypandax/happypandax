@@ -80,8 +80,8 @@ jobs:
         with:
           name: build
           path: |
-            .next
-            public
+            packages/client/.next
+            packages/client/public
 
   package:
     name: Package client
