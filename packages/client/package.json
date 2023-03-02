@@ -28,7 +28,15 @@
     "@tanstack/react-query-devtools": "^4.19.1",
     "@ts-stack/markdown": "^1.4.0",
     "@twiddly/scroller": "https://github.com/twiddli/scroller.git#commit=08d289ff7ce0d817240769936f7db4dfba9ba2b6",
+    "@types/classnames": "^2.2.3",
     "@types/cors": "^2.8.13",
+    "@types/dotenv": "^8.2.0",
+    "@types/jest": "^27.0.1",
+    "@types/lodash": "^4.14.108",
+    "@types/node": "^14.14.35",
+    "@types/react": "^18.0.26",
+    "@types/react-window": "^1.8.5",
+    "@types/serve-static": "^1.15.0",
     "animate.css": "^4.1.1",
     "axios": "^1.2.1",
     "better-sse": "^0.5.0",
@@ -76,9 +84,10 @@
     "ts-custom-error": "^3.3.1",
     "ts-jest": "^27.0.5",
     "ttag": "^1.7.24",
-    "zeromq": "6.0.0-beta.16",
+    "typescript": "^4.9.4",
     "webpack": "^5.75.0",
-    "webpack-merge": "^5.8.0"
+    "webpack-merge": "^5.8.0",
+    "zeromq": "6.0.0-beta.16"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",
@@ -93,15 +102,6 @@
     "@storybook/manager-webpack5": "^6.3.1",
     "@storybook/react": "^6.3.1",
     "@tanstack/eslint-plugin-query": "^4.15.1",
-    "@types/classnames": "^2.2.3",
-    "@types/dotenv": "^8.2.0",
-    "@types/jest": "^27.0.1",
-    "@types/lodash": "^4.14.108",
-    "@types/node": "^14.14.35",
-    "@types/react": "^18.0.26",
-    "@types/react-window": "^1.8.5",
-    "@types/serve-static": "^1.15.0",
-    "@vercel/ncc": "^0.36.1",
     "@vjpr/babel-plugin-parameter-decorator": "^1.0.15",
     "babel-jest": "^27.0.6",
     "babel-loader": "^8.2.2",
@@ -116,7 +116,6 @@
     "storybook-addon-themes": "^6.1.0",
     "storybook-css-modules-preset": "^1.0.8",
     "ts-deep-pick": "^0.2.2",
-    "ts-typetools": "^0.6.1",
-    "typescript": "^4.9.4"
+    "ts-typetools": "^0.6.1"
   }
 }
