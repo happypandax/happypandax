@@ -4,5 +4,5 @@
 
 #### Are you creating an issue?
 
-- Do fill out the provided template
-- Issues not following or skipping the provided template will most likely be labeled `Invalid` and closed
+- Fill out the provided template!
+- Issues not following or skipping the provided template will most likely be labeled `Invalid` and closed 😈
