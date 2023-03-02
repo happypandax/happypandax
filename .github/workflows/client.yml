@@ -44,81 +44,107 @@ jobs:
       - name: Run tests
         run: yarn run:client test
 
-  # build_nexe:
-  #   name: Build nexe
-  #   needs:
-  #     - test
-  #   runs-on: ${{ matrix.os }}
-  #   timeout-minutes: 180
+  build:
+    name: Build client
+    # needs:
+    #   - test
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - windows-2022
+          - macos-11
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup yarn
+        run: corepack enable && corepack prepare yarn@stable --activate
+      - name: Install production dependencies
+        run: yarn install --immutable --production
+      - name: Build
+        run: yarn run:client build
 
-  #   strategy:
-  #     matrix:
-  #       os:
-  #         - ubuntu-22.04
-  #         - windows-2022
-  #         - macos-11
+  package:
+    name: Build client
+    needs:
+      - build
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - windows-2022
+          - macos-11
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Build
+        run: yarn run:client package
 
-  #       node_version: ["18.14.0"]
+    # steps:
+    #   - uses: actions/checkout@v3
+    #   - name: Use Node.js from .nvmrc
+    #     uses: actions/setup-node@v3
+    #     with:
+    #       node-version-file: ".nvmrc"
+    #       cache: "npm"
+    #   - name: Declare caches for build
+    #     uses: actions/cache@v3
+    #     with:
+    #       path: |
+    #         ~/.ccache/
+    #       key: ${{ matrix.os }}-${{ matrix.node_version }}
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Use Node.js from .nvmrc
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version-file: ".nvmrc"
-  #         cache: "npm"
-  #     - name: Declare caches for build
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.ccache/
-  #         key: ${{ matrix.os }}-${{ matrix.node_version }}
+    #   - run: npm ci
+    #   - name: Run nexe CD build
+    #     id: run_cd
+    #     run: |
+    #       echo "github.ref = ${{ github.ref }}"
+    #       ./bin/run_cd
+    #       echo "Creating dist/ dir if it doesn't exist ..."
+    #       mkdir -p dist/
+    #       echo "Getting release_file and release_id ..."
+    #       release_file="$(ls dist/ | head -n 1)"
+    #       release_name="$(cat ./NEXE_ASSET_NAME)"
+    #       release_id="$(cat ./RELEASE_ID)"
+    #       echo "Getting build_occurred ..."
+    #       if [ "$release_file" != "" ]; then
+    #         build_occurred="true"
+    #       else
+    #         build_occurred="false"
+    #       fi
+    #       echo "release_id=$release_id"
+    #       echo "release_file=$release_file"
+    #       echo "release_name=$release_name"
+    #       echo "build_occurred=$build_occurred"
+    #       echo "release_id=$release_id" >> $GITHUB_OUTPUT
+    #       echo "release_file=$release_file" >> $GITHUB_OUTPUT
+    #       echo "release_name=$release_name" >> $GITHUB_OUTPUT
+    #       echo "build_occurred=$build_occurred" >> $GITHUB_OUTPUT
+    #     env:
+    #       NODE_VERSION: ${{ matrix.node_version }}
+    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #       CREATE_RELEASE: "${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}"
 
-  #     - run: npm ci
-  #     - name: Run nexe CD build
-  #       id: run_cd
-  #       run: |
-  #         echo "github.ref = ${{ github.ref }}"
-  #         ./bin/run_cd
-  #         echo "Creating dist/ dir if it doesn't exist ..."
-  #         mkdir -p dist/
-  #         echo "Getting release_file and release_id ..."
-  #         release_file="$(ls dist/ | head -n 1)"
-  #         release_name="$(cat ./NEXE_ASSET_NAME)"
-  #         release_id="$(cat ./RELEASE_ID)"
-  #         echo "Getting build_occurred ..."
-  #         if [ "$release_file" != "" ]; then
-  #           build_occurred="true"
-  #         else
-  #           build_occurred="false"
-  #         fi
-  #         echo "release_id=$release_id"
-  #         echo "release_file=$release_file"
-  #         echo "release_name=$release_name"
-  #         echo "build_occurred=$build_occurred"
-  #         echo "release_id=$release_id" >> $GITHUB_OUTPUT
-  #         echo "release_file=$release_file" >> $GITHUB_OUTPUT
-  #         echo "release_name=$release_name" >> $GITHUB_OUTPUT
-  #         echo "build_occurred=$build_occurred" >> $GITHUB_OUTPUT
-  #       env:
-  #         NODE_VERSION: ${{ matrix.node_version }}
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         CREATE_RELEASE: "${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}"
-
-  #     # Upload artifact & asset
-  #     - name: Upload build artifact
-  #       uses: actions/upload-artifact@v3
-  #       if: steps.run_cd.outputs.build_occurred == 'true'
-  #       with:
-  #         name: ${{ steps.run_cd.outputs.release_name }}
-  #         path: dist/${{ steps.run_cd.outputs.release_file }}
-  #     - name: Upload Release Asset
-  #       uses: actions/upload-release-asset@v1
-  #       if: steps.run_cd.outputs.build_occurred == 'true' && github.ref == 'refs/heads/main'
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: https://uploads.github.com/repos/urbdyn/nexe_builds/releases/${{ steps.run_cd.outputs.release_id }}/assets{?name,label}
-  #         asset_name: ${{ steps.run_cd.outputs.release_name }}
-  #         asset_path: dist/${{ steps.run_cd.outputs.release_file }}
-  #         asset_content_type: application/octet-stream
+    #   # Upload artifact & asset
+    #   - name: Upload build artifact
+    #     uses: actions/upload-artifact@v3
+    #     if: steps.run_cd.outputs.build_occurred == 'true'
+    #     with:
+    #       name: ${{ steps.run_cd.outputs.release_name }}
+    #       path: dist/${{ steps.run_cd.outputs.release_file }}
+    #   - name: Upload Release Asset
+    #     uses: actions/upload-release-asset@v1
+    #     if: steps.run_cd.outputs.build_occurred == 'true' && github.ref == 'refs/heads/main'
+    #     env:
+    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #     with:
+    #       upload_url: https://uploads.github.com/repos/urbdyn/nexe_builds/releases/${{ steps.run_cd.outputs.release_id }}/assets{?name,label}
+    #       asset_name: ${{ steps.run_cd.outputs.release_name }}
+    #       asset_path: dist/${{ steps.run_cd.outputs.release_file }}
+    #       asset_content_type: application/octet-stream
