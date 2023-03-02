@@ -2689,7 +2689,7 @@ __metadata:
     babel-plugin-lodash: ^3.3.4
     better-sse: ^0.5.0
     classnames: ^2.2.6
-    colorthief: ^2.3.2
+    colorthief: ^2.4.0
     cookie: ^0.4.1
     cors: ^2.8.5
     darkreader: ^4.9.32
@@ -3046,6 +3046,13 @@ __metadata:
     "@types/yargs": ^16.0.0
     chalk: ^4.0.0
   checksum: abe367b073d5b7396d7397620f57a24409551bb940761d78e6775f10aee68fb96eb80d7177824090ac811c7e7ba5d9cfce4cbdded86f3adef2abc291da28de77
+  languageName: node
+  linkType: hard
+
+"@lokesh.dhakar/quantize@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@lokesh.dhakar/quantize@npm:1.3.0"
+  checksum: 042620e753e369676b8cc8277664e9ec5bf408679bc5cbddedcd0076f15b286579200a3c63c8f691cfd5ecf5ba0afddd6a5651c273f39a395734f0f11ae964fc
   languageName: node
   linkType: hard
 
@@ -8873,13 +8880,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorthief@npm:^2.3.2":
-  version: 2.3.2
-  resolution: "colorthief@npm:2.3.2"
+"colorthief@npm:^2.4.0":
+  version: 2.4.0
+  resolution: "colorthief@npm:2.4.0"
   dependencies:
+    "@lokesh.dhakar/quantize": ^1.3.0
     get-pixels: ^3.3.2
-    quantize: "github:lokesh/quantize"
-  checksum: e33180f95004dc6246bdaeec19e26804015e509d3c9f114ce9624455f369f4ec9cade2a23f68cd43e4316bb6a6dc916201cd1d8650277635f3b104e3d71d3166
+  checksum: ffc465fdd26b1a474229b0f076920bdd9906a8d42b3afb3fa2d4a18d944ab9b017086d7cae1bf53a68a0bb66b91bc8a2aba696a483ad30f6a1a25d9c342da730
   languageName: node
   linkType: hard
 
@@ -20037,13 +20044,6 @@ fsevents@^1.2.7:
   version: 6.5.2
   resolution: "qs@npm:6.5.2"
   checksum: 24af7b9928ba2141233fba2912876ff100403dba1b08b20c3b490da9ea6c636760445ea2211a079e7dfa882a5cf8f738337b3748c8bdd0f93358fa8881d2db8f
-  languageName: node
-  linkType: hard
-
-"quantize@github:lokesh/quantize":
-  version: 1.2.0
-  resolution: "quantize@https://github.com/lokesh/quantize.git#commit=f572abd2646b5944852535c8a26fdb958a5d7c4b"
-  checksum: 83d4b8d7bdf32457fbb53c3920d24bb09892e9cc52df99d0ead381d00518d6d9a496529fc79e4041808ffaf7b81fcbc1e642c3d825827fb17d1970086002e072
   languageName: node
   linkType: hard
 

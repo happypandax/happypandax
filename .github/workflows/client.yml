@@ -39,7 +39,7 @@ jobs:
       - name: Setup yarn
         run: corepack enable && corepack prepare yarn@stable --activate
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run tests
         run: yarn run:client test
