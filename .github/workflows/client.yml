@@ -72,12 +72,16 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
       - name: Build
-        run: yarn run:client build
+        run: |
+          yarn run:client build:css
+          yarn run:client build
       - name: Store build
         uses: actions/upload-artifact@v3
         with:
           name: build
-          path: .next
+          path: |
+            .next
+            public
 
   package:
     name: Package client
