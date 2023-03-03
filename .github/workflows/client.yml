@@ -124,28 +124,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Load build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+          path: packages/client
+      - name: Display structure of files
+        run: ls -R
+        working-directory: packages/client
       - name: Install global dependencies
         run: |
           npm install -g rimraf cross-env nexe
           yarn add nexe
       - name: Install production dependencies
         run: yarn plugin import workspace-tools && yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
-      - name: Load build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
       - name: Package
         run: yarn run:client package
 
       - name: Set release name
         run: |
-          echo "RELEASE_NAME=happypandax_$(node -p "require('./package.json').version")_${{ matrix.os }}" >> $GITHUB_ENV
-      - name: Zip the contents of the dist folder
+          echo "RELEASE_NAME=happypandax_client-$(node -p "require('./packages/client/package.json').version")-${{ matrix.os }}" >> $GITHUB_ENV
+      - name: Archive release
         run: |
+          cd packages/client/dist
           if [ "${{ matrix.os }}" == "windows-2022" ]; then
-            7z a -tzip ${{ env.RELEASE_NAME }}.zip packages/client/dist/*
+            7z a -tzip .zip ./*
           else
-            zip -r ${{ env.RELEASE_NAME }}.zip packages/client/dist/*
+            tar -czf ${{ env.RELEASE_NAME }}.tar.gz .
           fi
 
       - name: Publish
@@ -153,6 +158,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: "*.zip"
+          file: "*.zip;*.tar.gz"
           draft: true
           prerelease: true
