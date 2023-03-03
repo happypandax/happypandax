@@ -136,3 +136,23 @@ jobs:
           name: build
       - name: Build
         run: yarn run:client package
+
+      - name: Set release name
+        run: |
+          echo "RELEASE_NAME=happypandax_$(node -p "require('./package.json').version")_${{ matrix.os }}" >> $GITHUB_ENV
+      - name: Zip release
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-2022" ]]; then
+            7z a -tzip ${{ env.RELEASE_NAME }}.zip dist
+          else
+            zip -r ${{ env.RELEASE_NAME }}.zip dist
+          fi
+
+      - name: Publish
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: "*.zip"
+          draft: true
+          prerelease: true
