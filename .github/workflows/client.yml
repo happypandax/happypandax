@@ -134,18 +134,18 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build
-      - name: Build
+      - name: Package
         run: yarn run:client package
 
       - name: Set release name
         run: |
           echo "RELEASE_NAME=happypandax_$(node -p "require('./package.json').version")_${{ matrix.os }}" >> $GITHUB_ENV
-      - name: Zip release
+      - name: Zip the contents of the dist folder
         run: |
-          if [[ "${{ matrix.os }}" == "windows-2022" ]]; then
-            7z a -tzip ${{ env.RELEASE_NAME }}.zip dist
+          if [ "${{ matrix.os }}" == "windows-2022" ]; then
+            7z a -tzip ${{ env.RELEASE_NAME }}.zip packages/client/dist/*
           else
-            zip -r ${{ env.RELEASE_NAME }}.zip dist
+            zip -r ${{ env.RELEASE_NAME }}.zip packages/client/dist/*
           fi
 
       - name: Publish
