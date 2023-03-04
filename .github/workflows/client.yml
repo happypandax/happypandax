@@ -148,7 +148,7 @@ jobs:
         run: |
           cd packages/client/dist
           if [ "${{ matrix.os }}" == "windows-2022" ]; then
-            7z a -tzip .zip ./*
+            7z a -tzip ${{ env.RELEASE_NAME }}.zip ./*
           else
             tar -czf ../${{ env.RELEASE_NAME }}.tar.gz *
           fi
