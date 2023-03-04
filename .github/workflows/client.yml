@@ -150,7 +150,8 @@ jobs:
           if [ "${{ matrix.os }}" == "windows-2022" ]; then
             7z a -tzip .zip ./*
           else
-            tar -czf ${{ env.RELEASE_NAME }}.tar.gz .
+            touch ${{ env.RELEASE_NAME }}.tar.gz
+            tar --exclude=${{ env.RELEASE_NAME }}.tar.gz -zcfv ${{ env.RELEASE_NAME }}.tar.gz .
           fi
 
       - name: Publish
