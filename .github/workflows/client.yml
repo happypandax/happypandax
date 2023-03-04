@@ -146,12 +146,12 @@ jobs:
           echo "RELEASE_NAME=happypandax_client-$(node -p "require('./packages/client/package.json').version")-${{ matrix.os }}" >> $GITHUB_ENV
       - name: Archive release
         run: |
-          cd packages/client/dist
           if [ "${{ matrix.os }}" == "windows-2022" ]; then
+            cd packages/client/dist
             7z a -tzip .zip ./*
           else
-            touch ${{ env.RELEASE_NAME }}.tar.gz
-            tar -zcfv ../${{ env.RELEASE_NAME }}.tar.gz .
+            cd packages/client
+            tar -zcfv ${{ env.RELEASE_NAME }}.tar.gz dist
           fi
 
       - name: Publish
