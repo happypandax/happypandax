@@ -48,7 +48,7 @@
     "mobx": "^6.6.0",
     "mobx-react-lite": "^3.4.0",
     "next": "^13.2.1",
-    "next-auth": "^4.19.2",
+    "next-auth": "^4.20.1",
     "next-connect": "^0.13.0",
     "nprogress": "next",
     "on-finished": "^2.4.1",
