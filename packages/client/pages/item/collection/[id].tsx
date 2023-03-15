@@ -1,4 +1,4 @@
-import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
+import { GetServerSidePropsResult, NextPageContext } from 'next';
 import { Divider } from 'semantic-ui-react';
 
 import {
@@ -8,6 +8,7 @@ import {
 } from '../../../components/layout/CollectionLayout';
 import { ServiceType } from '../../../server/constants';
 import { ImageSize, ItemType } from '../../../shared/enums';
+import { ServerErrorCode } from '../../../shared/error';
 import { ServerCollection } from '../../../shared/types';
 import { urlparse } from '../../../shared/utility';
 import LibraryPage, {
@@ -20,24 +21,26 @@ const stateKey = 'collection_page';
 
 interface PageProps extends LibraryPageProps {
   collection: CollectionHeaderData &
-  DeepPick<ServerCollection, 'gallery_count'>;
+    DeepPick<ServerCollection, 'gallery_count'>;
 }
 
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
 
-  let redirect: Redirect;
+  let redirect = false;
   let r: Unwrap<ReturnType<typeof libraryServerSideProps>>;
 
   const item_id = parseInt(context.query.id as string);
 
   if (isNaN(item_id)) {
-    redirect = { permanent: false, destination: '/library' };
+    redirect = true;
   }
 
-  let collection: PageProps['collection'];
+  let collection: PageProps['collection'] = null;
 
   if (!redirect) {
     const urlQuery = urlparse(context.resolvedUrl);
@@ -60,33 +63,47 @@ export async function getServerSideProps(
         collection = r;
       });
 
-    await group.call();
+    await group.call({ throw_error: false });
 
-    let page = urlQuery.query?.p
-      ? parseInt(urlQuery.query?.p as string, 10)
-      : 1;
-
-    if (isNaN(page)) {
-      page = 1;
+    try {
+      await group.throw_errors();
+    } catch (e) {
+      if (e?.code === ServerErrorCode.DatabaseItemNotFoundError) {
+        redirect = true;
+      } else {
+        throw e;
+      }
     }
 
-    const largs = libraryArgs({
-      ctx: context,
-      urlQuery,
-      itemType: ItemType.Collection,
-      relatedType: ItemType.Gallery,
-      itemId: collection?.id,
-      stateKey,
-      page,
-    });
+    if (!redirect) {
+      let page = urlQuery.query?.p
+        ? parseInt(urlQuery.query?.p as string, 10)
+        : 1;
 
-    r = await libraryServerSideProps(context, {
-      ...largs,
-    });
+      if (isNaN(page)) {
+        page = 1;
+      }
+
+      const largs = libraryArgs({
+        ctx: context,
+        urlQuery,
+        itemType: ItemType.Collection,
+        relatedType: ItemType.Gallery,
+        itemId: collection?.id,
+        stateKey,
+        page,
+      });
+
+      r = await libraryServerSideProps(context, {
+        ...largs,
+      });
+    }
   }
 
   return {
-    redirect,
+    redirect: redirect
+      ? { permanent: false, destination: '/library' }
+      : undefined,
     ...r,
     props: {
       ...r?.props,

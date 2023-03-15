@@ -35,6 +35,9 @@ export default function ManagementPage({ children }: PageProps) {
                 link
                 active={path === 'database'}>{t`Database`}</MenuItem>
             </Link>
+            <Link href="/management/user" passHref>
+              <MenuItem link active={path === 'user'}>{t`User`}</MenuItem>
+            </Link>
           </MainMenu>
         ),
         []

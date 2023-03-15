@@ -4,9 +4,9 @@ import { getEnumMembersMKeyMap } from './utility';
 export enum ErrorCode {
   UnknownError,
   NoOpError,
-  CoreError,
-  DatabaseError,
-  ValidationError,
+  ClientError,
+  ServerError,
+  CancelledError,
 }
 
 const ErrorCodeMembersMap = getEnumMembersMKeyMap(ErrorCode);
@@ -48,9 +48,11 @@ export class UnknownError extends Error {
 export class NoOpError extends UnknownError { }
 export class ClientError extends UnknownError { }
 export class ServerError extends NoOpError { }
+export class CancelledError extends NoOpError { }
 
 // HPX SERVER ERRORS ---------------------------------------------------------------
 
 export enum ServerErrorCode {
   CommandError = 120,
+  DatabaseItemNotFoundError = 303
 }

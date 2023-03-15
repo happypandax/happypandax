@@ -29,6 +29,7 @@ import {
   TransientViewSubmitAction,
   TransientViewType,
 } from '../shared/enums';
+import { CancelledError } from '../shared/error';
 import {
   Activity,
   CommandID,
@@ -430,10 +431,10 @@ export default class ServerService extends Service {
 export class Server {
 
   public session: string;
+  public query_client: QueryClient;
 
   accepted = false;
 
-  query_client: QueryClient;
 
   constructor(session: string) {
     this.session = session;
@@ -460,43 +461,30 @@ export class Server {
     options?: CallOptions
   ) {
     const client_type = options?.client ?? ClientType.main;
-    try {
-      if (group) {
-        return await group._group_call(
-          this,
-          client_type,
-          this.query_client,
-          func,
-          args,
-          options
-        );
-      }
-
-      const r = await queryClientFetchQuery(
-        this.session,
-        this.query_client,
+    if (group) {
+      return await group._group_call(
+        this,
         client_type,
-        [[func, args]],
+        func,
+        args,
         options
       );
-
-      const data = r?.data?.[0];
-
-      throw_msg_error(data, options);
-
-      // global.app.log.d('HPX call', func, args, '->', data)
-
-      return data;
-    } catch (e) {
-      if (e instanceof AuthError || [
-        exception_codes.AuthError,
-        exception_codes.AuthMissingCredentials,
-        exception_codes.AuthRequiredError,
-        exception_codes.AuthWrongCredentialsError].includes(e?.code)) {
-        this.accepted = false;
-      }
-      throw e
     }
+
+    const r = await queryClientFetchQuery(
+      this,
+      client_type,
+      [[func, args]],
+      options
+    );
+
+    const data = r?.data?.[0];
+
+    throw_msg_error(data, options);
+
+    // global.app.log.d('HPX call', func, args, '->', data)
+
+    return data;
   }
 
   get logged_in() {
@@ -783,7 +771,6 @@ export class Server {
     options?: CallOptions
   ) {
     const data = await this._call('library_view', args, group, {
-      cache: true,
       ...options,
     });
 
@@ -1109,7 +1096,7 @@ export class Server {
   }
 
   async command_progress(
-    args: { command_ids: string[] },
+    args: { command_ids: CommandID<any>[] },
     group?: GroupCall,
     options?: CallOptions
   ) {
@@ -1276,6 +1263,22 @@ export class Server {
     )[];
   }
 
+  async reindex(
+    args: {
+      limit?: number;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('reindex', args, group, {
+      ...options,
+    });
+
+    return data.data as CommandID<{
+      status: boolean;
+    }>;
+  }
+
   async scan_galleries(
     args: {
       path: string;
@@ -1396,7 +1399,7 @@ export class Server {
 }
 
 async function clientCall(ctx: QueryFunctionContext) {
-  const session = ctx.meta.session as string;
+  const server = ctx.meta.server as Server;
   const type = ctx.meta.type as ClientType;
   const calls = ctx.meta.calls as [fname: string, args: JsonMap][];
   const fnames = calls.map((v) => v[0]);
@@ -1404,7 +1407,7 @@ async function clientCall(ctx: QueryFunctionContext) {
   global.app.log.d('calling', ...calls.flat());
   const node = await global.app.service.get(ServiceType.Server).client(type);
   try {
-    const client = node.get(type, session);
+    const client = node.get(type, server.session);
 
     const d = await client
       .send('call',
@@ -1428,6 +1431,14 @@ async function clientCall(ctx: QueryFunctionContext) {
       fairy.healthcheck();
     }
 
+    if (e instanceof AuthError || [
+      exception_codes.AuthError,
+      exception_codes.AuthMissingCredentials,
+      exception_codes.AuthRequiredError,
+      exception_codes.AuthWrongCredentialsError].includes(e?.code)) {
+      server.accepted = false;
+    }
+
     throw e;
   } finally {
     await node.release();
@@ -1435,8 +1446,7 @@ async function clientCall(ctx: QueryFunctionContext) {
 }
 
 async function queryClientFetchQuery(
-  session: string,
-  query_client: QueryClient,
+  server: Server,
   client_type: ClientType,
   calls: [fname: string, args: JsonMap][],
   call_options?: CallOptions
@@ -1444,14 +1454,14 @@ async function queryClientFetchQuery(
   if (call_options?.invalidate) {
     const fnames = calls.map((v) => v[0]);
     global.log.d('invalidating cache by', ...fnames);
-    await query_client.invalidateQueries();
+    await server.query_client.invalidateQueries();
   }
 
   const key = calls.flat();
-  return query_client.fetchQuery(key, clientCall, {
+  return server.query_client.fetchQuery(key, clientCall, {
     cacheTime: !call_options?.cache ? 0 : cacheTime,
     meta: {
-      session,
+      server,
       type: client_type,
       calls,
     },
@@ -1485,7 +1495,6 @@ function promiseTimeout(
 }
 export class GroupCall {
   server?: Server;
-  #query_client: QueryClient;
   #client_type: ClientType;
   #options: CallOptions;
   #functions: {
@@ -1511,7 +1520,6 @@ export class GroupCall {
   _group_call(
     server: Server,
     client_type: ClientType,
-    query_client: QueryClient,
     func: string,
     args: JsonMap,
     options?: CallOptions
@@ -1526,7 +1534,6 @@ export class GroupCall {
 
     this.server = server;
     this.#client_type = client_type;
-    this.#query_client = query_client;
     this.#functions.push({
       name: func,
       args,
@@ -1581,8 +1588,7 @@ export class GroupCall {
       this.#resolved = true;
 
       const data = await queryClientFetchQuery(
-        this.server.session,
-        this.#query_client,
+        this.server,
         this.#client_type,
         this.#functions.map((f) => [f.name, f.args]),
         this.#options
@@ -1590,8 +1596,18 @@ export class GroupCall {
 
       throw_msg_error(data);
       data?.data?.forEach?.((r, idx) => {
-        this.#promises_resolves[idx][0](r);
+        try {
+          throw_msg_error(r);
+          this.#promises_resolves[idx][0](r);
+        } catch (err) {
+          this.#promises_resolves[idx][1](err);
+          if (opt?.throw_error !== false) {
+            throw new CancelledError(`Group call cancelled due to error in one of the calls: ${err?.message}`);
+          }
+        }
       });
+
+
       await Promise.allSettled(this.#promises);
       return true;
     } catch (err) {
@@ -1602,5 +1618,17 @@ export class GroupCall {
       }
       return false;
     }
+  }
+
+  async throw_errors() {
+    if (!this.#resolved) {
+      throw Error('Group call not resolved. Call "GroupCall.call()" first');
+    }
+    const r = await Promise.allSettled(this.#promises);
+    r.forEach((v) => {
+      if (v.status === 'rejected' && v.reason !== timeoutError && v.reason !== CancelledError) {
+        throw v.reason;
+      }
+    });
   }
 }

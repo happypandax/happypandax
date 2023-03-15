@@ -1,6 +1,6 @@
-import { syncEffect } from 'recoil-sync';
 
-import { string } from '@recoiljs/refine';
+
+
 
 import { ItemSort, ItemType, ViewType } from '../shared/enums';
 import { ServerItem } from '../shared/types';
@@ -54,7 +54,6 @@ export default class _LibraryState extends StateBlock {
           noInitialValue: true,
           removeIfNoInitialValue: true,
         }),
-        syncEffect({refine: string(), syncDefault: false, storeKey: "q"}),
       ],
     },
     true

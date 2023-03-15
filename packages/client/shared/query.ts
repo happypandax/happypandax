@@ -58,6 +58,7 @@ export enum MutatationType {
     TRANSIENT_VIEW_SUBMIT_ACTION = '/api/transient_view_submit',
     CREATE_TRANSIENT_VIEW = '/api/create_transient_view',
     UPDATE_TRANSIENT_VIEW = '/api/update_transient_view',
+    REINDEX = '/api/reindex',
 }
 
 // ======================== ACTIONS ====================================
@@ -460,6 +461,12 @@ interface UpdateTransientViewAction<T = undefined> extends MutationAction<T> {
     variables: ServerParameters['update_transient_view'];
 }
 
+interface ReIndex<T = undefined> extends MutationAction<T> {
+    type: MutatationType.REINDEX;
+    dataType: ServerReturnType['reindex'];
+    variables: ServerParameters['reindex'];
+}
+
 export type MutationActions<T = undefined> =
     | LoginAction<T>
     | UpdateItem<T>
@@ -486,6 +493,7 @@ export type MutationActions<T = undefined> =
     | TransientViewSubmitAction<T>
     | CreateTransientViewAction<T>
     | UpdateTransientViewAction<T>
+    | ReIndex<T>
     | ClearQueue<T>;
 
 export type Actions<T = undefined> = MutationActions<T> | QueryActions<T>;

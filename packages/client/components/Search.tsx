@@ -586,10 +586,10 @@ export function ItemSearch({
   const onSubmit = useCallback(
     (ev?) => {
       ev?.preventDefault?.();
-      onSearch?.(query, {});
+      onSearch?.(deferredQuery, {});
       setFocused(false);
     },
-    [query]
+    [deferredQuery]
   );
 
   const onClear = useCallback(() => {
@@ -628,7 +628,7 @@ export function ItemSearch({
   );
 
   useEffect(() => {
-    if (query) {
+    if (deferredQuery) {
       onSubmit();
     }
   }, [options]);
@@ -637,16 +637,21 @@ export function ItemSearch({
     (text) => {
       const target = ref.current.querySelector('input');
       target.focus();
-      const t = replaceTextAtPosition(query, text, target.selectionStart, {
-        quotation: true,
-      });
+      const t = replaceTextAtPosition(
+        deferredQuery,
+        text,
+        target.selectionStart,
+        {
+          quotation: true,
+        }
+      );
       target.value = t.text;
       target.focus();
       //   document.getSelection().collapse(ref.current, t.newPosition)
       target.setSelectionRange(t.newEndPosition, t.newEndPosition);
       setQuery(t.text);
     },
-    [query]
+    [deferredQuery]
   );
 
   const optionsEl = useMemo(
@@ -654,16 +659,18 @@ export function ItemSearch({
       <>
         <div>
           <SearchOptions size={size} />
-          {!!query && <Icon name="remove" link onClick={onClear} />}
+          {!!deferredQuery && <Icon name="remove" link onClick={onClear} />}
         </div>
       </>
     ),
-    [query, onClear]
+    [deferredQuery, onClear]
   );
 
   return (
     <SearchContext.Provider
-      value={useMemo(() => ({ query, stateKey, ref }), [query])}>
+      value={useMemo(() => ({ query: deferredQuery, stateKey, ref }), [
+        deferredQuery,
+      ])}>
       <form
         onSubmit={onSubmit}
         className={classNames({ fullwidth: fluid }, className)}>
@@ -681,7 +688,7 @@ export function ItemSearch({
                 []
               )}
               tabIndex={0}
-              value={query}
+              value={deferredQuery}
               onChange={useCallback((ev, d) => {
                 ev.preventDefault();
                 setFocused(true);

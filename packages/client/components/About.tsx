@@ -121,13 +121,9 @@ function InfoPane() {
             <Icon name="refresh" />
             {t`Check for updates`}
           </Button>
-          <Button size="small">
-            <Icon name="redo" />
-            {t`Reindex library`}
-          </Button>
-          <Button size="small" floated="right">
+          <Button size="small" basic floated="right">
             <Icon name="settings" />
-            {t`Reset client settings`}
+            {t`Reset web client settings`}
           </Button>
         </Grid.Column>
       </Grid.Row>

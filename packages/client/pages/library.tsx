@@ -783,9 +783,8 @@ export default function Page({
     const q = {
       ...routerQuery?.query,
       p: 1,
+      q: query,
     };
-    setPage(1);
-    setInfiniteKey(generateInfiniteKey());
     router.push(urlstring(q)).then(() => {
       setPage(1);
       setInfiniteKey(generateInfiniteKey());
@@ -815,7 +814,7 @@ export default function Page({
     [router.query]
   );
 
-  const onItemKey = useCallback((item: ServerItem) => item.id, []);
+  const onItemKey = useCallback((item: ServerItem) => item?.id, []);
   const saveRecentQuery = useCallback(
     _.debounce((query: string) => {
       setRecentQuery([query]);
