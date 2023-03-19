@@ -9,7 +9,15 @@ const nextConfig = (phase, { defaultConfig }) => {
     experimental: {
       appDir: false,
     },
-    transpilePackages: [],
+    transpilePackages: [
+      '@tanstack/query-core',
+      '@tanstack/react-query',
+      '@tanstack/react-query-devtools',
+      'next-connect',
+      'axios',
+      'swiper',
+      'ssr-window',
+    ],
     typescript: {
       ignoreBuildErrors: true,
     },
