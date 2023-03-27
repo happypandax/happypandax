@@ -159,5 +159,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           file: "**/*.zip;**/*.tar.gz"
+          target_owner: twiddli
+          target_repo: happypandax
           draft: true
+          overwrite: true
           prerelease: true
