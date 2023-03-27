@@ -9,6 +9,7 @@ on:
       - dev
 env:
   NODE_VERSION: "18.14.0"
+  HAPPYPANDAX_TOKEN: ${{ secrets.HAPPYPANDAX_TOKEN }}
 
 defaults:
   run:
@@ -143,6 +144,7 @@ jobs:
 
       - name: Set release name
         run: |
+          echo "HPX_VERSION=$(node -p "require('./packages/client/package.json').version")" >> $GITHUB_ENV
           echo "RELEASE_NAME=happypandax_client-$(node -p "require('./packages/client/package.json').version")-${{ matrix.os }}" >> $GITHUB_ENV
       - name: Archive release
         run: |
@@ -156,11 +158,12 @@ jobs:
       - name: Publish
         uses: xresloader/upload-to-github-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ env.HAPPYPANDAX_TOKEN }}
         with:
           file: "**/*.zip;**/*.tar.gz"
-          target_owner: twiddli
-          target_repo: happypandax
+          tag_name: client-v${{ env.HPX_VERSION }}
+          # target_owner: twiddli
+          # target_repo: happypandax
           draft: true
           overwrite: true
           prerelease: true
