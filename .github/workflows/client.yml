@@ -145,7 +145,7 @@ jobs:
       - name: Set release name
         run: |
           echo "HPX_VERSION=$(node -p "require('./packages/client/package.json').version")" >> $GITHUB_ENV
-          echo "RELEASE_NAME=happypandax_client-$(node -p "require('./packages/client/package.json').version")-${{ matrix.os }}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=happypandax_client-$(node -p "require('./packages/client/package.json').version")" >> $GITHUB_ENV
       - name: Tag release
         run: |
           git config user.name github-actions
@@ -156,9 +156,9 @@ jobs:
         run: |
           cd packages/client/dist
           if [ "${{ matrix.os }}" == "windows-2022" ]; then
-            7z a -tzip ${{ env.RELEASE_NAME }}.zip ./*
+            7z a -tzip ${{ env.RELEASE_NAME }}-${{ matrix.os }}.zip ./*
           else
-            tar -czf ../${{ env.RELEASE_NAME }}.tar.gz *
+            tar -czf ../${{ env.RELEASE_NAME }}-${{ matrix.os }}.tar.gz *
           fi
 
       - name: Publish
