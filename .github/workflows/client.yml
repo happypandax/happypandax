@@ -162,8 +162,6 @@ jobs:
         with:
           file: "**/*.zip;**/*.tar.gz"
           tag_name: client-v${{ env.HPX_VERSION }}
-          target_owner: twiddli
-          target_repo: happypandax
           draft: true
           overwrite: true
           prerelease: true
