@@ -146,6 +146,12 @@ jobs:
         run: |
           echo "HPX_VERSION=$(node -p "require('./packages/client/package.json').version")" >> $GITHUB_ENV
           echo "RELEASE_NAME=happypandax_client-$(node -p "require('./packages/client/package.json').version")-${{ matrix.os }}" >> $GITHUB_ENV
+      - name: Tag release
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag -a ${{ env.RELEASE_NAME }} -m "Release ${{ env.RELEASE_NAME }}" || true
+          git push --quiet --tags || true
       - name: Archive release
         run: |
           cd packages/client/dist
