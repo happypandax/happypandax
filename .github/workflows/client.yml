@@ -158,7 +158,7 @@ jobs:
       - name: Publish
         uses: xresloader/upload-to-github-release@v1
         env:
-          GITHUB_TOKEN: ${{ env.HAPPYPANDAX_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.HAPPYPANDAX_TOKEN }}
         with:
           file: "**/*.zip;**/*.tar.gz"
           tag_name: client-v${{ env.HPX_VERSION }}
