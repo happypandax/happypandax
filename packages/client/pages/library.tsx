@@ -63,7 +63,7 @@ import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
 import ListView from '../components/view/ListView';
 import { ServiceType } from '../server/constants';
-import ServerService from '../services/server';
+import { Server } from '../services/server';
 import { ItemSort, ItemType, ViewType } from '../shared/enums';
 import { ServerGallery, ServerItem, ServerMetaTags } from '../shared/types';
 import { urlparse, urlstring } from '../shared/utility';
@@ -76,7 +76,7 @@ export function cookieKey(k: string) {
   return k;
 }
 
-export function libraryArgs({
+export function getLibraryArgs({
   ctx,
   stateKey: defaultStateKey,
   cookieKey: defaultCookieKey,
@@ -228,7 +228,7 @@ export function libraryArgs({
           : itemType === ItemType.Collection
           ? collectionCardDataFields
           : groupingCardDataFields,
-    } as Parameters<ServerService['library']>[0],
+    } as Parameters<Server['library']>[0],
   };
 }
 
@@ -576,7 +576,7 @@ function ActionsMenu({
 }
 
 export interface PageProps {
-  data: Unwrap<ServerService['library']>;
+  data: Unwrap<Server['library']>;
   page: number;
   itemType: ItemType;
   urlQuery: ReturnType<typeof urlparse>;
@@ -586,7 +586,7 @@ export interface PageProps {
 
 export async function getServerSideProps(
   context: NextPageContext,
-  args?: ReturnType<typeof libraryArgs>
+  args?: ReturnType<typeof getLibraryArgs>
 ): Promise<GetServerSidePropsResult<PageProps>> {
   const server = await global.app.service
     .get(ServiceType.Server)
@@ -595,7 +595,7 @@ export async function getServerSideProps(
   const urlQuery = urlparse(context.resolvedUrl);
 
   const { errorLimit, args: largs } =
-    args ?? libraryArgs({ ctx: context, urlQuery });
+    args ?? getLibraryArgs({ ctx: context, urlQuery });
 
   const data = errorLimit
     ? { count: 0, items: [] }
@@ -628,13 +628,13 @@ export default function Page({
   hideViewItems?: boolean;
   stateKey?: string;
   children?: React.ReactNode;
-  libraryArgs?: Partial<Parameters<typeof libraryArgs>[0]>;
+  libraryArgs?: Partial<Parameters<typeof getLibraryArgs>[0]>;
 }) {
   const stateKey = defaultStateKey ?? StateKey;
 
   const [item, setItem] = useRecoilState(LibraryState.item(stateKey));
   const [view, setView] = useRecoilState(LibraryState.view(stateKey));
-  const [query, setQuery] = useRecoilState(LibraryState.query(stateKey));
+  const [clientQuery, setQuery] = useRecoilState(LibraryState.query(stateKey));
   const [favorites, setFavorites] = useRecoilState(
     LibraryState.favorites(stateKey)
   );
@@ -656,7 +656,7 @@ export default function Page({
   const router = useRouter();
   const routerQuery = urlparse(router.asPath);
 
-  const { errorLimit, args: libraryargs } = libraryArgs({
+  const { errorLimit, args: libraryargs } = getLibraryArgs({
     urlQuery: routerQuery,
     ...defaultLibraryArgs,
   });
@@ -668,6 +668,8 @@ export default function Page({
 
   const [infiniteKey, setInfiniteKey] = useState('');
   const [infiniteDirty, setInfiniteDirty] = useState(false);
+
+  const query = libraryargs.search_query ?? clientQuery;
 
   const activePage = infiniteDirty
     ? page ?? initialPage ?? 1
@@ -878,7 +880,7 @@ export default function Page({
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu fixed stackable separateNavigation>
+          <MainMenu fixed stackable>
             <MenuItem className={classNames('no-right-padding')}>
               <ViewButtons
                 view={view}

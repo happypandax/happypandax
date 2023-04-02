@@ -12,8 +12,8 @@ import { ServerErrorCode } from '../../../shared/error';
 import { ServerCollection } from '../../../shared/types';
 import { urlparse } from '../../../shared/utility';
 import LibraryPage, {
+  getLibraryArgs,
   getServerSideProps as libraryServerSideProps,
-  libraryArgs,
   PageProps as LibraryPageProps,
 } from '../../library';
 
@@ -86,7 +86,7 @@ export async function getServerSideProps(
         page = 1;
       }
 
-      const largs = libraryArgs({
+      const largs = getLibraryArgs({
         ctx: context,
         urlQuery,
         itemType: ItemType.Collection,

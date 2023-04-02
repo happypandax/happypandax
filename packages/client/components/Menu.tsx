@@ -192,8 +192,8 @@ export function MainMenu({
         <Menu
           size={size}
           fluid
+          secondary
           borderless={borderless}
-          secondary={secondary ?? !fixed}
           pointing={pointing}
           tabular={tabular}>
           {sidebarPosition === 'left' && <SidebarMenuItem />}
