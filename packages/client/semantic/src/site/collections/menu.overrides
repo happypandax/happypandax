@@ -1,3 +1,53 @@
 /*******************************
          Site Overrides
 *******************************/
+
+& when (@variationMenuStackable) {
+
+  /*--------------
+      Stackable with submenus
+  ---------------*/
+
+  @media only screen and (max-width: @largestMobileScreen) {
+    .ui.stackable2.menu {
+      flex-direction: column;
+
+      &.pointing > .active.item::after when (@variationMenuPointing) {
+        display: none;
+      }
+    }
+    .ui.stackable2.menu > .item {
+      width: 100% !important;
+    }
+    .ui.stackable2.menu > .item::before {
+      position: absolute;
+      content: '';
+      top: auto;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: @dividerSize;
+      background: @verticalDividerBackground;
+    }
+
+    .ui.stackable2.menu > .left.menu,
+    .ui.stackable2.menu > .left.item {
+      margin-right: 0 !important;
+    }
+    .ui.stackable2.menu > .right.menu,
+    .ui.stackable2.menu > .right.item {
+      margin-left: 0 !important;
+    }
+    .ui.stackable2.menu > .center.menu,
+    .ui.stackable2.menu > .center.item {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .ui.stackable2.menu > .right.menu,
+    .ui.stackable2.menu > .center.menu,
+    .ui.stackable2.menu > .left.menu {
+      flex-direction: column;
+    }
+  }
+}

@@ -878,7 +878,7 @@ export default function Page({
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu fixed>
+          <MainMenu fixed stackable separateNavigation>
             <MenuItem className={classNames('no-right-padding')}>
               <ViewButtons
                 view={view}

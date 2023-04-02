@@ -208,7 +208,7 @@ const ListViewList = forwardRef(function ListViewList<T>(
       outerRef={outerRef}
       style={style}
       className="listview"
-      overscanCount={5}
+      overscanCount={10}
       initialScrollOffset={scrollTop}
       onScroll={onScroll}
       itemKey={(index, data) =>

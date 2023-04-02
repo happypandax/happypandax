@@ -97,11 +97,15 @@ function SidebarItem({
 }
 
 export function MainSidebar({
-  hiiden: hidden,
+  hidden,
   fixed = true,
+  direction,
   onlyIcons,
+  onHide,
 }: {
-  hiiden?: boolean;
+  hidden?: boolean;
+  direction?: 'left' | 'right';
+  onHide?: () => void;
   fixed?: boolean;
   onlyIcons?: boolean;
 }) {
@@ -136,6 +140,7 @@ export function MainSidebar({
       as={Menu}
       animation={animation}
       vertical
+      direction={direction}
       size="small"
       inverted={inverted}
       icon={iconOnly}
@@ -143,6 +148,9 @@ export function MainSidebar({
       className={classNames('overflow-unset', 'window-height', {
         fixed: fixed,
       })}
+      onHide={useCallback(() => {
+        onHide?.();
+      }, [onHide])}
       onMouseEnter={useCallback(() => {
         if (!onlyIcons) setIconOnly(false);
       }, [onlyIcons])}

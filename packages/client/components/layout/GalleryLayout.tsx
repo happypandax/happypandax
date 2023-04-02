@@ -20,6 +20,7 @@ import {
 
 import { DataContext } from '../../client/context';
 import { useImage, useSetupDataState } from '../../client/hooks/item';
+import { useBreakpoints } from '../../client/hooks/ui';
 import t, { sortIndexName } from '../../client/lang';
 import { QueryType, useQueryType } from '../../client/queries';
 import { ItemSort, ItemType, ViewType } from '../../shared/enums';
@@ -428,6 +429,7 @@ export function GalleryItemHeader({
 }: {
   data: GalleryHeaderData;
 }) {
+  const { isMobileMax, isTabletMin } = useBreakpoints();
   const blur = useRecoilValue(AppState.blur);
   const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
 
@@ -445,6 +447,58 @@ export function GalleryItemHeader({
 
   const inReadingQueue = readingQueue?.includes?.(data?.id);
 
+  const namesTableEl = (
+    <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
+      <FavoriteLabel
+        defaultRating={data?.metatags?.favorite ? 1 : 0}
+        size="gigantic"
+        className="float-left"
+      />
+      <GalleryMenu
+        hasProgress={hasProgress}
+        read={data?.metatags?.read}
+        trigger={
+          <Icon
+            link
+            size="large"
+            className="float-right"
+            name="ellipsis vertical"
+          />
+        }
+      />
+    </NamesTable>
+  );
+
+  const detailsSegment = (
+    <Segment className="no-margins no-right-padding" basic>
+      {isTabletMin && namesTableEl}
+      <Header textAlign="center">
+        <LastReadLabel timestamp={data?.last_read} />
+        <LastUpdatedLabel timestamp={data?.last_updated} />
+        <DateAddedLabel timestamp={data?.timestamp} />
+      </Header>
+      {data?.info && <InfoSegment fluid />}
+      <Divider hidden className="small" />
+      <LabelFields>
+        <LabelField label={t`Series`} padded={false}>
+          <Label.Group>
+            <GroupingLabel />
+            <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
+          </Label.Group>
+        </LabelField>
+        <LabelField label={t`Parody`} padded={false}>
+          <ParodyLabels />
+        </LabelField>
+        <LabelField label={t`Tags`} padded={false}>
+          <TagsTable />
+        </LabelField>
+        <LabelField label={t`External links`} padded={false}>
+          <UrlList />
+        </LabelField>
+      </LabelFields>
+    </Segment>
+  );
+
   return (
     <>
       <ItemHeaderParallax data={data} />
@@ -452,7 +506,10 @@ export function GalleryItemHeader({
         <Container>
           <Segment basic className="no-margins no-top-padding no-right-padding">
             <div className={classNames(styles.header_content)}>
-              <div className={styles.cover_column}>
+              <div
+                className={classNames(styles.cover_column, {
+                  [styles.fluid]: isMobileMax,
+                })}>
                 <Image
                   centered
                   rounded
@@ -464,6 +521,7 @@ export function GalleryItemHeader({
                   height={data?.profile?.size?.[1]}
                 />
                 <Divider hidden />
+
                 <Divider fitted horizontal>
                   <Header as="h5">
                     <Button size="mini" basic>
@@ -474,6 +532,7 @@ export function GalleryItemHeader({
                     </Button>
                   </Header>
                 </Divider>
+                {isMobileMax && namesTableEl}
                 <Divider hidden />
                 <Grid>
                   {hasProgress && (
@@ -558,53 +617,10 @@ export function GalleryItemHeader({
                       </LabelField>
                     </LabelFields>
                   </Grid.Row>
+                  {isMobileMax && <Grid.Row>{detailsSegment}</Grid.Row>}
                 </Grid>
               </div>
-              <Segment className="no-margins no-right-padding" basic>
-                <NamesTable dataKey="titles" dataPrimaryKey="preferred_title">
-                  <FavoriteLabel
-                    defaultRating={data?.metatags?.favorite ? 1 : 0}
-                    size="gigantic"
-                    className="float-left"
-                  />
-                  <GalleryMenu
-                    hasProgress={hasProgress}
-                    read={data?.metatags?.read}
-                    trigger={
-                      <Icon
-                        link
-                        size="large"
-                        className="float-right"
-                        name="ellipsis vertical"
-                      />
-                    }
-                  />
-                </NamesTable>
-                <Header textAlign="center">
-                  <LastReadLabel timestamp={data?.last_read} />
-                  <LastUpdatedLabel timestamp={data?.last_updated} />
-                  <DateAddedLabel timestamp={data?.timestamp} />
-                </Header>
-                {data?.info && <InfoSegment fluid />}
-                <Divider hidden className="small" />
-                <LabelFields>
-                  <LabelField label={t`Series`} padded={false}>
-                    <Label.Group>
-                      <GroupingLabel />
-                      <StatusLabel>{data?.grouping?.status?.name}</StatusLabel>
-                    </Label.Group>
-                  </LabelField>
-                  <LabelField label={t`Parody`} padded={false}>
-                    <ParodyLabels />
-                  </LabelField>
-                  <LabelField label={t`Tags`} padded={false}>
-                    <TagsTable />
-                  </LabelField>
-                  <LabelField label={t`External links`} padded={false}>
-                    <UrlList />
-                  </LabelField>
-                </LabelFields>
-              </Segment>
+              {isTabletMin && detailsSegment}
             </div>
           </Segment>
         </Container>

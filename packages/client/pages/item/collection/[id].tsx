@@ -31,6 +31,7 @@ export async function getServerSideProps(
     .get(ServiceType.Server)
     .context(context);
 
+  let redirectUrl = '/library';
   let redirect = false;
   let r: Unwrap<ReturnType<typeof libraryServerSideProps>>;
 
@@ -42,9 +43,9 @@ export async function getServerSideProps(
 
   let collection: PageProps['collection'] = null;
 
-  if (!redirect) {
-    const urlQuery = urlparse(context.resolvedUrl);
+  const urlQuery = urlparse(context.resolvedUrl);
 
+  if (!redirect) {
     const group = server.create_group_call();
 
     server
@@ -70,6 +71,7 @@ export async function getServerSideProps(
     } catch (e) {
       if (e?.code === ServerErrorCode.DatabaseItemNotFoundError) {
         redirect = true;
+        redirectUrl = '/404';
       } else {
         throw e;
       }
@@ -102,11 +104,12 @@ export async function getServerSideProps(
 
   return {
     redirect: redirect
-      ? { permanent: false, destination: '/library' }
+      ? { permanent: false, destination: redirectUrl }
       : undefined,
     ...r,
     props: {
       ...r?.props,
+      urlQuery,
       itemType: ItemType.Gallery,
       collection,
     },

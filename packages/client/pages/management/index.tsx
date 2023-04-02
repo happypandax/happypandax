@@ -29,7 +29,7 @@ export default function ManagementPage({ children }: PageProps) {
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu secondary={false} size="small" tabular>
+          <MainMenu secondary={false} size="small" tabular stackable>
             <Link href="/management/database" passHref>
               <MenuItem
                 link

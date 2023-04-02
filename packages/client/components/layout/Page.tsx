@@ -1,9 +1,11 @@
 import classNames from 'classnames';
+import { useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { Button, Container, Dimmer, Sidebar } from 'semantic-ui-react';
 
+import { useBreakpoints } from '../../client/hooks/ui';
 import t from '../../client/lang';
 import { AppState } from '../../state';
 import DrawerPortal, { DrawerButton } from '../Drawer';
@@ -40,13 +42,19 @@ export function BottomZoneItem({
 
 export function BottomZone({
   children,
+  fluid,
   className,
 }: {
   children?: React.ReactNode;
+  fluid?: boolean;
   className?: string;
 }) {
   return (
-    <div id="bottom_zone" className={className}>
+    <div
+      id="bottom_zone"
+      className={classNames(className, {
+        fluid,
+      })}>
       <div>{children}</div>
     </div>
   );
@@ -76,10 +84,36 @@ export default function PageLayout({
   children?: React.ReactNode;
 }) {
   const drawerButtonPosition = useRecoilValue(AppState.drawerButtonPosition);
+  const { isMobileMax } = useBreakpoints();
+  const [sidebarHidden, setSidebarHidden] = useRecoilState(
+    AppState.sidebarHidden
+  );
+  const [sidebarPosition, setSidebarPosition] = useRecoilState(
+    AppState.sidebarPosition
+  );
+  const sidebarForcePosition = useRecoilValue(AppState.sidebarForcePosition);
+
+  useEffect(() => {
+    setSidebarHidden(isMobileMax);
+    if (!sidebarForcePosition) {
+      setSidebarPosition(isMobileMax ? 'right' : 'left');
+    }
+  }, [isMobileMax, sidebarForcePosition]);
+
+  useEffect(() => {
+    if (sidebarForcePosition) {
+      setSidebarPosition(sidebarForcePosition);
+    }
+  }, [sidebarForcePosition]);
 
   return (
     <>
-      <MainSidebar />
+      <MainSidebar
+        hidden={sidebarHidden}
+        direction={sidebarPosition}
+        onlyIcons={isMobileMax ? true : undefined}
+        onHide={() => setSidebarHidden(true)}
+      />
       {menu}
       <DndProvider backend={HTML5Backend}>
         <Sidebar.Pusher
@@ -91,7 +125,7 @@ export default function PageLayout({
           {!centered && children}
           <DrawerPortal />
         </Sidebar.Pusher>
-        <BottomZone className="pusher">
+        <BottomZone className="pusher" fluid={sidebarHidden}>
           {bottomZone}
           <BottomZoneItem x="left" y="top" className="flex">
             {bottomZoneLeft}

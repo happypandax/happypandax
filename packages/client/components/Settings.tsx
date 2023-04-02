@@ -204,6 +204,9 @@ function GeneralPane() {
   const [drawerButtonPosition, setDrawerButtonPosition] = useRecoilState(
     AppState.drawerButtonPosition
   );
+  const [sidebarForcePosition, setSidebarForcePosition] = useRecoilState(
+    AppState.sidebarForcePosition
+  );
 
   const [cfg, setConfig] = useConfig({
     'gallery.auto_rate_on_favorite': undefined as boolean,
@@ -230,7 +233,7 @@ function GeneralPane() {
   return (
     <Segment basic>
       <Form>
-        <Header size="small" dividing>{t`Application`}</Header>
+        <Header size="small" dividing>{t`Web Client`}</Header>
         <Segment>
           <Form.Field>
             <label>
@@ -283,6 +286,26 @@ function GeneralPane() {
               onChange={useCallback((ev, { value }) => {
                 ev.preventDefault();
                 if (value) setDrawerButtonPosition(value as any);
+              }, [])}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>
+              <IsolationLabel isolation="client" /> {t`Sidebar position`}
+            </label>
+            <Select
+              options={[
+                { key: 'auto', value: 'auto', text: t`Auto` },
+                { key: 'left', value: 'left', text: t`Left` },
+                { key: 'right', value: 'right', text: t`Right` },
+              ]}
+              value={sidebarForcePosition ?? 'auto'}
+              placeholder={t`Select position`}
+              onChange={useCallback((ev, { value }) => {
+                ev.preventDefault();
+                setSidebarForcePosition(
+                  value === 'auto' ? undefined : (value as any)
+                );
               }, [])}
             />
           </Form.Field>

@@ -1,10 +1,13 @@
 import classNames from 'classnames';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUpdateEffect } from 'react-use';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { Icon, IconProps, Menu, Ref } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
+import { useBreakpoints } from '../client/hooks/ui';
 import { useDocumentEvent } from '../client/hooks/utils';
+import { AppState } from '../state';
 import { useGlobalValue } from '../state/global';
 import styles from './Menu.module.css';
 import { NotificationAlert, NotificationsPopup } from './popup/Notification';
@@ -89,6 +92,21 @@ export function ConnectionItem({
   );
 }
 
+export function SidebarMenuItem() {
+  const [hidden, setHidden] = useRecoilState(AppState.sidebarHidden);
+
+  return (
+    <>
+      {hidden && (
+        <MenuItem
+          icon={{ className: 'hpx-standard huge left' }}
+          onClick={() => setHidden(false)}
+        />
+      )}
+    </>
+  );
+}
+
 export function MainMenu({
   hidden,
   borderless,
@@ -97,6 +115,7 @@ export function MainMenu({
   tabular,
   fixed,
   size = 'tiny',
+  stackable,
   absolutePosition,
   connectionItem = true,
   children,
@@ -104,6 +123,7 @@ export function MainMenu({
   hidden?: boolean;
   size?: React.ComponentProps<typeof Menu>['size'];
   borderless?: boolean;
+  stackable?: boolean;
   secondary?: boolean;
   tabular?: boolean;
   pointing?: boolean;
@@ -113,6 +133,9 @@ export function MainMenu({
   children?: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>();
+
+  const sidebarPosition = useRecoilValue(AppState.sidebarPosition);
+  const { isMobileMax } = useBreakpoints();
 
   const [isFixed, setIsFixed] = useState<
     React.ComponentProps<typeof Menu>['fixed'] | boolean
@@ -146,6 +169,8 @@ export function MainMenu({
 
   if (hidden) return <></>;
 
+  const isStacking = isMobileMax && stackable;
+
   const el = (fixed) => (
     <Menu
       size={size}
@@ -158,11 +183,32 @@ export function MainMenu({
       className={classNames(
         'main-menu',
         'pusher no-margins standard-z-index',
-        absolutePosition ? 'pos-absolute' : 'pos-relative'
+        absolutePosition ? 'pos-absolute' : 'pos-relative',
+        {
+          stackable2: stackable,
+        }
       )}>
+      {isStacking && (
+        <Menu
+          size={size}
+          fluid
+          borderless={borderless}
+          secondary={secondary ?? !fixed}
+          pointing={pointing}
+          tabular={tabular}>
+          {sidebarPosition === 'left' && <SidebarMenuItem />}
+          {connectionItem && isFixed && fixed && <ConnectionItem />}
+          {connectionItem && !isFixed && !fixed && <ConnectionItem />}
+          {sidebarPosition === 'right' && <SidebarMenuItem />}
+        </Menu>
+      )}
+      {!isStacking && sidebarPosition === 'left' && <SidebarMenuItem />}
       {children}
-      {connectionItem && isFixed && fixed && <ConnectionItem />}
-      {connectionItem && !isFixed && !fixed && <ConnectionItem />}
+      {!isStacking && connectionItem && isFixed && fixed && <ConnectionItem />}
+      {!isStacking && connectionItem && !isFixed && !fixed && (
+        <ConnectionItem />
+      )}
+      {!isStacking && sidebarPosition === 'right' && <SidebarMenuItem />}
     </Menu>
   );
 

@@ -84,6 +84,11 @@ html, body {
     padding-bottom: 20px;
 }
 
+#bottom_zone.fluid {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 #bottom_zone {
     pointer-events: none;
 }
@@ -95,6 +100,10 @@ html, body {
     left: 5px;
     right: 70px;
     bottom: 20px;
+}
+
+#bottom_zone.fluid > div {
+    right: 5px;
 }
 
 #bottom_zone > div > .item {

@@ -39,6 +39,27 @@ export default class _AppState extends StateBlock {
     default: 'very thin' as 'very thin' | 'thin',
   });
 
+  static sidebarForcePosition = defineAtom({
+    default: undefined as 'left' | 'right' | undefined,
+    effects: [localStorageEffect()],
+  });
+
+  static sidebarPosition = defineAtom({
+    default: 'left' as 'left' | 'right',
+    effects: [
+      ({ setSelf, getLoadable }) => {
+        const v = getLoadable(_AppState.sidebarForcePosition).getValue()
+        if (v) {
+          setSelf(v);
+        }
+      },
+    ],
+  });
+
+  static sidebarHidden = defineAtom({
+    default: false,
+  });
+
   static drawerSticky = defineAtom({ default: false });
   static drawerExpanded = defineAtom({ default: false });
   static drawerOpen = defineAtom({

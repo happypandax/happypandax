@@ -72,10 +72,18 @@ export function ElementScroller({
 
   useEffect(() => {
     const handleWindowScroll = throttle(() => {
+      const { top = 0, left = 0 } =
+        outerRef.current?.getBoundingClientRect?.() || {};
       const { offsetTop = 0, offsetLeft = 0 } = outerRef.current || {};
 
-      const scrollTop = getScrollPosition(scrollElementRef, 'y') - offsetTop;
-      const scrollLeft = getScrollPosition(scrollElementRef, 'x') - offsetLeft;
+      const y = getScrollPosition(scrollElementRef, 'y');
+      const x = getScrollPosition(scrollElementRef, 'x');
+      const scrollTop = y - offsetTop;
+      const scrollLeft = x - offsetLeft;
+
+      if (!horizontal && y - top < 0) return;
+      if (horizontal && x - left < 0) return;
+
       if (isGrid)
         ref.current && ref.current.scrollTo({ scrollLeft, scrollTop });
       if (!isGrid) ref.current && ref.current.scrollTo(scrollTop);
@@ -86,7 +94,7 @@ export function ElementScroller({
       handleWindowScroll.cancel();
       scrollElementRef.removeEventListener('scroll', handleWindowScroll);
     };
-  }, [isGrid, scrollElementRef, throttleTime]);
+  }, [isGrid, scrollElementRef, throttleTime, horizontal]);
 
   const onScroll = useCallback(
     ({

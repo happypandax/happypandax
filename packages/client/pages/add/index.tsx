@@ -29,7 +29,7 @@ export default function AddPage({ children }: PageProps) {
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu secondary={false} size="small" tabular>
+          <MainMenu secondary={false} size="small" tabular stackable>
             <Link href="/add/item" passHref>
               <MenuItem link active={path === 'item'}>{t`New item`}</MenuItem>
             </Link>

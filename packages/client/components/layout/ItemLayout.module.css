@@ -52,6 +52,10 @@
     margin-right: 1em;
 }
 
+.fluid.cover_column {
+    max-width: 100%;
+}
+
 .cover_collection {
     max-width: max-content;
     min-width: max-content;

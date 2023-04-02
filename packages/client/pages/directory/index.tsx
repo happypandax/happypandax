@@ -29,7 +29,12 @@ export default function DirectoryPage({ children }: PageProps) {
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu secondary={false} size="small" tabular>
+          <MainMenu
+            secondary={false}
+            size="small"
+            tabular
+            separateNavigation
+            stackable>
             <Link href="/directory/filter" passHref>
               <MenuItem link active={path === 'filter'}>{t`Filters`}</MenuItem>
             </Link>

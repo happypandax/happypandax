@@ -211,7 +211,10 @@ export function AppRoot({
   );
 }
 
-function MyApp({ Component, pageProps }: AppProps<AppPageProps['pageProps']>) {
+function HappyPandaApp({
+  Component,
+  pageProps,
+}: AppProps<AppPageProps['pageProps']>) {
   return (
     <AppRoot pageProps={pageProps}>
       {!['/login', '/_error'].includes(pageProps.pathname) && <LoginModal />}
@@ -241,7 +244,7 @@ function redirect(params: {
   Router.replace(location, undefined);
 }
 
-MyApp.getInitialProps = async function (
+HappyPandaApp.getInitialProps = async function (
   context: AppContext
 ): Promise<AppPageProps> {
   let serverHost = HPX_SERVER_HOST;
@@ -347,7 +350,7 @@ MyApp.getInitialProps = async function (
   };
 };
 
-export default MyApp;
+export default HappyPandaApp;
 
 if (!global?.app?.initialized && process.env.NODE_ENV !== 'test') {
   if (!IS_SERVER) {
