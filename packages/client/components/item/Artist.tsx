@@ -5,7 +5,8 @@ import { Card, Icon, Image, Label, Segment } from 'semantic-ui-react';
 import { DataContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
 import t from '../../client/lang';
-import { ItemType } from '../../shared/enums';
+import { getLibraryQuery } from '../../client/utility';
+import { ItemType, ViewType } from '../../shared/enums';
 import { FieldPath, ServerArtist } from '../../shared/types';
 import { urlstring } from '../../shared/utility';
 import { FavoriteLabel, FolllowLabel } from '../dataview/Common';
@@ -89,7 +90,12 @@ export default function ArtistCardLabel({
           <Card.Meta className="clearfix">
             <Link
               href={urlstring('/library', {
-                q: `artist:"${data.preferred_name.name}"`,
+                ...getLibraryQuery({
+                  query: `artist:"${data.preferred_name.name}"`,
+                  view: ViewType.All,
+                  favorites: false,
+                  filter: 0,
+                }),
               })}
               passHref
               legacyBehavior>

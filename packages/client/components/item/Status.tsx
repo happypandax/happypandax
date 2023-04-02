@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Card, Icon, Label, Segment } from 'semantic-ui-react';
 
 import t from '../../client/lang';
+import { getLibraryQuery } from '../../client/utility';
+import { ViewType } from '../../shared/enums';
 import { FieldPath, ServerStatus } from '../../shared/types';
 import { urlstring } from '../../shared/utility';
 
@@ -30,7 +32,12 @@ export default function StatusCardLabel({
         </Label>
         <Link
           href={urlstring('/library', {
-            q: `status:"${data.name}"`,
+            ...getLibraryQuery({
+              query: `language:"${data.name}"`,
+              view: ViewType.All,
+              favorites: false,
+              filter: 0,
+            }),
           })}
           passHref
           legacyBehavior>

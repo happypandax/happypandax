@@ -6,6 +6,7 @@ import { NextPageContext } from 'next';
 
 import { Marked, Renderer } from '@ts-stack/markdown';
 
+import { ItemSort, ViewType } from '../shared/enums';
 import t from './lang';
 
 Marked.setOptions({
@@ -254,3 +255,37 @@ export function dateFromTimestamp(
     : format(d, dateFormat);
 }
 
+
+
+export function getLibraryQuery({
+  favorites,
+  filter,
+  page,
+  sort,
+  sortDesc,
+  query,
+  limit,
+  view,
+}: {
+  favorites?: boolean;
+  filter?: number;
+  page?: number;
+  sort?: ItemSort;
+  sortDesc?: boolean;
+  limit?: number;
+  query?: string;
+  view?: ViewType;
+}) {
+
+  return {
+    q: query,
+    filter,
+    sort,
+    desc: sortDesc,
+    p: page,
+    fav: favorites,
+    view,
+    limit
+  }
+
+}

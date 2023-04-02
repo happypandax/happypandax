@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Card, Icon, Label, Segment } from 'semantic-ui-react';
 
 import t from '../../client/lang';
+import { getLibraryQuery } from '../../client/utility';
+import { ViewType } from '../../shared/enums';
 import { FieldPath, ServerLanguage } from '../../shared/types';
 import { urlstring } from '../../shared/utility';
 
@@ -32,7 +34,12 @@ export default function LanguageCardLabel({
         </Label>
         <Link
           href={urlstring('/library', {
-            q: `language:"${data.name}"`,
+            ...getLibraryQuery({
+              query: `language:"${data.name}"`,
+              view: ViewType.All,
+              favorites: false,
+              filter: 0,
+            }),
           })}
           passHref
           legacyBehavior>
