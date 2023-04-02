@@ -6,7 +6,8 @@ import { Card, Label } from 'semantic-ui-react';
 import { DataContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
 import t from '../../client/lang';
-import { ItemType } from '../../shared/enums';
+import { getLibraryQuery } from '../../client/utility';
+import { ItemType, ViewType } from '../../shared/enums';
 import { FieldPath, ServerNamespaceTag } from '../../shared/types';
 import { urlstring } from '../../shared/utility';
 import { AppState } from '../../state';
@@ -65,10 +66,16 @@ export default function TagCardLabel({
             {data.tag.name}
             <Link
               href={urlstring('/library', {
-                q:
-                  data.namespace.name !== appProps.special_namespace
-                    ? `${data.namespace.name}:"${data.tag.name}"`
-                    : `tag:"${data.tag.name}"`,
+                ...getLibraryQuery({
+                  query:
+                    data.namespace.name !== appProps.special_namespace
+                      ? `${data.namespace.name}:"${data.tag.name}"`
+                      : `tag:"${data.tag.name}"`,
+
+                  view: ViewType.All,
+                  favorites: false,
+                  filter: 0,
+                }),
               })}
               passHref
               legacyBehavior>

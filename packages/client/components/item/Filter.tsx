@@ -14,6 +14,8 @@ import {
 import { useCommand } from '../../client/command';
 import t from '../../client/lang';
 import { MutatationType, useMutationType } from '../../client/queries';
+import { getLibraryQuery } from '../../client/utility';
+import { ViewType } from '../../shared/enums';
 import { FieldPath, ServerFilter } from '../../shared/types';
 import { urlstring } from '../../shared/utility';
 import { LabelAccordion } from '../misc';
@@ -76,7 +78,14 @@ export default function FilterCard({
             as="a"
           />
           <Link
-            href={urlstring('/library', { filter: data.id })}
+            href={urlstring('/library', {
+              ...getLibraryQuery({
+                query: '',
+                view: ViewType.All,
+                favorites: false,
+                filter: data.id,
+              }),
+            })}
             passHref
             legacyBehavior>
             <Label
