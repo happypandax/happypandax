@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -94,7 +94,13 @@ export default function PageLayout({
   const sidebarForcePosition = useRecoilValue(AppState.sidebarForcePosition);
 
   useEffect(() => {
-    setSidebarHidden(isMobileMax);
+    if (isMobileMax) {
+      console.debug({ isMobileMax });
+      setSidebarHidden(isMobileMax);
+    } else {
+      console.debug({ isMobileMax });
+      setSidebarHidden(false);
+    }
     if (!sidebarForcePosition) {
       setSidebarPosition(isMobileMax ? 'right' : 'left');
     }
@@ -106,20 +112,29 @@ export default function PageLayout({
     }
   }, [sidebarForcePosition]);
 
+  const sidebarEl = (
+    <MainSidebar
+      hidden={sidebarHidden}
+      direction={sidebarPosition}
+      onlyIcons={isMobileMax ? true : undefined}
+      onHide={useCallback(() => {
+        if (isMobileMax) {
+          setSidebarHidden(true);
+        }
+      }, [isMobileMax])}
+    />
+  );
+
   return (
     <>
-      <MainSidebar
-        hidden={sidebarHidden}
-        direction={sidebarPosition}
-        onlyIcons={isMobileMax ? true : undefined}
-        onHide={() => setSidebarHidden(true)}
-      />
+      {!isMobileMax && sidebarEl}
       {menu}
       <DndProvider backend={HTML5Backend}>
         <Sidebar.Pusher
           as={Dimmer.Dimmable}
           dimmed={dimmed}
           className={classNames()}>
+          {isMobileMax && sidebarEl}
           <Dimmer simple active={dimmed} />
           {centered && <Container>{children}</Container>}
           {!centered && children}

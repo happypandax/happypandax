@@ -66,6 +66,10 @@ html, body {
     max-height: 100%;
 }
 
+.max-h-screen {
+    max-height: 100vh;
+}
+
 .user-select-none {
     -webkit-user-select: none;
 	-moz-user-select: none;

@@ -470,7 +470,12 @@ export function GalleryItemHeader({
   );
 
   const detailsSegment = (
-    <Segment className="no-margins no-right-padding" basic>
+    <Segment
+      className={classNames('no-margins', {
+        'no-right-padding': !isMobileMax,
+        'no-padding-segment': isMobileMax,
+      })}
+      basic>
       {isTabletMin && namesTableEl}
       <Header textAlign="center">
         <LastReadLabel timestamp={data?.last_read} />

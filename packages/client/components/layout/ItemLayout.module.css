@@ -32,6 +32,10 @@
     flex-direction: row;
 }
 
+.header_content.column {
+    flex-direction: column;
+}
+
 .header_content > div {
     flex-grow: 1;
 }
@@ -57,9 +61,13 @@
 }
 
 .cover_collection {
-    max-width: max-content;
     min-width: max-content;
     margin-right: 1em;
+    margin-top: 1em;
+}
+
+.header_content:not(.column) .cover_collection {
+    max-width: max-content;
 }
 
 .label_children_padded {

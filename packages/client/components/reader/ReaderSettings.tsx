@@ -135,56 +135,6 @@ export default function ReaderSettings({
           options={scalingOptions}
         />
 
-        <Form.Field
-          onChange={useCallback((ev) => {
-            ev.preventDefault();
-            const v = parseFloat(ev.target.value);
-            setAutoNavigateInterval(Math.max(0, isNaN(v) ? 15 : v));
-          }, [])}>
-          <label>{t`Auto navigate interval`}</label>
-          <input value={autoNavigateInterval} type="number" min={0} />
-          <span className="sub-text">{t`Seconds`}</span>
-        </Form.Field>
-
-        <Form.Group>
-          <Form.Field
-            onChange={useCallback((ev, data) => {
-              ev.preventDefault();
-              const v = parseFloat(ev.target.value);
-              setAutoScrollSpeed(Math.max(0, isNaN(v) ? 100 : v));
-            }, [])}
-            width={10}
-            disabled={!autoScroll}
-          >
-            <label>{t`Auto scroll speed`}</label>
-            <input value={autoScrollSpeed} type="number" min={0} />
-          </Form.Field>
-
-          <Form.Field width={6}>
-            <Checkbox
-              label={t`Auto scroll`}
-              checked={autoScroll}
-              onChange={useCallback((ev, data) => {
-                ev.preventDefault();
-                setAutoScroll(data.checked);
-              }, [])}
-            />
-          </Form.Field>
-        </Form.Group>
-
-        <Form.Field
-          onChange={useCallback((ev) => {
-            ev.preventDefault();
-            const v = parseFloat(ev.target.value);
-            setAutoReadNextCountdown(Math.max(0, isNaN(v) ? 15 : v));
-          }, [])}>
-          <label>{t`Auto read next gallery countdown`}</label>
-          <input value={autoReadNextCountdown} type="number" min={0} />
-          <span className="sub-text">{t`Set to 0 to disable`}</span>
-        </Form.Field>
-
-
-
         <Form.Field>
           <label>{t`Zoom with mouse wheel`}</label>
           <Checkbox
@@ -207,6 +157,52 @@ export default function ReaderSettings({
               setBlurryBg(data.checked);
             }, [])}
           />
+        </Form.Field>
+
+        <Form.Group>
+          <Form.Field
+            onChange={useCallback((ev, data) => {
+              ev.preventDefault();
+              const v = parseFloat(ev.target.value);
+              setAutoScrollSpeed(Math.max(0, isNaN(v) ? 100 : v));
+            }, [])}
+            width={10}
+            disabled={!autoScroll}>
+            <label>{t`Auto scroll speed`}</label>
+            <input value={autoScrollSpeed} type="number" min={0} />
+          </Form.Field>
+
+          <Form.Field width={6}>
+            <Checkbox
+              label={t`Auto scroll`}
+              checked={autoScroll}
+              onChange={useCallback((ev, data) => {
+                ev.preventDefault();
+                setAutoScroll(data.checked);
+              }, [])}
+            />
+          </Form.Field>
+        </Form.Group>
+        <Form.Field
+          onChange={useCallback((ev) => {
+            ev.preventDefault();
+            const v = parseFloat(ev.target.value);
+            setAutoNavigateInterval(Math.max(0, isNaN(v) ? 15 : v));
+          }, [])}>
+          <label>{t`Auto navigate interval`}</label>
+          <input value={autoNavigateInterval} type="number" min={0} />
+          <span className="sub-text">{t`Seconds`}</span>
+        </Form.Field>
+
+        <Form.Field
+          onChange={useCallback((ev) => {
+            ev.preventDefault();
+            const v = parseFloat(ev.target.value);
+            setAutoReadNextCountdown(Math.max(0, isNaN(v) ? 15 : v));
+          }, [])}>
+          <label>{t`Auto read next gallery countdown`}</label>
+          <input value={autoReadNextCountdown} type="number" min={0} />
+          <span className="sub-text">{t`Set to 0 to disable`}</span>
         </Form.Field>
       </Form>
     </Segment>

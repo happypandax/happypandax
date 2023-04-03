@@ -19,6 +19,7 @@ import {
 
 import { DataContext, ReaderContext } from '../../client/context';
 import { useSetupDataState } from '../../client/hooks/item';
+import { useBreakpoints } from '../../client/hooks/ui';
 import t from '../../client/lang';
 import { QueryType, useQueryType } from '../../client/queries';
 import { ImageSize, ItemType } from '../../shared/enums';
@@ -45,6 +46,8 @@ function ReadNext({
   nextInReadingList?: GalleryCardData;
 }) {
   const { stateKey } = useContext(ReaderContext);
+
+  const { isMobileMax } = useBreakpoints();
 
   const router = useRouter();
   const isEnd = useRecoilValue(ReaderState.endReached(stateKey));
@@ -116,10 +119,13 @@ function ReadNext({
   const onlyRandom =
     randomItems?.length && !queueData && !nextChapter && !nextInReadingList;
 
+  const itemSize = 'medium';
+
   return (
     <Grid
       centered
       columns="equal"
+      stackable
       onClick={() => {
         setCountDownEnabled(undefined);
       }}>
@@ -127,7 +133,7 @@ function ReadNext({
         <Grid.Column textAlign="center">
           <Header
             textAlign="center"
-            size="medium">{t`Read the next one`}</Header>
+            size={itemSize}>{t`Read the next one`}</Header>
           {!!random && (
             <Link
               passHref
@@ -152,7 +158,7 @@ function ReadNext({
                   : ''}
               </Header>
               <GalleryCard
-                size="medium"
+                size={itemSize}
                 data={queueData.data as ServerGallery}
               />
             </Segment>
@@ -168,7 +174,7 @@ function ReadNext({
                   ? '(' + t`in ${countdown}` + ')'
                   : ''}
               </Header>
-              <GalleryCard size="medium" data={nextChapter} />
+              <GalleryCard size={itemSize} data={nextChapter} />
             </Segment>
           </Grid.Column>
         )}
@@ -182,7 +188,7 @@ function ReadNext({
                   ? '(' + t`in ${countdown}` + ')'
                   : ''}
               </Header>
-              <GalleryCard size="medium" data={nextInReadingList} />
+              <GalleryCard size={itemSize} data={nextInReadingList} />
             </Segment>
           </Grid.Column>
         )}
@@ -191,7 +197,7 @@ function ReadNext({
           randomItems.map((g) => (
             <Grid.Column key={g.id} textAlign="center">
               <Segment tertiary basic>
-                <GalleryCard size="medium" data={g} />
+                <GalleryCard size={itemSize} data={g} />
               </Segment>
             </Grid.Column>
           ))}
@@ -233,13 +239,14 @@ function RatingIcon({
 
 function EndRating() {
   const { item } = useContext(ReaderContext);
+  const { isMobileMax } = useBreakpoints();
 
   // TODO: rating doesnt update to server
   const [rating, setRating] = useState(item?.rating);
 
   return (
     <Grid as={Segment} basic textAlign="center">
-      <Grid.Row>
+      <Grid.Row columns="equal">
         <Grid.Column>
           <RatingIcon
             className="meh outline"
@@ -287,23 +294,11 @@ function EndRating() {
       </Grid.Row>
       <Grid.Row>
         <RatingLabel
-          size="massive"
+          size={isMobileMax ? 'huge' : 'massive'}
           onRating={useCallback((r) => setRating(r), [])}
           defaultRating={rating}
         />
       </Grid.Row>
-      <span className="left-0 pos-absolute">
-        <FavoriteLabel
-          size="massive"
-          defaultRating={item?.metatags?.favorite ? 1 : 0}
-        />
-      </span>
-      <div className="right-0 pos-absolute">
-        <Link href={`/item/gallery/${item.id}`} passHref legacyBehavior>
-          <Button as="a" icon={{ name: 'level up alternate' }} basic />
-        </Link>
-        {item?.metatags?.inbox && <Button primary>{t`Send to library`}</Button>}
-      </div>
     </Grid>
   );
 }
@@ -356,6 +351,8 @@ export default function EndContent({
 } & React.ComponentProps<typeof ReadNext>) {
   const { item, stateKey } = useContext(ReaderContext);
 
+  const { isMobileMax } = useBreakpoints();
+
   const { dataContext } = useSetupDataState({
     initialData: item,
     itemType: ItemType.Gallery,
@@ -388,8 +385,17 @@ export default function EndContent({
     { enabled: !!readingQueue.length }
   );
 
+  const topRightButtonsEl = (
+    <Grid.Column width={!isMobileMax ? 4 : undefined} textAlign="right">
+      <Link href={`/item/gallery/${item.id}`} passHref legacyBehavior>
+        <Button as="a" icon={{ name: 'level up alternate' }} basic />
+      </Link>
+      {item?.metatags?.inbox && <Button primary>{t`Send to library`}</Button>}
+    </Grid.Column>
+  );
+
   return (
-    <Grid as={Segment} centered fluid className="max-h-full overflow-auto">
+    <Grid as={Segment} centered fluid className="max-h-screen overflow-auto">
       <Grid.Row>
         <Grid.Column width={16}>
           <Header
@@ -398,7 +404,25 @@ export default function EndContent({
         </Grid.Column>
         <Grid.Column width={16} textAlign="center">
           <DataContext.Provider value={dataContext}>
-            <EndRating />
+            <Grid stackable>
+              <Grid.Row>
+                <Grid.Column width={4} textAlign="left">
+                  <Grid columns="equal">
+                    <Grid.Column textAlign="left">
+                      <FavoriteLabel
+                        size="massive"
+                        defaultRating={item?.metatags?.favorite ? 1 : 0}
+                      />
+                    </Grid.Column>
+                    {isMobileMax && topRightButtonsEl}
+                  </Grid>
+                </Grid.Column>
+                <Grid.Column width={8}>
+                  <EndRating />
+                </Grid.Column>
+                {!isMobileMax && topRightButtonsEl}
+              </Grid.Row>
+            </Grid>
           </DataContext.Provider>
         </Grid.Column>
       </Grid.Row>

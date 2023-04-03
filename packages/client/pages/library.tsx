@@ -28,6 +28,7 @@ import {
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
 import { LibraryContext } from '../client/context';
+import { useBreakpoints } from '../client/hooks/ui';
 import t from '../client/lang';
 import { QueryType, useQueryType } from '../client/queries';
 import { getCookies } from '../client/utility';
@@ -630,6 +631,8 @@ export default function Page({
   children?: React.ReactNode;
   libraryArgs?: Partial<Parameters<typeof getLibraryArgs>[0]>;
 }) {
+  const { isMobileMax } = useBreakpoints();
+
   const stateKey = defaultStateKey ?? StateKey;
 
   const [item, setItem] = useRecoilState(LibraryState.item(stateKey));
@@ -917,7 +920,11 @@ export default function Page({
                     setQuery('');
                   }}
                   defaultValue={query}
-                  placeholder={t`Search using tags, titles, names, artists... Press "/" to search`}
+                  placeholder={
+                    isMobileMax
+                      ? t`Search here...`
+                      : t`Search using tags, titles, names, artists... Press "/" to search`
+                  }
                   showOptions
                   size="small"
                   fluid
