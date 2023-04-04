@@ -45,6 +45,7 @@ import {
   ItemCardHorizontalDetailContent,
 } from '../item/index';
 import { EmptyMessage } from '../misc';
+import { ModalWithBack } from '../misc/BackSupport';
 import { SortableList } from '../misc/SortableList';
 import { IsolationLabel, OptionField } from '../Settings';
 import { HandlerLabelGroup, ItemQueueBase } from './';
@@ -90,7 +91,7 @@ function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
   }, [metadataHandlers]);
 
   return (
-    <Modal dimmer={false} {...props}>
+    <ModalWithBack dimmer={false} {...props}>
       <Modal.Header>{t`Metadata Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
@@ -182,7 +183,7 @@ function MetadataSettings(props: React.ComponentProps<typeof Modal>) {
           />
         </List>
       </Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }
 

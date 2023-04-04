@@ -23,6 +23,7 @@ import t from '../client/lang';
 import { defined } from '../shared/utility';
 import { AppState, MiscState } from '../state';
 import { JSONTextEditor } from './misc';
+import { ModalWithBack } from './misc/BackSupport';
 import { Plugins } from './Plugin';
 
 function namespaceExists(
@@ -339,14 +340,14 @@ function GeneralPane() {
             </Header>
             <Segment clearing>
               <OptionField
-                label={t`Automatically set unrated gallery to max rating on favorite`}
+                label={t`Set unrated gallery to maximum rating when favorited`}
                 cfg={cfg}
                 nskey="gallery.auto_rate_on_favorite"
                 type="boolean"
                 optionChange={optionChange}
               />
               <OptionField
-                label={t`How many pages in percent have to be read before the gallery is considered read`}
+                label={t`What percentage of pages must be read to consider the gallery as read?`}
                 cfg={cfg}
                 nskey="gallery.pages_to_read"
                 float
@@ -1168,6 +1169,7 @@ export default function SettingsModal({
   ...props
 }: React.ComponentProps<typeof Modal>) {
   const [open, setOpen] = useState(false);
+
   const touched = useRecoilValue(MiscState.touchedConfig);
   const touchedRef = useRef(touched);
 
@@ -1192,7 +1194,7 @@ export default function SettingsModal({
   }, [open]);
 
   return (
-    <Modal
+    <ModalWithBack
       dimmer="inverted"
       closeIcon
       centered={false}
@@ -1217,6 +1219,6 @@ export default function SettingsModal({
       <Modal.Content as={Segment} className="no-margins" basic>
         <SettingsTab />
       </Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }

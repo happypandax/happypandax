@@ -35,7 +35,7 @@ import {
   DataContext,
   DataContextT,
   ItemContext,
-  LibraryContext,
+  useSidebarDetailsContext,
 } from '../../client/context';
 import { useImage } from '../../client/hooks/item';
 import t from '../../client/lang';
@@ -49,6 +49,7 @@ import {
 import { maskText } from '../../shared/utility';
 import { AppState, LibraryState } from '../../state';
 import { ActivityList } from '../misc/ActivityList';
+import { ModalWithBack } from '../misc/BackSupport';
 import { GalleryCardData } from './Gallery';
 import { GroupingCardData } from './Grouping';
 import styles from './Item.module.css';
@@ -387,9 +388,9 @@ function ItemCardLabels({ children }: { children: React.ReactNode }) {
 
 function ItemDetailsModal(props: React.ComponentProps<typeof Modal>) {
   return (
-    <Modal {...props}>
+    <ModalWithBack {...props}>
       <Modal.Content>{props.children}</Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }
 
@@ -435,7 +436,7 @@ export function ItemCardContent({
 
   const onDetailsClose = useCallback(() => setDetailsOpen(false), []);
 
-  const libraryContext = useContext(LibraryContext);
+  const sidebarDetailsContext = useSidebarDetailsContext();
 
   const El = itemContext.horizontal && itemContext.href ? Link : React.Fragment;
 
@@ -450,7 +451,7 @@ export function ItemCardContent({
           (ev) => {
             if (!itemContext.horizontal) {
               ev.preventDefault();
-              if (libraryContext && itemContext.detailsData) {
+              if (sidebarDetailsContext && itemContext.detailsData) {
                 ev.stopPropagation();
                 setLibrarySidebarData(itemContext.detailsData);
                 setLibrarySidebarVisible(true);
@@ -460,7 +461,11 @@ export function ItemCardContent({
               }
             }
           },
-          [itemContext.horizontal, itemContext.detailsData, libraryContext]
+          [
+            itemContext.horizontal,
+            itemContext.detailsData,
+            sidebarDetailsContext,
+          ]
         )}
         className="content">
         {!!itemContext.Details &&
@@ -602,7 +607,7 @@ export function ItemCardImage({
 
   const setLibrarySidebarData = useSetRecoilState(LibraryState.sidebarData);
 
-  const libraryContext = useContext(LibraryContext);
+  const sidebarDetailsContext = useSidebarDetailsContext();
 
   // const size = src && typeof src !== 'string' ? src.size : undefined;
 
@@ -623,7 +628,7 @@ export function ItemCardImage({
         (ev) => {
           if (itemContext.horizontal) {
             ev.preventDefault();
-            if (libraryContext && itemContext.detailsData) {
+            if (sidebarDetailsContext && itemContext.detailsData) {
               ev.stopPropagation();
               setLibrarySidebarData(itemContext.detailsData);
               setLibrarySidebarVisible(true);
@@ -633,7 +638,7 @@ export function ItemCardImage({
             }
           }
         },
-        [itemContext.horizontal, itemContext.detailsData, libraryContext]
+        [itemContext.horizontal, itemContext.detailsData, sidebarDetailsContext]
       )}
       dimmer={{
         active:

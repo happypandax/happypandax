@@ -84,7 +84,7 @@ export default function PageLayout({
   children?: React.ReactNode;
 }) {
   const drawerButtonPosition = useRecoilValue(AppState.drawerButtonPosition);
-  const { isMobileMax } = useBreakpoints();
+  const { isTabletMax } = useBreakpoints();
   const [sidebarHidden, setSidebarHidden] = useRecoilState(
     AppState.sidebarHidden
   );
@@ -94,17 +94,17 @@ export default function PageLayout({
   const sidebarForcePosition = useRecoilValue(AppState.sidebarForcePosition);
 
   useEffect(() => {
-    if (isMobileMax) {
-      console.debug({ isMobileMax });
-      setSidebarHidden(isMobileMax);
+    if (isTabletMax) {
+      console.debug({ isMobileMax: isTabletMax });
+      setSidebarHidden(isTabletMax);
     } else {
-      console.debug({ isMobileMax });
+      console.debug({ isMobileMax: isTabletMax });
       setSidebarHidden(false);
     }
     if (!sidebarForcePosition) {
-      setSidebarPosition(isMobileMax ? 'right' : 'left');
+      setSidebarPosition(isTabletMax ? 'right' : 'left');
     }
-  }, [isMobileMax, sidebarForcePosition]);
+  }, [isTabletMax, sidebarForcePosition]);
 
   useEffect(() => {
     if (sidebarForcePosition) {
@@ -116,25 +116,27 @@ export default function PageLayout({
     <MainSidebar
       hidden={sidebarHidden}
       direction={sidebarPosition}
-      onlyIcons={isMobileMax ? true : undefined}
+      onlyIcons={isTabletMax ? true : undefined}
       onHide={useCallback(() => {
-        if (isMobileMax) {
+        if (isTabletMax) {
           setSidebarHidden(true);
         }
-      }, [isMobileMax])}
+      }, [isTabletMax])}
     />
   );
 
+  const innerSidebar = isTabletMax || sidebarPosition === 'right';
+
   return (
     <>
-      {!isMobileMax && sidebarEl}
+      {!innerSidebar && sidebarEl}
       {menu}
       <DndProvider backend={HTML5Backend}>
         <Sidebar.Pusher
           as={Dimmer.Dimmable}
           dimmed={dimmed}
           className={classNames()}>
-          {isMobileMax && sidebarEl}
+          {innerSidebar && sidebarEl}
           <Dimmer simple active={dimmed} />
           {centered && <Container>{children}</Container>}
           {!centered && children}

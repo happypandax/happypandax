@@ -168,7 +168,7 @@ html, body {
     width: 100%;
 }
 
-.sticky-page-sidebar.right {
+.sticky-page-sidebar.right:not(.mobile) {
     padding-right: 60px;
 }
 

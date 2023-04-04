@@ -33,6 +33,7 @@ import {
 import { DownloadHandler, DownloadItem } from '../../shared/types';
 import { AppState } from '../../state';
 import { EmptyMessage } from '../misc';
+import { ModalWithBack } from '../misc/BackSupport';
 import { Progress } from '../misc/Progress';
 import { SortableList } from '../misc/SortableList';
 import { IsolationLabel, OptionField } from '../Settings';
@@ -150,7 +151,7 @@ function DownloadSettings(props: React.ComponentProps<typeof Modal>) {
   }, [downloadHandlers]);
 
   return (
-    <Modal dimmer={false} {...props}>
+    <ModalWithBack dimmer={false} {...props}>
       <Modal.Header>{t`Download Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
@@ -240,7 +241,7 @@ function DownloadSettings(props: React.ComponentProps<typeof Modal>) {
           />
         </List>
       </Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }
 

@@ -32,6 +32,7 @@ import GalleryCard, {
   GalleryCardData,
   galleryCardDataFields,
 } from '../item/Gallery';
+import { ModalWithBack } from '../misc/BackSupport';
 import { SimilarItemsSlider, Slider, SliderElement } from '../misc/Slider';
 
 function ReadNext({
@@ -312,7 +313,8 @@ function CollectionOptions(props: React.ComponentProps<typeof Modal>) {
   const [cats, setCats] = useRecoilState(ReaderState.collectionCategories);
 
   return (
-    <Modal closeIcon size="small" {...props}>
+    // eslint-disable-next-line react/jsx-no-undef
+    <ModalWithBack closeIcon size="small" {...props}>
       <Modal.Header>{t`Categories`}</Modal.Header>
       <Modal.Content>
         <Form>
@@ -335,7 +337,7 @@ function CollectionOptions(props: React.ComponentProps<typeof Modal>) {
             ))}
         </Form>
       </Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }
 

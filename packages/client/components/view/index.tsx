@@ -22,6 +22,7 @@ import {
 } from 'semantic-ui-react';
 
 import { ArrayContext, ArrayContextT } from '../../client/context';
+import { useBreakpoints } from '../../client/hooks/ui';
 import t from '../../client/lang';
 import { getClientHeight } from '../../client/utility';
 import { AppState } from '../../state';
@@ -150,6 +151,8 @@ export function ViewPagination({
   totalPages?: React.ComponentProps<typeof Pagination>['totalPages'];
   hrefTemplate?: string;
 }) {
+  const { isMobileMax } = useBreakpoints();
+
   const router = useRouter();
   const tmpl = useMemo(() => {
     return _.template(hrefTemplate ?? '');
@@ -157,6 +160,7 @@ export function ViewPagination({
 
   return (
     <Pagination
+      boundaryRange={isMobileMax ? 0 : 1}
       totalPages={totalPages ?? 1}
       activePage={activePage}
       pageItem={useCallback(

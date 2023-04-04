@@ -3,7 +3,12 @@ import React, { useContext } from 'react';
 import { ItemType } from '../shared/enums';
 import { ItemSize, ServerGallery, ServerItem } from '../shared/types';
 
-export const LibraryContext = React.createContext(undefined);
+export const SidebarDetailsContext = React.createContext(false as boolean);
+export const LibraryContext = React.createContext(false as boolean);
+
+export function useSidebarDetailsContext() {
+  return useContext(SidebarDetailsContext);
+}
 
 export function useLibraryContext() {
   return useContext(LibraryContext);

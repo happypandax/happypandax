@@ -19,6 +19,7 @@ import { CommandProgress } from '../shared/types';
 import { useGlobalValue } from '../state/global';
 import { EmptySegment } from './misc';
 import { ActivityList } from './misc/ActivityList';
+import { ModalWithBack } from './misc/BackSupport';
 import { TrashTabView } from './Trash';
 
 function InfoPane() {
@@ -234,7 +235,7 @@ export default function AboutModal({
   const debug = useGlobalValue('debug');
 
   return (
-    <Modal
+    <ModalWithBack
       dimmer="inverted"
       closeIcon
       {...props}
@@ -270,6 +271,6 @@ export default function AboutModal({
           Twiddly
         </a>
       </Segment>
-    </Modal>
+    </ModalWithBack>
   );
 }

@@ -27,7 +27,7 @@ import {
 } from 'semantic-ui-react';
 import { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic';
 
-import { LibraryContext } from '../client/context';
+import { LibraryContext, SidebarDetailsContext } from '../client/context';
 import { useBreakpoints } from '../client/hooks/ui';
 import t from '../client/lang';
 import { QueryType, useQueryType } from '../client/queries';
@@ -59,6 +59,7 @@ import {
   PageTitle,
   Visible,
 } from '../components/misc';
+import { ModalWithBack } from '../components/misc/BackSupport';
 import { ItemSearch } from '../components/Search';
 import { StickySidebar } from '../components/Sidebar';
 import CardView from '../components/view/CardView';
@@ -70,6 +71,7 @@ import { ServerGallery, ServerItem, ServerMetaTags } from '../shared/types';
 import { urlparse, urlstring } from '../shared/utility';
 import { AppState, getStateKey, LibraryState, SearchState } from '../state';
 import { useGlobalValue } from '../state/global';
+import { useInitialRecoilState } from '../state/index';
 
 const StateKey = 'library_page';
 
@@ -265,19 +267,22 @@ function FilterPageMessage({
 }
 
 function LibrarySidebar() {
+  const { isMobileMax } = useBreakpoints();
   const [sidebarVisible, setSidebarVisible] = useRecoilState(
     LibraryState.sidebarVisible
   );
   const sidebarData = useRecoilValue(LibraryState.sidebarData);
 
+  const onHide = useCallback(() => {
+    setSidebarVisible(false);
+  }, []);
+
   return (
     <Portal open>
       <StickySidebar
-        className="sticky-page-sidebar"
+        className={classNames('sticky-page-sidebar', { mobile: isMobileMax })}
         visible={sidebarVisible}
-        onHide={useCallback(() => {
-          setSidebarVisible(false);
-        }, [])}>
+        onHide={onHide}>
         {sidebarData && <GalleryDataTable data={sidebarData} />}
       </StickySidebar>
     </Portal>
@@ -333,7 +338,7 @@ function LibrarySettings({
   }, []);
 
   return (
-    <Modal
+    <ModalWithBack
       trigger={trigger}
       dimmer={false}
       onClose={useCallback(() => {
@@ -468,7 +473,7 @@ function LibrarySettings({
           )}
         </Form>
       </Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }
 
@@ -637,7 +642,6 @@ export default function Page({
 
   const [item, setItem] = useRecoilState(LibraryState.item(stateKey));
   const [view, setView] = useRecoilState(LibraryState.view(stateKey));
-  const [clientQuery, setQuery] = useRecoilState(LibraryState.query(stateKey));
   const [favorites, setFavorites] = useRecoilState(
     LibraryState.favorites(stateKey)
   );
@@ -672,7 +676,10 @@ export default function Page({
   const [infiniteKey, setInfiniteKey] = useState('');
   const [infiniteDirty, setInfiniteDirty] = useState(false);
 
-  const query = libraryargs.search_query ?? clientQuery;
+  const [query, setQuery] = useInitialRecoilState(
+    LibraryState.query(stateKey),
+    libraryargs.search_query ? urlQuery.query.q ?? undefined : undefined
+  );
 
   const activePage = infiniteDirty
     ? page ?? initialPage ?? 1
@@ -1013,36 +1020,38 @@ export default function Page({
         </EmptySegment>
       )}
       <LibraryContext.Provider value={true}>
-        <LibrarySidebar />
-        {!errorLimited && (
-          <>
-            <ActionsMenu
-              itemType={itemType}
-              inverted={defaultLibraryArgs?.itemType === ItemType.Collection}
-            />
-            <View
-              hrefTemplate={pageHrefTemplate}
-              activePage={activePage}
-              items={items}
-              infinite={infinite}
-              loading={isFetchingNextPage}
-              onLoadMore={fetchNext}
-              paddedChildren
-              itemRender={
-                itemType === ItemType.Gallery
-                  ? GalleryCard
-                  : itemType === ItemType.Collection
-                  ? CollectionCard
-                  : GroupingCard
-              }
-              itemsPerPage={limit}
-              onItemKey={onItemKey}
-              totalItemCount={count}
-              pagination={!!count || errorLimited}
-              bottomPagination={!!count}
-            />
-          </>
-        )}
+        <SidebarDetailsContext.Provider value={item !== ItemType.Collection}>
+          <LibrarySidebar />
+          {!errorLimited && (
+            <>
+              <ActionsMenu
+                itemType={itemType}
+                inverted={defaultLibraryArgs?.itemType === ItemType.Collection}
+              />
+              <View
+                hrefTemplate={pageHrefTemplate}
+                activePage={activePage}
+                items={items}
+                infinite={infinite}
+                loading={isFetchingNextPage}
+                onLoadMore={fetchNext}
+                paddedChildren
+                itemRender={
+                  itemType === ItemType.Gallery
+                    ? GalleryCard
+                    : itemType === ItemType.Collection
+                    ? CollectionCard
+                    : GroupingCard
+                }
+                itemsPerPage={limit}
+                onItemKey={onItemKey}
+                totalItemCount={count}
+                pagination={!!count || errorLimited}
+                bottomPagination={!!count}
+              />
+            </>
+          )}
+        </SidebarDetailsContext.Provider>
       </LibraryContext.Provider>
     </PageLayout>
   );

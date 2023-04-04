@@ -93,3 +93,50 @@ export function useBreakpoints() {
         isWidescreenMonitor,
     };
 }
+
+export function useHijackHistory(active: boolean, onBack?: () => void, { onlyOnMobile = true } = {} as { onlyOnMobile?: boolean, }) {
+
+    const { isMobileMax } = useBreakpoints()
+
+    const ignore = onlyOnMobile && !isMobileMax
+
+    const [pushed, setPushed] = useState(false)
+
+
+    useEffect(() => {
+        if (ignore) return
+
+        if (active) {
+            const prev = window.onpopstate;
+            if (!pushed) {
+                console.debug("useHijackHistory", "push")
+
+                window.history.pushState(null, "", window.location.href);
+                setPushed(true)
+            }
+            window.onpopstate = () => {
+                setPushed(false) // prevents popping twice
+                console.debug("useHijackHistory", "back")
+                if (onBack) {
+                    console.debug("useHijackHistory", "onBack")
+                    onBack();
+
+                } else {
+                    console.debug("useHijackHistory", "click")
+                    document.body.click()
+                }
+            };
+
+            return () => {
+                window.onpopstate = prev;
+            }
+        } else {
+            if (pushed) {
+                console.debug("useHijackHistory", "pop")
+                window.history.back();
+                setPushed(false)
+            }
+        }
+    }, [active, onBack, ignore]);
+
+}

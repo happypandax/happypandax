@@ -26,6 +26,7 @@ import {
   SemanticICONS,
 } from 'semantic-ui-react/dist/commonjs/generic';
 
+import { useBreakpoints, useHijackHistory } from '../client/hooks/ui';
 import { useDocumentEvent } from '../client/hooks/utils';
 import t from '../client/lang';
 import { urlparse } from '../shared/utility';
@@ -242,6 +243,8 @@ export const StickySidebar = forwardRef(function StickySidebar(
 ) {
   const ref = useRef<HTMLDivElement>();
 
+  const { isMobileMax } = useBreakpoints();
+
   useImperativeHandle(fref, () => ref.current);
 
   const computeTop = useCallback(() => {
@@ -278,11 +281,16 @@ export const StickySidebar = forwardRef(function StickySidebar(
 
   useDocumentEvent('scroll', computeTop, { passive: true }, [computeTop]);
 
+  useHijackHistory(visible);
+
   return (
     <Ref innerRef={ref}>
       <Sidebar
         as={Segment}
-        size="very wide"
+        size={classNames({
+          'very wide': !isMobileMax,
+          wide: isMobileMax,
+        })}
         animation="overlay"
         {...props}
         visible={visible}

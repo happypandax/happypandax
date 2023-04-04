@@ -15,6 +15,7 @@ import { ReaderContext } from '../../client/context';
 import t from '../../client/lang';
 import { ImageSize, ItemFit, ReadingDirection } from '../../shared/enums';
 import { ReaderState } from '../../state';
+import { ModalWithBack } from '../misc/BackSupport';
 
 const sizeOptions = [
   { key: 'auto', text: t`Auto`, value: ItemFit.Auto },
@@ -215,7 +216,7 @@ export function ReaderSettingsButton({
   const { stateKey } = useContext(ReaderContext);
 
   return (
-    <Modal
+    <ModalWithBack
       size="mini"
       closeIcon
       trigger={<Button icon="setting" secondary basic circular {...props} />}>
@@ -225,6 +226,6 @@ export function ReaderSettingsButton({
       <Modal.Content>
         <ReaderSettings className="no-padding-segment" />
       </Modal.Content>
-    </Modal>
+    </ModalWithBack>
   );
 }
