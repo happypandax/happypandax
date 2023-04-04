@@ -3,7 +3,9 @@ import { handler } from '../../server/requests';
 import { ActivityType } from '../../shared/enums';
 
 export default handler().post(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
   const { items, activity_type, __options } = req.body;
 

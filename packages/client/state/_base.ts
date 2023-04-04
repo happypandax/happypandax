@@ -15,8 +15,7 @@ import {
   SerializableParam,
 } from 'recoil';
 
-RecoilEnv.RECOIL_DUPLICATE_ATOM_KEY_CHECKING_ENABLED = false
-
+RecoilEnv.RECOIL_DUPLICATE_ATOM_KEY_CHECKING_ENABLED = false;
 
 export function defineAtom<T>(
   options: Optional<AtomOptions<T>, 'key'>,
@@ -64,10 +63,10 @@ export function defineSelector<
 export function defineSelector<
   T,
   O extends
-  | Optional<ReadOnlySelectorOptions<T>, 'key'>
-  | Optional<ReadOnlySelectorFamilyOptions<T, P>, 'key'>
-  | Optional<ReadWriteSelectorOptions<T>, 'key'>
-  | Optional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>,
+    | Optional<ReadOnlySelectorOptions<T>, 'key'>
+    | Optional<ReadOnlySelectorFamilyOptions<T, P>, 'key'>
+    | Optional<ReadWriteSelectorOptions<T>, 'key'>
+    | Optional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>,
   P extends SerializableParam = SerializableParam,
   F extends undefined | true = undefined
 >(
@@ -75,8 +74,8 @@ export function defineSelector<
   family?: F
 ): F extends undefined
   ? O extends Optional<ReadWriteSelectorOptions<T>, 'key'>
-  ? RecoilState<T>
-  : RecoilValueReadOnly<T>
+    ? RecoilState<T>
+    : RecoilValueReadOnly<T>
   : O extends Optional<ReadWriteSelectorFamilyOptions<T, P>, 'key'>
   ? (param: P) => RecoilState<T>
   : (param: P) => RecoilValueReadOnly<T> {

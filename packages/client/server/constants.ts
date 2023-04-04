@@ -4,7 +4,6 @@ export enum ServiceType {
   Fairy,
 }
 
-
 export const IS_SERVER = typeof window === 'undefined';
 
 export const THUMB_STATIC_FOLDER = process.env.HPX_THUMB_STATIC_FOLDER
@@ -31,13 +30,17 @@ export const HPX_SERVER_PORT = process.env.HPX_SERVER_PORT
   ? parseInt(process.env.HPX_SERVER_PORT, 10)
   : 7007;
 
-export const DISABLE_SERVER_CONNECT = (['true', '1'].includes(process.env?.HPX_DISABLE_SERVER_CONNECT?.toLocaleLowerCase?.()))
+export const DISABLE_SERVER_CONNECT = ['true', '1'].includes(
+  process.env?.HPX_DISABLE_SERVER_CONNECT?.toLocaleLowerCase?.()
+);
 
 export const HPX_SECRET = process.env.HPX_SECRET
   ? process.env.HPX_SECRET
   : 'secret';
 
-export const DOMAIN_URL = process.env.PUBLIC_DOMAIN_URL ? process.env.PUBLIC_DOMAIN_URL : 'http://localhost:7008';
+export const DOMAIN_URL = process.env.PUBLIC_DOMAIN_URL
+  ? process.env.PUBLIC_DOMAIN_URL
+  : 'http://localhost:7008';
 
 export enum LOGIN_ERROR {
   InvalidCredentials = 'InvalidCredentials',

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import cookie from 'cookie';
 import { format, formatDistanceToNowStrict, fromUnixTime } from 'date-fns';
 import imupdate, { CustomCommands, extend, Spec } from 'immutability-helper';
@@ -37,11 +37,11 @@ extend('$removeIndex', function (value: number, original: any[]) {
 
 interface UpdateCommands<T> {
   $insert: T extends Array<infer U> | ReadonlyArray<infer U>
-  ? [index: number, value: any]
-  : never;
+    ? [index: number, value: any]
+    : never;
   $removeIndex: T extends Array<infer U> | ReadonlyArray<infer U>
-  ? number
-  : never;
+    ? number
+    : never;
 }
 
 export function update<T>(
@@ -85,13 +85,11 @@ export function isElementInViewport(
     rect.bottom >= 0 - offset &&
     rect.right >= 0 - offset &&
     rect.top <=
-    (window.innerHeight || document.documentElement.clientHeight) + offset &&
+      (window.innerHeight || document.documentElement.clientHeight) + offset &&
     rect.left <=
-    (window.innerWidth || document.documentElement.clientWidth) + offset
+      (window.innerWidth || document.documentElement.clientWidth) + offset
   );
 }
-
-
 
 // Replaces the URL without reloading unlike location.replace, also keeps state and title if unspecififed
 export function replaceURL(
@@ -239,7 +237,6 @@ export function removeCookies(
   return setCookies(ctx, key, '', { ...options, expires: -1 });
 }
 
-
 export function dateFromTimestamp(
   timestamp: number,
   {
@@ -254,8 +251,6 @@ export function dateFromTimestamp(
     ? formatDistanceToNowStrict(d, { addSuffix })
     : format(d, dateFormat);
 }
-
-
 
 export function getLibraryQuery({
   favorites,
@@ -276,7 +271,6 @@ export function getLibraryQuery({
   query?: string;
   view?: ViewType;
 }) {
-
   return {
     q: query,
     filter,
@@ -285,7 +279,6 @@ export function getLibraryQuery({
     p: page,
     fav: favorites,
     view,
-    limit
-  }
-
+    limit,
+  };
 }

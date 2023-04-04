@@ -4,7 +4,9 @@ import { ViewID } from '../../shared/types';
 import { urlparse } from '../../shared/utility';
 
 export default handler().get(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
   const { view_id, limit, offset, desc, __options } = urlparse(req.url).query;
 

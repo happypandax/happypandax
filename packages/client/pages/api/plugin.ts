@@ -4,7 +4,9 @@ import { urlparse } from '../../shared/utility';
 
 export default handler()
   .get(async (req, res) => {
-    const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+    const server = await global.app.service
+      .get(ServiceType.Server)
+      .context({ req, res });
 
     const { plugin_id, __options } = urlparse(req.url).query;
 
@@ -21,7 +23,9 @@ export default handler()
       });
   })
   .post(async (req, res) => {
-    const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+    const server = await global.app.service
+      .get(ServiceType.Server)
+      .context({ req, res });
 
     const { plugin_id, __options } = req.body;
 
@@ -38,7 +42,9 @@ export default handler()
       });
   })
   .put(async (req, res) => {
-    const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+    const server = await global.app.service
+      .get(ServiceType.Server)
+      .context({ req, res });
 
     const { plugin_id, __options } = req.body;
 
@@ -55,7 +61,9 @@ export default handler()
       });
   })
   .delete(async (req, res) => {
-    const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+    const server = await global.app.service
+      .get(ServiceType.Server)
+      .context({ req, res });
 
     const { plugin_id, __options } = req.body;
 

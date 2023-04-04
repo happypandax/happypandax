@@ -45,14 +45,14 @@ export class UnknownError extends Error {
   }
 }
 
-export class NoOpError extends UnknownError { }
-export class ClientError extends UnknownError { }
-export class ServerError extends NoOpError { }
-export class CancelledError extends NoOpError { }
+export class NoOpError extends UnknownError {}
+export class ClientError extends UnknownError {}
+export class ServerError extends NoOpError {}
+export class CancelledError extends NoOpError {}
 
 // HPX SERVER ERRORS ---------------------------------------------------------------
 
 export enum ServerErrorCode {
   CommandError = 120,
-  DatabaseItemNotFoundError = 303
+  DatabaseItemNotFoundError = 303,
 }

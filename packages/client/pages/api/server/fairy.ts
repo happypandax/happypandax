@@ -10,7 +10,7 @@ export default handler().all(async (req, res) => {
     },
   });
   const fairy = global.app.service.get(ServiceType.Fairy);
-  const sess = await getServerSession({ req, res })
+  const sess = await getServerSession({ req, res });
 
   fairy.register(req, session, sess.id);
 });

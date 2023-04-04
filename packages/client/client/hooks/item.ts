@@ -26,10 +26,10 @@ export function useImage(initialSrc?: ImageSource) {
     const s = !initialSrc
       ? noImage
       : typeof initialSrc === 'string'
-        ? initialSrc
-        : initialSrc.data
-          ? initialSrc.data
-          : noImage;
+      ? initialSrc
+      : initialSrc.data
+      ? initialSrc.data
+      : noImage;
 
     if (loaded) {
       return s;

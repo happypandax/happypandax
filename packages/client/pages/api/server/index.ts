@@ -48,7 +48,7 @@ async function imageFromPath(path_type, req, res) {
     });
     s.on('error', function (e) {
       if (process.env.NODE_ENV === 'development') {
-        throw e
+        throw e;
       }
       return res.status(404).end(errTxt);
     });
@@ -64,9 +64,8 @@ export function createImageHandler(path_type: string) {
     const { t, ...rest } = req.query;
     if (LOCAL === undefined) {
       const pixie = await getPixie();
-      LOCAL = pixie.isLocal
+      LOCAL = pixie.isLocal;
     }
-
 
     if (t && Object.keys(rest ?? {}).length) {
       if (!LOCAL || t === 'g' || (rest?.l1 && rest?.l2 && rest?.l3)) {
@@ -80,7 +79,7 @@ export function createImageHandler(path_type: string) {
             s.push(null);
             s.on('error', function (e) {
               if (process.env.NODE_ENV === 'development') {
-                throw e
+                throw e;
               }
 
               return res.status(404).end(errTxt);
@@ -94,7 +93,7 @@ export function createImageHandler(path_type: string) {
         } catch (err) {
           global.app.log.w('Error on', req.url, err);
           if (process.env.NODE_ENV === 'development') {
-            throw err
+            throw err;
           }
           return res.status(404).end(errTxt);
         }

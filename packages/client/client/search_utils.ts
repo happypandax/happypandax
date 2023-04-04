@@ -123,8 +123,9 @@ function searchForBreaks({
     ]);
 
     // for the right hand side, default is end of text
-    rightSearchBreak = processedText.slice(Math.max(rightPosition - 1, 0))
-      .length;
+    rightSearchBreak = processedText.slice(
+      Math.max(rightPosition - 1, 0)
+    ).length;
     let rightSearchBreakCandidate = processedText
       .slice(Math.max(rightPosition - 1, 0))
       .search(' ');

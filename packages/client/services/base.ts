@@ -11,7 +11,7 @@ export class Service {
     this.type = type;
   }
 
-  async init(locator: ServiceLocator) { }
+  async init(locator: ServiceLocator) {}
 }
 
 type ServiceTypeMap = {
@@ -24,7 +24,9 @@ export class ServiceLocator {
   #instances: { [key in ServiceType]?: Service } = {};
 
   init(locator: ServiceLocator) {
-    return Promise.all(Object.values(this.#instances).map((s) => s?.init(locator)));
+    return Promise.all(
+      Object.values(this.#instances).map((s) => s?.init(locator))
+    );
   }
 
   set<T extends Service>(instance: T) {

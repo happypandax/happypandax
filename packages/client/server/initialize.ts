@@ -6,7 +6,7 @@ export async function serverInitialize() {
   global.app = global?.app ?? ({} as any);
   global.app.log = setupLogger();
   try {
-    global.app.getServerSession = getServerSession
+    global.app.getServerSession = getServerSession;
     global.app.IS_SERVER = true;
     global.app.title = 'HappyPanda X';
 
@@ -18,11 +18,8 @@ export async function serverInitialize() {
     global.app.initialized = true;
   } catch (e) {
     global.app.log.c(e);
-    throw e
+    throw e;
   }
-
 }
 
 export default serverInitialize;
-
-

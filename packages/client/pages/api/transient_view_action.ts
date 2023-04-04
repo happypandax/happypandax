@@ -4,7 +4,9 @@ import { TransientViewAction } from '../../shared/enums';
 import { ViewID } from '../../shared/types';
 
 export default handler().post(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
   const { view_id, action, value, __options } = req.body;
 

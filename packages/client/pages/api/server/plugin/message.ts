@@ -2,7 +2,9 @@ import { ServiceType } from '../../../../server/constants';
 import { handler } from '../../../../server/requests';
 
 export default handler().post(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
   const msg = req.body ? JSON.parse(req.body) : {};
   let plugin_id = '';

@@ -2,7 +2,9 @@ import { ServiceType } from '../../server/constants';
 import { handler, RequestOptions } from '../../server/requests';
 
 export default handler().post(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
   const { queue_type, __options } = req.body;
 

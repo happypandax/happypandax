@@ -48,7 +48,7 @@ export default class _AppState extends StateBlock {
     default: 'left' as 'left' | 'right',
     effects: [
       ({ setSelf, getLoadable }) => {
-        const v = getLoadable(_AppState.sidebarForcePosition).getValue()
+        const v = getLoadable(_AppState.sidebarForcePosition).getValue();
         if (v) {
           setSelf(v);
         }
@@ -124,16 +124,16 @@ export default class _AppState extends StateBlock {
 
   static itemActivity = defineSelector(
     {
-      get: ({ type, item_id }: { type: ItemType; item_id: ItemID }) => ({
-        get,
-      }) => {
-        const state = get(_AppState.itemActivityState);
+      get:
+        ({ type, item_id }: { type: ItemType; item_id: ItemID }) =>
+        ({ get }) => {
+          const state = get(_AppState.itemActivityState);
 
-        if (type && item_id && state[type] && state[type][item_id]) {
-          return state[type][item_id];
-        }
-        return [];
-      },
+          if (type && item_id && state[type] && state[type][item_id]) {
+            return state[type][item_id];
+          }
+          return [];
+        },
       cachePolicy_UNSTABLE: { eviction: 'lru', maxSize: 250 },
     },
     true

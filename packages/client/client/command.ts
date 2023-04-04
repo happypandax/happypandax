@@ -9,16 +9,20 @@ import { Query } from './queries';
 
 import type { ErrorResponseData, RequestOptions } from '../server/requests';
 import type { Server } from '../services/server';
-type CommandValueMap<R = unknown> = Record<CommandIDKey, R>
+type CommandValueMap<R = unknown> = Record<CommandIDKey, R>;
 
-type ValueCallback<R = unknown, Scalar = false> = (values: Scalar extends true ? R : CommandValueMap<R>) => void;
-type ErrorCallback<Scalar = false> = (error: Scalar extends true ? ErrorResponseData : Record<CommandIDKey, ErrorResponseData>) => void;
+type ValueCallback<R = unknown, Scalar = false> = (
+  values: Scalar extends true ? R : CommandValueMap<R>
+) => void;
+type ErrorCallback<Scalar = false> = (
+  error: Scalar extends true
+    ? ErrorResponseData
+    : Record<CommandIDKey, ErrorResponseData>
+) => void;
 
 export type CommandIDs<T> = CommandID<T> | CommandID<T>[] | string[];
 
-declare type UnwrapCommandType<T> = T extends CommandIDs<infer U>
-  ? U
-  : T;
+declare type UnwrapCommandType<T> = T extends CommandIDs<infer U> ? U : T;
 
 interface CommandOptions<T, Scalar = false> {
   track?: boolean;
@@ -30,7 +34,10 @@ interface CommandOptions<T, Scalar = false> {
 
 type IsScalar<T> = T extends CommandID<any> ? true : false;
 
-export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> = UnwrapCommandType<C>> {
+export class Command<
+  C extends CommandIDs<any>,
+  T extends UnwrapCommandType<C> = UnwrapCommandType<C>
+> {
   interval: number;
   command_ids: string[];
   scalar: boolean;
@@ -91,7 +98,10 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
     }
   }
 
-  addCallback(callback: ValueCallback<T, IsScalar<C>>, options?: { onAnyValue?: boolean, clearExisting?: boolean }) {
+  addCallback(
+    callback: ValueCallback<T, IsScalar<C>>,
+    options?: { onAnyValue?: boolean; clearExisting?: boolean }
+  ) {
     if (options?.clearExisting) {
       this.clearCallbacks();
     }
@@ -108,7 +118,10 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
     this.#callbacks.all = [];
   }
 
-  addErrorCallback(callback: ErrorCallback<IsScalar<C>>, options?: { clearExisting?: boolean }) {
+  addErrorCallback(
+    callback: ErrorCallback<IsScalar<C>>,
+    options?: { clearExisting?: boolean }
+  ) {
     if (options?.clearExisting) {
       this.#errorCallbacks = [];
     }
@@ -119,7 +132,6 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
   clearErrorCallbacks() {
     this.#errorCallbacks = [];
   }
-
 
   stopTracking() {
     this._end_poll();
@@ -230,7 +242,9 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
           if (
             Object.keys(this.#resolved_ids).length === this.command_ids.length
           ) {
-            this.#callbacks.all.forEach((c) => c(this.scalar ? v : this.#resolved_ids));
+            this.#callbacks.all.forEach((c) =>
+              c(this.scalar ? v : this.#resolved_ids)
+            );
           }
         });
       });
@@ -242,7 +256,7 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
         Object.entries(r).forEach(([k, v]) => {
           this.#resolved_ids[k] = v;
 
-          console.debug({ e, v, r, scalar: this.scalar })
+          console.debug({ e, v, r, scalar: this.scalar });
 
           this.#errorCallbacks.forEach((c) => c(this.scalar ? v : r));
         });
@@ -299,11 +313,14 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
     return this._return(r.data, command_ids);
   }
 
-  async value(command_ids: string[] = undefined, args?: { raise_error?: boolean }) {
+  async value(
+    command_ids: string[] = undefined,
+    args?: { raise_error?: boolean }
+  ) {
     const r = await Query.fetch(QueryType.COMMAND_VALUE, {
       command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
       ...args,
-      __options: { ...this.#requestOptions }
+      __options: { ...this.#requestOptions },
     });
 
     return this._return(r.data, command_ids);
@@ -326,7 +343,10 @@ export class Command<C extends CommandIDs<any>, T extends UnwrapCommandType<C> =
   }
 }
 
-export function useCommand<C extends CommandIDs<any>, T extends UnwrapCommandType<C> = UnwrapCommandType<C>>(
+export function useCommand<
+  C extends CommandIDs<any>,
+  T extends UnwrapCommandType<C> = UnwrapCommandType<C>
+>(
   command_ids: C,
   options?: Omit<CommandOptions<T, IsScalar<C>>, 'callback'> & {
     stopOnUnmount?: boolean;
@@ -401,7 +421,7 @@ export function useCommand<C extends CommandIDs<any>, T extends UnwrapCommandTyp
       if (cmd) {
         cmd.clearCallbacks();
       }
-    }
+    };
   }, [cmd, ...deps]);
 
   useEffect(() => {
@@ -412,7 +432,7 @@ export function useCommand<C extends CommandIDs<any>, T extends UnwrapCommandTyp
       if (cmd) {
         cmd.clearErrorCallbacks();
       }
-    }
+    };
   }, [cmd, options?.onError, ...deps]);
 
   return cmd;

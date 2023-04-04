@@ -27,8 +27,8 @@ import {
 
 import type { CallOptions } from '../services/server';
 const corsOptions: CorsOptions = {
-  origin: "*",
-}
+  origin: '*',
+};
 
 export interface RequestOptions extends CallOptions {
   notifyError?: boolean;
@@ -38,8 +38,6 @@ export interface ErrorResponseData {
   error: string;
   code: number;
 }
-
-
 
 function defaultOnError(
   err: any,
@@ -73,7 +71,10 @@ function defaultOnError(
   }
 }
 
-export function handler(options?: Options<NextApiRequest, NextApiResponse>, onError = defaultOnError) {
+export function handler(
+  options?: Options<NextApiRequest, NextApiResponse>,
+  onError = defaultOnError
+) {
   return nextConnect<NextApiRequest, NextApiResponse>({
     onError,
     ...options,
@@ -92,7 +93,7 @@ const serverQueryClient = new QueryClient({
       cacheTime: 0,
     },
   },
-})
+});
 
 type Actions<A> = MomoActions<A> | QueryActions<A>;
 
@@ -107,62 +108,62 @@ export async function fetchQuery<
   R extends Extract<T, { type: K }>['dataType'] = Extract<
     T,
     { type: K }
-  >['dataType']>
-  (
-    action: K,
-    variables?: V,
-    options?: FetchQueryOptions<R | null>,
-    config?: RequestInit
-  ): Promise<R | null> {
+  >['dataType']
+>(
+  action: K,
+  variables?: V,
+  options?: FetchQueryOptions<R | null>,
+  config?: RequestInit
+): Promise<R | null> {
   const key = [action.toString(), variables];
 
   let endpoint = action.toString();
 
   let params: Partial<V> = variables;
 
-  let method: RequestInit['method'] = 'GET'
+  let method: RequestInit['method'] = 'GET';
   let data: Record<string, any> = undefined;
 
   switch (action as unknown as MomoType) {
     case MomoType.SAME_MACHINE: {
-      endpoint = '/api/server/momo'
-      method = 'POST'
-      data = { action, ...variables }
-      params = {}
+      endpoint = '/api/server/momo';
+      method = 'POST';
+      data = { action, ...variables };
+      params = {};
       break;
     }
   }
 
-  const headers = { ...config?.headers }
+  const headers = { ...config?.headers };
 
   if (data) {
-    headers['Content-Type'] = 'application/json'
+    headers['Content-Type'] = 'application/json';
   }
 
-  const url = urlstring(DOMAIN_URL + endpoint, params as any)
-
+  const url = urlstring(DOMAIN_URL + endpoint, params as any);
 
   const cfg: RequestInit = {
     method,
     body: JSON.stringify(data),
     ...config,
     headers,
-  }
+  };
 
   return serverQueryClient.fetchQuery(
     key,
     ({ signal }): Promise<R | null> => {
       return fetch(url, cfg).then(async (response) => {
-        const is_json = response.headers.get('content-type')?.includes('application/json');
+        const is_json = response.headers
+          .get('content-type')
+          ?.includes('application/json');
         const data = is_json ? await response.json() : null;
 
         if (!response.ok) {
           const error = (data && data.error) || response.status;
-          throw Error(error)
+          throw Error(error);
         }
         return data;
-      })
-
+      });
     },
     options
   );
@@ -173,30 +174,30 @@ export const nextAuthOptions: NextAuthOptions = {
   // Configure one or more authentication providers
   logger: {
     error(code, metadata) {
-      global.app.log.e(code, metadata)
+      global.app.log.e(code, metadata);
     },
     warn(code) {
-      global.app.log.w(code)
+      global.app.log.w(code);
     },
     debug(code, metadata) {
-      global.app.log.d(code, metadata)
-    }
+      global.app.log.d(code, metadata);
+    },
   },
   providers: [
     CredentialsProvider({
       // The name to display on the sign in form (e.g. 'Sign in with...')
       name: 'Happy Panda X',
-      id: "happypandax",
-      type: "credentials",
+      id: 'happypandax',
+      type: 'credentials',
       // The credentials is used to generate a suitable form on the sign in page.
       // You can specify whatever fields you are expecting to be submitted.
       // e.g. domain, username, password, 2FA token, etc.
       // You can pass any HTML attribute to the <input> tag through the object.
       credentials: {
-        username: { label: "username", type: "text" },
-        password: { label: "password", type: "password" },
-        host: { label: "host", type: "text" },
-        port: { label: "port", type: "text" }
+        username: { label: 'username', type: 'text' },
+        password: { label: 'password', type: 'password' },
+        host: { label: 'host', type: 'text' },
+        port: { label: 'port', type: 'text' },
       },
       async authorize(credentials, req) {
         // You need to provide your own logic here that takes the credentials
@@ -212,41 +213,43 @@ export const nextAuthOptions: NextAuthOptions = {
         let port = credentials?.port ? parseInt(credentials?.port) : undefined;
 
         if (DISABLE_SERVER_CONNECT) {
-          host = HPX_SERVER_HOST
-          port = HPX_SERVER_PORT
+          host = HPX_SERVER_HOST;
+          port = HPX_SERVER_PORT;
         }
 
         if (host && port) {
           await server.connect({ host, port }).catch((e: ServerError) => {
-            global.app.log.e(e)
+            global.app.log.e(e);
             if (e instanceof ConnectionError) {
-              throw new Error(LOGIN_ERROR.ServerNotConnected)
+              throw new Error(LOGIN_ERROR.ServerNotConnected);
             } else {
-              throw new Error(e?.message)
+              throw new Error(e?.message);
             }
-          })
+          });
         }
 
-        const r = await server.login(credentials?.username, credentials?.password).catch((e: ServerError) => {
-          if (e instanceof AuthWrongCredentialsError) {
-            throw new Error(LOGIN_ERROR.InvalidCredentials)
-          } else if (e instanceof ConnectionError) {
-            throw new Error(LOGIN_ERROR.ServerNotConnected)
-          } else {
-            global.app.log.e(e)
-            throw new Error(e?.message)
-          }
-        })
+        const r = await server
+          .login(credentials?.username, credentials?.password)
+          .catch((e: ServerError) => {
+            if (e instanceof AuthWrongCredentialsError) {
+              throw new Error(LOGIN_ERROR.InvalidCredentials);
+            } else if (e instanceof ConnectionError) {
+              throw new Error(LOGIN_ERROR.ServerNotConnected);
+            } else {
+              global.app.log.e(e);
+              throw new Error(e?.message);
+            }
+          });
 
         if (!r) {
-          throw new Error(LOGIN_ERROR.InvalidCredentials)
+          throw new Error(LOGIN_ERROR.InvalidCredentials);
         }
 
         return {
           id: r,
-        }
-      }
-    })
+        };
+      },
+    }),
   ],
   session: {
     strategy: 'jwt' as const,
@@ -257,38 +260,42 @@ export const nextAuthOptions: NextAuthOptions = {
     signOut: '/',
     error: '/error', // Error code passed in query string as ?error=
     verifyRequest: '/',
-    newUser: '/'
+    newUser: '/',
   },
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
-      return true
+      return true;
     },
     async redirect({ url, baseUrl }) {
-      return DOMAIN_URL
+      return DOMAIN_URL;
     },
     async session({ session, token, user }) {
-      return session
+      return session;
     },
     async jwt({ token, user, account, profile, isNewUser }) {
-      return { id: account.providerAccountId }
-    }
+      return { id: account.providerAccountId };
+    },
   },
   events: {
     async signOut(message) {
       const server = global.app.service.get(ServiceType.Server);
-      const token = message.token as { id: string }
-      await server.logout(token.id)
+      const token = message.token as { id: string };
+      await server.logout(token.id);
     },
-  }
-}
+  },
+};
 
-export async function getServerSession({ req }: {
-  req?: (IncomingMessage & {
-    cookies: Partial<{ [key: string]: string }>
-  }) | NextApiRequest
+export async function getServerSession({
+  req,
+}: {
+  req?:
+    | (IncomingMessage & {
+        cookies: Partial<{ [key: string]: string }>;
+      })
+    | NextApiRequest;
 }) {
-  const s = await getToken({ req, secret: HPX_SECRET })
-  return s as { id: string }
+  const s = await getToken({ req, secret: HPX_SECRET });
+  return s as { id: string };
 }
 
-export type GetServerSession = typeof getServerSession
+export type GetServerSession = typeof getServerSession;

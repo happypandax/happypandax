@@ -40,8 +40,7 @@ import {
 } from '../state/global';
 
 import type { ErrorResponseData } from '../server/requests';
-export { QueryType, MutatationType } from '../shared/query'
-
+export { QueryType, MutatationType } from '../shared/query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,7 +94,6 @@ onGlobalStateChange(['connected', 'loggedIn'], (state) => {
   }
 });
 
-
 export function useMutationType<
   T extends MutationActions,
   K extends T['type'],
@@ -113,21 +111,24 @@ export function useMutationType<
   let endpoint = type as string;
   let method: AxiosRequestConfig['method'] = 'POST';
   let headers: AxiosRequestConfig['headers'] | undefined = undefined;
-  let withCredentials: AxiosRequestConfig['withCredentials'] | undefined = undefined;
+  let withCredentials: AxiosRequestConfig['withCredentials'] | undefined =
+    undefined;
   let dataTransform: ((data: V) => Promise<any>) | undefined = undefined;
-  let endpoointTransform: ((data: V) => Promise<string>) | undefined = undefined;
+  let endpoointTransform: ((data: V) => Promise<string>) | undefined =
+    undefined;
 
   switch (type) {
-
     case MutatationType.LOGIN: {
       withCredentials = true;
 
       headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
 
-      dataTransform = async (data: MutationActions<MutatationType.LOGIN>['variables']) => {
-        const csrfToken = await getCsrfToken()
+      dataTransform = async (
+        data: MutationActions<MutatationType.LOGIN>['variables']
+      ) => {
+        const csrfToken = await getCsrfToken();
 
         return {
           json: true,
@@ -136,10 +137,10 @@ export function useMutationType<
           password: data.password,
           host: data.endpoint.host,
           port: data.endpoint.port,
-        }
+        };
       };
 
-      break
+      break;
     }
 
     case MutatationType.INSTALL_PLUGIN: {
@@ -156,7 +157,6 @@ export function useMutationType<
       method = 'DELETE';
       break;
     }
-
   }
 
   return useMutation(
@@ -168,7 +168,7 @@ export function useMutationType<
         data: dataTransform ? await dataTransform(data) : data,
         headers,
         withCredentials,
-      })
+      });
     },
     options
   );
@@ -222,26 +222,25 @@ export function useQueryType<
     onQueryKey?: () => any[];
     infinite?: I;
     infinitePageParam?: I extends Falsy
-    ? undefined
-    : (variables: V, context: QueryFunctionContext) => V;
+      ? undefined
+      : (variables: V, context: QueryFunctionContext) => V;
   } & (I extends Falsy
     ? Omit<UseQueryOptions<D, E>, 'initialData' | 'placeholderData'>
     : Omit<UseInfiniteQueryOptions<D, E>, 'initialData' | 'placeholderData'>)
 ): (I extends Falsy ? UseQueryResult<D, E> : UseInfiniteQueryResult<D, E>) & {
   queryKey: QueryKey;
 } {
-
   const initialData = options?.initialData
     ? options.infinite
       ? { pages: [CreateInitialData(options.initialData)], pageParams: [] }
       : CreateInitialData(options.initialData)
-    : undefined
+    : undefined;
 
   const placeholderData = options?.placeholderData
     ? options.infinite
       ? { pages: [CreateInitialData(options.placeholderData)], pageParams: [] }
       : CreateInitialData(options.placeholderData)
-    : undefined
+    : undefined;
 
   const opts = {
     ...options,
@@ -266,7 +265,6 @@ export function useQueryType<
   let method: AxiosRequestConfig['method'] = 'GET';
 
   switch (type) {
-
     case QueryType.QUEUE_ITEMS:
     case QueryType.LOG:
     case QueryType.CONFIG:
@@ -282,7 +280,6 @@ export function useQueryType<
     case QueryType.ACTIVITIES: {
       throw Error('Not implemented');
     }
-
   }
 
   let r;
@@ -301,10 +298,10 @@ export function useQueryType<
             ),
             signal: ctx.signal,
           });
-          return rdata
+          return rdata;
         } catch (e) {
-          console.error(e)
-          throw e
+          console.error(e);
+          throw e;
         }
       },
       opts
@@ -327,9 +324,7 @@ export function useQueryType<
   return { ...r, queryKey: key };
 }
 
-
 // ======================== NORMAL QUERY ====================================
-
 
 export class Query {
   static mutationObservers: Record<
@@ -369,21 +364,21 @@ export class Query {
 
     let params: Partial<V> = variables;
 
-    let method: AxiosRequestConfig['method'] = 'GET'
+    let method: AxiosRequestConfig['method'] = 'GET';
     let data: AxiosRequestConfig['data'] = undefined;
 
     switch (action) {
       case QueryType.PAGES:
       case QueryType.PROFILE: {
-        break
+        break;
       }
 
       case QueryType.ACTIVITIES:
       case QueryType.COMMAND_STATE:
       case QueryType.COMMAND_VALUE: {
-        method = 'POST'
-        data = variables
-        params = {}
+        method = 'POST';
+        data = variables;
+        params = {};
         break;
       }
 
@@ -391,22 +386,18 @@ export class Query {
         throw Error('Invalid query type: ' + action);
     }
 
-
     const cfg: AxiosRequestConfig = {
       url: urlstring(action, params as any),
       method,
       data,
-      ...config
-    }
+      ...config,
+    };
 
     return queryClient.fetchQuery(
       key,
-      ({ signal }) =>
-        axios.request<R>({ ...cfg, signal }),
+      ({ signal }) => axios.request<R>({ ...cfg, signal }),
       options
     );
-
-
   }
 
   static async mutate<
@@ -443,8 +434,9 @@ export class Query {
       );
     }
 
-    let obs: MutationObserver<AxiosResponse<R>, E, V> =
-      Query.mutationObservers[key];
+    let obs: MutationObserver<AxiosResponse<R>, E, V> = Query.mutationObservers[
+      key
+    ];
     if (!obs) {
       let endpoint = action as string;
 

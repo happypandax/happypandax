@@ -22,8 +22,9 @@ declare type GetServerSession = import('./server/requests').GetServerSession;
 
 declare type MakeRequired<T, Key extends keyof T> = T & Required<Pick<T, Key>>;
 
-declare type MakeOptional<T, K extends keyof T> = Omit<T, K> &
-  { [SubKey in K]?: Maybe<T[SubKey]> };
+declare type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
 
 // unwrap generic
 declare type Unwrap<T> = T extends Array<infer U>
@@ -47,36 +48,36 @@ declare interface Opaque {
 // like DeepPickPath but without tokens also with globs
 declare type DeepPickPathPlain<T, Glob extends string = '.*'> = (
   | (T extends Opaque
-    ? never
-    : T extends Primitive
-    ? never
-    : T extends Array<infer T>
-    ? _InnerKey<T, '', Glob>
-    : {
-      [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
-    }[_KeyOfUnion<T>])
+      ? never
+      : T extends Primitive
+      ? never
+      : T extends Array<infer T>
+      ? _InnerKey<T, '', Glob>
+      : {
+          [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
+        }[_KeyOfUnion<T>])
   | '*'
 ) &
   string;
 
 // like DeepPickPathPlain but without globs
-declare type DeepPickPathPlainWithoutGlob<T, Glob extends string = ''> = (
-  | (T extends Opaque
-    ? never
-    : T extends Primitive
-    ? never
-    : T extends Array<infer T>
-    ? _InnerKey<T, '', Glob>
-    : {
-      [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
-    }[_KeyOfUnion<T>])
-
-) &
+declare type DeepPickPathPlainWithoutGlob<T, Glob extends string = ''> =
+  | T extends Opaque
+      ? never
+      : T extends Primitive
+      ? never
+      : T extends Array<infer T>
+      ? _InnerKey<T, '', Glob>
+      : {
+          [key in _KeyOfUnion<T>]: key | _InnerKey<T[key], key, Glob, T>;
+        }[_KeyOfUnion<T>] &
   string;
 
-declare type DeepPartial<T> = T extends object ? {
-  [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
+declare type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;
 
 type _InnerKey<
   T,
@@ -85,21 +86,21 @@ type _InnerKey<
   parentType = undefined
 > = (
   T extends Opaque
-  ? never
-  : T extends Primitive
-  ? never
-  : T extends Array<infer T>
-  ? T extends Primitive
-  ? never
-  : `${key}${_InnerKey<T, '', Glob> & string}` | `${key}${Glob}`
-  : T extends parentType
-  ? `${key}`
-  : {
-    [key2 in _KeyOfUnion<T>]:
-    | `${key}${Glob}`
-    | `${key}${'.'}${key2}`
-    | `${key}${'.'}${_InnerKey<T[key2], key2, Glob> & string}`;
-  }[_KeyOfUnion<T>]
+    ? never
+    : T extends Primitive
+    ? never
+    : T extends Array<infer T>
+    ? T extends Primitive
+      ? never
+      : `${key}${_InnerKey<T, '', Glob> & string}` | `${key}${Glob}`
+    : T extends parentType
+    ? `${key}`
+    : {
+        [key2 in _KeyOfUnion<T>]:
+          | `${key}${Glob}`
+          | `${key}${'.'}${key2}`
+          | `${key}${'.'}${_InnerKey<T[key2], key2, Glob> & string}`;
+      }[_KeyOfUnion<T>]
 ) extends infer key
   ? key
   : never;
@@ -129,28 +130,25 @@ declare type RecordValueMap<T, V> = {
   [P in keyof T]: V;
 };
 
-declare type RecordFromUnion<
-  T extends Record<K, string>,
-  K extends keyof T
-> = {
-    [V in T[K]]: DiscriminateUnion<T, K, V>;
-  };
+declare type RecordFromUnion<T extends Record<K, string>, K extends keyof T> = {
+  [V in T[K]]: DiscriminateUnion<T, K, V>;
+};
 
 declare type RecordFromUnionWithPick<
   T extends Record<K, string>,
   K extends keyof T,
   P extends keyof T
 > = {
-    [V in T[K]]: Pick<DiscriminateUnion<T, K, V>, P>;
-  };
+  [V in T[K]]: Pick<DiscriminateUnion<T, K, V>, P>;
+};
 
 declare type RecordFromUnionWithOmit<
   T extends Record<K, string>,
   K extends keyof T,
   P extends keyof T
 > = {
-    [V in T[K]]: Omit<DiscriminateUnion<T, K, V>, P>;
-  };
+  [V in T[K]]: Omit<DiscriminateUnion<T, K, V>, P>;
+};
 
 // A better Omit
 declare type DistributiveOmit<T, K extends keyof T> = T extends unknown
@@ -161,10 +159,10 @@ declare type PartialExcept<T, K extends keyof T> = Pick<T, K> & Partial<T>;
 
 declare type RecursivePartial<T> = {
   [P in keyof T]?: T[P] extends (infer U)[]
-  ? RecursivePartial<U>[]
-  : T[P] extends object
-  ? RecursivePartial<T[P]>
-  : T[P];
+    ? RecursivePartial<U>[]
+    : T[P] extends object
+    ? RecursivePartial<T[P]>
+    : T[P];
 };
 
 declare type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
@@ -174,7 +172,6 @@ declare type Replace<
   P extends keyof T,
   R extends Partial<Record<keyof T, any>>
 > = Omit<T, P> & R;
-
 
 declare module NodeJS {
   interface Global {
@@ -194,4 +191,3 @@ declare module NodeJS {
     log: Logger;
   }
 }
-

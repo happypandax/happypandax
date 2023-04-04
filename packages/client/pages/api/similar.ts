@@ -3,16 +3,12 @@ import { handler, RequestOptions } from '../../server/requests';
 import { urlparse } from '../../shared/utility';
 
 export default handler().get(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
-  const {
-    item_type,
-    item_id,
-    limit,
-    fields,
-    profile_options,
-    __options,
-  } = urlparse(req.url).query;
+  const { item_type, item_id, limit, fields, profile_options, __options } =
+    urlparse(req.url).query;
 
   return server
     .similar(

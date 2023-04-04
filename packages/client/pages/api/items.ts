@@ -3,7 +3,9 @@ import { handler, RequestOptions } from '../../server/requests';
 import { urlparse } from '../../shared/utility';
 
 export default handler().get(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
   const { item_type, metatags, limit, offset, fields, __options } = urlparse(
     req.url

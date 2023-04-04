@@ -41,9 +41,8 @@ export type DataContextT = PartialExcept<
   'key' | 'type'
 >;
 
-export const DataContext = React.createContext<DataContextT>(
-  defaultDataContext
-);
+export const DataContext =
+  React.createContext<DataContextT>(defaultDataContext);
 
 export function useDataContext(): DataContextT {
   return useContext(DataContext);
@@ -78,7 +77,9 @@ export const ItemContext = React.createContext({
   size: 'medium' as ItemSize,
   AlternativeContent: undefined as React.ElementType,
   ActionContent: undefined as React.ElementType,
-  Details: undefined as React.ElementType<{ data: PartialExcept<ServerItem, 'id'> }>,
+  Details: undefined as React.ElementType<{
+    data: PartialExcept<ServerItem, 'id'>;
+  }>,
   detailsData: undefined as PartialExcept<ServerItem, 'id'>,
   labels: undefined as React.ReactNode,
   href: '',
@@ -91,5 +92,4 @@ export const ItemContext = React.createContext({
 
 export const NewItemContext = React.createContext({
   data: ServerItem,
-
 });

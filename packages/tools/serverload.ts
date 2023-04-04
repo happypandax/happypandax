@@ -1,31 +1,31 @@
-import fs from 'fs';
-import Client, { JsonArray, JsonMap, log } from 'happypandax-client';
-import { hrtime } from 'process';
+import fs from "fs";
+import Client, { JsonArray, JsonMap, log } from "happypandax-client";
+import { hrtime } from "process";
 
 log.enabled = false;
 
-const statsPath = 'measure.log';
+const statsPath = "measure.log";
 
 let stats = {};
 
 if (fs.existsSync(statsPath)) {
-  stats = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
+  stats = JSON.parse(fs.readFileSync(statsPath, "utf-8"));
 }
 
 const SERVER = {
   port: 7007,
-  host: 'localhost',
+  host: "localhost",
 };
 
-function color(txt: string, color: 'red' | 'green' | 'blue' | 'yellow') {
+function color(txt: string, color: "red" | "green" | "blue" | "yellow") {
   switch (color) {
-    case 'red':
+    case "red":
       return `\x1b[31m${txt}\x1b[0m`;
-    case 'green':
+    case "green":
       return `\x1b[32m${txt}\x1b[0m`;
-    case 'blue':
+    case "blue":
       return `\x1b[34m${txt}\x1b[0m`;
-    case 'yellow':
+    case "yellow":
       return `\x1b[33m${txt}\x1b[0m`;
   }
 }
@@ -33,7 +33,7 @@ class HPX {
   client: Client;
 
   constructor(session_id?: string) {
-    this.client = new Client({ name: 'tools', session_id });
+    this.client = new Client({ name: "tools", session_id });
   }
 
   async connect(host: string, port: number) {
@@ -59,20 +59,20 @@ class HPX {
       avg = total / i;
       diff = avg - prev_avg;
       let d = color(
-        (diff > 0 ? '+' : '') + diff.toFixed(precision) + ' ms',
-        diff > 0 ? 'red' : 'green'
+        (diff > 0 ? "+" : "") + diff.toFixed(precision) + " ms",
+        diff > 0 ? "red" : "green"
       );
 
       process.stdout.cursorTo(0, y);
       process.stdout.clearLine();
       process.stdout.write(
         `${i} - ` +
-          color(elapsed.toFixed(precision) + ' ms', 'yellow') +
-          ' - avg ' +
-          color(avg.toFixed(precision) + ' ms', 'blue') +
-          ' - ' +
+          color(elapsed.toFixed(precision) + " ms", "yellow") +
+          " - avg " +
+          color(avg.toFixed(precision) + " ms", "blue") +
+          " - " +
           `(${d}) ` +
-          ' - ' +
+          " - " +
           note
       ); // print message + time
     }
@@ -94,32 +94,32 @@ class HPX {
 }
 
 const galleryCardDataFields = [
-  'artists.preferred_name.name',
-  'preferred_title.name',
-  'profile',
-  'number',
-  'page_count',
-  'language.code',
-  'progress.end',
-  'progress.page.number',
-  'progress.percent',
-  'metatags.*',
+  "artists.preferred_name.name",
+  "preferred_title.name",
+  "profile",
+  "number",
+  "page_count",
+  "language.code",
+  "progress.end",
+  "progress.page.number",
+  "progress.percent",
+  "metatags.*",
 ];
 
 const galleryCardDataFields2 = [
-  'artists.preferred_name.name',
-  'preferred_title.name',
-  'profile',
-  'number',
-  'times_read',
-  'page_count',
-  'language.code',
-  'language.name',
-  'grouping.status.name',
-  'progress.end',
-  'progress.page.number',
-  'progress.percent',
-  'metatags.*',
+  "artists.preferred_name.name",
+  "preferred_title.name",
+  "profile",
+  "number",
+  "times_read",
+  "page_count",
+  "language.code",
+  "language.name",
+  "grouping.status.name",
+  "progress.end",
+  "progress.page.number",
+  "progress.percent",
+  "metatags.*",
 ];
 
 export async function main() {
@@ -127,27 +127,27 @@ export async function main() {
   await hpx.connect(SERVER.host, SERVER.port);
   await hpx.measureVarious(
     [
-      ['library_view', { search_query: '' }, 'default view'],
+      ["library_view", { search_query: "" }, "default view"],
       [
-        'library_view',
-        { search_query: '', fields: galleryCardDataFields },
-        'gallerycard fields',
+        "library_view",
+        { search_query: "", fields: galleryCardDataFields },
+        "gallerycard fields",
       ],
       [
-        'library_view',
-        { search_query: '', fields: galleryCardDataFields2 },
-        'gallerycard fields 2',
+        "library_view",
+        { search_query: "", fields: galleryCardDataFields2 },
+        "gallerycard fields 2",
       ],
-      ['library_view', { search_query: '', fields: ['*'] }, '1 level * fields'],
+      ["library_view", { search_query: "", fields: ["*"] }, "1 level * fields"],
       [
-        'library_view',
-        { search_query: '', fields: ['**'] },
-        '2 level * fields',
+        "library_view",
+        { search_query: "", fields: ["**"] },
+        "2 level * fields",
       ],
       [
-        'library_view',
-        { search_query: '', fields: ['***'] },
-        '3 level * fields',
+        "library_view",
+        { search_query: "", fields: ["***"] },
+        "3 level * fields",
       ],
     ],
     100
@@ -158,7 +158,7 @@ main()
   .then(() => fs.writeFileSync(statsPath, JSON.stringify(stats)))
   .then(() => process.exit(0))
   .catch((e) => {
-    console.log('\n');
+    console.log("\n");
     console.error(e);
     process.exit(1);
   });

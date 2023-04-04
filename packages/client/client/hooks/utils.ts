@@ -77,7 +77,7 @@ export function useInterval(
   delay?: number | null,
   deps?: DependencyList
 ) {
-  const savedCallback = useRef<Function>(() => { });
+  const savedCallback = useRef<Function>(() => {});
 
   useEffect(() => {
     savedCallback.current = callback;
@@ -118,35 +118,43 @@ export function useEffectAction(effect: EffectCallback, deps?: DependencyList) {
 /**
  *  useEffect, but wraps the effect in a mobx action
  */
-export function useUpdateEffectAction(effect: EffectCallback, deps?: DependencyList) {
+export function useUpdateEffectAction(
+  effect: EffectCallback,
+  deps?: DependencyList
+) {
   useUpdateEffect(action(effect), deps);
 }
 
-export function useTrackDimensions(effect: (entry: ResizeObserverEntry) => void, ref: RefObject<HTMLElement>, deps: DependencyList = []) {
+export function useTrackDimensions(
+  effect: (entry: ResizeObserverEntry) => void,
+  ref: RefObject<HTMLElement>,
+  deps: DependencyList = []
+) {
   const frame = useRef(0);
 
-  const createObserver = useCallback(() =>
-    new ResizeObserver((entries) => {
-      const entry = entries[0];
+  const createObserver = useCallback(
+    () =>
+      new ResizeObserver((entries) => {
+        const entry = entries[0];
 
-      if (entry) {
-        cancelAnimationFrame(frame.current);
+        if (entry) {
+          cancelAnimationFrame(frame.current);
 
-        frame.current = requestAnimationFrame(() => {
-          if (ref.current) {
-            effect(entry);
-          }
-        });
-      }
-    }), [effect]);
-
-  const [observer, setObserver] = useState(
-    createObserver()
+          frame.current = requestAnimationFrame(() => {
+            if (ref.current) {
+              effect(entry);
+            }
+          });
+        }
+      }),
+    [effect]
   );
+
+  const [observer, setObserver] = useState(createObserver());
 
   useEffect(() => {
     setObserver(createObserver());
-  }, [...deps])
+  }, [...deps]);
 
   useEffect(() => {
     observer.disconnect();
@@ -155,5 +163,4 @@ export function useTrackDimensions(effect: (entry: ResizeObserverEntry) => void,
       observer.observe(ref.current);
     }
   }, [ref, observer]);
-
-};
+}

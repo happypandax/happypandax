@@ -7,7 +7,6 @@ export enum TransientViewType {
 }
 
 export enum TransientViewAction {
-
   //: Process transient view
   Process = 1,
 
@@ -22,12 +21,11 @@ export enum TransientViewAction {
 }
 
 export enum TransientViewSubmitAction {
-
   //: Send the contents of this transient view to an import transient view, requires a transient view id
   SendToView = 1,
 
   //: Send the contents of this transient view to the database
-  SendToDatabase = 2
+  SendToDatabase = 2,
 }
 
 export enum CommandState {

@@ -58,7 +58,8 @@ import {
 import { Service, ServiceLocator } from './base';
 
 const CLIENT_POOL_SIZE = 25;
-const CLIENT_NAME = process.env.NODE_ENV === 'production' ? "webclient" : "next-client";
+const CLIENT_NAME =
+  process.env.NODE_ENV === 'production' ? 'webclient' : 'next-client';
 
 // We are going to create multiple clients to support parallel requests, HPX supports this
 enum ClientType {
@@ -101,15 +102,15 @@ class ClientNode {
   }
 
   get(type: ClientType, session: string) {
-    let name = this.#name
+    let name = this.#name;
 
     switch (type) {
       case ClientType.main:
         name = this.#name;
-        break
+        break;
       case ClientType.background:
         name = this.#name + '#background';
-        break
+        break;
       case ClientType.poll:
         name = this.#name + '#poll';
         break;
@@ -135,7 +136,6 @@ class ClientNode {
   async _destroy() {
     await this.client.close();
   }
-
 }
 
 export interface Endpoint {
@@ -145,7 +145,6 @@ export interface Endpoint {
 
 export default class ServerService extends Service {
   endpoint: Endpoint;
-
 
   // intentionally not using a private field here
   private _disconnect_listener: () => void;
@@ -161,9 +160,8 @@ export default class ServerService extends Service {
   constructor(endpoint?: Endpoint) {
     super(ServiceType.Server);
 
-    global.app.hpx_sessions = this.#sessions
-    global.app.hpx_clients = this.#clients
-
+    global.app.hpx_sessions = this.#sessions;
+    global.app.hpx_clients = this.#clients;
 
     log.enabled = false;
     log.logger = {
@@ -175,46 +173,51 @@ export default class ServerService extends Service {
 
     this.endpoint = endpoint ?? { host: 'localhost', port: 7007 };
 
-    this._pool = global?.app?.hpx_pool ?? GenericPool.createPool({
-      create: async () => {
-        const node = new ClientNode(
-          new Client({ name: CLIENT_NAME }),
-          CLIENT_NAME
-        );
+    this._pool =
+      global?.app?.hpx_pool ??
+      GenericPool.createPool(
+        {
+          create: async () => {
+            const node = new ClientNode(
+              new Client({ name: CLIENT_NAME }),
+              CLIENT_NAME
+            );
 
-        this.#clients.add(node);
-        return node;
-      },
-      validate: async (node) => {
-        if (!node.client.is_connected()) {
-          for (const n of this.#clients) {
-            if (n.client.is_connected()) {
-              const [host, port] = n.client.endpoint
-              await node.client.connect({ host, port })
-              break
+            this.#clients.add(node);
+            return node;
+          },
+          validate: async (node) => {
+            if (!node.client.is_connected()) {
+              for (const n of this.#clients) {
+                if (n.client.is_connected()) {
+                  const [host, port] = n.client.endpoint;
+                  await node.client.connect({ host, port });
+                  break;
+                }
+              }
             }
-          }
+            return true;
+          },
+          destroy: async (node) => {
+            await node._destroy();
+            this.#clients.delete(node);
+          },
+        },
+        {
+          max: CLIENT_POOL_SIZE,
+          min: 1,
+          testOnBorrow: true,
+          priorityRange: 3,
         }
-        return true
-      },
-      destroy: async (node) => {
-        await node._destroy();
-        this.#clients.delete(node);
-      }
-    }, {
-      max: CLIENT_POOL_SIZE,
-      min: 1,
-      testOnBorrow: true,
-      priorityRange: 3,
-    })
+      );
 
     if (!global?.app?.hpx_pool) {
       this._pool.on('factoryCreateError', (err) => {
-        global.app.log.e("Error occurred in client pool:create", err);
+        global.app.log.e('Error occurred in client pool:create', err);
       });
 
       this._pool.on('factoryDestroyError', (err) => {
-        global.app.log.e("Error occurred in client pool:destroy", err);
+        global.app.log.e('Error occurred in client pool:destroy', err);
       });
     }
 
@@ -222,10 +225,9 @@ export default class ServerService extends Service {
 
     this._disconnect_listener = () => {
       this.emit('disconnect', this.endpoint);
-    }
+    };
 
     this.on('disconnect', () => this._on_disconnect());
-
   }
 
   async init(locator: ServiceLocator) {
@@ -253,7 +255,7 @@ export default class ServerService extends Service {
 
     const node = await this._pool.acquire(priority);
 
-    return node
+    return node;
   }
 
   private _on_disconnect() {
@@ -269,10 +271,16 @@ export default class ServerService extends Service {
     return this;
   }
 
-  on(event: 'disconnect', listener: (endpoint: Endpoint) => void): this
-  on(event: 'connect', listener: (endpoint: Endpoint) => void): this
-  on(event: 'login', listener: (endpoint: Endpoint, session: string) => void): this
-  on(event: 'logout', listener: (endpoint: Endpoint, session: string) => void): this
+  on(event: 'disconnect', listener: (endpoint: Endpoint) => void): this;
+  on(event: 'connect', listener: (endpoint: Endpoint) => void): this;
+  on(
+    event: 'login',
+    listener: (endpoint: Endpoint, session: string) => void
+  ): this;
+  on(
+    event: 'logout',
+    listener: (endpoint: Endpoint, session: string) => void
+  ): this;
   on(event: string, listener: (...args: any[]) => void): this {
     this.#emitter.on(event, listener);
     return this;
@@ -288,7 +296,7 @@ export default class ServerService extends Service {
 
   private _close_clients() {
     this.#clients.forEach(async (node) => {
-      await node._destroy()
+      await node._destroy();
       node.client.off('close', this._disconnect_listener);
     });
   }
@@ -298,9 +306,16 @@ export default class ServerService extends Service {
     try {
       const client = node.get(ClientType.main, '');
       if (client.is_connected()) {
-
-        if ((endpoint.host === this.endpoint.host && endpoint.port == this.endpoint.port)) {
-          global.app.log.i("Already connected to HPX server at " + this.endpoint.host + ":" + this.endpoint.port)
+        if (
+          endpoint.host === this.endpoint.host &&
+          endpoint.port == this.endpoint.port
+        ) {
+          global.app.log.i(
+            'Already connected to HPX server at ' +
+              this.endpoint.host +
+              ':' +
+              this.endpoint.port
+          );
           return;
         } else {
           global.app.log.i(
@@ -310,7 +325,12 @@ export default class ServerService extends Service {
         }
       }
 
-      global.app.log.i("Connecting to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+      global.app.log.i(
+        'Connecting to HPX server... at ' +
+          this.endpoint.host +
+          ':' +
+          this.endpoint.port
+      );
 
       if (!client.is_connected()) {
         for (const n of this.#clients) {
@@ -322,27 +342,27 @@ export default class ServerService extends Service {
         this.emit('connect', this.endpoint);
         this.endpoint = endpoint;
       }
-
     } finally {
       await node.release();
     }
   }
 
-  async login(
-    user?: string,
-    password?: string,
-
-  ) {
+  async login(user?: string, password?: string) {
     const node = await this.client(ClientType.main);
 
     try {
-      global.app.log.d("Logging in to HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+      global.app.log.d(
+        'Logging in to HPX server... at ' +
+          this.endpoint.host +
+          ':' +
+          this.endpoint.port
+      );
 
       const client = node.get(ClientType.main, '');
 
       const s = await client.handshake({ user, password });
       if (s) {
-        const session = client.session
+        const session = client.session;
         this._create_server(session);
         // link the others
         for (const n of this.#clients) {
@@ -351,8 +371,8 @@ export default class ServerService extends Service {
           }
         }
 
-        this.emit('login', this.endpoint, session)
-        return session
+        this.emit('login', this.endpoint, session);
+        return session;
       }
       return null;
     } finally {
@@ -366,7 +386,12 @@ export default class ServerService extends Service {
       const node = await this.client(ClientType.main);
 
       try {
-        global.app.log.d("Logging out of HPX server... at " + this.endpoint.host + ":" + this.endpoint.port)
+        global.app.log.d(
+          'Logging out of HPX server... at ' +
+            this.endpoint.host +
+            ':' +
+            this.endpoint.port
+        );
 
         const client = node.get(ClientType.main, session);
 
@@ -375,16 +400,31 @@ export default class ServerService extends Service {
         this.#servers.delete(session);
         this.#sessions.delete(session);
 
-        this.emit('logout', this.endpoint, session)
-        global.app.log.d("Successfully logged out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' (', session, ')')
-        return true
+        this.emit('logout', this.endpoint, session);
+        global.app.log.d(
+          'Successfully logged out of HPX server at ' +
+            this.endpoint.host +
+            ':' +
+            this.endpoint.port,
+          ' (',
+          session,
+          ')'
+        );
+        return true;
       } finally {
         await node.release();
       }
-
     }
-    global.app.log.d("Failed to log out of HPX server at " + this.endpoint.host + ":" + this.endpoint.port, ' because of invalid session (', session, ')')
-    return false
+    global.app.log.d(
+      'Failed to log out of HPX server at ' +
+        this.endpoint.host +
+        ':' +
+        this.endpoint.port,
+      ' because of invalid session (',
+      session,
+      ')'
+    );
+    return false;
   }
 
   private _create_server(session: string) {
@@ -402,14 +442,18 @@ export default class ServerService extends Service {
     if (node) {
       return node.client.is_connected();
     }
-    return false
+    return false;
   }
 
   session(session: string) {
     // This adds HMR support
-    if (process.env.NODE_ENV === 'development' && this.#sessions.has(session) && !this.#servers.has(session)) {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      this.#sessions.has(session) &&
+      !this.#servers.has(session)
+    ) {
       this._create_server(session);
-      this.emit('login', this.endpoint, session)
+      this.emit('login', this.endpoint, session);
     }
 
     if (!this.is_connected()) {
@@ -429,12 +473,10 @@ export default class ServerService extends Service {
 }
 
 export class Server {
-
   public session: string;
   public query_client: QueryClient;
 
   accepted = false;
-
 
   constructor(session: string) {
     this.session = session;
@@ -462,13 +504,7 @@ export class Server {
   ) {
     const client_type = options?.client ?? ClientType.main;
     if (group) {
-      return await group._group_call(
-        this,
-        client_type,
-        func,
-        args,
-        options
-      );
+      return await group._group_call(this, client_type, func, args, options);
     }
 
     const r = await queryClientFetchQuery(
@@ -491,27 +527,26 @@ export class Server {
     return this.accepted;
   }
 
-
   create_group_call() {
     return new GroupCall();
   }
 
   async properties<
     K extends {
-      version: any,
-      user: any,
-      state: any,
-      update: any,
-      guest_allowed: any,
-      no_namespace_key: any,
+      version: any;
+      user: any;
+      state: any;
+      update: any;
+      guest_allowed: any;
+      no_namespace_key: any;
       webserver: {
-        host: any,
-        port: any,
-        ssl: any,
-      },
+        host: any;
+        port: any;
+        ssl: any;
+      };
       pixie: {
-        connect: any,
-      },
+        connect: any;
+      };
     },
     P extends DeepPickPathPlain<K>
   >(
@@ -1002,7 +1037,6 @@ export class Server {
       ...options,
     });
 
-
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
     return data.data as {
@@ -1038,7 +1072,6 @@ export class Server {
     options?: CallOptions
   ) {
     const data = await this._call('get_queue_items', args, group, options);
-
 
     type D = T extends QueueType.Metadata ? MetadataItem[] : DownloadItem[];
 
@@ -1086,7 +1119,7 @@ export class Server {
   }
 
   async command_value<R = AnyJson>(
-    args: { command_ids: string[], raise_error?: boolean },
+    args: { command_ids: string[]; raise_error?: boolean },
     group?: GroupCall,
     options?: CallOptions
   ) {
@@ -1252,14 +1285,14 @@ export class Server {
     return data.data as (
       | string
       | {
-        class: string;
-        start: number;
-        end: number;
-        text: string;
-        token: string;
-        type: string;
-        error: string;
-      }
+          class: string;
+          start: number;
+          end: number;
+          text: string;
+          token: string;
+          type: string;
+          error: string;
+        }
     )[];
   }
 
@@ -1322,7 +1355,7 @@ export class Server {
     args: {
       view_id: ViewID;
       action: TransientViewAction;
-      value?: AnyJson
+      value?: AnyJson;
     },
     group?: GroupCall,
     options?: CallOptions
@@ -1338,7 +1371,7 @@ export class Server {
     args: {
       view_id: ViewID;
       action: TransientViewSubmitAction;
-      value?: AnyJson
+      value?: AnyJson;
     },
     group?: GroupCall,
     options?: CallOptions
@@ -1409,19 +1442,18 @@ async function clientCall(ctx: QueryFunctionContext) {
   try {
     const client = node.get(type, server.session);
 
-    const d = await client
-      .send('call',
-        calls.map((c) => ({
-          fname: c[0],
-          ...c[1],
-        }))
-      )
+    const d = await client.send(
+      'call',
+      calls.map((c) => ({
+        fname: c[0],
+        ...c[1],
+      }))
+    );
 
     global.app.log.d(fnames, 'received data');
     throw_msg_error(d);
 
     return d;
-
   } catch (e) {
     if (
       e instanceof ServerDisconnectError ||
@@ -1431,11 +1463,15 @@ async function clientCall(ctx: QueryFunctionContext) {
       fairy.healthcheck();
     }
 
-    if (e instanceof AuthError || [
-      exception_codes.AuthError,
-      exception_codes.AuthMissingCredentials,
-      exception_codes.AuthRequiredError,
-      exception_codes.AuthWrongCredentialsError].includes(e?.code)) {
+    if (
+      e instanceof AuthError ||
+      [
+        exception_codes.AuthError,
+        exception_codes.AuthMissingCredentials,
+        exception_codes.AuthRequiredError,
+        exception_codes.AuthWrongCredentialsError,
+      ].includes(e?.code)
+    ) {
       server.accepted = false;
     }
 
@@ -1468,7 +1504,10 @@ async function queryClientFetchQuery(
   });
 }
 
-function throw_msg_error(msg: ServerMsg<any> | ServerFunctionMsg, options?: CallOptions) {
+function throw_msg_error(
+  msg: ServerMsg<any> | ServerFunctionMsg,
+  options?: CallOptions
+) {
   if (msg?.error && !options?.ignoreError) {
     const msgerror: ServerErrorMsg = msg.error;
     const err = Error(`${msgerror.code}: ${msgerror.msg}`);
@@ -1528,8 +1567,14 @@ export class GroupCall {
       throw Error('Group call already resolved');
     }
 
-    if (this.server && this.server !== server && this.server.session !== server.session) {
-      throw Error('Trying to assign a server belonging to a different client to a group call; This is likely a bug');
+    if (
+      this.server &&
+      this.server !== server &&
+      this.server.session !== server.session
+    ) {
+      throw Error(
+        'Trying to assign a server belonging to a different client to a group call; This is likely a bug'
+      );
     }
 
     this.server = server;
@@ -1602,11 +1647,12 @@ export class GroupCall {
         } catch (err) {
           this.#promises_resolves[idx][1](err);
           if (opt?.throw_error !== false) {
-            throw new CancelledError(`Group call cancelled due to error in one of the calls: ${err?.message}`);
+            throw new CancelledError(
+              `Group call cancelled due to error in one of the calls: ${err?.message}`
+            );
           }
         }
       });
-
 
       await Promise.allSettled(this.#promises);
       return true;
@@ -1626,7 +1672,11 @@ export class GroupCall {
     }
     const r = await Promise.allSettled(this.#promises);
     r.forEach((v) => {
-      if (v.status === 'rejected' && v.reason !== timeoutError && v.reason !== CancelledError) {
+      if (
+        v.status === 'rejected' &&
+        v.reason !== timeoutError &&
+        v.reason !== CancelledError
+      ) {
         throw v.reason;
       }
     });

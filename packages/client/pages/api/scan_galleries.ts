@@ -3,17 +3,12 @@ import { handler, RequestOptions } from '../../server/requests';
 import { ViewID } from '../../shared/types';
 
 export default handler().post(async (req, res) => {
-  const server = await global.app.service.get(ServiceType.Server).context({ req, res });
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context({ req, res });
 
-  const {
-    path,
-    patterns,
-    options,
-    view_id,
-    limit,
-    offset,
-    __options,
-  } = req.body;
+  const { path, patterns, options, view_id, limit, offset, __options } =
+    req.body;
 
   return server
     .scan_galleries(

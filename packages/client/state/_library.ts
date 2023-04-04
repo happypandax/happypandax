@@ -1,7 +1,3 @@
-
-
-
-
 import { ItemSort, ItemType, ViewType } from '../shared/enums';
 import { ServerItem } from '../shared/types';
 import StateBlock, { defineAtom } from './_base';
