@@ -38,17 +38,17 @@
     "darkreader": "^4.9.32",
     "date-fns": "^2.22.1",
     "dotenv": "^16.0.3",
-    "file-type": "^16.5.2",
+    "file-type": "^18.2.1",
     "fomantic-ui-less": "^2.8.7",
     "generic-pool": "^3.9.0",
     "happypandax-client": "^3.5.2",
     "immutability-helper": "^3.1.1",
-    "liquidjs": "^9.36.0",
+    "liquidjs": "^10.7.0",
     "lodash": "^4.17.21",
     "mobx": "^6.6.0",
     "mobx-react-lite": "^3.4.0",
     "next": "^13.2.1",
-    "next-auth": "^4.19.2",
+    "next-auth": "^4.21.1",
     "next-connect": "^0.13.0",
     "nprogress": "next",
     "on-finished": "^2.4.1",
@@ -116,6 +116,6 @@
     "ts-deep-pick": "^0.2.2",
     "ts-typetools": "^0.6.1",
     "typescript": "^4.9.4",
-    "webpack": "^5.75.0"
+    "webpack": "^5.77.0"
   }
 }

@@ -1,4 +1,4 @@
-import FileType from 'file-type';
+import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type';
 import { createReadStream, existsSync } from 'fs';
 import path from 'path';
 import sanitize from 'sanitize-filename';
@@ -40,7 +40,7 @@ async function imageFromPath(path_type, req, res) {
     if (!existsSync(p)) {
       return res.status(404).end(errTxt);
     }
-    const type = await FileType.fromFile(p);
+    const type = await fileTypeFromFile(p);
     const s = createReadStream(p);
     s.on('open', function () {
       res.setHeader('Content-Type', type?.mime ? type?.mime : '');
@@ -73,7 +73,7 @@ export function createImageHandler(path_type: string) {
         try {
           const b = await pixie.image({ t, ...(rest as any) });
           if (b.data && Buffer.isBuffer(b.data)) {
-            const type = await FileType.fromBuffer(b.data);
+            const type = await fileTypeFromBuffer(b.data);
             const s = new Readable();
             s.push(b.data);
             s.push(null);
