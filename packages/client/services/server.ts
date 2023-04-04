@@ -18,6 +18,7 @@ import { ServiceType } from '../server/constants';
 import { getServerSession } from '../server/requests';
 import {
   ActivityType,
+  ApplicationState,
   CommandState,
   ItemsKind,
   ItemType,
@@ -312,9 +313,9 @@ export default class ServerService extends Service {
         ) {
           global.app.log.i(
             'Already connected to HPX server at ' +
-              this.endpoint.host +
-              ':' +
-              this.endpoint.port
+            this.endpoint.host +
+            ':' +
+            this.endpoint.port
           );
           return;
         } else {
@@ -327,9 +328,9 @@ export default class ServerService extends Service {
 
       global.app.log.i(
         'Connecting to HPX server... at ' +
-          this.endpoint.host +
-          ':' +
-          this.endpoint.port
+        this.endpoint.host +
+        ':' +
+        this.endpoint.port
       );
 
       if (!client.is_connected()) {
@@ -353,9 +354,9 @@ export default class ServerService extends Service {
     try {
       global.app.log.d(
         'Logging in to HPX server... at ' +
-          this.endpoint.host +
-          ':' +
-          this.endpoint.port
+        this.endpoint.host +
+        ':' +
+        this.endpoint.port
       );
 
       const client = node.get(ClientType.main, '');
@@ -388,9 +389,9 @@ export default class ServerService extends Service {
       try {
         global.app.log.d(
           'Logging out of HPX server... at ' +
-            this.endpoint.host +
-            ':' +
-            this.endpoint.port
+          this.endpoint.host +
+          ':' +
+          this.endpoint.port
         );
 
         const client = node.get(ClientType.main, session);
@@ -403,9 +404,9 @@ export default class ServerService extends Service {
         this.emit('logout', this.endpoint, session);
         global.app.log.d(
           'Successfully logged out of HPX server at ' +
-            this.endpoint.host +
-            ':' +
-            this.endpoint.port,
+          this.endpoint.host +
+          ':' +
+          this.endpoint.port,
           ' (',
           session,
           ')'
@@ -417,9 +418,9 @@ export default class ServerService extends Service {
     }
     global.app.log.d(
       'Failed to log out of HPX server at ' +
-        this.endpoint.host +
-        ':' +
-        this.endpoint.port,
+      this.endpoint.host +
+      ':' +
+      this.endpoint.port,
       ' because of invalid session (',
       session,
       ')'
@@ -533,19 +534,26 @@ export class Server {
 
   async properties<
     K extends {
-      version: any;
-      user: any;
-      state: any;
-      update: any;
-      guest_allowed: any;
-      no_namespace_key: any;
+      version: {
+        core: [number, number, number];
+        db: [number, number, number];
+        torrent: [number, number, number];
+        beta: boolean;
+        alpha: boolean;
+        build: string;
+      };
+      user: ServerUser;
+      state: ApplicationState;
+      update: [number, number, number];
+      guest_allowed: boolean;
+      no_namespace_key: string;
       webserver: {
-        host: any;
-        port: any;
-        ssl: any;
+        host: string;
+        port: number;
+        ssl: boolean;
       };
       pixie: {
-        connect: any;
+        connect: string;
       };
     },
     P extends DeepPickPathPlain<K>
@@ -553,9 +561,10 @@ export class Server {
     args: {
       keys: P[];
     },
-    group?: GroupCall
+    group?: GroupCall,
+    options?: CallOptions
   ) {
-    const data = await this._call('get_properties', args, group);
+    const data = await this._call('get_properties', args, group, options);
     return data.data as DeepPick<K, P>;
   }
 
@@ -1285,14 +1294,14 @@ export class Server {
     return data.data as (
       | string
       | {
-          class: string;
-          start: number;
-          end: number;
-          text: string;
-          token: string;
-          type: string;
-          error: string;
-        }
+        class: string;
+        start: number;
+        end: number;
+        text: string;
+        token: string;
+        type: string;
+        error: string;
+      }
     )[];
   }
 

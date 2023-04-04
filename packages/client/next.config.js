@@ -1,10 +1,14 @@
 const { merge } = require('webpack-merge');
+const pkg = require('./package.json');
 
 const nextConfig = (phase, { defaultConfig }) => {
   /** @type {import('next').NextConfig} */
   const config = {
     // output: phase === PHASE_PRODUCTION_BUILD ? 'standalone' : undefined,
     poweredByHeader: false,
+    env: {
+      PACKAGE_JSON: JSON.stringify(pkg),
+    },
     swcMinify: true,
     experimental: {
       appDir: false,

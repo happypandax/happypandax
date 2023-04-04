@@ -3,6 +3,7 @@ import type { RequestOptions } from '../server/requests';
 import { FieldPath, ServerSortIndex } from './types';
 
 export enum QueryType {
+  PROPERTIES = '/api/properties',
   PROFILE = '/api/profile',
   PAGES = '/api/pages',
   LIBRARY = '/api/library',
@@ -65,12 +66,12 @@ export enum MutatationType {
 
 export type ServerParameters = {
   [K in keyof Server]:
-    | {
-        __options?: RequestOptions;
-      }
-    | Parameters<
-        Server[K] extends (...args: any[]) => any ? Server[K] : never
-      >[0];
+  | {
+    __options?: RequestOptions;
+  }
+  | Parameters<
+    Server[K] extends (...args: any[]) => any ? Server[K] : never
+  >[0];
 };
 
 export type ServerReturnType = {
@@ -102,6 +103,12 @@ interface FetchSortIndexes<T = undefined> extends QueryAction<T> {
   type: QueryType.SORT_INDEXES;
   dataType: ServerSortIndex[];
   variables: ServerParameters['sort_indexes'];
+}
+
+interface FetchProperties<T = undefined> extends QueryAction<T> {
+  type: QueryType.PROPERTIES;
+  dataType: ServerReturnType['properties'];
+  variables: ServerParameters['properties'];
 }
 
 interface FetchProfile<T = undefined> extends QueryAction<T> {
@@ -261,6 +268,7 @@ interface FetchTransientViews<T = undefined> extends QueryAction<T> {
 }
 
 export type QueryActions<T = undefined> =
+  | FetchProperties<T>
   | FetchProfile<T>
   | FetchItem<T>
   | FetchItems<T>

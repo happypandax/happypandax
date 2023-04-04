@@ -23,6 +23,8 @@ enableStaticRendering(typeof window === 'undefined');
 class State {
   initialized = false;
 
+  packageJson: Record<string, any> = {};
+
   disableServerConnect = DISABLE_SERVER_CONNECT;
   serverHost: string = HPX_SERVER_HOST;
   serverPort: number = HPX_SERVER_PORT;

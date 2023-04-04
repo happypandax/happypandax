@@ -23,21 +23,39 @@ import { ModalWithBack } from './misc/BackSupport';
 import { TrashTabView } from './Trash';
 
 function InfoPane() {
+  const packageJson = useGlobalValue('packageJson');
+  const { data } = useQueryType(QueryType.PROPERTIES, {
+    keys: ['version'],
+  });
+
   return (
     <Grid as={Segment} basic>
       <Grid.Row textAlign="center">
         <Grid.Column>
+          {data?.data?.version?.beta && <Label color="violet">{t`Beta`}</Label>}
+          {data?.data?.version?.alpha && <Label color="red">{t`Alpha`}</Label>}
           <Label basic>
-            {t`Webclient`} <Label.Detail>1.1.1</Label.Detail>
+            {t`Webclient`} <Label.Detail>{packageJson?.version}</Label.Detail>
           </Label>
           <Label basic>
-            {t`Server`} <Label.Detail>1.1.1</Label.Detail>
+            {t`Server`}{' '}
+            <Label.Detail>
+              {data?.data?.version?.core?.join?.('.')}
+            </Label.Detail>
           </Label>
           <Label basic>
-            {t`Database`} <Label.Detail>1.1.1</Label.Detail>
+            {t`Database`}{' '}
+            <Label.Detail>{data?.data?.version?.db?.join?.('.')}</Label.Detail>
           </Label>
           <Label basic>
-            {t`Torrent`} <Label.Detail>1.1.1</Label.Detail>
+            {t`Torrent`}{' '}
+            <Label.Detail>
+              {data?.data?.version?.torrent?.join?.('.')}
+            </Label.Detail>
+          </Label>
+          <Label basic color="grey">
+            {t`#`}
+            {data?.data?.version?.build}
           </Label>
         </Grid.Column>
       </Grid.Row>
@@ -49,8 +67,7 @@ function InfoPane() {
             rel="noreferrer"
             target="_blank"
             size="small"
-            color="orange"
-          >
+            color="orange">
             <Icon name="heart" />
             {t`Support on Patreon`}
           </Button>
@@ -60,8 +77,7 @@ function InfoPane() {
             rel="noreferrer"
             target="_blank"
             size="small"
-            color="blue"
-          >
+            color="blue">
             <Icon name="coffee" />
             {t`Buy me a Coffee`}
           </Button>
@@ -72,8 +88,7 @@ function InfoPane() {
             rel="noreferrer"
             target="_blank"
             size="small"
-            floated="right"
-          >
+            floated="right">
             <Icon name="github" />
             {t`View on Github`}
           </Button>
@@ -94,8 +109,7 @@ function InfoPane() {
                   <a
                     href="https://github.com/twiddli"
                     target="_blank"
-                    rel="noreferrer"
-                  >
+                    rel="noreferrer">
                     Twiddly
                   </a>
                 </Table.Cell>
@@ -111,8 +125,7 @@ function InfoPane() {
                   <a
                     href="https://twitter.com/twiddly_"
                     target="_blank"
-                    rel="noreferrer"
-                  >
+                    rel="noreferrer">
                     @twiddly_
                   </a>
                 </Table.Cell>
@@ -244,8 +257,7 @@ export default function AboutModal({
       dimmer="inverted"
       closeIcon
       {...props}
-      className={classNames('min-300-h', className)}
-    >
+      className={classNames('min-300-h', className)}>
       <Modal.Content as={Segment} basic>
         <Header icon textAlign="center">
           <Icon className="hpx-standard" circular />
@@ -260,8 +272,7 @@ export default function AboutModal({
           inverted
           color="violet"
           tertiary
-          className="no-margins"
-        >
+          className="no-margins">
           {t`Running in debug mode`}
         </Segment>
       )}
@@ -270,8 +281,7 @@ export default function AboutModal({
         attached="bottom"
         textAlign="center"
         secondary
-        className="no-margins"
-      >
+        className="no-margins">
         {t`HappyPanda X is a cross platform manga/doujinshi manager made out of pure`}
         <Icon name="heart" color="red" size="large" />
         {t`by`}{' '}

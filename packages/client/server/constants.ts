@@ -6,6 +6,8 @@ export enum ServiceType {
 
 export const IS_SERVER = typeof window === 'undefined';
 
+export const PACKAGE_JSON = process.env.PACKAGE_JSON ? JSON.parse(process.env.PACKAGE_JSON) : {};
+
 export const THUMB_STATIC_FOLDER = process.env.HPX_THUMB_STATIC_FOLDER
   ? process.env.HPX_THUMB_STATIC_FOLDER
   : '.';

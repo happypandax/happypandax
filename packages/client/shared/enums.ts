@@ -1,3 +1,18 @@
+export enum ApplicationState {
+  //: normal state
+  Normal = 1,
+
+  //: application is pending a restart
+  Restarting = 2,
+
+  //: application is pending a shutdown
+  Shutdown = 3,
+
+  //: application is currently updating
+  Updating = 4
+}
+
+
 export enum TransientViewType {
   // Contains items to be added
   Import = 1,

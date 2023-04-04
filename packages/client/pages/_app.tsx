@@ -24,6 +24,7 @@ import {
   HPX_SERVER_HOST,
   HPX_SERVER_PORT,
   IS_SERVER,
+  PACKAGE_JSON,
   ServiceType,
 } from '../server/constants';
 import { NotificationData, ServerUser } from '../shared/types';
@@ -38,6 +39,7 @@ const Theme = dynamic(() => import('../components/Theme'), { ssr: false });
 interface AppPageProps extends AppInitialProps {
   pageProps: {
     notifications: NotificationData[];
+    packageJson: Record<string, any>;
     user: ServerUser | null;
     loggedIn: boolean;
     connected: boolean;
@@ -180,6 +182,7 @@ export function AppRoot({
   pageProps?: AppPageProps['pageProps'];
 }) {
   const setConnected = useSetGlobalState('connected');
+  const setPackageJson = useSetGlobalState('packageJson');
   const setLoggedIn = useSetGlobalState('loggedIn');
   const setSameMachine = useSetGlobalState('sameMachine');
   const setUser = useSetGlobalState('user');
@@ -189,6 +192,7 @@ export function AppRoot({
 
   useEffect(() => {
     setConnected(pageProps.connected);
+    setPackageJson(pageProps.packageJson);
     setLoggedIn(pageProps.loggedIn);
     setSameMachine(pageProps.sameMachine);
     setUser(pageProps.user);
@@ -264,6 +268,7 @@ function redirect(params: {
 HappyPandaApp.getInitialProps = async function (
   context: AppContext
 ): Promise<AppPageProps> {
+  let packageJson = PACKAGE_JSON;
   let serverHost = HPX_SERVER_HOST;
   let serverPort = HPX_SERVER_PORT;
   let disableServerConnect = DISABLE_SERVER_CONNECT;
@@ -316,6 +321,7 @@ HappyPandaApp.getInitialProps = async function (
   let propsData: AppPageProps['pageProps'] = {
     disableServerConnect,
     serverHost,
+    packageJson,
     serverPort,
     pathname,
     loggedIn,
@@ -346,6 +352,7 @@ HappyPandaApp.getInitialProps = async function (
     propsData = {
       disableServerConnect: data.disableServerConnect,
       serverHost: data.serverHost,
+      packageJson: data.packageJson,
       serverPort: data.serverPort,
       pathname: data.pathname,
       loggedIn: data.loggedIn,
