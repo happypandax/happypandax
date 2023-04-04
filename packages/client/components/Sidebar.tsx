@@ -68,7 +68,8 @@ function SidebarItem({
       as={href ? 'a' : undefined}
       onClick={onClick}
       active={active ?? (href ? urlquery.url.startsWith(href) : undefined)}
-      className={classNames(className)}>
+      className={classNames(className)}
+    >
       {!!icon && (
         <Icon
           size="large"
@@ -160,7 +161,8 @@ export function MainSidebar({
           if (!onlyIcons) setIconOnly(true);
         }, 100),
         [onlyIcons]
-      )}>
+      )}
+    >
       <SidebarContext.Provider value={{ iconOnly }}>
         <div className="flex-container">
           <div className="top-aligned">
@@ -168,7 +170,8 @@ export function MainSidebar({
               href="/"
               active={false}
               icon={{ className: 'hpx-standard huge left' }}
-              className="center-text small-padding-segment no-left-padding no-right-padding"></SidebarItem>
+              className="center-text small-padding-segment no-left-padding no-right-padding"
+            ></SidebarItem>
             <SidebarItem
               href="/add"
               icon={{ name: 'plus square', color: 'teal' }} // <-- use React.memo
@@ -181,13 +184,16 @@ export function MainSidebar({
             >{t`Dashboard`}</SidebarItem>
             <SidebarItem
               href="/library"
-              icon={'grid layout'}>{t`Library`}</SidebarItem>
+              icon={'grid layout'}
+            >{t`Library`}</SidebarItem>
             <SidebarItem
               href="/directory"
-              icon={'folder outline'}>{t`Directory`}</SidebarItem>
+              icon={'folder outline'}
+            >{t`Directory`}</SidebarItem>
             <SidebarItem
               href="/management"
-              icon={'cubes'}>{t`Management`}</SidebarItem>
+              icon={'cubes'}
+            >{t`Management`}</SidebarItem>
           </div>
           <div className="bottom-aligned">
             <SettingsModal

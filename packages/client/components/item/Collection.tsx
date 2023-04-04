@@ -103,7 +103,8 @@ export function CollectionCard({
           <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
         ),
         [data.profile]
-      )}>
+      )}
+    >
       <ItemCardContent title={data?.name ?? ''}></ItemCardContent>
     </ItemCard>
   );

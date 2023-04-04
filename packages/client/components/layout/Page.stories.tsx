@@ -45,5 +45,6 @@ export const Buttons = () => (
           </div>
         </div>
       </>
-    }></PageLayout>
+    }
+  ></PageLayout>
 );

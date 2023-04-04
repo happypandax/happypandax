@@ -96,7 +96,8 @@ export default function Page({ page, data }: PageProps) {
         hrefTemplate={pageHrefTemplate}
         pagination={limit < data.count}
         bottomPagination
-        totalItemCount={data.count}>
+        totalItemCount={data.count}
+      >
         <Grid doubling centered stackable columns="3">
           {data.items.map((i: ServerStatus) => (
             <Grid.Column key={i.id}>

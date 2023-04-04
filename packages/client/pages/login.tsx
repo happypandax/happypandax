@@ -18,16 +18,19 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<{}>> {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
   const next = context.query?.next
     ? decodeURIComponent(context?.query?.next as string)
     : undefined;
 
   return {
     props: { next },
-    redirect: (server && server.logged_in)
-      ? { permanent: false, destination: next ?? '/library' }
-      : undefined,
+    redirect:
+      server && server.logged_in
+        ? { permanent: false, destination: next ?? '/library' }
+        : undefined,
   };
 }
 
@@ -49,7 +52,8 @@ export default function Page({ next }: PageProps) {
       <Grid
         className="main-content overflow-hidden"
         centered
-        verticalAlign="middle">
+        verticalAlign="middle"
+      >
         <Grid.Row>
           <Grid.Column
             className="animate__animated vanishIn"
@@ -58,7 +62,8 @@ export default function Page({ next }: PageProps) {
             largescreen="4"
             mobile="15"
             tablet="9"
-            computer="7">
+            computer="7"
+          >
             <div className="mt-neg-25">
               <div className="center-text">
                 <img

@@ -182,7 +182,8 @@ function FileItemContent({ data }: { data: FileViewItem }) {
         <Grid.Column>
           <Label
             color={data.processed ? 'green' : 'grey'}
-            basic={data.processed}>
+            basic={data.processed}
+          >
             {data.processed ? t`Processed` : t`Unprocessed`}
           </Label>
           <Label basic>
@@ -255,9 +256,8 @@ export function TransientFileView({
 }: React.ComponentProps<typeof TransientView> & {
   onDeleteItem?: (id: string, commmand: CommandID<any>) => void;
 }) {
-  const [viewData, setViewData] = useState<
-    TransientViewT<TransientViewType.File>
-  >(data);
+  const [viewData, setViewData] =
+    useState<TransientViewT<TransientViewType.File>>(data);
 
   let root = viewData?.roots?.[0] ?? data?.id;
 
@@ -299,7 +299,8 @@ export function TransientFileView({
             ))}
           </Grid.Row>
         </Grid>
-      }>
+      }
+    >
       <Accordion
         exclusive={false}
         fluid

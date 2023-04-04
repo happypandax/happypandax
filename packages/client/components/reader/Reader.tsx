@@ -763,7 +763,8 @@ const Reader = observer(function Reader({
         { 'no-padding-segment': !padded },
         'no-margins',
         'reader'
-      )}>
+      )}
+    >
       {blurryBg && (
         <div
           style={{
@@ -777,7 +778,8 @@ const Reader = observer(function Reader({
         className="fluid-dimmer"
         onClickOutside={useCallback(() => {
           setIsEnd(false);
-        }, [])}>
+        }, [])}
+      >
         {children}
       </Dimmer>
       <Canvas
@@ -812,7 +814,8 @@ const Reader = observer(function Reader({
             }
             setIsEnd(true);
           }
-        }, [pageCount, currentWindow])}>
+        }, [pageCount, currentWindow])}
+      >
         {currentWindow.map((i, idx) => (
           <CanvasImage
             key={`${currentPages[i].id}-${stretchFit}`}

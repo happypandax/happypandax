@@ -213,16 +213,19 @@ export function GroupingCard({
           disableModal={true}
           actionContent={actionContent ?? actions}
           labels={labels}
-          image={image}>
+          image={image}
+        >
           <ItemCardContent
             title={data?.name ?? ''}
             subtitle={artists.map((a) => (
               <span key={a.id}>
                 {blur ? maskText(a.preferred_name.name) : a.preferred_name.name}
               </span>
-            ))}></ItemCardContent>
+            ))}
+          ></ItemCardContent>
         </ItemCard>
-      }>
+      }
+    >
       <GroupingContent horizontal={horizontal} data={data} />
     </Popup>
   );

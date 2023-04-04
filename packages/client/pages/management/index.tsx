@@ -33,7 +33,8 @@ export default function ManagementPage({ children }: PageProps) {
             <Link href="/management/database" passHref>
               <MenuItem
                 link
-                active={path === 'database'}>{t`Database`}</MenuItem>
+                active={path === 'database'}
+              >{t`Database`}</MenuItem>
             </Link>
             <Link href="/management/user" passHref>
               <MenuItem link active={path === 'user'}>{t`User`}</MenuItem>
@@ -41,7 +42,8 @@ export default function ManagementPage({ children }: PageProps) {
           </MainMenu>
         ),
         []
-      )}>
+      )}
+    >
       <PageTitle title={t`Management`} />
       {children}
     </PageLayout>

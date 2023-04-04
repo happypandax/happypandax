@@ -70,7 +70,8 @@ const ListViewRender = memo(function ListViewRender({
               ref={itemRef}
               key={`loading-${i}`}
               className={styles.item}
-              style={{ flexGrow: 1 }}>
+              style={{ flexGrow: 1 }}
+            >
               <PlaceholderItemCard horizontal fluid size={size} />
             </div>
           );
@@ -83,7 +84,8 @@ const ListViewRender = memo(function ListViewRender({
           ref={itemRef}
           key={onItemKey(items[i])}
           className={styles.item}
-          style={{ flexGrow: 1 }}>
+          style={{ flexGrow: 1 }}
+        >
           <ItemRender data={items[i]} horizontal size={size} fluid />
         </div>
       );
@@ -223,7 +225,8 @@ const ListViewList = forwardRef(function ListViewList<T>(
       height={height}
       itemCount={rowCount}
       itemSize={() => rowHeight}
-      estimatedItemSize={rowHeight}>
+      estimatedItemSize={rowHeight}
+    >
       {ListViewRender}
     </List>
   );

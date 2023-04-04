@@ -103,7 +103,8 @@ export default function Page({ data, urlQuery, itemType }: PageProps) {
           <MainMenu></MainMenu>
         ),
         []
-      )}>
+      )}
+    >
       <PageTitle title={t`Dashboard`} />
       <Favorites />
       <Suggestions />

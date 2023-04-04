@@ -9,7 +9,8 @@ export default function Page() {
       <Grid
         className="main-content overflow-hidden"
         centered
-        verticalAlign="middle">
+        verticalAlign="middle"
+      >
         <Grid.Row>
           <Grid.Column
             width="7"
@@ -17,7 +18,8 @@ export default function Page() {
             largescreen="4"
             mobile="15"
             tablet="9"
-            computer="7">
+            computer="7"
+          >
             <div className="mt-neg-25">
               <div className="center-text">
                 <Header size="huge" icon>

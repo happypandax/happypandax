@@ -50,7 +50,9 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
 
   let redirect: Redirect;
 
@@ -173,7 +175,8 @@ export default function Page(props: PageProps) {
           <ItemMenu data={props.item} type={ItemType.Gallery}></ItemMenu>
         ),
         [props.item]
-      )}>
+      )}
+    >
       <PageTitle title={props?.item?.preferred_title?.name} />
       <GalleryItemHeader data={props.item} />
       <Container>
@@ -185,7 +188,8 @@ export default function Page(props: PageProps) {
                   fluid
                   stateKey="series_page"
                   label={t`Series`}
-                  color="teal">
+                  color="teal"
+                >
                   {props?.series?.map?.((i) => (
                     <SliderElement key={i.id}>
                       <GalleryCard size="small" data={i} />
@@ -200,7 +204,8 @@ export default function Page(props: PageProps) {
                 stateKey="same_artist_page"
                 label={t`From same artist`}
                 defaultShow={!!props?.sameArtist?.length}
-                color="blue">
+                color="blue"
+              >
                 {props?.sameArtist?.map?.((i) => (
                   <SliderElement key={i.id}>
                     <GalleryCard size="small" data={i} />
@@ -215,7 +220,8 @@ export default function Page(props: PageProps) {
                   stateKey="gallery_collection_page"
                   showCount={false}
                   label={t`Appears in ${collectionCount} collections`}
-                  color="violet">
+                  color="violet"
+                >
                   {props?.collections?.map?.((i) => (
                     <SliderElement key={i.id}>
                       <CollectionCard size="small" data={i} />

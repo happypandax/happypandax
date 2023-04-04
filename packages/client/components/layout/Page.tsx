@@ -54,19 +54,16 @@ export function BottomZone({
       id="bottom_zone"
       className={classNames(className, {
         fluid,
-      })}>
+      })}
+    >
       <div>{children}</div>
     </div>
   );
 }
 
 function useBodyStyles() {
-  const {
-    isTablet,
-    isMobileMax,
-    isComputer,
-    isWidescreenMonitor,
-  } = useBreakpoints();
+  const { isTablet, isMobileMax, isComputer, isWidescreenMonitor } =
+    useBreakpoints();
   const sidebarPosition = useRecoilValue(AppState.sidebarPosition);
   const sidebarHidden = useRecoilValue(AppState.sidebarHidden);
 
@@ -167,7 +164,8 @@ export default function PageLayout({
         <Sidebar.Pusher
           as={Dimmer.Dimmable}
           dimmed={dimmed}
-          className={classNames()}>
+          className={classNames()}
+        >
           {innerSidebar && sidebarEl}
           <Dimmer simple active={dimmed} />
           {centered && <Container>{children}</Container>}

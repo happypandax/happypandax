@@ -168,7 +168,8 @@ export default function ReaderSettings({
               setAutoScrollSpeed(Math.max(0, isNaN(v) ? 100 : v));
             }, [])}
             width={10}
-            disabled={!autoScroll}>
+            disabled={!autoScroll}
+          >
             <label>{t`Auto scroll speed`}</label>
             <input value={autoScrollSpeed} type="number" min={0} />
           </Form.Field>
@@ -189,7 +190,8 @@ export default function ReaderSettings({
             ev.preventDefault();
             const v = parseFloat(ev.target.value);
             setAutoNavigateInterval(Math.max(0, isNaN(v) ? 15 : v));
-          }, [])}>
+          }, [])}
+        >
           <label>{t`Auto navigate interval`}</label>
           <input value={autoNavigateInterval} type="number" min={0} />
           <span className="sub-text">{t`Seconds`}</span>
@@ -200,7 +202,8 @@ export default function ReaderSettings({
             ev.preventDefault();
             const v = parseFloat(ev.target.value);
             setAutoReadNextCountdown(Math.max(0, isNaN(v) ? 15 : v));
-          }, [])}>
+          }, [])}
+        >
           <label>{t`Auto read next gallery countdown`}</label>
           <input value={autoReadNextCountdown} type="number" min={0} />
           <span className="sub-text">{t`Set to 0 to disable`}</span>
@@ -219,7 +222,8 @@ export function ReaderSettingsButton({
     <ModalWithBack
       size="mini"
       closeIcon
-      trigger={<Button icon="setting" secondary basic circular {...props} />}>
+      trigger={<Button icon="setting" secondary basic circular {...props} />}
+    >
       <Modal.Header>
         <Icon name="setting" /> {t`Reader Settings`}
       </Modal.Header>

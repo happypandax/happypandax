@@ -149,9 +149,8 @@ export function TransientImportView({
   onData,
   ...props
 }: React.ComponentProps<typeof TransientView>) {
-  const [viewData, setViewData] = useState<
-    TransientViewT<TransientViewType.Import>
-  >(data);
+  const [viewData, setViewData] =
+    useState<TransientViewT<TransientViewType.Import>>(data);
 
   const [showItemType, { set: setShowItemType }] = useMap({
     [ItemType.Collection]: true,
@@ -171,7 +170,8 @@ export function TransientImportView({
         onClick={(e) => {
           e.preventDefault();
           setShowItemType(type, !showItemType[type]);
-        }}>
+        }}
+      >
         {label}
       </Label>
     );
@@ -209,7 +209,8 @@ export function TransientImportView({
             <Grid.Column width="4" textAlign="right"></Grid.Column>
           </Grid.Row>
         </Grid>
-      }>
+      }
+    >
       <Accordion
         exclusive={false}
         fluid
@@ -361,7 +362,8 @@ export function ImportViews({
               }}
               size="mini"
               floated="right"
-              compact>{t`Make active`}</Button>
+              compact
+            >{t`Make active`}</Button>
           )}
           {labelButtons}
         </>
@@ -384,7 +386,8 @@ export function ImportViews({
           createView({
             type: TransientViewType.Import,
           });
-        }, [])}>
+        }, [])}
+      >
         {t`Create new import view`}
       </Button>
       <Divider horizontal>{t`Active import view`}</Divider>

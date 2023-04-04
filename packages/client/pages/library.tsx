@@ -255,7 +255,8 @@ function FilterPageMessage({
       hidden={isLoading}
       color="blue"
       size="tiny"
-      onDismiss={useCallback(() => setFilter(undefined), [])}>
+      onDismiss={useCallback(() => setFilter(undefined), [])}
+    >
       <Message.Header className="text-center">
         {t`Filter`}: {data?.data?.name}
       </Message.Header>
@@ -282,7 +283,8 @@ function LibrarySidebar() {
       <StickySidebar
         className={classNames('sticky-page-sidebar', { mobile: isMobileMax })}
         visible={sidebarVisible}
-        onHide={onHide}>
+        onHide={onHide}
+      >
         {sidebarData && <GalleryDataTable data={sidebarData} />}
       </StickySidebar>
     </Portal>
@@ -345,7 +347,8 @@ function LibrarySettings({
         if (reload) {
           router.reload();
         }
-      }, [reload, router])}>
+      }, [reload, router])}
+    >
       <Modal.Header>{t`Library Settings`}</Modal.Header>
       <Modal.Content>
         <Form>
@@ -561,7 +564,8 @@ function ActionsMenu({
         button
         basic
         className={cls}
-        text={t`View actions`}>
+        text={t`View actions`}
+      >
         <Dropdown.Menu>
           {actions.map((action) => {
             if (action.view === false) return null;
@@ -999,7 +1003,8 @@ export default function Page({
           </>
         ),
         [favorites, filter, sort, sortDesc, itemType]
-      )}>
+      )}
+    >
       <PageTitle title={t`Library`} />
       {children}
       {!count && !errorLimited && <EmptySegment />}
@@ -1013,7 +1018,8 @@ export default function Page({
                 {t`Please refine your search query to retrieve results.`}
               </p>
             </div>
-          }>
+          }
+        >
           <Segment basic textAlign="center">
             <Button color="red" onClick={goBack}>{t`Go back`}</Button>
           </Segment>

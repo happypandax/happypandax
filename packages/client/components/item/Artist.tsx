@@ -49,7 +49,8 @@ export default function ArtistCardLabel({
         as={Segment}
         size="tiny"
         color="blue"
-        className={classNames('default-card', props.className)}>
+        className={classNames('default-card', props.className)}
+      >
         <Card.Content>
           <Image
             floated="left"
@@ -98,7 +99,8 @@ export default function ArtistCardLabel({
                 }),
               })}
               passHref
-              legacyBehavior>
+              legacyBehavior
+            >
               <Label
                 size="small"
                 empty

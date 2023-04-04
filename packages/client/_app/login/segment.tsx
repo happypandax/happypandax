@@ -24,7 +24,8 @@ export default function LoginSegment({ next }: { next: string }) {
     <Grid
       className="main-content overflow-hidden"
       centered
-      verticalAlign="middle">
+      verticalAlign="middle"
+    >
       <Grid.Row>
         <Grid.Column
           className="animate__animated vanishIn"
@@ -33,7 +34,8 @@ export default function LoginSegment({ next }: { next: string }) {
           largescreen="4"
           mobile="15"
           tablet="9"
-          computer="7">
+          computer="7"
+        >
           <div className="mt-neg-25">
             <div className="center-text">
               <img src="/img/hpx_logo.svg" className="hpxlogo" alt="hpxlogo" />

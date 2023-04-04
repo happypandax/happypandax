@@ -36,12 +36,14 @@ export default function AddPage({ children }: PageProps) {
             <Link href="/add/scan" passHref>
               <MenuItem
                 link
-                active={path === 'scan'}>{t`Scan directories`}</MenuItem>
+                active={path === 'scan'}
+              >{t`Scan directories`}</MenuItem>
             </Link>
           </MainMenu>
         ),
         []
-      )}>
+      )}
+    >
       {children}
     </PageLayout>
   );

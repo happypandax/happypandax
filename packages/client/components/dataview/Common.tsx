@@ -126,9 +126,11 @@ export function DateLabel({
     <Label
       as="a"
       {...props}
-      onClick={useCallback(() => setShowRelative(!showRelative), [
-        showRelative,
-      ])}>
+      onClick={useCallback(
+        () => setShowRelative(!showRelative),
+        [showRelative]
+      )}
+    >
       {text}
       <Label.Detail>{date ? date : t`Unknown`}</Label.Detail>
     </Label>
@@ -527,7 +529,8 @@ export function TagLabel({
   return (
     <Label
       basic={data?.metatags?.favorite}
-      color={data?.metatags?.favorite ? 'red' : undefined}>
+      color={data?.metatags?.favorite ? 'red' : undefined}
+    >
       {data?.tag?.name}
     </Label>
   );
@@ -561,7 +564,8 @@ export function TagsTable({
       compact="very"
       verticalAlign="middle"
       size="small"
-      stackable>
+      stackable
+    >
       <Table.Body>
         {!!freeTags.length && (
           <Table.Row>

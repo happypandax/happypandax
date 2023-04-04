@@ -30,16 +30,15 @@ export function Notification({
       <Header
         size="tiny"
         className="w-full"
-        color={
-          type === 'info' ? 'blue' : type === 'warning' ? 'orange' : 'red'
-        }>
+        color={type === 'info' ? 'blue' : type === 'warning' ? 'orange' : 'red'}
+      >
         <Icon
           name={
             type === 'info'
               ? 'info'
               : type === 'warning'
-                ? 'exclamation'
-                : 'exclamation circle'
+              ? 'exclamation'
+              : 'exclamation circle'
           }
           color={
             type === 'info' ? 'blue' : type === 'warning' ? 'orange' : 'red'
@@ -101,7 +100,7 @@ export function NotificationsPopup({
 
   const onLogout = useCallback(() => {
     GeneralActions.logout();
-  }, [])
+  }, []);
 
   return (
     <Popup
@@ -111,9 +110,10 @@ export function NotificationsPopup({
         setNotificationAlert([]);
       }, [])}
       className={classNames('no-padding-segment', styles.notification_group)}
-      trigger={trigger}>
+      trigger={trigger}
+    >
       <Menu size="tiny" attached="top" secondary>
-        <Menu.Item header >
+        <Menu.Item header>
           <Icon name="user" color="blue" />
           {user?.name}
         </Menu.Item>
@@ -129,20 +129,31 @@ export function NotificationsPopup({
           <Popup
             inverted
             position="left center"
-            trigger={<Menu.Item icon={<Icon.Group>
-              <Icon name="dont" size="big" color="red" />
-              <Icon name="home" />
-            </Icon.Group>} />}
+            trigger={
+              <Menu.Item
+                icon={
+                  <Icon.Group>
+                    <Icon name="dont" size="big" color="red" />
+                    <Icon name="home" />
+                  </Icon.Group>
+                }
+              />
+            }
             content={t`Connected remotely to server`}
           />
         )}
         <Popup
           inverted
           position="left center"
-          trigger={<Menu.Item position='right' onClick={onLogout} icon={<Icon name="sign out alternate" />} />}
+          trigger={
+            <Menu.Item
+              position="right"
+              onClick={onLogout}
+              icon={<Icon name="sign out alternate" />}
+            />
+          }
           content={t`Logout`}
         />
-
       </Menu>
       <Notifications />
     </Popup>
@@ -164,7 +175,8 @@ export function NotificationAlert({
       context={context}
       position="bottom right"
       positionFixed
-      className="no-padding-segment">
+      className="no-padding-segment"
+    >
       {notificationAlert.map((d) => (
         <Notification
           key={d?.date?.getTime()}

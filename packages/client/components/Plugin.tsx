@@ -109,7 +109,8 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
             <Label
               as={Button}
               color={siteOpen ? 'red' : 'blue'}
-              onClick={() => setSiteOpen(!siteOpen)}>
+              onClick={() => setSiteOpen(!siteOpen)}
+            >
               {siteOpen ? t`Close` : t`Open Plugin Site`}
             </Label>
           </Label.Group>
@@ -138,7 +139,8 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
           color="green"
           onClick={useCallback(() => {
             installPlugin({ plugin_id: plugin.id });
-          }, [plugin])}>
+          }, [plugin])}
+        >
           {isInstalling
             ? t`Installing...`
             : plugin.state === PluginState.Registered ||
@@ -158,7 +160,8 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
           }
           onClick={useCallback(() => {
             disablePlugin({ plugin_id: plugin.id });
-          }, [plugin])}>
+          }, [plugin])}
+        >
           {isDisabling
             ? t`Disabling...`
             : plugin.state === PluginState.Disabled
@@ -170,7 +173,8 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
           color="red"
           onClick={useCallback(() => {
             removePlugin({ plugin_id: plugin.id });
-          }, [plugin])}>
+          }, [plugin])}
+        >
           {isRemoving ? t`Removing...` : t`Remove`}
         </Button>
       </Button.Group>
@@ -203,7 +207,8 @@ export function PluginAccordion(props: React.ComponentProps<typeof Plugin>) {
       basic={false}
       label={props.plugin?.name}
       color={color}
-      detail={getPluginState(props.plugin?.state)}>
+      detail={getPluginState(props.plugin?.state)}
+    >
       <Plugin {...props} />
     </LabelAccordion>
   );

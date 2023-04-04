@@ -44,7 +44,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     onError: (err) => {
       setLoading(false);
 
-      const data = (err.response?.data as unknown) as NextAuthErrorData;
+      const data = err.response?.data as unknown as NextAuthErrorData;
 
       if (err.response.status === 401 && data?.url) {
         console.debug(err.message, data);
@@ -106,7 +106,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             password: '',
             endpoint: getEndpoint(),
           });
-        }}>{t`Continue as Guest`}</Button>
+        }}
+      >{t`Continue as Guest`}</Button>
       <Divider hidden horizontal />
       <Form
         loading={loading}
@@ -122,7 +123,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             password: f.get('password') as string,
             endpoint: getEndpoint(),
           });
-        }}>
+        }}
+      >
         {!disableServerConnect && (
           <LabelAccordion label="Server">
             <Segment basic>
@@ -135,7 +137,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
                   onChange={(e, d) => {
                     setEndpoint({ ...endpoint, host: d.value });
                   }}
-                  placeholder={endpoint.host ?? serverHost}></Form.Input>
+                  placeholder={endpoint.host ?? serverHost}
+                ></Form.Input>
                 <Form.Input
                   name="port"
                   label={t`Port`}
@@ -148,7 +151,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
                     });
                   }}
                   placeholder={endpoint.port ?? serverPort}
-                  type="number"></Form.Input>
+                  type="number"
+                ></Form.Input>
               </Form.Group>
             </Segment>
           </LabelAccordion>
@@ -156,11 +160,13 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         <Form.Input
           name="username"
           label={t`Username`}
-          placeholder="default"></Form.Input>
+          placeholder="default"
+        ></Form.Input>
         <Form.Input
           name="password"
           label={t`Password`}
-          type="password"></Form.Input>
+          type="password"
+        ></Form.Input>
         <Message error>{error}</Message>
         <Button primary floated="right">{t`Connect`}</Button>
       </Form>

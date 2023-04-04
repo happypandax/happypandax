@@ -118,7 +118,8 @@ export function ItemQueueBase({
             } else {
               startQueue.mutate({ queue_type });
             }
-          }, [active])}>
+          }, [active])}
+        >
           <Loader active={runningLoading} size="small" />
           <Icon
             name={active ? 'play' : 'pause'}
@@ -130,7 +131,8 @@ export function ItemQueueBase({
           disabled={clearLoading}
           onClick={useCallback(() => {
             clearQueue.mutate({ queue_type });
-          }, [])}>
+          }, [])}
+        >
           <Loader active={clearLoading} size="small" />
           <Icon name="remove" /> {t`Clear`}
         </Menu.Item>
@@ -144,15 +146,19 @@ export function ItemQueueBase({
         </Menu.Item>
         <Menu.Menu position="right">
           <Menu.Item
-            onClick={useCallback(() => setLogVisible(!logVisible), [
-              logVisible,
-            ])}>
+            onClick={useCallback(
+              () => setLogVisible(!logVisible),
+              [logVisible]
+            )}
+          >
             <Icon name={logVisible ? 'angle down' : 'angle right'} /> {t`Log`}
           </Menu.Item>
           <Menu.Item
-            onClick={useCallback(() => setSettingsVisible(!settingsVisible), [
-              settingsVisible,
-            ])}>
+            onClick={useCallback(
+              () => setSettingsVisible(!settingsVisible),
+              [settingsVisible]
+            )}
+          >
             <Icon name="setting" /> {t`Options`}
           </Menu.Item>
           {menuItems}
@@ -205,7 +211,8 @@ export const HandlerLabel = forwardRef(function HandlerLabel(
         basic
         color={disabled.includes(item.id) ? 'red' : 'green'}
         {...props}
-        size="small">
+        size="small"
+      >
         <DragItem />
         {item.index}
         <Label.Detail>
@@ -303,7 +310,8 @@ export const HandlerItem = forwardRef(function HandlerItem(
     <Ref innerRef={ref}>
       <List.Item
         {...props}
-        style={{ ...props?.style, display: 'flex', alignItems: 'center' }}>
+        style={{ ...props?.style, display: 'flex', alignItems: 'center' }}
+      >
         <DragItem />
 
         <List.Content>
@@ -341,7 +349,8 @@ export const HandlerItem = forwardRef(function HandlerItem(
                       getQueryTypeKey(QueryType.DOWNLOAD_INFO)
                     );
                   }, 500);
-                }, [value, disabled])}>
+                }, [value, disabled])}
+              >
                 {disabled ? t`Enable` : t`Disable`}
               </Label>
             </Label.Group>

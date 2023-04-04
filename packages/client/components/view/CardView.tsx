@@ -209,7 +209,8 @@ const CardViewGrid = forwardRef(function CardViewGrid<T>(
           : index
       }
       itemSize={() => rowHeight}
-      estimatedItemSize={rowHeight}>
+      estimatedItemSize={rowHeight}
+    >
       {CardViewRender}
     </List>
   );

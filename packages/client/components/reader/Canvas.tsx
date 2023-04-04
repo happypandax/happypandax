@@ -339,12 +339,8 @@ export class CanvasState {
 
     const { dimensions } = this.adjustments;
 
-    const {
-      width,
-      height,
-      contentWidth,
-      contentHeight,
-    } = this._scroller.getDimensions();
+    const { width, height, contentWidth, contentHeight } =
+      this._scroller.getDimensions();
 
     return (
       width !== dimensions.width ||
@@ -818,7 +814,8 @@ const Canvas = observer(function Canvas({
           state.onMouseDown(e.nativeEvent);
         },
         [state]
-      )}>
+      )}
+    >
       <div className="top-content text-center">{!!label && label}</div>
 
       <div
@@ -826,7 +823,8 @@ const Canvas = observer(function Canvas({
         className={classNames(
           'user-select-none reader-content no-scrollbar',
           'column'
-        )}>
+        )}
+      >
         {children}
       </div>
     </div>

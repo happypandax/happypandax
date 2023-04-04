@@ -126,7 +126,8 @@ export default function Page({ collection, ...props }: PageProps) {
         itemId: collection?.id,
         itemType: ItemType.Collection,
         relatedType: ItemType.Gallery,
-      }}>
+      }}
+    >
       <CollectionItemHeader data={collection} />
       <Divider horizontal hidden />
     </LibraryPage>

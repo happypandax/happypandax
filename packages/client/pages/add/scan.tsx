@@ -49,11 +49,10 @@ import { ImportState } from '../../state';
 import AddPage from './index';
 
 function PathPattern({ onChange }: { onChange?: (value: string) => void }) {
-  const {
-    mutate,
-    error,
-    data,
-  } = useMutationType(MutatationType.RESOLVE_PATH_PATTERN, { retry: false });
+  const { mutate, error, data } = useMutationType(
+    MutatationType.RESOLVE_PATH_PATTERN,
+    { retry: false }
+  );
 
   const [pattern, setPattern] = useState('');
   const [showPattern, setShowPattern] = useState(false);
@@ -101,7 +100,8 @@ function PathPattern({ onChange }: { onChange?: (value: string) => void }) {
           <Label
             as="a"
             size="tiny"
-            onClick={() => setShowPattern(!showPattern)}>
+            onClick={() => setShowPattern(!showPattern)}
+          >
             <Icon name={showPattern ? 'eye slash' : 'eye'} />
             {t`Compiled`}
           </Label>
@@ -157,9 +157,8 @@ export default function Page({ views }: PageProps) {
   >({});
   const [patterns, { removeAt, updateAt, push }] = useList([] as string[]);
 
-  const actions = useRef<
-    Unwrap<React.ComponentProps<typeof TransientView>['actions']>
-  >();
+  const actions =
+    useRef<Unwrap<React.ComponentProps<typeof TransientView>['actions']>>();
 
   // have to use useRef and NOT useMap or we risk causing a state change update loop
   const viewsMap = useRef(
@@ -281,13 +280,15 @@ export default function Page({ views }: PageProps) {
               });
             },
             [path, patterns, scanViewId]
-          )}>
+          )}
+        >
           <Form.Input
             //   type="text"
             action
             value={path}
             onChange={(e, { value }) => setPath(value)}
-            placeholder={t`Directory`}>
+            placeholder={t`Directory`}
+          >
             <input />
             <Select
               options={[
@@ -310,7 +311,8 @@ export default function Page({ views }: PageProps) {
               disabled={!path}
               primary
               type="submit"
-              title={t`Submit`}>
+              title={t`Submit`}
+            >
               <Icon name="search" />
               {t`Scan`}
             </Button>
@@ -325,7 +327,8 @@ export default function Page({ views }: PageProps) {
               onClick={useCallback((e, v) => {
                 e.preventDefault();
                 push('');
-              }, [])}>
+              }, [])}
+            >
               <Icon name="plus" /> {t`Add pattern`}
             </Button>
             ⸻{root}
@@ -336,7 +339,8 @@ export default function Page({ views }: PageProps) {
               on="click"
               wide="very"
               position="bottom right"
-              trigger={<Button circular basic size="mini" icon="help" />}>
+              trigger={<Button circular basic size="mini" icon="help" />}
+            >
               <Markdown>
                 {t`#### Path patterns
                     Path patterns are rules used to match directories and files in the scanning process. See [the documentation](https://happypandax.github.io/faq.html#scanning-for-galleries) for details.
@@ -463,7 +467,8 @@ export default function Page({ views }: PageProps) {
 
                             setRescanLoading(v.id, true);
                           }
-                        }}>
+                        }}
+                      >
                         <Icon name="refresh" />
                         {t`Rescan`}
                       </Button>

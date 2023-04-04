@@ -36,7 +36,8 @@ function StepBody({
           <Header
             as="h2"
             disabled={!show}
-            className={classNames('center-text')}>
+            className={classNames('center-text')}
+          >
             {title}
           </Header>
           {children}
@@ -84,14 +85,16 @@ Some things that can help you choose:
           <Button
             active={backend === 'sqlite'}
             color={backend === 'sqlite' ? 'green' : undefined}
-            onClick={useCallback(() => setBackend('sqlite'), [])}>
+            onClick={useCallback(() => setBackend('sqlite'), [])}
+          >
             SQLite
           </Button>
           <Button.Or />
           <Button
             active={backend === 'postgresql'}
             color={backend === 'postgresql' ? 'green' : undefined}
-            onClick={useCallback(() => setBackend('postgresql'), [])}>
+            onClick={useCallback(() => setBackend('postgresql'), [])}
+          >
             PostgreSQL
           </Button>
         </Button.Group>
@@ -213,7 +216,8 @@ export default function Setup() {
           <StepBody
             {...props}
             title={t`and a parting word from Momo-chan...`}
-            noNext>
+            noNext
+          >
             <div className="center-text">
               <img src="/img/masturbated.png" height={500} />
             </div>
@@ -232,7 +236,8 @@ export default function Setup() {
       className="min-fullheight animate__animated animate__fadeInUp"
       centered
       verticalAlign="middle"
-      as={Segment}>
+      as={Segment}
+    >
       <Grid.Row>
         <Grid.Column>
           <div className="center-text">
@@ -250,7 +255,8 @@ export default function Setup() {
                   active={currentStep === i}
                   id={`step-${i}`}
                   link
-                  onClick={() => setCurrentStep(i)}>
+                  onClick={() => setCurrentStep(i)}
+                >
                   <Step.Content>
                     <Step.Title>{s.title}</Step.Title>
                   </Step.Content>

@@ -321,10 +321,11 @@ export default function Page(props: PageProps) {
 
   return (
     <ReaderContext.Provider
-      value={useMemo(() => ({ item: props.item, stateKey }), [
-        props.item,
-        stateKey,
-      ])}>
+      value={useMemo(
+        () => ({ item: props.item, stateKey }),
+        [props.item, stateKey]
+      )}
+    >
       <PageLayout
         basicDrawerButton
         bottomZoneLeftBottom={useMemo(
@@ -356,7 +357,8 @@ export default function Page(props: PageProps) {
               </BottomZoneItem>
             </>
           );
-        }, [])}>
+        }, [])}
+      >
         <PageTitle title={t`Page ${number}` + ' | ' + props.title} />
         <Reader
           pageCount={props.data.count}
@@ -364,7 +366,8 @@ export default function Page(props: PageProps) {
           initialData={props.data.items as ServerPage[]}
           onPage={useCallback((page: ReaderData) => {
             setNumber(page.number);
-          }, [])}>
+          }, [])}
+        >
           <Container textAlign="center">
             <EndContent
               series={props.series}

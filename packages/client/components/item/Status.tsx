@@ -24,7 +24,8 @@ export default function StatusCardLabel({
       as={Segment}
       size="tiny"
       color="blue"
-      className={classNames('default-card', props.className)}>
+      className={classNames('default-card', props.className)}
+    >
       <Card.Content>
         <Label size="mini" className="right">
           {t`ID`}
@@ -40,7 +41,8 @@ export default function StatusCardLabel({
             }),
           })}
           passHref
-          legacyBehavior>
+          legacyBehavior
+        >
           <Label
             size="small"
             empty

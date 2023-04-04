@@ -89,14 +89,16 @@ export function Progress({
         !_.isUndefined(percent) || !_.isUndefined(value)
           ? computedPercent
           : undefined
-      }>
+      }
+    >
       <div
         className="bar"
         style={
           !_.isUndefined(percent) || !_.isUndefined(value)
             ? { width: `${computedPercent}%` }
             : undefined
-        }>
+        }
+      >
         {progress && (
           <div className={classNames('progress', { centered })}>
             {computeValueText(computedPercent)}

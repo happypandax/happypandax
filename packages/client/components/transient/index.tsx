@@ -136,7 +136,11 @@ export function TransientView({
     CommandState.Finished,
   ];
 
-  const { data: viewData, refetch, isLoading } = useQueryType(
+  const {
+    data: viewData,
+    refetch,
+    isLoading,
+  } = useQueryType(
     QueryType.TRANSIENT_VIEW,
     { view_id: data?.id, desc: descView, limit, offset: (page - 1) * limit },
     {
@@ -281,7 +285,8 @@ export function TransientView({
         color="blue"
         error={state === CommandState.Failed}
         warning={state === CommandState.Stopped}
-        success={state == CommandState.Finished}>
+        success={state == CommandState.Finished}
+      >
         {viewData?.data?.progress?.text}
       </Progress>
     ) : null;
@@ -347,7 +352,8 @@ export function TransientView({
         }
         onClick={viewData?.data?.processed ? onSubmitClick : onProcessClick}
         color={color}
-        {...props}>
+        {...props}
+      >
         {text}
       </Button>
     );
@@ -381,7 +387,8 @@ export function TransientView({
             <Label
               size="tiny"
               basic={statusLabel.basic}
-              color={statusLabel.color}>
+              color={statusLabel.color}
+            >
               {statusLabel.text}
             </Label>
           )}
@@ -402,12 +409,14 @@ export function TransientView({
 
           {labelButtons}
         </>
-      }>
+      }
+    >
       <Divider hidden section />
       <Segment
         disabled={viewData?.data?.deleted}
         basic
-        className="no-padding-segment">
+        className="no-padding-segment"
+      >
         <Grid>
           <Grid.Row className="small-padding-segment">
             <Grid.Column>
@@ -465,7 +474,8 @@ export function TransientView({
                   },
                   [viewData?.data]
                 )}
-                compact>
+                compact
+              >
                 <Icon name="close" />
                 {t`Clear all`}
               </Button>

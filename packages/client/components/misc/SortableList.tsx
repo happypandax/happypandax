@@ -27,13 +27,8 @@ export function SortableItemItem<T extends { id: string }>({
   children?: React.ReactNode;
   as?: React.ElementType;
 } & { [key: string]: any }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: item.id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: item.id });
 
   delete attributes.role;
 
@@ -49,7 +44,8 @@ export function SortableItemItem<T extends { id: string }>({
       {...attributes}
       {...listeners}
       item={item}
-      {...props}>
+      {...props}
+    >
       {children}
     </El>
   );
@@ -105,14 +101,16 @@ export function SortableList<T extends { id: string }, P extends { item: T }>({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}>
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext
         items={items}
         strategy={
           direction === 'vertical'
             ? verticalListSortingStrategy
             : horizontalListSortingStrategy
-        }>
+        }
+      >
         {items.map((i) => (
           <Element key={i.id} item={i} />
         ))}

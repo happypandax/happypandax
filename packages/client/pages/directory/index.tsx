@@ -34,7 +34,8 @@ export default function DirectoryPage({ children }: PageProps) {
             size="small"
             tabular
             separateNavigation
-            stackable>
+            stackable
+          >
             <Link href="/directory/filter" passHref>
               <MenuItem link active={path === 'filter'}>{t`Filters`}</MenuItem>
             </Link>
@@ -62,7 +63,8 @@ export default function DirectoryPage({ children }: PageProps) {
           </MainMenu>
         ),
         []
-      )}>
+      )}
+    >
       <PageTitle title={t`Directory`} />
       {children}
     </PageLayout>

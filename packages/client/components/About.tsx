@@ -49,7 +49,8 @@ function InfoPane() {
             rel="noreferrer"
             target="_blank"
             size="small"
-            color="orange">
+            color="orange"
+          >
             <Icon name="heart" />
             {t`Support on Patreon`}
           </Button>
@@ -59,7 +60,8 @@ function InfoPane() {
             rel="noreferrer"
             target="_blank"
             size="small"
-            color="blue">
+            color="blue"
+          >
             <Icon name="coffee" />
             {t`Buy me a Coffee`}
           </Button>
@@ -70,7 +72,8 @@ function InfoPane() {
             rel="noreferrer"
             target="_blank"
             size="small"
-            floated="right">
+            floated="right"
+          >
             <Icon name="github" />
             {t`View on Github`}
           </Button>
@@ -91,7 +94,8 @@ function InfoPane() {
                   <a
                     href="https://github.com/twiddli"
                     target="_blank"
-                    rel="noreferrer">
+                    rel="noreferrer"
+                  >
                     Twiddly
                   </a>
                 </Table.Cell>
@@ -107,7 +111,8 @@ function InfoPane() {
                   <a
                     href="https://twitter.com/twiddly_"
                     target="_blank"
-                    rel="noreferrer">
+                    rel="noreferrer"
+                  >
                     @twiddly_
                   </a>
                 </Table.Cell>
@@ -239,7 +244,8 @@ export default function AboutModal({
       dimmer="inverted"
       closeIcon
       {...props}
-      className={classNames('min-300-h', className)}>
+      className={classNames('min-300-h', className)}
+    >
       <Modal.Content as={Segment} basic>
         <Header icon textAlign="center">
           <Icon className="hpx-standard" circular />
@@ -254,7 +260,8 @@ export default function AboutModal({
           inverted
           color="violet"
           tertiary
-          className="no-margins">
+          className="no-margins"
+        >
           {t`Running in debug mode`}
         </Segment>
       )}
@@ -263,7 +270,8 @@ export default function AboutModal({
         attached="bottom"
         textAlign="center"
         secondary
-        className="no-margins">
+        className="no-margins"
+      >
         {t`HappyPanda X is a cross platform manga/doujinshi manager made out of pure`}
         <Icon name="heart" color="red" size="large" />
         {t`by`}{' '}

@@ -55,7 +55,8 @@ export const decorators = [
         <RecoilRoot
           initializeState={(snapshot) => {
             snapshot.set(AppState.loggedIn, true);
-          }}>
+          }}
+        >
           <DndProvider backend={HTML5Backend}>
             <Story />
           </DndProvider>

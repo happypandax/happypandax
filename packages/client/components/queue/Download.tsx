@@ -95,7 +95,8 @@ function DownloadItemCard({
                 warning={item.state === CommandState.Finished && !item.success}
                 indicating={item.active}
                 percent={item.active ? item.percent : 100}
-                active={item.active}>
+                active={item.active}
+              >
                 {lbl}
               </Progress>
             )}
@@ -301,7 +302,8 @@ export function DownloadQueue() {
               refetchQueueItems();
             },
             [url]
-          )}>
+          )}
+        >
           <Ref innerRef={ref}>
             <Form.Input
               name="url"

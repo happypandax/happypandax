@@ -119,7 +119,8 @@ export default function Rating({
         },
         [props.onMouseLeave, props.disabled]
       )}
-      role="radiogroup">
+      role="radiogroup"
+    >
       {_.times(maxRating, (i) => (
         <RatingIcon
           tabIndex={props.disabled ? -1 : 0}

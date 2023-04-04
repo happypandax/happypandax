@@ -129,12 +129,14 @@ function ReadNext({
       stackable
       onClick={() => {
         setCountDownEnabled(undefined);
-      }}>
+      }}
+    >
       <Grid.Row>
         <Grid.Column textAlign="center">
           <Header
             textAlign="center"
-            size={itemSize}>{t`Read the next one`}</Header>
+            size={itemSize}
+          >{t`Read the next one`}</Header>
           {!!random && (
             <Link
               passHref
@@ -142,7 +144,8 @@ function ReadNext({
                 `/item/gallery/${random.id}/page/1`,
                 urlparse().query as any
               )}
-              legacyBehavior>
+              legacyBehavior
+            >
               <Button as="a">{t`Pick a random`}</Button>
             </Link>
           )}
@@ -284,9 +287,10 @@ function EndRating() {
           <RatingIcon
             link
             animation="tada"
-            onClick={useCallback(() => setRating(rating < 9 ? 9 : 10), [
-              rating,
-            ])}
+            onClick={useCallback(
+              () => setRating(rating < 9 ? 9 : 10),
+              [rating]
+            )}
             className="grin hearts outline"
             size="big"
             color="red"
@@ -402,7 +406,8 @@ export default function EndContent({
         <Grid.Column width={16}>
           <Header
             textAlign="center"
-            size="large">{t`What did you think?`}</Header>
+            size="large"
+          >{t`What did you think?`}</Header>
         </Grid.Column>
         <Grid.Column width={16} textAlign="center">
           <DataContext.Provider value={dataContext}>
@@ -439,8 +444,9 @@ export default function EndContent({
             stateKey="this_queue"
             defaultOpen={false}
             label={t`Queue`}
-            color="red">
-            {((queueData?.data as any) as ServerGallery[])?.map?.((g) => (
+            color="red"
+          >
+            {(queueData?.data as any as ServerGallery[])?.map?.((g) => (
               <SliderElement key={g.id}>
                 <GalleryCard size="small" data={g} />
               </SliderElement>
@@ -487,7 +493,8 @@ export default function EndContent({
               </>
             }
             defaultShow={false}
-            color="violet">
+            color="violet"
+          >
             {collections.map((i) => (
               <SliderElement key={i.id}>
                 <CollectionCard size="small" data={i} />
@@ -502,7 +509,8 @@ export default function EndContent({
             stateKey="same_artist"
             label={t`From same artist`}
             defaultShow={!sameArtist?.length}
-            color="blue">
+            color="blue"
+          >
             {sameArtist.map((i) => (
               <SliderElement key={i.id}>
                 <GalleryCard size="small" data={i} />

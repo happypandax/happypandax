@@ -174,7 +174,8 @@ export function AddToQueueButton<T extends ItemType>({
           setReadingQueue(list);
         },
         [data, readingQueue]
-      )}>
+      )}
+    >
       <Icon name={exists ? 'bookmark' : 'bookmark outline'} />
       {t`Queue`}
     </Button>
@@ -221,7 +222,8 @@ export function ReadingIconLabel({ percent }: { percent?: number }) {
           className={classNames(styles.reading_icon_label)}
           size="mini"
           basic
-          title={`This item is being read`}>
+          title={`This item is being read`}
+        >
           <Icon name="eye" size="large" title={`This item is being read`} />
           <span>{Math.round(percent)}%</span>
         </TranslucentLabel>
@@ -265,7 +267,8 @@ export function TranslucentLabel({
       basic={basic}
       size={itemContext?.size === 'mini' ? 'mini' : size}
       circular={circular}
-      className={classNames('translucent-black', className)}>
+      className={classNames('translucent-black', className)}
+    >
       {children}
     </Label>
   );
@@ -321,7 +324,8 @@ export function ItemMenuLabel({
             />
           ),
         [trigger]
-      )}>
+      )}
+    >
       <List selection relaxed>
         {children}
       </List>
@@ -367,7 +371,8 @@ export function ActivityLabel({
         <TranslucentLabel floating size="mini" circular basic={false}>
           <Loader inline active indeterminate className="double" size="mini" />
         </TranslucentLabel>
-      }>
+      }
+    >
       <ActivityList data={activities} />
     </Popup>
   ) : null;
@@ -444,7 +449,8 @@ export function ItemCardContent({
     <El
       href={itemContext.horizontal ? itemContext.href : undefined}
       passHref
-      legacyBehavior>
+      legacyBehavior
+    >
       <Dimmer.Dimmable
         as={itemContext.horizontal && itemContext.href ? 'a' : Card.Content}
         onClick={useCallback(
@@ -467,7 +473,8 @@ export function ItemCardContent({
             sidebarDetailsContext,
           ]
         )}
-        className="content">
+        className="content"
+      >
         {!!itemContext.Details &&
           !itemContext.horizontal &&
           !itemContext.disableModal && (
@@ -475,7 +482,8 @@ export function ItemCardContent({
               open={detailsOpen}
               closeIcon
               dimmer="inverted"
-              onClose={onDetailsClose}>
+              onClose={onDetailsClose}
+            >
               <Details data={itemContext.detailsData} />
             </ItemDetailsModal>
           )}
@@ -483,7 +491,8 @@ export function ItemCardContent({
         <Dimmer
           active={itemContext.horizontal && itemContext.hover}
           inverted
-          className="no-padding-segment">
+          className="no-padding-segment"
+        >
           {!!itemContext.ActionContent && <itemContext.ActionContent />}
         </Dimmer>
         {itemContext.horizontal && (
@@ -551,7 +560,8 @@ export function ItemCardHorizontalDetailContent({
       className={classNames(
         'small-padding-segment no-margins',
         props.className
-      )}>
+      )}
+    >
       {middle ? <div className="centered-container">{children}</div> : children}
     </Segment>
   );
@@ -656,14 +666,16 @@ export function ItemCardImage({
                   open={detailsOpen}
                   closeIcon
                   dimmer="inverted"
-                  onClose={onDetailsClose}>
+                  onClose={onDetailsClose}
+                >
                   <Details data={itemContext.detailsData} />
                 </ItemDetailsModal>
               )}
             {children}
           </>
         ),
-      }}></ImageComponent>
+      }}
+    ></ImageComponent>
   );
 }
 
@@ -793,7 +805,8 @@ export const ItemCard = React.forwardRef(
           loading,
           horizontal,
           size: itemSize,
-        }}>
+        }}
+      >
         <Ref innerRef={ref}>
           <Card
             {...props}
@@ -827,7 +840,8 @@ export const ItemCard = React.forwardRef(
             onContextMenu={(e) => {
               e.preventDefault();
               setOpenMenu(true);
-            }}>
+            }}
+          >
             <Dimmer active={loading} inverted>
               <Loader inverted active={loading} />
             </Dimmer>
@@ -892,7 +906,8 @@ export function PlaceholderItemCard({
           <ItemCardImage src="/img/default.png">{children}</ItemCardImage>
         ),
         []
-      )}>
+      )}
+    >
       <Placeholder>
         <Placeholder.Header>
           <Placeholder.Line />

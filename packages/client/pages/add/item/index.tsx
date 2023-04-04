@@ -51,13 +51,15 @@ export function FileSegment({
             }
           },
           [onCreate, path]
-        )}>
+        )}
+      >
         <Form.Input
           type="text"
           action
           value={path}
           onChange={(e, { value }) => setPath(value)}
-          placeholder={t`Load from path (path must exist on the host)`}>
+          placeholder={t`Load from path (path must exist on the host)`}
+        >
           <input />
           <Button disabled={!path} primary type="submit" title={t`Create`}>
             <Icon name="plus" />
@@ -79,7 +81,8 @@ export function FileSegment({
               ) {
                 setFiles([]);
               }
-            }}>{t`Create`}</Button>
+            }}
+          >{t`Create`}</Button>
         </Divider>
       )}
     </Segment>
@@ -98,21 +101,24 @@ export function Header({
           <Button
             as="a"
             primary={active === 'gallery'}
-            active={active === 'gallery'}>{t`Gallery`}</Button>
+            active={active === 'gallery'}
+          >{t`Gallery`}</Button>
         </Link>
         <Button.Or />
         <Link href="/add/item/series" passHref>
           <Button
             as="a"
             primary={active === 'series'}
-            active={active === 'series'}>{t`Series`}</Button>
+            active={active === 'series'}
+          >{t`Series`}</Button>
         </Link>
         <Button.Or />
         <Link href="/add/item/collection" passHref>
           <Button
             as="a"
             primary={active === 'collection'}
-            active={active === 'collection'}>{t`Collection`}</Button>
+            active={active === 'collection'}
+          >{t`Collection`}</Button>
         </Link>
       </Button.Group>
     </Segment>
@@ -140,7 +146,8 @@ function ViewSidebar() {
         className={classNames({ 'sticky-page-sidebar': expanded })}
         size={expanded ? 'very wide' : 'very thin'}
         visible={true}
-        onHide={useCallback(() => {}, [])}>
+        onHide={useCallback(() => {}, [])}
+      >
         <Label attached="top">View</Label>
       </StickySidebar>
     </Portal>

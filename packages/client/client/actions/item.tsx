@@ -6,7 +6,7 @@ import { ServerItem, ServerItemWithMetatags } from '../../shared/types';
 import { Query } from '../queries';
 import { update } from '../utility';
 
-import type {Server} from '../../services/server';
+import type { Server } from '../../services/server';
 export class ItemActions {
   static async updateItem<T extends Partial<ServerItem>>(
     item_id: number,
@@ -107,7 +107,7 @@ export class ItemActions {
     });
   }
 
-  static updateFilters(filters, type: ItemType, item_ids: number[]) { }
+  static updateFilters(filters, type: ItemType, item_ids: number[]) {}
 
-  static openGallery() { }
+  static openGallery() {}
 }

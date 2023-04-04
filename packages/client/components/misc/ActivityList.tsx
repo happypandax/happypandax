@@ -99,7 +99,8 @@ export function ActivityList({
                 success={p.state === CommandState.Finished}
                 error={p.state === CommandState.Failed}
                 warning={p.state === CommandState.Stopped}
-                autoSuccess={p.max ? true : false}>
+                autoSuccess={p.max ? true : false}
+              >
                 {p.subtitle}
               </Progress>
               <List.Description className="sub-text">

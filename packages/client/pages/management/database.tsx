@@ -106,7 +106,8 @@ function SearchIndexPane() {
           primary
           onClick={() => {
             mutate({ limit: reindexLimit });
-          }}>{t`Rebuild Index`}</Button>
+          }}
+        >{t`Rebuild Index`}</Button>
         <Dropdown
           disabled={running}
           className="button icon"

@@ -42,7 +42,8 @@ export default function TagCardLabel({
       <Card
         {...props}
         basic
-        className={classNames('default-card', props.className)}>
+        className={classNames('default-card', props.className)}
+      >
         <Card.Content>
           <Card.Header>
             <FavoriteLabel
@@ -78,7 +79,8 @@ export default function TagCardLabel({
                 }),
               })}
               passHref
-              legacyBehavior>
+              legacyBehavior
+            >
               <Label
                 size="small"
                 empty

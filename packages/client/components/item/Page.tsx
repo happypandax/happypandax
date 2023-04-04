@@ -92,7 +92,8 @@ export function PageCard({
           <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
         ),
         [data.profile]
-      )}></ItemCard>
+      )}
+    ></ItemCard>
   );
 }
 

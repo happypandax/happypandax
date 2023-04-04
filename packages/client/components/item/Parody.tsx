@@ -37,7 +37,8 @@ export default function ParodyCardLabel({
         'tiny-size',
         'parody',
         props.className
-      )}>
+      )}
+    >
       <Image
         floated="left"
         size="mini"
@@ -58,7 +59,8 @@ export default function ParodyCardLabel({
               q: `parody:"${data.preferred_name.name}"`,
             })}
             passHref
-            legacyBehavior>
+            legacyBehavior
+          >
             <Label
               size="small"
               empty

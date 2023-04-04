@@ -67,7 +67,8 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
         className={classNames(
           styles.searchline,
           'small-padding-segment no-margins'
-        )}>
+        )}
+      >
         <Icon
           name="heart"
           color="red"
@@ -81,7 +82,8 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
           slidesPerView={'auto'}
           freeMode
           mousewheel
-          spaceBetween={0}>
+          spaceBetween={0}
+        >
           <SwiperSlide className={styles.tagsline_swipeslide}>
             <Label.Group className={classNames(styles.tagsline_labels)}>
               {data?.data?.items?.map?.((t: ServerNamespaceTag) => {
@@ -105,7 +107,8 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
                       const n = tag ? `"${ns}":"${tag}"` : `"${ns}"`;
                       ev.preventDefault();
                       onClick?.(n);
-                    }}>
+                    }}
+                  >
                     {ns}
                     {!!tag && <Label.Detail>{tag}</Label.Detail>}
                   </Label>
@@ -140,7 +143,8 @@ function RecentSearch({ onClick }: { onClick: (text: string) => void }) {
         className={classNames(
           styles.searchline,
           'small-padding-segment no-margins'
-        )}>
+        )}
+      >
         <Icon
           name="history"
           size="small"
@@ -183,13 +187,15 @@ function SearchResult({
         },
         [text, onClick]
       )}
-      className={classNames('no-left-padding no-left-margin', className)}>
+      className={classNames('no-left-padding no-left-margin', className)}
+    >
       <Label
         className={classNames('no-left-margin')}
         basic={basic}
         size="small"
         color={color}
-        {...props}>
+        {...props}
+      >
         {type}
       </Label>
       <span className="small-padding-segment">{children}</span>
@@ -209,7 +215,8 @@ function ArtistSearchResult({
       type={t`Artist`}
       color="blue"
       onClick={onClick}
-      text={`artist:"${item?.names?.[0]?.name}"`}>
+      text={`artist:"${item?.names?.[0]?.name}"`}
+    >
       {item?.names?.[0]?.name}
     </SearchResult>
   );
@@ -294,7 +301,8 @@ function SearchResults({
       onClick={onClick}
       onContextMenu={onClick}
       basic
-      className={classNames('no-margins no-padding-segment')}>
+      className={classNames('no-margins no-padding-segment')}
+    >
       <TagsLine onClick={onSelect} />
       <RecentSearch onClick={onSelect} />
       <List
@@ -302,7 +310,8 @@ function SearchResults({
         divided
         verticalAlign="middle"
         selection
-        className="no-margins small-padding-segment max-200-h overflow-y-auto">
+        className="no-margins small-padding-segment max-200-h overflow-y-auto"
+      >
         {!!context.query &&
           data?.data?.items?.map?.((i) => {
             const color = itemColor(i.__type__);
@@ -354,7 +363,8 @@ function SearchResults({
                     onClick={onSelect}
                     basic={basic}
                     text={text}
-                    color={color}>
+                    color={color}
+                  >
                     {i?.name}
                   </SearchResult>
                 );
@@ -421,7 +431,8 @@ function SearchOptions({
       }
       hoverable
       on="click"
-      hideOnScroll>
+      hideOnScroll
+    >
       <List>
         <List.Item>
           <Checkbox
@@ -668,12 +679,15 @@ export function ItemSearch({
 
   return (
     <SearchContext.Provider
-      value={useMemo(() => ({ query: deferredQuery, stateKey, ref }), [
-        deferredQuery,
-      ])}>
+      value={useMemo(
+        () => ({ query: deferredQuery, stateKey, ref }),
+        [deferredQuery]
+      )}
+    >
       <form
         onSubmit={onSubmit}
-        className={classNames({ fullwidth: fluid }, className)}>
+        className={classNames({ fullwidth: fluid }, className)}
+      >
         <div className={classNames('ui search', size, { fluid })}>
           <Ref innerRef={ref}>
             <Input
@@ -700,7 +714,8 @@ export function ItemSearch({
             <div
               className={classNames('results transition', {
                 visible: resultsVisible,
-              })}>
+              })}
+            >
               <SearchResults
                 itemTypes={itemTypes}
                 onClick={onSearchResultClick}

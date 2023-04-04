@@ -26,7 +26,8 @@ export default function CategoryCardLabel({
       as={Segment}
       size="tiny"
       color="black"
-      className={classNames('default-card', props.className)}>
+      className={classNames('default-card', props.className)}
+    >
       <Card.Content>
         <Label size="mini" className="right">
           {t`ID`}
@@ -42,7 +43,8 @@ export default function CategoryCardLabel({
             }),
           })}
           passHref
-          legacyBehavior>
+          legacyBehavior
+        >
           <Label
             size="small"
             empty

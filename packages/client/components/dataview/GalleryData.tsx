@@ -96,7 +96,8 @@ export default function GalleryDataTable({
               className="float-left"
               circular
               size="tiny"
-              color="black">
+              color="black"
+            >
               {data?.number}
             </GroupingNumberLabel>
           </NamesTable>

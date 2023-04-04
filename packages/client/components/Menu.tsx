@@ -187,7 +187,8 @@ export function MainMenu({
         {
           stackable2: stackable,
         }
-      )}>
+      )}
+    >
       {isStacking && (
         <Menu
           size={size}
@@ -195,7 +196,8 @@ export function MainMenu({
           secondary
           borderless={borderless}
           pointing={pointing}
-          tabular={tabular}>
+          tabular={tabular}
+        >
           {sidebarPosition === 'left' && <SidebarMenuItem />}
           {connectionItem && isFixed && fixed && <ConnectionItem />}
           {connectionItem && !isFixed && !fixed && <ConnectionItem />}

@@ -11,7 +11,8 @@ const LabelItem_ = forwardRef<
       <Label
         image
         {...props}
-        className={classNames(className, 'item', { fluid })}>
+        className={classNames(className, 'item', { fluid })}
+      >
         {children}
       </Label>
     </Ref>

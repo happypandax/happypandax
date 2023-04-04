@@ -122,7 +122,8 @@ export function SortButtonInput({
           circular
           className={classNames(className)}
         />
-      }>
+      }
+    >
       <Popup.Content>
         <Menu secondary vertical>
           {!!data?.data &&
@@ -230,7 +231,8 @@ export function FilterButtonInput({
           circular
           className={classNames(className)}
         />
-      }>
+      }
+    >
       <Popup.Content>
         <Menu secondary vertical>
           {!!data?.data &&
@@ -352,11 +354,13 @@ export function ViewButtons({
           <Button
             primary
             basic={item === ItemType.Collection}
-            onClick={onCollection}>{t`Collection`}</Button>
+            onClick={onCollection}
+          >{t`Collection`}</Button>
           <Button
             primary
             basic={item === ItemType.Gallery}
-            onClick={onGallery}>{t`Gallery`}</Button>
+            onClick={onGallery}
+          >{t`Gallery`}</Button>
         </>
       )}
     </ButtonGroup>
@@ -475,7 +479,8 @@ export function GalleryItemHeader({
         'no-right-padding': !isMobileMax,
         'no-padding-segment': isMobileMax,
       })}
-      basic>
+      basic
+    >
       {isTabletMin && namesTableEl}
       <Header textAlign="center">
         <LastReadLabel timestamp={data?.last_read} />
@@ -514,7 +519,8 @@ export function GalleryItemHeader({
               <div
                 className={classNames(styles.cover_column, {
                   [styles.fluid]: isMobileMax,
-                })}>
+                })}
+              >
                 <Image
                   centered
                   rounded
@@ -565,7 +571,8 @@ export function GalleryItemHeader({
                       <Link
                         href={urlstring(`/item/gallery/${data?.id}/page/1`)}
                         passHref
-                        legacyBehavior>
+                        legacyBehavior
+                      >
                         <Button as="a" primary>
                           <Icon className="book open" /> {t`Read`} 「
                           {data?.times_read}」
@@ -588,7 +595,8 @@ export function GalleryItemHeader({
                           inReadingQueue
                             ? t`Remove from reading queue`
                             : t`Add to reading queue`
-                        }>
+                        }
+                      >
                         <Icon
                           name={
                             inReadingQueue ? 'bookmark' : 'bookmark outline'

@@ -92,11 +92,13 @@ export function ReadButton({
 
   return (
     <Link
-      href={useMemo(() => ({ pathname: `/item/gallery/${data?.id}/page/1` }), [
-        data,
-      ])}
+      href={useMemo(
+        () => ({ pathname: `/item/gallery/${data?.id}/page/1` }),
+        [data]
+      )}
       passHref
-      legacyBehavior>
+      legacyBehavior
+    >
       <Button
         as="a"
         primary
@@ -106,7 +108,8 @@ export function ReadButton({
             e.preventDefault();
           }
         }, [])}
-        {...props}>
+        {...props}
+      >
         <Icon className="book open" />
         {t`Read`}
       </Button>
@@ -129,7 +132,8 @@ export function ContinueButton({
         [data]
       )}
       passHref
-      legacyBehavior>
+      legacyBehavior
+    >
       <Button as="a" color="orange" size="mini" {...props}>
         <Icon name="play" />
         {t`Continue`}
@@ -408,14 +412,16 @@ export function GalleryCard({
           <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
         ),
         [data.profile]
-      )}>
+      )}
+    >
       <ItemCardContent
         title={data?.preferred_title?.name ?? ''}
         subtitle={data?.artists.map((a) => (
           <span key={a.id}>
             {blur ? maskText(a.preferred_name.name) : a.preferred_name.name}
           </span>
-        ))}></ItemCardContent>
+        ))}
+      ></ItemCardContent>
     </ItemCard>
   );
 }

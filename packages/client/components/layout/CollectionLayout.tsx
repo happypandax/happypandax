@@ -76,11 +76,13 @@ export function CollectionItemHeader({
         <Segment
           className={classNames('no-margins no-top-padding', {
             'no-right-padding': !isMobileMax,
-          })}>
+          })}
+        >
           <div
             className={classNames(styles.header_content, {
               [styles.column]: isMobileMax,
-            })}>
+            })}
+          >
             <div className={classNames(styles.cover_collection)}>
               <Image
                 centered

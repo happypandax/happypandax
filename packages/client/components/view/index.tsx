@@ -469,7 +469,8 @@ export function PaginatedView({
     <Segment
       basic
       {...props}
-      className={classNames('no-padding-segment', { fluid }, props.className)}>
+      className={classNames('no-padding-segment', { fluid }, props.className)}
+    >
       <Grid className="no-margins" verticalAlign="middle" padded="vertically">
         {pagination && getPaginationText()}
         {pagination && (
@@ -513,7 +514,8 @@ export function PaginatedView({
               itemsPerPage,
               activePage,
             ]
-          )}>
+          )}
+        >
           {children}
         </Visibility>
         {/* {loading && (
@@ -546,7 +548,8 @@ export function SidebarPaginatedView({
       <Sidebar
         visible={sidebarVisible}
         animation={sidebarAnimation}
-        direction="top">
+        direction="top"
+      >
         {sidebarContent}
       </Sidebar>
       <Sidebar.Pusher>{children}</Sidebar.Pusher>

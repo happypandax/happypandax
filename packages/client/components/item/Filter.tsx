@@ -54,7 +54,8 @@ export default function FilterCard({
     <Card
       color="black"
       {...props}
-      className={classNames('horizontal', 'default-card', props.className)}>
+      className={classNames('horizontal', 'default-card', props.className)}
+    >
       <Card.Content>
         <Card.Header>
           {data.name}
@@ -87,7 +88,8 @@ export default function FilterCard({
               }),
             })}
             passHref
-            legacyBehavior>
+            legacyBehavior
+          >
             <Label
               size="small"
               empty
@@ -162,7 +164,8 @@ export default function FilterCard({
                   <Card.Description
                     as={Segment}
                     tertiary
-                    className={classNames('small-padding-segment')}>
+                    className={classNames('small-padding-segment')}
+                  >
                     {data.filter}
                   </Card.Description>
                 )}

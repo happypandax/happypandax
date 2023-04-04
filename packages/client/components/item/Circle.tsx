@@ -27,7 +27,8 @@ export default function CircleCardLabel({
       as={Segment}
       size="tiny"
       color="teal"
-      className={classNames('default-card', props.className)}>
+      className={classNames('default-card', props.className)}
+    >
       <Card.Content>
         <Card.Header>
           <Icon name="group" className="sub-text" />
@@ -48,7 +49,8 @@ export default function CircleCardLabel({
               }),
             })}
             passHref
-            legacyBehavior>
+            legacyBehavior
+          >
             <Label
               size="small"
               empty

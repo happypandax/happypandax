@@ -62,7 +62,8 @@ export function IsolationLabel({
           ? 'teal'
           : 'black'
       }
-      {...props}>
+      {...props}
+    >
       {isolation === 'user'
         ? t`User`
         : isolation === 'client'
@@ -323,11 +324,13 @@ function GeneralPane() {
             ]}
             placeholder={t`Select language`}
             type="select"
-            optionChange={optionChange}>
+            optionChange={optionChange}
+          >
             <a
               href="https://happypandax.github.io/translation.html"
               target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               {t`Not satisfied with the translation? Consider helping out! Click here for more information.`}
             </a>
           </OptionField>
@@ -1061,7 +1064,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment">
+                  className="no-padding-segment"
+                >
                   <GeneralPane />
                 </Tab.Pane>
               ),
@@ -1076,7 +1080,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment">
+                  className="no-padding-segment"
+                >
                   <ImportPane />
                 </Tab.Pane>
               ),
@@ -1091,7 +1096,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment">
+                  className="no-padding-segment"
+                >
                   <PluginsPane />
                 </Tab.Pane>
               ),
@@ -1106,7 +1112,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment">
+                  className="no-padding-segment"
+                >
                   <NetworkPane />
                 </Tab.Pane>
               ),
@@ -1121,7 +1128,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment">
+                  className="no-padding-segment"
+                >
                   <ServerPane />
                 </Tab.Pane>
               ),
@@ -1136,7 +1144,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment">
+                  className="no-padding-segment"
+                >
                   <AdvancedPane />
                 </Tab.Pane>
               ),
@@ -1157,7 +1166,8 @@ function RestartNeededSegment({ settings = [] }: { settings: string[] }) {
       attached="top"
       tertiary
       className="no-margins"
-      warning>
+      warning
+    >
       <Icon name="warning circle" />
       {t`Some settings require a server restart to take effect.`}
     </Message>
@@ -1201,7 +1211,8 @@ export default function SettingsModal({
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
       {...props}
-      className={classNames('min-400-h', className)}>
+      className={classNames('min-400-h', className)}
+    >
       <Modal.Header>
         <Icon name="settings" />
         {t`Preferences`}
