@@ -2,10 +2,10 @@ import { GetServerSidePropsResult, NextPageContext, Redirect } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRecoilState } from 'recoil';
 import { Button, Container, Icon } from 'semantic-ui-react';
 
 import { ReaderContext } from '../../../../../client/context';
+import { useHijackHistory } from '../../../../../client/hooks/ui';
 import t from '../../../../../client/lang';
 import { getCookies, replaceURL } from '../../../../../client/utility';
 import {
@@ -32,6 +32,7 @@ import {
 } from '../../../../../shared/types';
 import { JSONSafe, urlparse, urlstring } from '../../../../../shared/utility';
 import { ReaderState } from '../../../../../state';
+import { useInitialRecoilState } from '../../../../../state/index';
 
 const Reader = dynamic(
   () => import('../../../../../components/reader/Reader'),
@@ -107,7 +108,9 @@ interface PageProps {
 export async function getServerSideProps(
   context: NextPageContext
 ): Promise<GetServerSidePropsResult<PageProps>> {
-  const server = await global.app.service.get(ServiceType.Server).context(context);
+  const server = await global.app.service
+    .get(ServiceType.Server)
+    .context(context);
 
   let redirect: Redirect;
 
@@ -306,8 +309,14 @@ export default function Page(props: PageProps) {
     );
   }, [number]);
 
-  const [infoOpen, setInfoOpen] = useRecoilState(
-    ReaderState.pageInfoOpen(stateKey)
+  const [infoOpen, setInfoOpen] = useInitialRecoilState(
+    ReaderState.pageInfoOpen(stateKey),
+    false
+  );
+
+  useHijackHistory(
+    infoOpen,
+    useCallback(() => setInfoOpen(false), [])
   );
 
   return (
@@ -356,8 +365,7 @@ export default function Page(props: PageProps) {
           onPage={useCallback((page: ReaderData) => {
             setNumber(page.number);
           }, [])}>
-          <Container textAlign='center'>
-
+          <Container textAlign="center">
             <EndContent
               series={props.series}
               collections={props.collections}

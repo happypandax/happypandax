@@ -60,6 +60,36 @@ export function BottomZone({
   );
 }
 
+function useBodyStyles() {
+  const {
+    isTablet,
+    isMobileMax,
+    isComputer,
+    isWidescreenMonitor,
+  } = useBreakpoints();
+  const sidebarPosition = useRecoilValue(AppState.sidebarPosition);
+  const sidebarHidden = useRecoilValue(AppState.sidebarHidden);
+
+  useEffect(() => {
+    const body = document.body;
+    body.classList.toggle('tablet', isTablet);
+    body.classList.toggle('mobile', isMobileMax);
+    body.classList.toggle('computer', isComputer);
+    body.classList.toggle('widescreen', isWidescreenMonitor);
+
+    body.classList.toggle('sidebar-left', sidebarPosition === 'left');
+    body.classList.toggle('sidebar-right', sidebarPosition === 'right');
+    body.classList.toggle('sidebar-hidden', sidebarHidden);
+  }, [
+    isTablet,
+    isMobileMax,
+    isComputer,
+    isWidescreenMonitor,
+    sidebarPosition,
+    sidebarHidden,
+  ]);
+}
+
 export default function PageLayout({
   dimmed,
   menu,
@@ -83,6 +113,8 @@ export default function PageLayout({
   bottomZone?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  useBodyStyles();
+
   const drawerButtonPosition = useRecoilValue(AppState.drawerButtonPosition);
   const { isTabletMax } = useBreakpoints();
   const [sidebarHidden, setSidebarHidden] = useRecoilState(

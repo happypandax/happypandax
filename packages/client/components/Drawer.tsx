@@ -15,6 +15,7 @@ import {
 } from 'semantic-ui-react';
 
 import { useRecentViewedItem } from '../client/hooks/item';
+import { useHijackHistory } from '../client/hooks/ui';
 import t from '../client/lang';
 import { useQueryType } from '../client/queries';
 import { DrawerTab, ImageSize, ItemType, QueueType } from '../shared/enums';
@@ -353,6 +354,9 @@ export default function DrawerPortal() {
   const [drawerOpen, setDrawerOpen] = useRecoilState(AppState.drawerOpen);
   const drawerSticky = useRecoilValue(AppState.drawerSticky);
   const onClose = useCallback(() => setDrawerOpen(false), []);
+
+  useHijackHistory(drawerOpen, onClose);
+
   return (
     <TransitionablePortal
       closeOnDocumentClick={!drawerSticky}

@@ -111,7 +111,7 @@ export function useHijackHistory(active: boolean, onBack?: () => void, { onlyOnM
             if (!pushed) {
                 console.debug("useHijackHistory", "push")
 
-                window.history.pushState(null, "", window.location.href);
+                window.history.pushState(null, "", window.location.href + "#momo");
                 setPushed(true)
             }
             window.onpopstate = () => {

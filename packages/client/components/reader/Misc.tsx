@@ -42,30 +42,37 @@ export function ReaderAutoNavigateButton({
       content={t`Auto navigate`}
       inverted
       position="top center"
-      trigger={<Button
-        icon={
-          autoNavigate ? (pageNumber >= pageCount ? 'pause' : 'play') : 'pause'
-        }
-        content={
-          autoNavigate && autoNavigateCounter && autoNavigateCounter <= 10
-            ? autoNavigateCounter
-            : undefined
-        }
-        secondary
-        color={
-          autoNavigate
-            ? pageNumber >= pageCount
-              ? 'orange'
-              : 'green'
-            : undefined
-        }
-        basic
-        circular
-        {...props}
-        onClick={useCallback(() => {
-          setAutoNavigate(!autoNavigate);
-        }, [autoNavigate])}
-      />} />
+      trigger={
+        <Button
+          icon={
+            autoNavigate
+              ? pageNumber >= pageCount
+                ? 'pause'
+                : 'play'
+              : 'pause'
+          }
+          content={
+            autoNavigate && autoNavigateCounter && autoNavigateCounter <= 10
+              ? autoNavigateCounter
+              : undefined
+          }
+          secondary
+          color={
+            autoNavigate
+              ? pageNumber >= pageCount
+                ? 'orange'
+                : 'green'
+              : undefined
+          }
+          basic
+          circular
+          {...props}
+          onClick={useCallback(() => {
+            setAutoNavigate(!autoNavigate);
+          }, [autoNavigate])}
+        />
+      }
+    />
   );
 }
 
@@ -84,22 +91,20 @@ export function ReaderAutoScrollButton({
       content={t`Auto scroll`}
       inverted
       position="top center"
-      trigger={<Button
-        icon="lightning"
-        secondary
-        color={
-          autoScroll
-            ? endReached ? 'orange' :
-              'green'
-            : undefined
-        }
-        basic
-        circular
-        {...props}
-        onClick={useCallback(() => {
-          setAutoScroll(!autoScroll);
-        }, [autoScroll])}
-      />} />
+      trigger={
+        <Button
+          icon="lightning"
+          secondary
+          color={autoScroll ? (endReached ? 'orange' : 'green') : undefined}
+          basic
+          circular
+          {...props}
+          onClick={useCallback(() => {
+            setAutoScroll(!autoScroll);
+          }, [autoScroll])}
+        />
+      }
+    />
   );
 }
 

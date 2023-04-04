@@ -83,9 +83,18 @@ html, body {
     left: 0;
     bottom: 0;
     right: 0;
-    padding-left: 70px;
+    padding-left: 5px;
     padding-right: 5px;
     padding-bottom: 20px;
+
+}
+
+:not(.sidebar-hidden).sidebar-left #drawer, :not(.sidebar-hidden).sidebar-left #drawer  {
+    padding-left: 70px;
+}
+
+:not(.sidebar-hidden).sidebar-right #drawer, :not(.sidebar-hidden).sidebar-right #drawer  {
+    padding-right: 70px;
 }
 
 #bottom_zone.fluid {

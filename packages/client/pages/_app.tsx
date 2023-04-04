@@ -7,6 +7,7 @@ import axios from 'axios';
 import App, { AppContext, AppInitialProps, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Router, { useRouter } from 'next/router';
+import Script from 'next/script';
 import NProgress from 'nprogress';
 import { useEffect, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -211,12 +212,28 @@ export function AppRoot({
   );
 }
 
+function ManuScrollRestoration() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.beforePopState((state) => {
+      state.options.scroll = false;
+      return true;
+    });
+  }, []);
+
+  return (
+    <Script id="manual-scroll-restoration">{`window.history.scrollRestoration = "manual"`}</Script>
+  );
+}
+
 function HappyPandaApp({
   Component,
   pageProps,
 }: AppProps<AppPageProps['pageProps']>) {
   return (
     <AppRoot pageProps={pageProps}>
+      <ManuScrollRestoration />
       {!['/login', '/_error'].includes(pageProps.pathname) && <LoginModal />}
       <Theme>
         <Component {...pageProps} />
