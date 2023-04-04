@@ -7,6 +7,7 @@ import { useFullscreen, useUnmount } from 'react-use';
 
 import Scroller from '@twiddly/scroller';
 
+import { useBreakpoints } from '../../client/hooks/ui';
 import {
   useBodyEvent,
   useEffectAction,
@@ -30,6 +31,8 @@ export class CanvasState {
   isPanning = false;
   isFullscreen = false;
   isTabActive = true;
+  isMobile = false;
+  isTablet = false;
 
   isAutoNavigating = false;
 
@@ -339,8 +342,12 @@ export class CanvasState {
 
     const { dimensions } = this.adjustments;
 
-    const { width, height, contentWidth, contentHeight } =
-      this._scroller.getDimensions();
+    const {
+      width,
+      height,
+      contentWidth,
+      contentHeight,
+    } = this._scroller.getDimensions();
 
     return (
       width !== dimensions.width ||
@@ -589,8 +596,9 @@ export class CanvasState {
     if (diffX < delta && diffY < delta) {
       const childNumber = this.currentChild;
 
-      const deadSpaceX = container.clientWidth * 0.1;
-      const deadSpaceY = container.clientHeight * 0.1;
+      const deadFactor = this.isMobile ? 0.01 : 0.1;
+      const deadSpaceX = container.clientWidth * deadFactor;
+      const deadSpaceY = container.clientHeight * deadFactor;
 
       console.debug({
         deadSpaceX,
@@ -727,6 +735,13 @@ const Canvas = observer(function Canvas({
     state.onEndReachedCallback = onEndReached;
   }, [onEndReached, state]);
 
+  const { isMobileMax, isTablet } = useBreakpoints();
+
+  useEffectAction(() => {
+    state.isMobile = isMobileMax;
+    state.isTablet = isTablet;
+  }, [isMobileMax, isTablet]);
+
   useRefEvent(
     state.containerRef,
     'wheel',
@@ -814,8 +829,7 @@ const Canvas = observer(function Canvas({
           state.onMouseDown(e.nativeEvent);
         },
         [state]
-      )}
-    >
+      )}>
       <div className="top-content text-center">{!!label && label}</div>
 
       <div
@@ -823,8 +837,7 @@ const Canvas = observer(function Canvas({
         className={classNames(
           'user-select-none reader-content no-scrollbar',
           'column'
-        )}
-      >
+        )}>
         {children}
       </div>
     </div>
