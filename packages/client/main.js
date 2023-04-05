@@ -4,6 +4,7 @@ const http = require('http');
 const dotenv = require('dotenv');
 const { parseArgs } = require('util');
 const nextConfigs = require('./next.config');
+const packageJson = require('./package.json');
 const _ = require('lodash');
 
 const dir = __dirname;
@@ -17,7 +18,7 @@ let hostname = 'localhost';
 let port = 7008;
 
 const {
-  values: { host: cliHost, port: cliPort, env, help, cwd },
+  values: { host: cliHost, port: cliPort, env, help, cwd, version },
 } = parseArgs({
   options: {
     host: {
@@ -38,6 +39,10 @@ const {
       type: 'string',
       default: '',
     },
+    version: {
+      type: 'boolean',
+      default: false,
+    },
     help: {
       type: 'boolean',
       default: false,
@@ -53,8 +58,14 @@ Options:
   -p, --port      Port to listen on
   --cwd           Working directory (defaults to where the executable is)
   --env           Environment variables to load
+  --version       Displays the version
   --help          Displays this message
 `);
+  process.exit(0);
+}
+
+if (version) {
+  console.log(packageJson.version);
   process.exit(0);
 }
 
@@ -75,6 +86,18 @@ Object.entries(process.env).forEach(([key, value]) => {
 
   if (key === 'HPX_PORT') {
     port = parseInt(value, 10);
+  }
+
+  if (key === 'HPX_SERVER_HOST') {
+    console.log(
+      `> Using HPX server hostname ${value} from HPX_SERVER_HOST environment variable`
+    );
+  }
+
+  if (key === 'HPX_SERVER_PORT') {
+    console.log(
+      `> Using HPX server port ${value} from HPX_SERVER_PORT environment variable`
+    );
   }
 });
 

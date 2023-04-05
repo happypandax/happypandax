@@ -326,22 +326,24 @@ export default class ServerService extends Service {
         }
       }
 
+      const n_endpoint = endpoint ?? this.endpoint;
+
       global.app.log.i(
         'Connecting to HPX server... at ' +
-        this.endpoint.host +
+        n_endpoint.host +
         ':' +
-        this.endpoint.port
+        n_endpoint.port
       );
 
       if (!client.is_connected()) {
         for (const n of this.#clients) {
-          await n.client.connect(this.endpoint);
+          await n.client.connect(n_endpoint);
         }
 
         client.on('close', this._disconnect_listener);
 
-        this.emit('connect', this.endpoint);
-        this.endpoint = endpoint;
+        this.emit('connect', n_endpoint);
+        this.endpoint = n_endpoint;
       }
     } finally {
       await node.release();
@@ -540,6 +542,7 @@ export class Server {
         torrent: [number, number, number];
         beta: boolean;
         alpha: boolean;
+        name: string;
         build: string;
       };
       user: ServerUser;

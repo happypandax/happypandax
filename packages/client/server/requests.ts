@@ -217,6 +217,7 @@ export const nextAuthOptions: NextAuthOptions = {
           port = HPX_SERVER_PORT;
         }
 
+
         if (host && port) {
           await server.connect({ host, port }).catch((e: ServerError) => {
             global.app.log.e(e);
@@ -289,10 +290,10 @@ export async function getServerSession({
   req,
 }: {
   req?:
-    | (IncomingMessage & {
-        cookies: Partial<{ [key: string]: string }>;
-      })
-    | NextApiRequest;
+  | (IncomingMessage & {
+    cookies: Partial<{ [key: string]: string }>;
+  })
+  | NextApiRequest;
 }) {
   const s = await getToken({ req, secret: HPX_SECRET });
   return s as { id: string };

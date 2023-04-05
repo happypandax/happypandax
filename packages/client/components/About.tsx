@@ -34,6 +34,9 @@ function InfoPane() {
         <Grid.Column>
           {data?.data?.version?.beta && <Label color="violet">{t`Beta`}</Label>}
           {data?.data?.version?.alpha && <Label color="red">{t`Alpha`}</Label>}
+          <Label basic color="purple">
+            {data?.data?.version?.name}
+          </Label>
           <Label basic>
             {t`Webclient`} <Label.Detail>{packageJson?.version}</Label.Detail>
           </Label>
