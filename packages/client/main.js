@@ -16,8 +16,6 @@ dotenv.config();
 
 const datetime = new Date().toISOString().replace(/:/g, '-');
 
-console.log(`HappyPanda X Client v${packageJson.version} (${datetime})`);
-
 let hostname = 'localhost';
 let port = 7008;
 
@@ -72,6 +70,8 @@ if (version) {
   console.log(packageJson.version);
   process.exit(0);
 }
+
+console.log(`HappyPanda X Client v${packageJson.version} (${datetime})`);
 
 if (env) {
   console.log(`> Loading environment variables from given env`);
