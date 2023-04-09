@@ -716,7 +716,6 @@ export class Server {
     options?: CallOptions
   ) {
     const data = await this._call('get_related_items', args, group, {
-      cache: true,
       ...options,
     });
 

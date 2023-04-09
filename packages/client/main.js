@@ -14,6 +14,10 @@ process.chdir(dir);
 
 dotenv.config();
 
+const datetime = new Date().toISOString().replace(/:/g, '-');
+
+console.log(`HappyPanda X Client v${packageJson.version} (${datetime})`);
+
 let hostname = 'localhost';
 let port = 7008;
 
