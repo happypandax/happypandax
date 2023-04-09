@@ -21,6 +21,7 @@ const nextConfig = (phase, { defaultConfig }) => {
       'axios',
       'swiper',
       'ssr-window',
+      'file-type',
     ],
     typescript: {
       ignoreBuildErrors: true,
