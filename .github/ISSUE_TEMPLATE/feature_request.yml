@@ -1,0 +1,34 @@
+name: Feature Request
+description: Suggest an idea for HPX
+title: "[Feat]: "
+labels: ["feature suggestion :bulb:"]
+assignees:
+  - twiddli
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do NOT use this template for support requests. If you have a question, please ask in the [Discussions](https://github.com/happypandax/happypandax/discussions).
+        For plugin issues, please report them in the [plugin repository](https://github.com/happypandax/plugins).
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: What would you like to see?
+      description: If your request is related to a problem, please describe it too.
+      placeholder: A clear and concise description of your request.
+    validations:
+      required: true
+  - type: textarea
+    id: feature-alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered. Screenshots are welcome!
+      placeholder: A clear and concise description of any alternative solutions or features you've considered.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Did you check for similar requests?
+      description: Please check the [issue tracker](https://github.com/happypandax/happypandax/issues) for similar requests.
+      options:
+        - label: I checked and didn't find similar requests.
+          required: true

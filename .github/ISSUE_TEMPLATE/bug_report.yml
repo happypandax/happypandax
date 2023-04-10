@@ -1,0 +1,72 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug :beetle:"]
+assignees:
+  - twiddli
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do NOT use this template for support requests. If you have a question, please ask in the [Discussions](https://github.com/happypandax/happypandax/discussions).
+        For plugin issues, please report them in the [plugin repository](https://github.com/happypandax/plugins).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: If you can, include a clear and concise description of what you expected to happen.
+      placeholder: A clear and concise description of what the issue is. Screenshots are welcome!
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - 1.0.2 (Default)
+        - 1.0.3 (Edge)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: HPX Version
+      description: What version of HPX are you running?
+      placeholder: ex. 1.0.0-alpha.2
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: What operating system are you using? Include OS version.
+      placeholder: ex. Windows 10 21H1
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: What browser are you using? Include browser version.
+      placeholder: ex. Firefox 92.0
+  - type: textarea
+    id: logs-hpx
+    attributes:
+      label: Relevant HPX log output (`activity.log`, `error.log` or `debug.log`)
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: textarea
+    id: logs-client
+    attributes:
+      label: Relevant web client log output (`client.log`)
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Did you check for similar issues?
+      description: Please check the [issue tracker](https://github.com/happypandax/happypandax/issues) for similar issues.
+      options:
+        - label: I checked and didn't find similar issues.
+          required: true
