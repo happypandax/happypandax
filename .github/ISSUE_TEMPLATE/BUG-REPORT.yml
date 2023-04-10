@@ -44,13 +44,17 @@ body:
     id: logs-hpx
     attributes:
       label: Relevant HPX log output (`activity.log`, `error.log` or `debug.log`)
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      description: |
+        Please copy and paste any relevant log output. You can find the log files in the `logs` folder in your HPX installation directory.
+        This will be automatically formatted into code, so no need for backticks.
       render: shell
   - type: textarea
     id: logs-client
     attributes:
       label: Relevant web client log output (`client.log`)
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      description: |
+        Please copy and paste any relevant log output. You can find the log files in the `logs` folder in your HPX installation directory.
+        This will be automatically formatted into code, so no need for backticks.
       render: shell
   - type: checkboxes
     id: terms
