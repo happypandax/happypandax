@@ -22,6 +22,9 @@ const nextConfig = (phase, { defaultConfig }) => {
       'swiper',
       'ssr-window',
       'file-type',
+      'strtok3',
+      'peek-readable',
+      'token-types',
     ],
     typescript: {
       ignoreBuildErrors: true,
