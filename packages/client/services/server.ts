@@ -838,7 +838,6 @@ export class Server {
     options?: CallOptions
   ) {
     const data = await this._call('get_similar', args, group, {
-      cache: true,
       ...options,
     });
 

@@ -155,15 +155,13 @@ export function Slider({
     <Segment
       basic
       {...props}
-      className={classNames('swiper', className, { fluid: fluid })}
-    >
+      className={classNames('swiper', className, { fluid: fluid })}>
       {!!label && (
         <Label
           color={color}
           attached="top"
           as={initialShow === false ? undefined : 'a'}
-          onClick={onLabelClick}
-        >
+          onClick={onLabelClick}>
           <Icon name={open ? 'caret down' : 'caret right'} />
           {label}
           {showCount && <Label.Detail>{items.length}</Label.Detail>}
@@ -181,8 +179,7 @@ export function Slider({
             watchOverflow
             touchStartPreventDefault={touchStartPreventDefault}
             navigation={navigation}
-            breakpoints={breakpoints}
-          >
+            breakpoints={breakpoints}>
             {children}
             <SliderNav direction="left" />
             <SliderNav direction="right" />
@@ -205,24 +202,30 @@ export function SimilarItemsSlider({
 } & React.ComponentProps<typeof Slider>) {
   const [data, setData] = useState<ServerGallery[]>([]);
 
-  const { data: cmd, isLoading } = useQueryType(QueryType.SIMILAR, {
-    item_id: item.id,
-    item_type: type,
-    fields: galleryCardDataFields,
-    limit: 50,
-  });
+  const { data: cmd, isLoading } = useQueryType(
+    QueryType.SIMILAR,
+    {
+      item_id: item?.id,
+      item_type: type,
+      fields: galleryCardDataFields,
+      limit: 50,
+    },
+    {
+      enabled: !!item?.id,
+    }
+  );
 
   const [loading, setLoading] = useState(isLoading);
 
-  useCommand(cmd?.data, {
-    callback: (v) => {
-      const d = v[cmd.data];
-      if (d) {
-        setData(d.items as ServerGallery[]);
-      }
+  useCommand(
+    cmd?.data,
+    {},
+    (v) => {
+      const d = setData(v?.items as ServerGallery[]);
       setLoading(false);
     },
-  });
+    []
+  );
 
   useEffect(() => {
     if (isLoading) {
@@ -237,8 +240,7 @@ export function SimilarItemsSlider({
       stateKey={stateKey}
       showCount={false}
       label={t`Just like this one`}
-      {...props}
-    >
+      {...props}>
       {data.map((i) => (
         <SliderElement key={i.id}>
           <GalleryCard size="small" data={i} />
