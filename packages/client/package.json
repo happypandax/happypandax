@@ -53,7 +53,7 @@
     "lodash": "^4.17.21",
     "mobx": "^6.6.0",
     "mobx-react-lite": "^3.4.0",
-    "next": "^13.2.1",
+    "next": "^13.3.0",
     "next-auth": "^4.21.1",
     "next-connect": "^0.13.0",
     "nprogress": "next",
