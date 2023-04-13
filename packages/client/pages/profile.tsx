@@ -108,9 +108,24 @@ export default function Page({ notes: initialNotes }: PageProps) {
         }>
         {!notes?.items?.length && <EmptySegment />}
         <NoteGroup>
-          {notes?.items?.map?.((note: ServerNote) => (
-            <Note data={note} key={note.id} onUpdated={() => refetchNotes()} />
-          ))}
+          {notes?.items
+            ?.sort?.((a: ServerNote, b: ServerNote) => {
+              // sort by title
+              if (a.title < b.title) {
+                return -1;
+              }
+              if (a.title > b.title) {
+                return 1;
+              }
+              return 0;
+            })
+            ?.map?.((note: ServerNote) => (
+              <Note
+                data={note}
+                key={note.id}
+                onUpdated={() => refetchNotes()}
+              />
+            ))}
         </NoteGroup>
       </TitleSegment>
       <TitleSegment icon="bar chart" title={t`Statistics`}>

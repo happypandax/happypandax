@@ -13,7 +13,8 @@
     "start": "cross-env NODE_ENV=production node main.js",
     "package": "node ./build.js",
     "storybook": "cross-env BROWSER=none start-storybook -p 7020 -s ./public",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "deploy": "yarn run:client build && yarn run:client package"
   },
   "dependencies": {
     "@brainhubeu/react-carousel": "^2.0.4",
