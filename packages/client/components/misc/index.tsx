@@ -64,8 +64,7 @@ export function ServerLog({
       className="max-300-h overflow-auto"
       loading={isLoading}
       secondary
-      {...props}
-    >
+      {...props}>
       <pre>{data?.data?.log}</pre>
     </Segment>
   );
@@ -212,16 +211,21 @@ export function TitleSegment({
   title,
   headerSize,
   children,
+  icon,
   as,
 }: {
-  title: string;
+  title: string | React.ReactNode;
+  icon?: React.ComponentProps<typeof Icon>['name'];
   as?: React.ElementType;
   headerSize?: React.ComponentProps<typeof Header>['size'];
   children?: React.ReactNode;
 }) {
   return (
     <>
-      <Header size={headerSize}>{title}</Header>
+      <Header size={headerSize}>
+        {!!icon && <Icon name={icon} />}
+        {title}
+      </Header>
       <Segment as={as}>{children}</Segment>
     </>
   );
@@ -242,8 +246,7 @@ export function EmptySegment({
     <Segment
       placeholder
       disabled
-      className={classNames('!min-0-h w-full', { 'h-full': fluid })}
-    >
+      className={classNames('!min-0-h w-full', { 'h-full': fluid })}>
       <Header className="center text-center sub-text" icon>
         <Icon className="hpx-standard sub-text" size="huge" />
         {title}
@@ -355,8 +358,7 @@ export function LabelAccordion({
       {...props}
       color={segmentColor}
       basic={basic}
-      className={classNames('small-padding-segment', className)}
-    >
+      className={classNames('small-padding-segment', className)}>
       <Label
         as="a"
         color={color}
@@ -370,8 +372,7 @@ export function LabelAccordion({
             }
           },
           [visible]
-        )}
-      >
+        )}>
         <Icon name={visible ? 'caret down' : 'caret right'} />
         {label}
         {!!detail && <Label.Detail>{detail}</Label.Detail>}
@@ -398,8 +399,7 @@ export function PageInfoMessage({
       onDismiss={onDismiss}
       size={size}
       className={classNames(styles.pageinfo_message, className)}
-      {...props}
-    >
+      {...props}>
       {children}
     </Message>
   );
@@ -485,8 +485,7 @@ export function FileDropZone({
     <Header
       inverted={!!droppedFiles.length}
       className="center text-center sub-text"
-      icon
-    >
+      icon>
       <Icon
         color={isOver ? 'green' : undefined}
         className="hpx-standard sub-text"
@@ -541,8 +540,7 @@ export function FileDropZone({
         {...props}
         placeholder={!droppedFiles.length}
         tertiary={!droppedFiles.length}
-        className="min-200-h"
-      >
+        className="min-200-h">
         {el}
       </Segment>
     </Ref>

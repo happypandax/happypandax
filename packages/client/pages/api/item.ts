@@ -24,7 +24,7 @@ export default handler()
         res.status(200).json(r);
       });
   })
-  .post(async (req, res) => {
+  .patch(async (req, res) => {
     const server = await global.app.service
       .get(ServiceType.Server)
       .context({ req, res });
@@ -33,6 +33,27 @@ export default handler()
 
     return server
       .update_item(
+        {
+          item_type: item_type as number,
+          item: item as any,
+          options: options as any,
+        },
+        undefined,
+        __options as RequestOptions
+      )
+      .then((r) => {
+        res.status(200).json(r);
+      });
+  })
+  .post(async (req, res) => {
+    const server = await global.app.service
+      .get(ServiceType.Server)
+      .context({ req, res });
+
+    const { item_type, item, options, __options } = req.body;
+
+    return server
+      .new_item(
         {
           item_type: item_type as number,
           item: item as any,

@@ -169,14 +169,6 @@ function ActivityPane() {
   );
 }
 
-function StatsPane() {
-  return (
-    <Segment basic>
-      <EmptySegment />
-    </Segment>
-  );
-}
-
 function TrashPane() {
   return (
     <Segment basic>
@@ -215,18 +207,6 @@ export function AboutTab() {
             render: () => (
               <Tab.Pane basic className="no-padding-segment">
                 <ActivityPane />
-              </Tab.Pane>
-            ),
-          },
-          {
-            menuItem: {
-              key: 'statistics',
-              icon: 'bar chart',
-              content: t`Statistics`,
-            },
-            render: () => (
-              <Tab.Pane basic className="no-padding-segment">
-                <StatsPane />
               </Tab.Pane>
             ),
           },

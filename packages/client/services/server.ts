@@ -602,6 +602,23 @@ export class Server {
     return data.data as AnyJson;
   }
 
+  async new_item<R = undefined>(
+    args: {
+      item_type: ItemType;
+      item: Record<string, AnyJson>;
+      options?: JsonMap;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('new_item', args, group, {
+      invalidate: true,
+      ...options,
+    });
+
+    return data.data as boolean;
+  }
+
   async update_item<R = undefined>(
     args: {
       item_type: ItemType;

@@ -95,6 +95,8 @@ export enum ItemType {
   Parody = 13,
   // NamespaceTag
   NamespaceTag = 14,
+  // Note
+  Note = 15,
 }
 
 export enum ImageSize {
@@ -198,6 +200,21 @@ export enum ProgressType {
   CheckUpdate = 3,
   // Updating application
   UpdateApplication = 4,
+  //: Scanning for items
+  Scan = 5,
+  //: Adding items to the database
+  ItemAdd = 6,
+  //: Adding items to the database
+  ItemUpdate = 6,
+  //: Removing items from the database
+  ItemRemove = 8,
+  //: A check for plugin update
+  CheckPluginUpdate = 9,
+  //: Upldating plugin
+  UpdatePlugin = 10,
+  //: Refreshing database
+  DatabaseRefresh = 11
+
 }
 
 export enum PluginState {

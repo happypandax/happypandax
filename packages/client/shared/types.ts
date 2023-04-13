@@ -61,6 +61,13 @@ export interface ServerItemWithMetatags extends ServerItem {
   metatags: ServerMetaTags;
 }
 
+export interface ServerNote extends ServerItemWithMetatags {
+  user_id: number;
+  content: string;
+  content_type: string
+  title: string;
+}
+
 export interface ServerParody extends ServerItem, ServerItemWithProfile {
   names: (ServerItemWithNameLanguageAlias & { parody_id: number })[];
   preferred_name: ServerItemWithNameLanguageAlias & { parody_id: number };
@@ -74,16 +81,16 @@ export interface ServerCategory extends ServerItemWithName {
   user_id: number;
 }
 
-export interface ServerUrl extends ServerItemWithName {}
-export interface ServerStatus extends ServerItemWithName {}
+export interface ServerUrl extends ServerItemWithName { }
+export interface ServerStatus extends ServerItemWithName { }
 export interface ServerLanguage extends ServerItemWithName {
   code: string;
   user_id: number;
 }
 
-export interface ServerNamespace extends ServerItemWithName {}
+export interface ServerNamespace extends ServerItemWithName { }
 
-export interface ServerTag extends ServerItemWithName {}
+export interface ServerTag extends ServerItemWithName { }
 
 export interface ServerNamespaceTag extends ServerItemWithMetatags {
   namespace: ServerNamespace;
@@ -100,7 +107,7 @@ export interface ServerMetaTags extends ServerItem {
 
 export interface ServerArtist
   extends ServerItemWithMetatags,
-    ServerItemWithProfile {
+  ServerItemWithProfile {
   names: (ServerItemWithNameLanguageAlias & { artist_id: number })[];
   preferred_name: ServerItemWithNameLanguageAlias & { artist_id: number };
   circles: ServerCircle[];
@@ -111,7 +118,7 @@ export interface ServerArtist
 
 export interface ServerGrouping
   extends ServerItemWithProfile,
-    ServerItemWithName {
+  ServerItemWithName {
   language: ServerLanguage;
   language_id: number;
   status_id: number;
@@ -144,10 +151,10 @@ export interface ServerGalleryProgress extends ServerItem {
 }
 export interface ServerGallery
   extends ServerItem,
-    ServerItemWithProfile,
-    ServerItemWithUrls,
-    ServerItemWithMetatags,
-    ServerItemTaggable {
+  ServerItemWithProfile,
+  ServerItemWithUrls,
+  ServerItemWithMetatags,
+  ServerItemTaggable {
   titles: ServerGalleryTitle[];
   artists: ServerArtist[];
   circles: ServerCircle[];
@@ -185,7 +192,7 @@ export interface ServerFilter extends ServerItem {
 
 export interface ServerPage
   extends ServerItemWithMetatags,
-    ServerItemWithProfile {
+  ServerItemWithProfile {
   number: number;
   name: string;
   path: string;
@@ -197,9 +204,9 @@ export interface ServerPage
 
 export interface ServerCollection
   extends ServerItemWithProfile,
-    ServerItemWithUrls,
-    ServerItemWithMetatags,
-    ServerItemWithName {
+  ServerItemWithUrls,
+  ServerItemWithMetatags,
+  ServerItemWithName {
   info: string;
   pub_date: number;
   category_id: number;
@@ -211,13 +218,14 @@ export interface ServerCollection
 
 export type FieldPath<T = undefined> = T extends undefined
   ?
-      | DeepPickPathPlain<ServerCircle>
-      | DeepPickPathPlain<ServerFilter>
-      | DeepPickPathPlain<ServerParody>
-      | DeepPickPathPlain<ServerLanguage>
-      | DeepPickPathPlain<ServerGallery>
-      | DeepPickPathPlain<ServerPage>
-      | DeepPickPathPlain<ServerArtist>
+  | DeepPickPathPlain<ServerCircle>
+  | DeepPickPathPlain<ServerFilter>
+  | DeepPickPathPlain<ServerParody>
+  | DeepPickPathPlain<ServerLanguage>
+  | DeepPickPathPlain<ServerGallery>
+  | DeepPickPathPlain<ServerPage>
+  | DeepPickPathPlain<ServerArtist>
+  | DeepPickPathPlain<ServerNote>
   : DeepPickPathPlain<T>;
 
 export interface ServerSortIndex {
@@ -271,7 +279,7 @@ export type SearchOptions = {
   children?: boolean;
 };
 
-export interface CommandID<T> extends String {}
+export interface CommandID<T> extends String { }
 
 export type ViewID = string;
 
@@ -355,18 +363,18 @@ export interface ImportViewItem<T extends ItemType = ItemType>
   path: string;
   data: null | DistributiveOmit<
     T extends ItemType.Gallery
-      ? ServerGallery
-      : T extends ItemType.Collection
-      ? ServerCollection
-      : T extends ItemType.Circle
-      ? ServerCircle
-      : T extends ItemType.Parody
-      ? ServerParody
-      : T extends ItemType.Artist
-      ? ServerArtist
-      : T extends ItemType.Language
-      ? ServerLanguage
-      : ServerItem,
+    ? ServerGallery
+    : T extends ItemType.Collection
+    ? ServerCollection
+    : T extends ItemType.Circle
+    ? ServerCircle
+    : T extends ItemType.Parody
+    ? ServerParody
+    : T extends ItemType.Artist
+    ? ServerArtist
+    : T extends ItemType.Language
+    ? ServerLanguage
+    : ServerItem,
     'id'
   >;
   children: ImportViewItem[];

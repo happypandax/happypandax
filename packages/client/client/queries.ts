@@ -157,6 +157,11 @@ export function useMutationType<
       method = 'DELETE';
       break;
     }
+    case MutatationType.UPDATE_ITEM:
+    case MutatationType.NEW_ITEM: {
+      throw new Error('Not implemented');
+    }
+
   }
 
   return useMutation(
@@ -222,8 +227,8 @@ export function useQueryType<
     onQueryKey?: () => any[];
     infinite?: I;
     infinitePageParam?: I extends Falsy
-      ? undefined
-      : (variables: V, context: QueryFunctionContext) => V;
+    ? undefined
+    : (variables: V, context: QueryFunctionContext) => V;
   } & (I extends Falsy
     ? Omit<UseQueryOptions<D, E>, 'initialData' | 'placeholderData'>
     : Omit<UseInfiniteQueryOptions<D, E>, 'initialData' | 'placeholderData'>)
@@ -420,7 +425,7 @@ export class Query {
       MutationObserverOptions<AxiosResponse<R>, E, V>,
       'mutationFn' | 'mutationKey' | 'variables'
     >,
-    reqConfig?: Parameters<AxiosInstance['post']>[2]
+    reqConfig?: Parameters<AxiosInstance['request']>[0]
   ) {
     const key = JSON.stringify([action.toString(), variables]);
 
@@ -439,8 +444,14 @@ export class Query {
     ];
     if (!obs) {
       let endpoint = action as string;
+      let method: AxiosRequestConfig['method'] = 'POST';
 
-      const fn = (v: V) => axios.post<R>(urlstring(endpoint), v, reqConfig);
+      const fn = (v: V) => axios.request<R>({
+        method,
+        url: urlstring(endpoint),
+        data: v,
+        ...reqConfig,
+      });
 
       obs = new MutationObserver<AxiosResponse<R>, E, V>(queryClient, {
         mutationKey: [key],

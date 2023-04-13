@@ -1,0 +1,30 @@
+.editor { 
+    margin: 0;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+    padding: 0.91666667em 1.16666667em;
+    background: #FFFFFF;
+    border: 1px solid rgba(34, 36, 38, 0.15);
+    border-top-color: rgba(34, 36, 38, 0.15);
+    border-right-color: rgba(34, 36, 38, 0.15);
+    border-bottom-color: rgba(34, 36, 38, 0.15);
+    border-left-color: rgba(34, 36, 38, 0.15);
+    outline: none;
+    color: #212121;
+    border-radius: 4px;
+    box-shadow: 0 0 0 0 transparent inset;
+    transition: color 0.1s ease, border-color 0.1s ease;
+    font-size: 1em;
+    line-height: 1.2857;
+    resize: vertical;
+    min-height: 6em;
+}
+
+.editor p.is_editor_empty:first-child::before {
+    color: #adb5bd;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+  

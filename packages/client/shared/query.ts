@@ -35,6 +35,7 @@ export enum QueryType {
 export enum MutatationType {
   LOGIN = '/api/auth/callback/happypandax',
   UPDATE_ITEM = '/api/item',
+  NEW_ITEM = '/api/item',
   UPDATE_METATAGS = '/api/metatags',
   UPDATE_CONFIG = '/api/config',
   START_COMMAND = '/api/command',
@@ -318,6 +319,12 @@ interface UpdateItem<T = undefined> extends MutationAction<T> {
   variables: ServerParameters['update_item'];
 }
 
+interface NewItem<T = undefined> extends MutationAction<T> {
+  type: MutatationType.NEW_ITEM;
+  dataType: ServerReturnType['new_item'];
+  variables: ServerParameters['new_item'];
+}
+
 interface UpdateMetatags<T = undefined> extends MutationAction<T> {
   type: MutatationType.UPDATE_METATAGS;
   dataType: ServerReturnType['update_metatags'];
@@ -470,6 +477,7 @@ interface ReIndex<T = undefined> extends MutationAction<T> {
 
 export type MutationActions<T = undefined> =
   | LoginAction<T>
+  | NewItem<T>
   | UpdateItem<T>
   | UpdateMetatags<T>
   | UpdateConfig<T>
