@@ -174,7 +174,7 @@ export function MainSidebar({
               icon={{ name: 'plus square', color: 'teal' }} // <-- use React.memo
             >{t`Import`}</SidebarItem>
           </div>
-          <div className="middle-aligned">
+          <div className="middle-aligned"></div>
             <SidebarItem
               href="/dashboard"
               icon={{ name: 'heart', color: 'red' }} // <-- use React.memo
@@ -191,8 +191,8 @@ export function MainSidebar({
           </div>
           <div className="bottom-aligned">
             <SidebarItem
-              href="/user"
-              icon={'user alternate'}>{t`You`}</SidebarItem>
+              href="/profile"
+              icon={'user alternate'}>{t`Profile`}</SidebarItem>
             <SettingsModal
               trigger={
                 <SidebarItem icon={'settings'}>{t`Preferences`}</SidebarItem>
