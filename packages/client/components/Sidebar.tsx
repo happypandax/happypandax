@@ -174,7 +174,7 @@ export function MainSidebar({
               icon={{ name: 'plus square', color: 'teal' }} // <-- use React.memo
             >{t`Import`}</SidebarItem>
           </div>
-          <div className="middle-aligned"></div>
+          <div className="middle-aligned">
             <SidebarItem
               href="/dashboard"
               icon={{ name: 'heart', color: 'red' }} // <-- use React.memo
