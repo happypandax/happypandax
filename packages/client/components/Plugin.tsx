@@ -109,8 +109,7 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
             <Label
               as={Button}
               color={siteOpen ? 'red' : 'blue'}
-              onClick={() => setSiteOpen(!siteOpen)}
-            >
+              onClick={() => setSiteOpen(!siteOpen)}>
               {siteOpen ? t`Close` : t`Open Plugin Site`}
             </Label>
           </Label.Group>
@@ -139,8 +138,7 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
           color="green"
           onClick={useCallback(() => {
             installPlugin({ plugin_id: plugin.id });
-          }, [plugin])}
-        >
+          }, [plugin])}>
           {isInstalling
             ? t`Installing...`
             : plugin.state === PluginState.Registered ||
@@ -160,8 +158,7 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
           }
           onClick={useCallback(() => {
             disablePlugin({ plugin_id: plugin.id });
-          }, [plugin])}
-        >
+          }, [plugin])}>
           {isDisabling
             ? t`Disabling...`
             : plugin.state === PluginState.Disabled
@@ -173,8 +170,7 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
           color="red"
           onClick={useCallback(() => {
             removePlugin({ plugin_id: plugin.id });
-          }, [plugin])}
-        >
+          }, [plugin])}>
           {isRemoving ? t`Removing...` : t`Remove`}
         </Button>
       </Button.Group>
@@ -182,7 +178,10 @@ export function Plugin({ plugin }: { plugin: PluginData }) {
   );
 }
 
-export function PluginAccordion(props: React.ComponentProps<typeof Plugin>) {
+export function PluginAccordion({
+  defaultVisible,
+  ...props
+}: React.ComponentProps<typeof Plugin> & { defaultVisible?: boolean }) {
   let color: SemanticCOLORS = 'grey';
 
   switch (props.plugin?.state) {
@@ -203,18 +202,23 @@ export function PluginAccordion(props: React.ComponentProps<typeof Plugin>) {
   return (
     <LabelAccordion
       clearing
+      defaultVisible={defaultVisible}
       secondary
       basic={false}
       label={props.plugin?.name}
       color={color}
-      detail={getPluginState(props.plugin?.state)}
-    >
+      detail={getPluginState(props.plugin?.state)}>
       <Plugin {...props} />
     </LabelAccordion>
   );
 }
 
-export function Plugins(props: React.ComponentProps<typeof Segment>) {
+export function Plugins({
+  defaultVisibleInactive,
+  ...props
+}: React.ComponentProps<typeof Segment> & {
+  defaultVisibleInactive?: boolean;
+}) {
   const { data, isLoading } = useQueryType(
     QueryType.PLUGINS,
     {},
@@ -229,7 +233,15 @@ export function Plugins(props: React.ComponentProps<typeof Segment>) {
       {data?.data
         ?.sort?.((a, b) => a.name.localeCompare(b.name))
         .map?.((plugin) => (
-          <PluginAccordion key={plugin.id} plugin={plugin} />
+          <PluginAccordion
+            defaultVisible={
+              defaultVisibleInactive
+                ? plugin.state !== PluginState.Enabled
+                : undefined
+            }
+            key={plugin.id}
+            plugin={plugin}
+          />
         ))}
     </Segment>
   );

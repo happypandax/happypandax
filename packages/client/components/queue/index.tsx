@@ -36,6 +36,8 @@ export function ItemQueueBase({
   running,
   log_type,
   queue_size,
+  logDefaultVisible = false,
+  logExpanded,
   finish_size,
   percent,
   active_size,
@@ -45,6 +47,8 @@ export function ItemQueueBase({
   Settings: React.ElementType;
   running: boolean;
   log_type: LogType;
+  logDefaultVisible?: boolean;
+  logExpanded?: boolean;
   queue_size: number;
   finish_size: number;
   percent: number;
@@ -57,7 +61,7 @@ export function ItemQueueBase({
   const [runningLoading, setRunningLoading] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
   const [active, setActive] = useState(true);
-  const [logVisible, setLogVisible] = useState(false);
+  const [logVisible, setLogVisible] = useState(logDefaultVisible);
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   const setDrawerSticky = useSetRecoilState(AppState.drawerSticky);
@@ -100,6 +104,8 @@ export function ItemQueueBase({
     onActive?.(active);
   }, [active]);
 
+  const _logExpanded = logExpanded ?? drawerExpanded;
+
   return (
     <>
       {!!Settings && (
@@ -118,8 +124,7 @@ export function ItemQueueBase({
             } else {
               startQueue.mutate({ queue_type });
             }
-          }, [active])}
-        >
+          }, [active])}>
           <Loader active={runningLoading} size="small" />
           <Icon
             name={active ? 'play' : 'pause'}
@@ -131,8 +136,7 @@ export function ItemQueueBase({
           disabled={clearLoading}
           onClick={useCallback(() => {
             clearQueue.mutate({ queue_type });
-          }, [])}
-        >
+          }, [])}>
           <Loader active={clearLoading} size="small" />
           <Icon name="remove" /> {t`Clear`}
         </Menu.Item>
@@ -146,19 +150,15 @@ export function ItemQueueBase({
         </Menu.Item>
         <Menu.Menu position="right">
           <Menu.Item
-            onClick={useCallback(
-              () => setLogVisible(!logVisible),
-              [logVisible]
-            )}
-          >
+            onClick={useCallback(() => setLogVisible(!logVisible), [
+              logVisible,
+            ])}>
             <Icon name={logVisible ? 'angle down' : 'angle right'} /> {t`Log`}
           </Menu.Item>
           <Menu.Item
-            onClick={useCallback(
-              () => setSettingsVisible(!settingsVisible),
-              [settingsVisible]
-            )}
-          >
+            onClick={useCallback(() => setSettingsVisible(!settingsVisible), [
+              settingsVisible,
+            ])}>
             <Icon name="setting" /> {t`Options`}
           </Menu.Item>
           {menuItems}
@@ -168,8 +168,8 @@ export function ItemQueueBase({
         <ServerLog
           type={log_type}
           className={classNames('no-margins', {
-            'max-300-h': drawerExpanded,
-            'max-100-h': !drawerExpanded,
+            'max-300-h': _logExpanded,
+            'max-100-h': !_logExpanded,
           })}
           attached="top"
         />
@@ -211,8 +211,7 @@ export const HandlerLabel = forwardRef(function HandlerLabel(
         basic
         color={disabled.includes(item.id) ? 'red' : 'green'}
         {...props}
-        size="small"
-      >
+        size="small">
         <DragItem />
         {item.index}
         <Label.Detail>
@@ -310,8 +309,7 @@ export const HandlerItem = forwardRef(function HandlerItem(
     <Ref innerRef={ref}>
       <List.Item
         {...props}
-        style={{ ...props?.style, display: 'flex', alignItems: 'center' }}
-      >
+        style={{ ...props?.style, display: 'flex', alignItems: 'center' }}>
         <DragItem />
 
         <List.Content>
@@ -349,8 +347,7 @@ export const HandlerItem = forwardRef(function HandlerItem(
                       getQueryTypeKey(QueryType.DOWNLOAD_INFO)
                     );
                   }, 500);
-                }, [value, disabled])}
-              >
+                }, [value, disabled])}>
                 {disabled ? t`Enable` : t`Disable`}
               </Label>
             </Label.Group>

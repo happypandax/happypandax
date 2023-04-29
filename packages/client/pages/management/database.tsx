@@ -1,5 +1,4 @@
 import { NextPageContext } from 'next';
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useLocalStorage, useUpdateEffect } from 'react-use';
 import { Button, Container, Dropdown, Segment, Tab } from 'semantic-ui-react';
@@ -12,6 +11,7 @@ import {
   useMutationType,
   useQueryType,
 } from '../../client/queries';
+import { PageTitle } from '../../components/misc';
 import { Progress } from '../../components/misc/Progress';
 import { ServiceType } from '../../server/constants';
 import { CommandState } from '../../shared/enums';
@@ -106,8 +106,7 @@ function SearchIndexPane() {
           primary
           onClick={() => {
             mutate({ limit: reindexLimit });
-          }}
-        >{t`Rebuild Index`}</Button>
+          }}>{t`Rebuild Index`}</Button>
         <Dropdown
           disabled={running}
           className="button icon"
@@ -165,10 +164,9 @@ const panes = [
 ];
 
 export default function Page({}: PageProps) {
-  const router = useRouter();
-
   return (
     <ManagementPage>
+      <PageTitle title={t`Database`} />
       <Container centered clearing as={Segment} basic>
         <Tab
           menu={{ stackable: true, className: 'tabs item three' }}

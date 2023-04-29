@@ -65,7 +65,7 @@ export default class PixieService extends Service {
 
   #session: string = '';
 
-  constructor(endpoint?: string, connections = 1) {
+  constructor(endpoint?: string, connections = 2) {
     super(ServiceType.Pixie);
     this.#connected = false;
     this.#endpoint = endpoint;

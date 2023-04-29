@@ -95,8 +95,7 @@ function DownloadItemCard({
                 warning={item.state === CommandState.Finished && !item.success}
                 indicating={item.active}
                 percent={item.active ? item.percent : 100}
-                active={item.active}
-              >
+                active={item.active}>
                 {lbl}
               </Progress>
             )}
@@ -246,7 +245,13 @@ function DownloadSettings(props: React.ComponentProps<typeof Modal>) {
   );
 }
 
-export function DownloadQueue() {
+export function DownloadQueue({
+  logDefaultVisible,
+  logExpanded,
+}: {
+  logDefaultVisible?: boolean;
+  logExpanded?: boolean;
+}) {
   const drawerTab = useRecoilValue(AppState.drawerTab);
 
   const [active, setActive] = useState(true);
@@ -302,8 +307,7 @@ export function DownloadQueue() {
               refetchQueueItems();
             },
             [url]
-          )}
-        >
+          )}>
           <Ref innerRef={ref}>
             <Form.Input
               name="url"
@@ -319,6 +323,8 @@ export function DownloadQueue() {
         </Form>
       </Segment>
       <ItemQueueBase
+        logDefaultVisible={logDefaultVisible}
+        logExpanded={logExpanded}
         queue_type={QueueType.Download}
         log_type={LogType.Download}
         Settings={DownloadSettings}

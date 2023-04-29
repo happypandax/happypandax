@@ -29,21 +29,41 @@ export default function ManagementPage({ children }: PageProps) {
     <PageLayout
       menu={useMemo(
         () => (
-          <MainMenu secondary={false} size="small" tabular stackable>
+          <MainMenu secondary={false} tabular stackable>
+            <Link href="/management/metadata" passHref>
+              <MenuItem
+                link
+                icon="cloud"
+                active={path === 'metadata'}>{t`Metadata`}</MenuItem>
+            </Link>
+            <Link href="/management/download" passHref>
+              <MenuItem
+                link
+                icon="download"
+                active={path === 'download'}>{t`Download`}</MenuItem>
+            </Link>
+            <Link href="/management/plugins" passHref>
+              <MenuItem
+                link
+                icon="cubes"
+                active={path === 'plugins'}>{t`Plugins`}</MenuItem>
+            </Link>
             <Link href="/management/database" passHref>
               <MenuItem
                 link
-                active={path === 'database'}
-              >{t`Database`}</MenuItem>
+                icon="database"
+                active={path === 'database'}>{t`Database`}</MenuItem>
             </Link>
             <Link href="/management/user" passHref>
-              <MenuItem link active={path === 'user'}>{t`User`}</MenuItem>
+              <MenuItem
+                link
+                icon="user"
+                active={path === 'user'}>{t`User`}</MenuItem>
             </Link>
           </MainMenu>
         ),
         []
-      )}
-    >
+      )}>
       <PageTitle title={t`Management`} />
       {children}
     </PageLayout>

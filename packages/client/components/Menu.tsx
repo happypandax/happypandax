@@ -15,12 +15,14 @@ import { NotificationAlert, NotificationsPopup } from './popup/Notification';
 export function MenuItem({
   className,
   icon,
+  size = 'large',
   children,
   ...props
 }: {
   icon?: SemanticICONS | IconProps;
   children?: React.ReactNode;
   className?: string;
+  size?: IconProps['size'];
 } & React.ComponentProps<typeof Menu.Item>) {
   //   const context = useContext(MenuContext);
 
@@ -28,7 +30,7 @@ export function MenuItem({
     <Menu.Item className={classNames(className)} {...props}>
       {!!icon && (
         <Icon
-          size="large"
+          size={size}
           {...(typeof icon === 'string' ? { name: icon } : icon)}
           className={classNames(
             'left',
@@ -187,8 +189,7 @@ export function MainMenu({
         {
           stackable2: stackable,
         }
-      )}
-    >
+      )}>
       {isStacking && (
         <Menu
           size={size}
@@ -196,8 +197,7 @@ export function MainMenu({
           secondary
           borderless={borderless}
           pointing={pointing}
-          tabular={tabular}
-        >
+          tabular={tabular}>
           {sidebarPosition === 'left' && <SidebarMenuItem />}
           {connectionItem && isFixed && fixed && <ConnectionItem />}
           {connectionItem && !isFixed && !fixed && <ConnectionItem />}

@@ -217,14 +217,19 @@ function MetadataItemActionContent({
               item_type: item.item_type,
               queue_type: QueueType.Metadata,
             });
-          }, [])}
-        >{t`Remove`}</Button>
+          }, [])}>{t`Remove`}</Button>
       </ItemCardActionContentItem>
     </ItemCardActionContent>
   );
 }
 
-export function MetadataQueue() {
+export function MetadataQueue({
+  logDefaultVisible,
+  logExpanded,
+}: {
+  logDefaultVisible?: boolean;
+  logExpanded?: boolean;
+}) {
   const [loading, setLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [active, setActive] = useState(true);
@@ -237,11 +242,7 @@ export function MetadataQueue() {
 
   const refetchEvery = addLoading ? 1500 : 3000;
 
-  const {
-    data: queueState,
-    refetch,
-    isLoading: isLoadingState,
-  } = useQueryType(
+  const { data: queueState, refetch, isLoading: isLoadingState } = useQueryType(
     QueryType.QUEUE_STATE,
     {
       queue_type: QueueType.Metadata,
@@ -391,6 +392,8 @@ export function MetadataQueue() {
         queue_type={QueueType.Metadata}
         log_type={LogType.Metadata}
         Settings={MetadataSettings}
+        logDefaultVisible={logDefaultVisible}
+        logExpanded={logExpanded}
         refetch={refetch}
         running={queueState?.data?.running}
         active_size={queueState?.data?.active_size}
@@ -407,8 +410,7 @@ export function MetadataQueue() {
               compact
               className="tiny"
               text={t`Add`}
-              upward={false}
-            >
+              upward={false}>
               <Dropdown.Menu>
                 <Dropdown.Item
                   onClick={() =>

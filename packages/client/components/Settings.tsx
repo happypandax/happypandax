@@ -24,7 +24,6 @@ import { defined } from '../shared/utility';
 import { AppState, MiscState } from '../state';
 import { JSONTextEditor } from './misc';
 import { ModalWithBack } from './misc/BackSupport';
-import { Plugins } from './Plugin';
 
 function namespaceExists(
   cfg: Record<string, any>,
@@ -62,8 +61,7 @@ export function IsolationLabel({
           ? 'teal'
           : 'black'
       }
-      {...props}
-    >
+      {...props}>
       {isolation === 'user'
         ? t`User`
         : isolation === 'client'
@@ -324,13 +322,11 @@ function GeneralPane() {
             ]}
             placeholder={t`Select language`}
             type="select"
-            optionChange={optionChange}
-          >
+            optionChange={optionChange}>
             <a
               href="https://happypandax.github.io/translation.html"
               target="_blank"
-              rel="noopener noreferrer"
-            >
+              rel="noopener noreferrer">
               {t`Not satisfied with the translation? Consider helping out! Click here for more information.`}
             </a>
           </OptionField>
@@ -459,82 +455,6 @@ function GeneralPane() {
 
 function NetworkPane() {
   return <Segment basic></Segment>;
-}
-
-function PluginsPane() {
-  const [cfg, setConfig] = useConfig({
-    'plugin.dev': undefined as boolean,
-    'plugin.auto_install_plugin_dependency': undefined as boolean,
-    'plugin.plugin_dir': undefined as string,
-    'plugin.check_plugin_release_interval': undefined as number,
-    'plugin.auto_install_plugin_release': undefined as boolean,
-    'plugin.check_new_plugin_releases': undefined as boolean,
-  });
-
-  const optionChange = useCallback(
-    function f<T extends typeof cfg, K extends keyof T>(key: K, value: T[K]) {
-      setConfig({ [key]: value });
-    },
-    [setConfig]
-  );
-
-  return (
-    <Segment basic>
-      <Form>
-        <Segment clearing>
-          <IsolationLabel attached="top left" isolation="server" />
-          <OptionField
-            label={t`Additional plugin directory to look for plugins`}
-            cfg={cfg}
-            nskey="plugin.plugin_dir"
-            type="string"
-            optionChange={optionChange}
-          />
-          <OptionField
-            label={t`Automatically install a plugin's dependencies when installing a plugin`}
-            cfg={cfg}
-            nskey="plugin.auto_install_plugin_dependency"
-            type="boolean"
-            optionChange={optionChange}
-          />
-          <OptionField
-            label={t`Regularly check plugins for updates`}
-            cfg={cfg}
-            nskey="plugin.check_new_plugin_releases"
-            type="boolean"
-            optionChange={optionChange}
-          />
-          <OptionField
-            label={t`Interval in minutes between checking for a new plugin update, set 0 to only check once every startup`}
-            cfg={cfg}
-            nskey="plugin.check_plugin_release_interval"
-            type="number"
-            inputLabel={t`minutes`}
-            optionChange={optionChange}
-          />
-          <OptionField
-            label={t`Automatically download and install new plugin updates`}
-            cfg={cfg}
-            nskey="plugin.auto_install_plugin_release"
-            type="boolean"
-            optionChange={optionChange}
-          />
-          <OptionField
-            label={t`Enable plugin development mode`}
-            cfg={cfg}
-            nskey="plugin.dev"
-            type="boolean"
-            optionChange={optionChange}
-          />
-        </Segment>
-      </Form>
-      <Header size="small" dividing>
-        <IsolationLabel isolation="server" />
-        {t`Plugins`}
-      </Header>
-      <Plugins basic className="no-padding-segment" />
-    </Segment>
-  );
 }
 
 function ServerPane() {
@@ -1064,8 +984,7 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment"
-                >
+                  className="no-padding-segment">
                   <GeneralPane />
                 </Tab.Pane>
               ),
@@ -1080,25 +999,8 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment"
-                >
+                  className="no-padding-segment">
                   <ImportPane />
-                </Tab.Pane>
-              ),
-            },
-            {
-              menuItem: {
-                key: 'plugins',
-                icon: 'cubes',
-                content: t`Plugins`,
-              },
-              render: () => (
-                <Tab.Pane
-                  attached={undefined}
-                  basic
-                  className="no-padding-segment"
-                >
-                  <PluginsPane />
                 </Tab.Pane>
               ),
             },
@@ -1112,8 +1014,7 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment"
-                >
+                  className="no-padding-segment">
                   <NetworkPane />
                 </Tab.Pane>
               ),
@@ -1128,8 +1029,7 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment"
-                >
+                  className="no-padding-segment">
                   <ServerPane />
                 </Tab.Pane>
               ),
@@ -1144,8 +1044,7 @@ export function SettingsTab() {
                 <Tab.Pane
                   attached={undefined}
                   basic
-                  className="no-padding-segment"
-                >
+                  className="no-padding-segment">
                   <AdvancedPane />
                 </Tab.Pane>
               ),
@@ -1166,8 +1065,7 @@ function RestartNeededSegment({ settings = [] }: { settings: string[] }) {
       attached="top"
       tertiary
       className="no-margins"
-      warning
-    >
+      warning>
       <Icon name="warning circle" />
       {t`Some settings require a server restart to take effect.`}
     </Message>
@@ -1211,8 +1109,7 @@ export default function SettingsModal({
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
       {...props}
-      className={classNames('min-400-h', className)}
-    >
+      className={classNames('min-400-h', className)}>
       <Modal.Header>
         <Icon name="settings" />
         {t`Preferences`}
