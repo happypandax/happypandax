@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import _ from 'lodash';
 import React, {
   useCallback,
   useContext,
@@ -67,8 +66,7 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
         className={classNames(
           styles.searchline,
           'small-padding-segment no-margins'
-        )}
-      >
+        )}>
         <Icon
           name="heart"
           color="red"
@@ -82,8 +80,7 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
           slidesPerView={'auto'}
           freeMode
           mousewheel
-          spaceBetween={0}
-        >
+          spaceBetween={0}>
           <SwiperSlide className={styles.tagsline_swipeslide}>
             <Label.Group className={classNames(styles.tagsline_labels)}>
               {data?.data?.items?.map?.((t: ServerNamespaceTag) => {
@@ -107,8 +104,7 @@ function TagsLine({ onClick }: { onClick: (text: string) => void }) {
                       const n = tag ? `"${ns}":"${tag}"` : `"${ns}"`;
                       ev.preventDefault();
                       onClick?.(n);
-                    }}
-                  >
+                    }}>
                     {ns}
                     {!!tag && <Label.Detail>{tag}</Label.Detail>}
                   </Label>
@@ -143,8 +139,7 @@ function RecentSearch({ onClick }: { onClick: (text: string) => void }) {
         className={classNames(
           styles.searchline,
           'small-padding-segment no-margins'
-        )}
-      >
+        )}>
         <Icon
           name="history"
           size="small"
@@ -187,15 +182,13 @@ function SearchResult({
         },
         [text, onClick]
       )}
-      className={classNames('no-left-padding no-left-margin', className)}
-    >
+      className={classNames('no-left-padding no-left-margin', className)}>
       <Label
         className={classNames('no-left-margin')}
         basic={basic}
         size="small"
         color={color}
-        {...props}
-      >
+        {...props}>
         {type}
       </Label>
       <span className="small-padding-segment">{children}</span>
@@ -215,8 +208,7 @@ function ArtistSearchResult({
       type={t`Artist`}
       color="blue"
       onClick={onClick}
-      text={`artist:"${item?.names?.[0]?.name}"`}
-    >
+      text={`artist:"${item?.names?.[0]?.name}"`}>
       {item?.names?.[0]?.name}
     </SearchResult>
   );
@@ -276,33 +268,33 @@ function SearchResults({
     }
   );
 
-  const searchItems = useCallback(
-    _.debounce((query: string, position: number) => {
-      if (query) {
-        const t = replaceTextAtPosition(query, '', position, {
-          quotation: true,
-        });
+  const searchItems = useCallback((query: string, position: number) => {
+    if (query) {
+      const t = replaceTextAtPosition(query, '', position, {
+        quotation: true,
+      });
 
-        const q = query.slice(t.startPosition, t.endPosition);
+      const q = query.slice(t.startPosition, t.endPosition);
 
-        setSearchQuery(q.toString());
-      }
-    }, 150),
-    []
+      setSearchQuery(q.toString());
+    }
+  }, []);
+
+  useDebounce(
+    () => {
+      const target = context.ref.current.querySelector('input');
+      searchItems(context.query, target.selectionStart);
+    },
+    300,
+    [context.query]
   );
-
-  useEffect(() => {
-    const target = context.ref.current.querySelector('input');
-    searchItems(context.query, target.selectionStart);
-  }, [context.query]);
 
   return (
     <Segment
       onClick={onClick}
       onContextMenu={onClick}
       basic
-      className={classNames('no-margins no-padding-segment')}
-    >
+      className={classNames('no-margins no-padding-segment')}>
       <TagsLine onClick={onSelect} />
       <RecentSearch onClick={onSelect} />
       <List
@@ -310,8 +302,7 @@ function SearchResults({
         divided
         verticalAlign="middle"
         selection
-        className="no-margins small-padding-segment max-200-h overflow-y-auto"
-      >
+        className="no-margins small-padding-segment max-200-h overflow-y-auto">
         {!!context.query &&
           data?.data?.items?.map?.((i) => {
             const color = itemColor(i.__type__);
@@ -363,8 +354,7 @@ function SearchResults({
                     onClick={onSelect}
                     basic={basic}
                     text={text}
-                    color={color}
-                  >
+                    color={color}>
                     {i?.name}
                   </SearchResult>
                 );
@@ -431,8 +421,7 @@ function SearchOptions({
       }
       hoverable
       on="click"
-      hideOnScroll
-    >
+      hideOnScroll>
       <List>
         <List.Item>
           <Checkbox
@@ -597,10 +586,10 @@ export function ItemSearch({
   const onSubmit = useCallback(
     (ev?) => {
       ev?.preventDefault?.();
-      onSearch?.(deferredQuery, {});
+      onSearch?.(query, {});
       setFocused(false);
     },
-    [deferredQuery]
+    [query]
   );
 
   const onClear = useCallback(() => {
@@ -635,11 +624,11 @@ export function ItemSearch({
       }
     },
     debounce,
-    [dynamic, deferredQuery, onSubmit]
+    [dynamic, onSubmit]
   );
 
   useEffect(() => {
-    if (deferredQuery) {
+    if (query) {
       onSubmit();
     }
   }, [options]);
@@ -648,21 +637,16 @@ export function ItemSearch({
     (text) => {
       const target = ref.current.querySelector('input');
       target.focus();
-      const t = replaceTextAtPosition(
-        deferredQuery,
-        text,
-        target.selectionStart,
-        {
-          quotation: true,
-        }
-      );
+      const t = replaceTextAtPosition(query, text, target.selectionStart, {
+        quotation: true,
+      });
       target.value = t.text;
       target.focus();
       //   document.getSelection().collapse(ref.current, t.newPosition)
       target.setSelectionRange(t.newEndPosition, t.newEndPosition);
       setQuery(t.text);
     },
-    [deferredQuery]
+    [query]
   );
 
   const optionsEl = useMemo(
@@ -679,15 +663,12 @@ export function ItemSearch({
 
   return (
     <SearchContext.Provider
-      value={useMemo(
-        () => ({ query: deferredQuery, stateKey, ref }),
-        [deferredQuery]
-      )}
-    >
+      value={useMemo(() => ({ query: deferredQuery, stateKey, ref }), [
+        deferredQuery,
+      ])}>
       <form
         onSubmit={onSubmit}
-        className={classNames({ fullwidth: fluid }, className)}
-      >
+        className={classNames({ fullwidth: fluid }, className)}>
         <div className={classNames('ui search', size, { fluid })}>
           <Ref innerRef={ref}>
             <Input
@@ -702,7 +683,7 @@ export function ItemSearch({
                 []
               )}
               tabIndex={0}
-              value={deferredQuery}
+              value={query}
               onChange={useCallback((ev, d) => {
                 ev.preventDefault();
                 setFocused(true);
@@ -714,8 +695,7 @@ export function ItemSearch({
             <div
               className={classNames('results transition', {
                 visible: resultsVisible,
-              })}
-            >
+              })}>
               <SearchResults
                 itemTypes={itemTypes}
                 onClick={onSearchResultClick}
