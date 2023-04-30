@@ -96,11 +96,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: Install global dependencies
-        run: |
-          npm install -g rimraf cross-env gulp@4
       - name: Install dependencies
-        run: yarn workspaces focus --production
+        run: yarn install --immutable
       - name: Build
         run: |
           yarn run:client build:css
