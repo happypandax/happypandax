@@ -81,6 +81,7 @@
     "swiper": "^9.0.5",
     "ts-custom-error": "^3.3.1",
     "ts-jest": "^27.0.5",
+    "nexe": "^4.0.0-rc.2",
     "ttag": "^1.7.24",
     "webpack-merge": "^5.8.0",
     "zeromq": "6.0.0-beta.16"
@@ -117,7 +118,7 @@
     "gulp": "^4.0.2",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.0.6",
-    "nexe": "^4.0.0-rc.2",
+    
     "storybook-addon-themes": "^6.1.0",
     "storybook-css-modules-preset": "^1.0.8",
     "ts-deep-pick": "^0.2.2",
