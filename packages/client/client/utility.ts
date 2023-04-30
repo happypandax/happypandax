@@ -13,11 +13,11 @@ Marked.setOptions({
   renderer: new Renderer(),
   gfm: true,
   tables: true,
-  breaks: false,
+  breaks: true,
   pedantic: false,
   sanitize: false,
   smartLists: true,
-  smartypants: false,
+  smartypants: true,
 });
 
 extend(
@@ -37,11 +37,11 @@ extend('$removeIndex', function (value: number, original: any[]) {
 
 interface UpdateCommands<T> {
   $insert: T extends Array<infer U> | ReadonlyArray<infer U>
-    ? [index: number, value: any]
-    : never;
+  ? [index: number, value: any]
+  : never;
   $removeIndex: T extends Array<infer U> | ReadonlyArray<infer U>
-    ? number
-    : never;
+  ? number
+  : never;
 }
 
 export function update<T>(
@@ -85,9 +85,9 @@ export function isElementInViewport(
     rect.bottom >= 0 - offset &&
     rect.right >= 0 - offset &&
     rect.top <=
-      (window.innerHeight || document.documentElement.clientHeight) + offset &&
+    (window.innerHeight || document.documentElement.clientHeight) + offset &&
     rect.left <=
-      (window.innerWidth || document.documentElement.clientWidth) + offset
+    (window.innerWidth || document.documentElement.clientWidth) + offset
   );
 }
 

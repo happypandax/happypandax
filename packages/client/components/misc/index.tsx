@@ -211,6 +211,7 @@ export function TitleSegment({
   title,
   headerSize,
   children,
+  titleContent,
   icon,
   as,
 }: {
@@ -219,10 +220,12 @@ export function TitleSegment({
   as?: React.ElementType;
   headerSize?: React.ComponentProps<typeof Header>['size'];
   children?: React.ReactNode;
+  titleContent?: React.ReactNode;
 }) {
   return (
     <>
       <Header size={headerSize}>
+        {titleContent}
         {!!icon && <Icon name={icon} />}
         {title}
       </Header>

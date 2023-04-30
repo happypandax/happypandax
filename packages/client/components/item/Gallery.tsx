@@ -5,7 +5,11 @@ import { Button, Icon, Label, Popup } from 'semantic-ui-react';
 
 import { ItemActions } from '../../client/actions/item';
 import { useLibraryContext } from '../../client/context';
-import { useSetupDataState, useUpdateDataState } from '../../client/hooks/item';
+import {
+  useAddToQueue,
+  useSetupDataState,
+  useUpdateDataState,
+} from '../../client/hooks/item';
 import t from '../../client/lang';
 import { ItemType } from '../../shared/enums';
 import {
@@ -92,13 +96,11 @@ export function ReadButton({
 
   return (
     <Link
-      href={useMemo(
-        () => ({ pathname: `/item/gallery/${data?.id}/page/1` }),
-        [data]
-      )}
+      href={useMemo(() => ({ pathname: `/item/gallery/${data?.id}/page/1` }), [
+        data,
+      ])}
       passHref
-      legacyBehavior
-    >
+      legacyBehavior>
       <Button
         as="a"
         primary
@@ -108,8 +110,7 @@ export function ReadButton({
             e.preventDefault();
           }
         }, [])}
-        {...props}
-      >
+        {...props}>
         <Icon className="book open" />
         {t`Read`}
       </Button>
@@ -132,8 +133,7 @@ export function ContinueButton({
         [data]
       )}
       passHref
-      legacyBehavior
-    >
+      legacyBehavior>
       <Button as="a" color="orange" size="mini" {...props}>
         <Icon name="play" />
         {t`Continue`}
@@ -184,24 +184,68 @@ export function SendToLibraryButton({
 export function GalleryMenu({
   hasProgress,
   read,
+  data,
   trigger,
 }: {
   hasProgress: boolean;
   read: boolean;
+  data: DeepPick<GalleryCardData, 'id' | 'progress.page.number'>;
   trigger?: React.ComponentProps<typeof ItemMenuLabel>['trigger'];
 }) {
+  const { toggle: toggleToQueue, exists: existsInQueue } = useAddToQueue({
+    data,
+    itemType: ItemType.Gallery,
+  });
+
   return (
     <ItemMenuLabel trigger={trigger}>
-      {!hasProgress && (
+      {hasProgress && (
         <>
-          <ItemMenuLabelItem icon="book open">{t`Read`}</ItemMenuLabelItem>
-          <ItemMenuLabelItem icon="book open">{t`Read in new tab`}</ItemMenuLabelItem>
+          <Link
+            href={{
+              pathname: `/item/gallery/${data?.id}/page/${data.progress.page.number}`,
+            }}
+            passHref
+            legacyBehavior>
+            <ItemMenuLabelItem
+              as="a"
+              icon="play">{t`Continue reading`}</ItemMenuLabelItem>
+          </Link>
+          <Link
+            href={{
+              pathname: `/item/gallery/${data?.id}/page/${data.progress.page.number}`,
+            }}
+            passHref
+            legacyBehavior>
+            <ItemMenuLabelItem
+              as="a"
+              target="_blank"
+              icon="play">{t`Continue in new tab`}</ItemMenuLabelItem>
+          </Link>
         </>
       )}
-      {hasProgress && (
-        <ItemMenuLabelItem icon="play">{t`Continue reading`}</ItemMenuLabelItem>
-      )}
-      <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
+      <>
+        <Link
+          href={{ pathname: `/item/gallery/${data?.id}/page/1` }}
+          passHref
+          legacyBehavior>
+          <ItemMenuLabelItem
+            as="a"
+            icon="book open">{t`Read`}</ItemMenuLabelItem>
+        </Link>
+        <Link
+          href={{ pathname: `/item/gallery/${data?.id}/page/1` }}
+          passHref
+          legacyBehavior>
+          <ItemMenuLabelItem
+            as="a"
+            target="_blank"
+            icon="book open">{t`Read in new tab`}</ItemMenuLabelItem>
+        </Link>
+      </>
+      <ItemMenuLabelItem onClick={toggleToQueue} icon="plus">
+        {existsInQueue ? t`Remove from queue` : t`Add to queue`}{' '}
+      </ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="exchange">{t`Show activity`}</ItemMenuLabelItem>
       {!read && (
@@ -387,6 +431,7 @@ export function GalleryCard({
               <TranslucentLabel circular>{data?.page_count}</TranslucentLabel>
             )}
             <GalleryMenu
+              data={data}
               hasProgress={hasProgress}
               read={data?.metatags?.read}
             />
@@ -412,16 +457,14 @@ export function GalleryCard({
           <ItemCardImage src={data?.profile}>{children}</ItemCardImage>
         ),
         [data.profile]
-      )}
-    >
+      )}>
       <ItemCardContent
         title={data?.preferred_title?.name ?? ''}
         subtitle={data?.artists.map((a) => (
           <span key={a.id}>
             {blur ? maskText(a.preferred_name.name) : a.preferred_name.name}
           </span>
-        ))}
-      ></ItemCardContent>
+        ))}></ItemCardContent>
     </ItemCard>
   );
 }

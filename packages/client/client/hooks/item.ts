@@ -1,14 +1,16 @@
 import _ from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SetterOrUpdater, useRecoilState } from 'recoil';
 
 import { ItemType } from '../../shared/enums';
 import { ServerItem, ServerItemWithProfile } from '../../shared/types';
-import { DataState } from '../../state';
+import { AppState, DataState } from '../../state';
 import { DataContextT, useDataContext } from '../context';
 import { update } from '../utility';
 import { useSetting } from './settings';
 
+import type { GalleryCardData } from '../../components/item/Gallery';
+import type { GroupingCardData } from '../../components/item/Grouping';
 const defaultImage = '/img/default.png';
 const errorImage = '/img/error-image.png';
 const noImage = '/img/no-image.png';
@@ -26,10 +28,10 @@ export function useImage(initialSrc?: ImageSource) {
     const s = !initialSrc
       ? noImage
       : typeof initialSrc === 'string'
-      ? initialSrc
-      : initialSrc.data
-      ? initialSrc.data
-      : noImage;
+        ? initialSrc
+        : initialSrc.data
+          ? initialSrc.data
+          : noImage;
 
     if (loaded) {
       return s;
@@ -129,4 +131,47 @@ export function useUpdateRecentlyViewedItem(id: number, type: ItemType) {
       setRecents(newRecents.slice(0, count));
     }
   }, [id, type, typeof recents === 'boolean']);
+}
+
+export function useAddToQueue<T extends ItemType>({ itemType, data }: {
+  itemType: ItemType;
+  data: T extends ItemType.Gallery ? DeepPick<GalleryCardData, 'id'> : DeepPick<GroupingCardData, 'id' | 'galleries'>
+}) {
+  const [readingQueue, setReadingQueue] = useRecoilState(AppState.readingQueue);
+
+  const exists =
+    itemType === ItemType.Gallery
+      ? readingQueue.includes(data.id)
+      : data?.galleries?.every?.((g) => readingQueue.includes(g.id));
+
+  const toggle = useCallback(
+    (e = undefined) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+
+      let list = readingQueue;
+
+      const d =
+        itemType === ItemType.Gallery
+          ? [data]
+          : (data?.galleries as GalleryCardData[]) ?? [];
+
+      d.forEach((g) => {
+        if (exists) {
+          list = list.filter((i) => i !== g.id);
+        } else {
+          list = [...list, g.id];
+        }
+      });
+
+      setReadingQueue(list);
+    },
+    [data, readingQueue]
+  )
+
+  return {
+    exists,
+    toggle,
+  }
+
 }

@@ -29,11 +29,34 @@ export default function MarkdownEditor({
       onChange?.(v);
     },
     extensions: [
-      Document,
+      Document.extend({
+        addKeyboardShortcuts() {
+          return {
+            Tab: () => {
+              this.editor
+                .chain()
+                .command(({ tr }) => {
+                  tr.insertText('  ');
+
+                  return true;
+                })
+                .run();
+
+              return true; // <- make sure to return true to prevent the tab from blurring.
+            },
+          };
+        },
+      }),
       Text,
       Paragraph,
       History,
-      HardBreak,
+      HardBreak.extend({
+        addKeyboardShortcuts() {
+          return {
+            Enter: () => this.editor.commands.setHardBreak(),
+          };
+        },
+      }),
       Placeholder.configure({
         placeholder: t`Markdown is supported.`,
         emptyNodeClass: styles.is_editor_empty,
@@ -44,7 +67,8 @@ export default function MarkdownEditor({
 
   useEffect(() => {
     if (editor && content !== undefined && content !== editor.getText()) {
-      // eplace all newlines with <br>
+      // replace all newlines with <br>
+
       const c = content?.replace?.(/\n/g, '<br />');
 
       editor.commands.setContent(c ?? '');

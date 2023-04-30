@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Form, Header, Icon, Modal, Segment } from 'semantic-ui-react';
+import { Card, Form, Header, Icon, Modal } from 'semantic-ui-react';
 
 import { ItemActions } from '../client/actions/item';
 import t from '../client/lang';
@@ -12,9 +12,11 @@ import MarkdownEditor from './misc/MarkdownEditor';
 export function NoteForm({
   data,
   onData,
+  onCancel,
 }: {
   data?: Partial<ServerNote>;
   onData?: (data: Partial<ServerNote>) => void;
+  onCancel?: () => void;
 }) {
   const [formData, setFormData] = useState<Partial<ServerNote>>(data ?? {});
 
@@ -27,32 +29,32 @@ export function NoteForm({
   );
 
   return (
-    <Segment basic>
-      <Header>{data ? t`Edit note` : t`Create new note`}</Header>
-      <Form onSubmit={onSubmit}>
-        <Form.Input
-          fluid
-          label={t`Title`}
-          placeholder={t`Title`}
-          value={formData?.title ?? ''}
-          onChange={(e) => {
-            setFormData({ ...formData, title: e.target.value });
+    <Form onSubmit={onSubmit}>
+      <Form.Input
+        fluid
+        label={t`Title`}
+        placeholder={t`Title`}
+        value={formData?.title ?? ''}
+        onChange={(e) => {
+          setFormData({ ...formData, title: e.target.value });
+        }}
+      />
+      <Form.Field>
+        <label>{t`Content`}</label>
+        <MarkdownEditor
+          content={formData?.content ?? ''}
+          onChange={(v) => {
+            setFormData({ ...formData, content: v });
           }}
         />
-        <Form.Field>
-          <label>{t`Content`}</label>
-          <MarkdownEditor
-            content={formData?.content ?? ''}
-            onChange={(v) => {
-              setFormData({ ...formData, content: v });
-            }}
-          />
-        </Form.Field>
+      </Form.Field>
+      <Form.Group>
         <Form.Button primary type="submit">
-          Submit
+          {t`Submit`}
         </Form.Button>
-      </Form>
-    </Segment>
+        <Form.Button onClick={onCancel} type="button">{t`Cancel`}</Form.Button>
+      </Form.Group>
+    </Form>
   );
 }
 
@@ -64,7 +66,7 @@ export default function Note({
   onUpdated?: (data: Partial<ServerNote>) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [edit, setEdit] = useState(false);
   const [data, setData] = useState(initalData ?? {});
 
   useEffect(() => {
@@ -85,49 +87,44 @@ export default function Note({
         open={open}
         onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}>
-        <Modal.Header>{data?.title}</Modal.Header>
+        <Modal.Header>
+          {edit ? t`Edit note` : data?.title}
+          <Icon
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setEdit(true);
+            }}
+            name="pencil"
+            link
+            size="small"
+            className="float-right"
+          />
+        </Modal.Header>
         <Modal.Content>
-          <Markdown>{data?.content}</Markdown>
+          {edit && (
+            <NoteForm
+              data={data}
+              onCancel={() => setEdit(false)}
+              onData={(v) => {
+                ItemActions.updateItem(data?.id, v, {
+                  item_type: ItemType.Note,
+                  item: v,
+                }).then(() => onUpdated?.(v));
+                setEdit(false);
+              }}
+            />
+          )}
+          {!edit && <Markdown>{data?.content}</Markdown>}
         </Modal.Content>
       </ModalWithBack>
-      <ModalWithBack
-        open={editOpen}
-        onOpen={() => setEditOpen(true)}
-        onClose={() => setEditOpen(false)}
-        closeIcon
-        content={
-          <NoteForm
-            data={data}
-            onData={(v) => {
-              ItemActions.updateItem(data?.id, v, {
-                item_type: ItemType.Note,
-                item: v,
-              }).then(() => onUpdated?.(v));
-              setEditOpen(false);
-            }}
-          />
-        }
-      />
       <Card
         onClick={(e) => {
           e.preventDefault();
           setOpen(true);
         }}>
         <Card.Content>
-          <Card.Header>
-            {data?.title}
-            <Icon
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setEditOpen(true);
-              }}
-              name="pencil"
-              link
-              size="small"
-              className="float-right"
-            />
-          </Card.Header>
+          <Card.Header>{data?.title}</Card.Header>
           {/* <Card.Meta>Friends of Elliot</Card.Meta> */}
           <Card.Description>
             <span

@@ -74,38 +74,30 @@ export default function Page({ notes: initialNotes }: PageProps) {
       <PageTitle title={t`User`} />
       <TitleSegment
         icon="sticky note outline"
-        title={
-          <>
-            <span>
-              <ModalWithBack
-                closeIcon
-                onOpen={() => setNewNoteOpen(true)}
-                onClose={() => setNewNoteOpen(false)}
-                open={newNoteOpen}
-                trigger={
-                  <Button
-                    basic
-                    primary
-                    icon="plus"
-                    size="tiny"
-                    floated="right"
-                  />
-                }
-                content={
-                  <NoteForm
-                    onData={(v) => {
-                      ItemActions.newItem(v, {
-                        item_type: ItemType.Note,
-                      }).then(() => refetchNotes());
-                      setNewNoteOpen(false);
-                    }}
-                  />
-                }
-              />
-            </span>
-            <Header.Content>{t`Notes`}</Header.Content>
-          </>
-        }>
+        titleContent={
+          <span className="float-right">
+            <ModalWithBack
+              closeIcon
+              onOpen={() => setNewNoteOpen(true)}
+              onClose={() => setNewNoteOpen(false)}
+              open={newNoteOpen}
+              trigger={
+                <Button basic primary icon="plus" size="tiny" floated="right" />
+              }
+              content={
+                <NoteForm
+                  onData={(v) => {
+                    ItemActions.newItem(v, {
+                      item_type: ItemType.Note,
+                    }).then(() => refetchNotes());
+                    setNewNoteOpen(false);
+                  }}
+                />
+              }
+            />
+          </span>
+        }
+        title={<Header.Content>{t`Notes`}</Header.Content>}>
         {!notes?.items?.length && <EmptySegment />}
         <NoteGroup>
           {notes?.items
