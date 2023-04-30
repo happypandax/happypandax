@@ -1,9 +1,10 @@
 import classNames from 'classnames';
 import _ from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { Divider, Popup, Segment } from 'semantic-ui-react';
 
+import { useAddToQueue } from '../../client/hooks/item';
 import t from '../../client/lang';
 import { ItemType } from '../../shared/enums';
 import {
@@ -50,10 +51,29 @@ export const groupingCardDataFields: FieldPath<ServerGrouping>[] = [
   ...(galleryCardDataFields.map((f) => 'galleries.' + f) as any),
 ];
 
-function GroupingMenu({}: { hasProgress: boolean; read: boolean }) {
+function GroupingMenu({ data }: { data: GroupingCardData }) {
+  const [menuOpen, setMenuOpen] = useState(undefined);
+
+  const { toggle: toggleToQueue, exists: existsInQueue } = useAddToQueue({
+    data,
+    itemType: ItemType.Grouping,
+  });
+
   return (
-    <ItemMenuLabel>
-      <ItemMenuLabelItem icon="plus">{t`Add to queue`}</ItemMenuLabelItem>
+    <ItemMenuLabel
+      open={menuOpen}
+      onClose={() => setMenuOpen(false)}
+      onOpen={() => setMenuOpen(true)}>
+      <ItemMenuLabelItem
+        icon={existsInQueue ? 'minus' : 'plus'}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleToQueue();
+          setMenuOpen(false);
+        }}>
+        {existsInQueue ? t`Remove from queue` : t`Add to queue`}
+      </ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="trash">{t`Delete`}</ItemMenuLabelItem>
     </ItemMenuLabel>
@@ -157,7 +177,7 @@ export function GroupingCard({
                   {data?.gallery_count}
                 </TranslucentLabel>
               )}
-              <GroupingMenu />
+              <GroupingMenu data={data} />
             </ItemLabel>,
           ],
     [horizontal, data, readingQueue]
@@ -213,19 +233,16 @@ export function GroupingCard({
           disableModal={true}
           actionContent={actionContent ?? actions}
           labels={labels}
-          image={image}
-        >
+          image={image}>
           <ItemCardContent
             title={data?.name ?? ''}
             subtitle={artists.map((a) => (
               <span key={a.id}>
                 {blur ? maskText(a.preferred_name.name) : a.preferred_name.name}
               </span>
-            ))}
-          ></ItemCardContent>
+            ))}></ItemCardContent>
         </ItemCard>
-      }
-    >
+      }>
       <GroupingContent horizontal={horizontal} data={data} />
     </Popup>
   );

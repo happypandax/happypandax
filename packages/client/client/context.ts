@@ -72,8 +72,6 @@ export const ItemContext = React.createContext({
   isDragging: false,
   alternative: false,
   showMiniActionContent: undefined as boolean,
-  openMenu: false,
-  onMenuClose: undefined as () => void,
   size: 'medium' as ItemSize,
   AlternativeContent: undefined as React.ElementType,
   ActionContent: undefined as React.ElementType,

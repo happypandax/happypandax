@@ -249,29 +249,39 @@ export function ItemMenuLabelItem({
 export function ItemMenuLabel({
   children,
   trigger,
+  onClose,
+  onOpen,
+  open,
 }: {
   children: React.ReactNode | React.ReactNode[];
   trigger?: React.ComponentProps<typeof Popup>['trigger'];
+  open?: React.ComponentProps<typeof Popup>['open'];
+  onClose?: React.ComponentProps<typeof Popup>['onClose'];
+  onOpen?: React.ComponentProps<typeof Popup>['onOpen'];
 }) {
-  const { openMenu, onMenuClose, size } = useContext(ItemContext);
+  const { size } = useContext(ItemContext);
 
   return (
     <Popup
       hoverable
-      onOpen={useCallback((e) => {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-      }, [])}
-      on="click"
-      open={openMenu ? openMenu : undefined}
-      hideOnScroll
-      onClose={useCallback(
-        (e) => {
+      onOpen={useCallback(
+        (e, d) => {
           e?.preventDefault?.();
           e?.stopPropagation?.();
-          onMenuClose?.();
+          onOpen?.(e, d);
         },
-        [onMenuClose]
+        [onOpen]
+      )}
+      on="click"
+      open={open}
+      hideOnScroll
+      onClose={useCallback(
+        (e, d) => {
+          e?.preventDefault?.();
+          e?.stopPropagation?.();
+          onClose?.(e, d);
+        },
+        [onClose]
       )}
       position="right center"
       trigger={useMemo(
@@ -286,7 +296,10 @@ export function ItemMenuLabel({
                   ? 'small'
                   : undefined
               }
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                onOpen?.(e, { open: false });
+              }}
             />
           ),
         [trigger]
@@ -697,7 +710,6 @@ export const ItemCard = React.forwardRef(
     forwardRef
   ) => {
     const [hover, setHover] = useState(false);
-    const [openMenu, setOpenMenu] = useState(false);
     const itemContext = useContext(ItemContext);
     const setDrawerOpen = useSetRecoilState(AppState.drawerOpen);
     const ref = useRef();
@@ -737,21 +749,15 @@ export const ItemCard = React.forwardRef(
       )
     ) : undefined;
 
-    const onMenuClose = useCallback(() => {
-      setOpenMenu(false);
-    }, []);
-
     const el = (
       <ItemContext.Provider
         value={{
           ...itemContext,
           isDragging,
-          onMenuClose,
           hover,
           href,
           disableModal,
           showMiniActionContent,
-          openMenu,
           alternative,
           onDetailsOpen,
           Details,

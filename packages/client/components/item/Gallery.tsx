@@ -185,25 +185,28 @@ export function GalleryMenu({
   hasProgress,
   read,
   data,
-  trigger,
 }: {
   hasProgress: boolean;
   read: boolean;
   data: DeepPick<GalleryCardData, 'id' | 'progress.page.number'>;
-  trigger?: React.ComponentProps<typeof ItemMenuLabel>['trigger'];
 }) {
+  const [menuOpen, setMenuOpen] = useState(undefined);
+
   const { toggle: toggleToQueue, exists: existsInQueue } = useAddToQueue({
     data,
     itemType: ItemType.Gallery,
   });
 
   return (
-    <ItemMenuLabel trigger={trigger}>
+    <ItemMenuLabel
+      open={menuOpen}
+      onClose={() => setMenuOpen(false)}
+      onOpen={() => setMenuOpen(true)}>
       {hasProgress && (
         <>
           <Link
             href={{
-              pathname: `/item/gallery/${data?.id}/page/${data.progress.page.number}`,
+              pathname: `/item/gallery/${data?.id}/page/${data?.progress?.page?.number}`,
             }}
             passHref
             legacyBehavior>
@@ -213,7 +216,7 @@ export function GalleryMenu({
           </Link>
           <Link
             href={{
-              pathname: `/item/gallery/${data?.id}/page/${data.progress.page.number}`,
+              pathname: `/item/gallery/${data?.id}/page/${data?.progress?.page?.number}`,
             }}
             passHref
             legacyBehavior>
@@ -243,8 +246,15 @@ export function GalleryMenu({
             icon="book open">{t`Read in new tab`}</ItemMenuLabelItem>
         </Link>
       </>
-      <ItemMenuLabelItem onClick={toggleToQueue} icon="plus">
-        {existsInQueue ? t`Remove from queue` : t`Add to queue`}{' '}
+      <ItemMenuLabelItem
+        icon={existsInQueue ? 'minus' : 'plus'}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleToQueue();
+          setMenuOpen(false);
+        }}>
+        {existsInQueue ? t`Remove from queue` : t`Add to queue`}
       </ItemMenuLabelItem>
       <ItemMenuLabelItem icon="pencil">{t`Edit`}</ItemMenuLabelItem>
       <ItemMenuLabelItem icon="exchange">{t`Show activity`}</ItemMenuLabelItem>

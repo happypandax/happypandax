@@ -130,7 +130,7 @@ export function QueueBoard({}: {}) {
     setItems([]);
   }, []);
 
-  const ritems = items.slice().reverse();
+  const ritems = items.slice();
 
   return (
     <Ref innerRef={dropRef}>
@@ -142,13 +142,11 @@ export function QueueBoard({}: {}) {
           <Segment
             basic
             textAlign="center"
-            className="small-padding-segment small-margins"
-          >
+            className="small-padding-segment small-margins">
             <Link
               href={urlstring(`/item/gallery/${ritems?.[0].id}/page/1`)}
               passHref
-              legacyBehavior
-            >
+              legacyBehavior>
               <Button primary as="a">{t`Start reading`}</Button>
             </Link>
             <Button
@@ -224,8 +222,7 @@ function DrawerPane({ children }: { children: React.ReactNode }) {
       className={classNames('no-padding-segment', {
         ['min-250-h max-250-h']: !drawerExpanded,
         ['min-500-h max-500-h']: drawerExpanded,
-      })}
-    >
+      })}>
       {children}
     </Tab.Pane>
   );
@@ -343,8 +340,7 @@ export function Drawer({
         style={{ right: '3em' }}
         onClick={useCallback(() => {
           setDrawerExpanded(!drawerExpanded);
-        }, [drawerExpanded])}
-      >
+        }, [drawerExpanded])}>
         <Icon name={drawerExpanded ? 'compress' : 'expand'} fitted />
       </Label>
       <Label as="a" attached="top right" onClick={onClose}>
@@ -366,8 +362,7 @@ export default function DrawerPortal() {
       closeOnDocumentClick={!drawerSticky}
       closeOnEscape={!drawerSticky}
       open={drawerOpen}
-      onClose={onClose}
-    >
+      onClose={onClose}>
       <div id="drawer">
         <Drawer onClose={onClose} />
       </div>

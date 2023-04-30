@@ -141,7 +141,7 @@ export function useAddToQueue<T extends ItemType>({ itemType, data }: {
 
   const exists =
     itemType === ItemType.Gallery
-      ? readingQueue.includes(data.id)
+      ? readingQueue.includes(data?.id)
       : data?.galleries?.every?.((g) => readingQueue.includes(g.id));
 
   const toggle = useCallback(
@@ -155,6 +155,7 @@ export function useAddToQueue<T extends ItemType>({ itemType, data }: {
         itemType === ItemType.Gallery
           ? [data]
           : (data?.galleries as GalleryCardData[]) ?? [];
+
 
       d.forEach((g) => {
         if (exists) {
