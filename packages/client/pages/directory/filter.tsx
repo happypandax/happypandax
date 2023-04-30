@@ -73,9 +73,15 @@ export default function Page({ page, data }: PageProps) {
     }
   );
 
-  useCommand(filterUpdateData ? filterUpdateData.data : undefined, {}, () => {
-    setUpdating(false);
-  });
+  useCommand(
+    filterUpdateData ? filterUpdateData.data : undefined,
+    {
+      stopOnUnmount: false,
+    },
+    () => {
+      setUpdating(false);
+    }
+  );
 
   const urlQuery = urlparse(router.asPath);
 
@@ -97,8 +103,7 @@ export default function Page({ page, data }: PageProps) {
           compact
           onClick={useCallback(() => {
             mutate({ item_ids: [] });
-          }, [])}
-        >
+          }, [])}>
           <Icon name="refresh" /> {t`Update`}
         </Button>
         <Statistic horizontal color="grey">
@@ -130,8 +135,7 @@ export default function Page({ page, data }: PageProps) {
         hrefTemplate={pageHrefTemplate}
         pagination={limit < data.count}
         bottomPagination
-        totalItemCount={data.count}
-      >
+        totalItemCount={data.count}>
         <Grid doubling centered stackable columns="3">
           {data.items.map((i: ServerFilter) => (
             <Grid.Column key={i.id}>

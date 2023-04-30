@@ -14,7 +14,7 @@ interface PageProps {
 export async function getServerSideProps(context) {
   return {
     redirect: {
-      destination: '/management/database',
+      destination: '/management/metadata',
       permanent: false,
     },
     props: {},

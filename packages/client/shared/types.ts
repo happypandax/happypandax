@@ -188,6 +188,7 @@ export interface ServerFilter extends ServerItem {
   enforce: boolean;
   search_options: string[];
   user_id: number;
+  gallery_count: number;
 }
 
 export interface ServerPage

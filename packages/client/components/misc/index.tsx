@@ -325,10 +325,12 @@ export function LabelAccordion({
   color,
   segmentColor,
   attached = 'top',
+  noPadding,
   ...props
 }: {
   stateKey?: string;
   visible?: boolean;
+  noPadding?: boolean;
   segmentColor?: SemanticCOLORS;
   basicLabel?: boolean;
   defaultVisible?: boolean;
@@ -358,7 +360,13 @@ export function LabelAccordion({
       {...props}
       color={segmentColor}
       basic={basic}
-      className={classNames('small-padding-segment', className)}>
+      className={classNames(
+        {
+          ['small-padding-segment']: !noPadding,
+          ['no-padding-segment']: noPadding,
+        },
+        className
+      )}>
       <Label
         as="a"
         color={color}

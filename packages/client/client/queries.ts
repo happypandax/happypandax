@@ -398,6 +398,13 @@ export class Query {
       ...config,
     };
 
+    if (cfg.method === 'POST') {
+      if (!options) {
+        options = {};
+      }
+      options.cacheTime = 0;
+    }
+
     return queryClient.fetchQuery(
       key,
       ({ signal }) => axios.request<R>({ ...cfg, signal }),

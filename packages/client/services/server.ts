@@ -653,6 +653,38 @@ export class Server {
     return data.data as boolean | number;
   }
 
+  async count(
+    args: {
+      item_type: ItemType;
+      metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_count', args, group, {
+      ...options,
+    });
+
+    return data.data as { count: number };
+  }
+
+  async related_count(
+    args: {
+      item_type: ItemType;
+      item_id: number
+      related_type: ItemType;
+      metatags?: Partial<Omit<ServerMetaTags, keyof ServerItem>>;
+    },
+    group?: GroupCall,
+    options?: CallOptions
+  ) {
+    const data = await this._call('get_related_count', args, group, {
+      ...options,
+    });
+
+    return data.data as { id: number, count: number };
+  }
+
   async item<R = undefined>(
     args: {
       item_type: ItemType;

@@ -159,6 +159,7 @@ export class Command<
     if (c.length) {
       this.state()
         .then(() => {
+          console.debug("Commands not finished", this._commands_not_finished())
           if (!this._commands_not_finished().length) {
             this._end_poll();
           } else {
@@ -167,8 +168,8 @@ export class Command<
         })
         .catch((e) => {
           if (
-            e.response.status === 500 &&
-            e.response?.data?.code === ServerErrorCode.CommandError
+            e?.response?.status === 500 &&
+            e?.response?.data?.code === ServerErrorCode.CommandError
           ) {
             // command doesn't exist, so we can ignore it
             return e.response;
@@ -229,6 +230,7 @@ export class Command<
   }
 
   _on_state(state: Unwrap<ReturnType<Server['command_state']>>) {
+    console.debug({ state })
     Object.entries(state).forEach(([k, v]) => (this.#state[k] = v));
 
     const c = this._commands_finished_successfully();
@@ -290,6 +292,8 @@ export class Command<
     const r = await Query.fetch(QueryType.COMMAND_STATE, {
       command_ids: this._command_ids_param(command_ids) ?? this.command_ids,
     });
+
+    console.debug("response", r)
 
     this._on_state(r.data);
 

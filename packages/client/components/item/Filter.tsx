@@ -5,6 +5,7 @@ import {
   Card,
   Checkbox,
   Grid,
+  Header,
   Icon,
   Label,
   List,
@@ -22,7 +23,13 @@ import { LabelAccordion } from '../misc';
 
 export type FilterCardData = DeepPick<
   ServerFilter,
-  'id' | 'name' | 'info' | 'filter' | 'enforce' | 'search_options'
+  | 'id'
+  | 'name'
+  | 'info'
+  | 'filter'
+  | 'enforce'
+  | 'search_options'
+  | 'gallery_count'
 >;
 
 export const filterCardDataFields: FieldPath<ServerFilter>[] = [
@@ -31,6 +38,7 @@ export const filterCardDataFields: FieldPath<ServerFilter>[] = [
   'filter',
   'enforce',
   'search_options',
+  'gallery_count',
 ];
 
 export default function FilterCard({
@@ -54,11 +62,13 @@ export default function FilterCard({
     <Card
       color="black"
       {...props}
-      className={classNames('horizontal', 'default-card', props.className)}
-    >
+      className={classNames('horizontal', 'default-card', props.className)}>
       <Card.Content>
         <Card.Header>
-          {data.name}
+          {data.name}{' '}
+          <Label size="mini" basic>
+            {data?.gallery_count}
+          </Label>
           <Label size="mini" className="right">
             {t`ID`}
             <Label.Detail>{data.id}</Label.Detail>
@@ -88,8 +98,7 @@ export default function FilterCard({
               }),
             })}
             passHref
-            legacyBehavior
-          >
+            legacyBehavior>
             <Label
               size="small"
               empty
@@ -100,7 +109,17 @@ export default function FilterCard({
             />
           </Link>
         </Card.Meta>
-        <LabelAccordion label={t`Options`}>
+        {!!data.filter && (
+          <LabelAccordion noPadding basicLabel color="blue" label={t`Filter`}>
+            <Segment
+              basic
+              tertiary
+              className="no-margins medium-padding-segment">
+              {data.filter}
+            </Segment>
+          </LabelAccordion>
+        )}
+        <LabelAccordion noPadding label={t`Options`}>
           <Grid columns="equal">
             <Grid.Row>
               <Grid.Column>
@@ -164,8 +183,7 @@ export default function FilterCard({
                   <Card.Description
                     as={Segment}
                     tertiary
-                    className={classNames('small-padding-segment')}
-                  >
+                    className={classNames('small-padding-segment')}>
                     {data.filter}
                   </Card.Description>
                 )}

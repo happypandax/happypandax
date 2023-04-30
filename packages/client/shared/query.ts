@@ -9,6 +9,8 @@ export enum QueryType {
   LIBRARY = '/api/library',
   ITEMS = '/api/items',
   ITEM = '/api/item',
+  COUNT = '/api/count',
+  RELATED_COUNT = '/api/related_count',
   RELATED_ITEMS = '/api/related_items',
   SEARCH_ITEMS = '/api/search_items',
   SIMILAR = '/api/similar',
@@ -122,6 +124,22 @@ interface FetchItem<T = undefined> extends QueryAction<T> {
   type: QueryType.ITEM;
   dataType: Record<string, any>;
   variables: Omit<ServerParameters['item'], 'fields'> & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
+interface FetchCount<T = undefined> extends QueryAction<T> {
+  type: QueryType.COUNT;
+  dataType: ServerReturnType['count'];
+  variables: Omit<ServerParameters['count'], 'fields'> & {
+    fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
+  };
+}
+
+interface FetchRelatedCount<T = undefined> extends QueryAction<T> {
+  type: QueryType.RELATED_COUNT;
+  dataType: ServerReturnType['related_count'];
+  variables: Omit<ServerParameters['related_count'], 'fields'> & {
     fields?: [T] extends [undefined] ? FieldPath[] : DeepPickPathPlain<T>[];
   };
 }
@@ -272,6 +290,8 @@ export type QueryActions<T = undefined> =
   | FetchProperties<T>
   | FetchProfile<T>
   | FetchItem<T>
+  | FetchCount<T>
+  | FetchRelatedCount<T>
   | FetchItems<T>
   | FetchLibrary<T>
   | FetchPages<T>
