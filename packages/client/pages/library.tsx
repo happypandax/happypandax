@@ -940,7 +940,7 @@ export default function Page({
             </Menu.Menu>
           </MainMenu>
         ),
-        [view, item, itemType, query, urlQuery.query?.q, hideViewItems]
+        [view, item, itemType, query, urlQuery.query?.q, hideViewItems, isMobileMax]
       )}
       bottomZone={useMemo(() => {
         return filter ? (
