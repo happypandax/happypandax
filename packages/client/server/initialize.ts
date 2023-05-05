@@ -4,7 +4,7 @@ import { getServerSession } from './requests';
 
 export async function serverInitialize() {
   global.app = global?.app ?? ({} as any);
-  global.app.log = setupLogger();
+  global.app.log = setupLogger({});
   try {
     global.app.getServerSession = getServerSession;
     global.app.IS_SERVER = true;

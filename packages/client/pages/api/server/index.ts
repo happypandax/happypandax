@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type';
 import { createReadStream, existsSync } from 'fs';
 import path from 'path';
@@ -57,19 +58,20 @@ async function imageFromPath(path_type, req, res) {
   }
 }
 
-let LOCAL: boolean | undefined = undefined;
-
 export function createImageHandler(path_type: string) {
   return handler().get(async (req, res) => {
     const { t, ...rest } = req.query;
-    if (LOCAL === undefined) {
-      const pixie = await getPixie();
-      LOCAL = pixie.isLocal;
+    const pixie = await getPixie(false);
+
+    if (!pixie.isHPXInstanced) {
+      const token = req.headers?.['x-hpx-token'];
+      if (token != pixie.HPXToken) {
+        return res.status(404).end("Momo: invalid token!");
+      }
     }
 
-    if (t && Object.keys(rest ?? {}).length) {
-      if (!LOCAL || t === 'g' || (rest?.l1 && rest?.l2 && rest?.l3)) {
-        const pixie = await getPixie();
+    if (pixie.isLocal && pixie.connected && t && Object.keys(rest ?? {}).length) {
+      if (t === 'g' || (rest?.l1 && rest?.l2 && rest?.l3)) {
         try {
           const b = await pixie.image({ t, ...(rest as any) });
           if (b.data && Buffer.isBuffer(b.data)) {
@@ -100,9 +102,47 @@ export function createImageHandler(path_type: string) {
       } else {
         return await imageFromPath(path_type, req, res);
       }
-    } else {
-      return res.status(404).end(errTxt);
     }
+
+    if (!pixie.isHPXInstanced && pixie.webserver_endpoint) {
+
+      // forward
+      const url = pixie.webserver_endpoint + req.url
+
+      try {
+        const r = await axios(url, {
+          responseType: "stream",
+          method: req.method ?? 'GET',
+          headers: {
+            'x-hpx-token': pixie.HPXToken,
+          }
+        });
+
+
+        const type = r.headers['content-type'];
+        if (type) {
+          res.setHeader('Content-Type', type);
+        }
+
+        r.data.on('error', function (e) {
+          if (process.env.NODE_ENV === 'development') {
+            throw e;
+          }
+          return res.status(404).end(errTxt);
+        });
+
+        r.data.pipe(res)
+
+        return;
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          throw err;
+        }
+        return res.status(404).end(errTxt);
+      }
+    }
+
+    return res.status(404).end(errTxt);
   });
 }
 

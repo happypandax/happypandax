@@ -36,11 +36,15 @@ export const DISABLE_SERVER_CONNECT = ['true', '1'].includes(
   process.env?.HPX_DISABLE_SERVER_CONNECT?.toLocaleLowerCase?.()
 );
 
+export const HPX_INSTANCE_TOKEN = process.env.HPX_INSTANCE_TOKEN
+  ? process.env.HPX_INSTANCE_TOKEN
+  : '';
+
 export const HPX_SECRET = process.env.HPX_SECRET
   ? process.env.HPX_SECRET
   : 'secret';
 
-export const DOMAIN_URL = process.env.PUBLIC_DOMAIN_URL
+export const HPX_DOMAIN_URL = process.env.PUBLIC_DOMAIN_URL
   ? process.env.PUBLIC_DOMAIN_URL
   : 'http://localhost:7008';
 

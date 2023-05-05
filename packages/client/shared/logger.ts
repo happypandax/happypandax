@@ -26,7 +26,11 @@ function createObjectTransformProcessor(): Processor {
   };
 }
 
-export default function setupLogger() {
+export default function setupLogger({
+  level
+}: {
+  level?: LogLevel;
+} = {}) {
   const logger = new Logger();
   // eslint-disable-next-line no-restricted-syntax
   for (const k of Object.keys(Logger.prototype)) {
@@ -46,7 +50,7 @@ export default function setupLogger() {
   );
 
   logger.setLevel(
-    process.env.NODE_ENV !== 'production' ? LogLevel.DEBUG : LogLevel.WARN
+    level ?? (process.env.NODE_ENV !== 'production' ? LogLevel.DEBUG : LogLevel.INFO)
   );
 
   function log(...args: any[]) {

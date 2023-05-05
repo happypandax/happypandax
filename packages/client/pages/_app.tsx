@@ -21,6 +21,7 @@ import { queryClient } from '../client/queries';
 import { LoginModal } from '../components/Login';
 import {
   DISABLE_SERVER_CONNECT,
+  HPX_INSTANCE_TOKEN,
   HPX_SERVER_HOST,
   HPX_SERVER_PORT,
   IS_SERVER,
@@ -310,7 +311,14 @@ HappyPandaApp.getInitialProps = async function (
       }
     }
 
-    if (!loggedIn && !['/login', '/_error'].includes(context.router.pathname)) {
+    let bypass =
+      context.ctx.req.headers?.['x-hpx-token'] === HPX_INSTANCE_TOKEN;
+
+    if (
+      !bypass &&
+      !loggedIn &&
+      !['/login', '/_error'].includes(context.router.pathname)
+    ) {
       return redirect({
         location: `/login?next=${encodeURIComponent(context.router.asPath)}`,
         ctx: context.ctx,
@@ -321,7 +329,11 @@ HappyPandaApp.getInitialProps = async function (
   let propsData: AppPageProps['pageProps'] = {
     disableServerConnect,
     serverHost,
-    packageJson,
+    packageJson:
+      context.router.pathname.startsWith('/api') ||
+      ['/404'].includes(context.router.pathname)
+        ? {}
+        : packageJson,
     serverPort,
     pathname,
     loggedIn,

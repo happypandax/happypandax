@@ -536,6 +536,7 @@ export class Server {
 
   async properties<
     K extends {
+      token: string;
       version: {
         core: [number, number, number];
         db: [number, number, number];

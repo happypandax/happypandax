@@ -1,17 +1,25 @@
 import EventEmitter from 'events';
 import { TimeoutError } from 'happypandax-client';
+import { networkInterfaces } from 'os';
 import PQueue from 'p-queue';
 import { Dealer } from 'zeromq';
 
 import { Decoder, Encoder } from '@msgpack/msgpack';
 
-import { PIXIE_ENDPOINT, ServiceType } from '../server/constants';
+import {
+  HPX_DOMAIN_URL,
+  HPX_INSTANCE_TOKEN,
+  HPX_SERVER_HOST,
+  HPX_SERVER_PORT,
+  PIXIE_ENDPOINT,
+  ServiceType,
+} from '../server/constants';
 import { Service } from './base';
 
 import type { Endpoint } from './server';
-export async function getPixie() {
+export async function getPixie(connected = true) {
   const pixie = global.app.service.get(ServiceType.Pixie);
-  if (!pixie.connected) {
+  if (connected && !pixie.connected) {
     throw new Error('Pixie is not connected');
   }
   return pixie;
@@ -50,7 +58,12 @@ export default class PixieService extends Service {
   TIMEOUT = 1000 * 30 // 30 sec
 
   #endpoint: string;
-  #server_endpoint: Endpoint;
+  #server_endpoint: Endpoint = {
+    host: HPX_SERVER_HOST,
+    port: HPX_SERVER_PORT
+  };
+  #webserver_endpoint: string = HPX_DOMAIN_URL;
+  #instance_token: string = HPX_INSTANCE_TOKEN;
 
   #emitter: EventEmitter;
 
@@ -104,6 +117,46 @@ export default class PixieService extends Service {
     server.on('connect', (...args) => this._on_connect(...args));
     server.on('disconnect', (...args) => this._on_disconnect(...args));
     server.on('login', (...args) => this._on_login(...args));
+
+    if (HPX_INSTANCE_TOKEN && PIXIE_ENDPOINT) {
+      this.connect(PIXIE_ENDPOINT);
+    }
+  }
+
+  get webserver_endpoint() {
+    if (!this.#webserver_endpoint) {
+      return '';
+    }
+
+    return this.#webserver_endpoint
+  }
+
+  get connected() {
+    return this.#connected;
+  }
+
+  _isLocal(endpoint: Endpoint) {
+    const nets = networkInterfaces();
+    const ips = Object.values(nets).flat().map(net => net.address);
+
+    return (
+      endpoint?.host === 'localhost' ||
+      ips.includes(endpoint?.host)
+    )
+  }
+
+  get isLocal() {
+    return this._isLocal(this.#server_endpoint);
+  }
+
+  get isHPXInstanced() {
+    return (
+      this.isLocal && !!HPX_INSTANCE_TOKEN
+    );
+  }
+
+  get HPXToken() {
+    return this.#instance_token ?? '';
   }
 
   private async _recv(socket: Dealer) {
@@ -137,11 +190,30 @@ export default class PixieService extends Service {
   }
 
   private _on_login(endpoint: Endpoint, session: string) {
+
+    if (!this.#webserver_endpoint || !this.#instance_token) {
+      const server = global.app.service
+        .get(ServiceType.Server)
+        .session(session);
+
+      server
+        .properties({
+          keys: ['webserver', 'token'],
+        })
+        .then((props) => {
+
+          this.#webserver_endpoint = (props.webserver.ssl ? 'https://' : 'http://')
+            + props.webserver.host + ':'
+            + props.webserver.port
+          this.#instance_token = props.token;
+        });
+    }
+
     if (
       !this.#connected ||
       !(
-        endpoint.host === this.#server_endpoint.host &&
-        endpoint.port === this.#server_endpoint.port
+        endpoint?.host === this.#server_endpoint?.host &&
+        endpoint?.port === this.#server_endpoint?.port
       )
     ) {
       const server = global.app.service
@@ -152,35 +224,30 @@ export default class PixieService extends Service {
       this.#session = session;
       this.#server_endpoint = endpoint;
 
-      global.app.log.d(
-        'Pixie connecting after login (',
-        session,
-        ', ',
-        endpoint,
-        ')'
-      );
+      if (this._isLocal(endpoint)) {
+        global.app.log.d(
+          'Pixie connecting after login (',
+          endpoint,
+          ')'
+        );
 
-      server
-        .properties({
-          keys: ['pixie.connect'],
-        })
-        .then((props) => {
-          global.app.log.d('Pixie props', props);
-          this.connect(props.pixie.connect);
-        });
+        server
+          .properties({
+            keys: ['pixie.connect'],
+          })
+          .then((props) => {
+            this.connect(props.pixie.connect);
+          });
+      } else {
+        global.app.log.w(
+          'Client is not local, will not connect pixie'
+        );
+
+      }
+
     }
   }
 
-  get connected() {
-    return this.#connected;
-  }
-
-  get isLocal() {
-    return (
-      this.#endpoint.includes('localhost') ||
-      this.#endpoint.includes('127.0.0.1')
-    );
-  }
 
   private async connect(endpoint?: string) {
     if (!this.connected) {
@@ -240,7 +307,6 @@ export default class PixieService extends Service {
     } else if (l1 && l2 && l3) {
       r = await this.communicate({
         msgid: this._generate_msg_id(),
-
         name: 'image_link',
         link: [l1, l2, l3],
         type: t,
@@ -256,13 +322,15 @@ export default class PixieService extends Service {
     return r;
   }
 
-  communicate(msg: { msgid: any } & Record<string, any>) {
+  communicate(message: { msgid: any } & Record<string, any>) {
 
     return new Promise((resolve, reject) => {
 
       if (!this.connected) {
         throw Error('Pixie not connected');
       }
+
+      const msg = { ...message, token: this.HPXToken };
 
       // global.app.log.d('Sending pixie message', msg);
 

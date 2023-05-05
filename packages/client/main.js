@@ -103,6 +103,17 @@ Object.entries(process.env).forEach(([key, value]) => {
       `> Using HPX server port ${value} from HPX_SERVER_PORT environment variable`
     );
   }
+
+  if (key === 'HPX_DEV' && value.toLowerCase() === 'true') {
+    console.log(`> Setting NODE_ENV=development`);
+    process.env.NODE_ENV = 'development';
+  }
+
+  if (key === 'PUBLIC_DOMAIN_URL') {
+    console.log(
+      `> Using PUBLIC_DOMAIN_URL ${value} from PUBLIC_DOMAIN_URL environment variable`
+    );
+  }
 });
 
 if (cwd) {
@@ -116,6 +127,14 @@ if (cliHost) {
 
 if (cliPort) {
   port = parseInt(cliPort, 10);
+}
+
+if (!process.env.PUBLIC_DOMAIN_URL) {
+  process.env.PUBLIC_DOMAIN_URL = `http://${hostname}:${port}`;
+
+  console.log(
+    `> Setting PUBLIC_DOMAIN_URL to ${process.env.PUBLIC_DOMAIN_URL} (from hostname and port)`
+  );
 }
 
 // Make sure commands gracefully respect termination signals (e.g. from Docker)

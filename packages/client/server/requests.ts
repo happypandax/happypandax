@@ -17,7 +17,7 @@ import { MomoActions, MomoType, QueryActions } from '../shared/query';
 import { urlparse, urlstring } from '../shared/utility';
 import {
   DISABLE_SERVER_CONNECT,
-  DOMAIN_URL,
+  HPX_DOMAIN_URL,
   HPX_SECRET,
   HPX_SERVER_HOST,
   HPX_SERVER_PORT,
@@ -140,7 +140,7 @@ export async function fetchQuery<
     headers['Content-Type'] = 'application/json';
   }
 
-  const url = urlstring(DOMAIN_URL + endpoint, params as any);
+  const url = urlstring(HPX_DOMAIN_URL + endpoint, params as any);
 
   const cfg: RequestInit = {
     method,
@@ -268,7 +268,7 @@ export const nextAuthOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      return DOMAIN_URL;
+      return HPX_DOMAIN_URL;
     },
     async session({ session, token, user }) {
       return session;
