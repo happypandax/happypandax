@@ -257,11 +257,23 @@ export default class PixieService extends Service {
       this.#endpoint = e;
       global.app.log.i('Successfully connected pixie to', e);
       this.#connected = true;
+
+      // TODO: 
+      // this.properties().then((props) => {});
     }
   }
 
   private _generate_msg_id() {
     return Math.floor(Math.random() * 10000000000);
+  }
+
+  async properties() {
+    const r = await this.communicate({
+      msgid: this._generate_msg_id(),
+      name: 'properties',
+    });
+    return r?.data as {
+    };
   }
 
   async plugin({ plugin_id }: { plugin_id: string }) {
