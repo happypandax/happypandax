@@ -13,8 +13,6 @@ import {
 import { handler } from '../../../server/requests';
 import { getPixie } from '../../../services/pixie';
 
-// THIS IS SPECIFIC TO WHEN THE WEBSERVER IS STARTED BY HPX SERVER
-
 const errTxt = "Momo didn't find anything!";
 
 async function imageFromPath(path_type, req, res) {
@@ -59,11 +57,11 @@ async function imageFromPath(path_type, req, res) {
 }
 
 export function createImageHandler(path_type: string) {
-  return handler().get(async (req, res) => {
+  return handler({ auth: false }).get(async (req, res) => {
     const { t, ...rest } = req.query;
     const pixie = await getPixie(false);
 
-    if (!pixie.isHPXInstanced) {
+    if (pixie.isHPXInstanced) {
       const token = req.headers?.['x-hpx-token'];
       if (token != pixie.HPXToken) {
         return res.status(404).end("Momo: invalid token!");
@@ -88,6 +86,9 @@ export function createImageHandler(path_type: string) {
             });
             res.setHeader('Content-Type', type?.mime ? type?.mime : '');
             s.pipe(res);
+
+            return;
+
           } else {
             global.app.log.w(b?.data);
             return res.status(404).end(errTxt);
@@ -102,9 +103,8 @@ export function createImageHandler(path_type: string) {
       } else {
         return await imageFromPath(path_type, req, res);
       }
-    }
 
-    if (!pixie.isHPXInstanced && pixie.webserver_endpoint) {
+    } else if (!pixie.isHPXInstanced && pixie.webserver_endpoint) {
 
       // forward
       const url = pixie.webserver_endpoint + req.url

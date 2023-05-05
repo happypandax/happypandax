@@ -194,7 +194,7 @@ export default handler().all((req, res, next) => {
         }
 
         const file = send(req, pathname, {});
-        sendfile(res, file, {}, () => {});
+        sendfile(res, file, {}, () => { });
       } else {
         res.status(404).end(errTxt);
       }

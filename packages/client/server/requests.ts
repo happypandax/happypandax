@@ -71,14 +71,42 @@ function defaultOnError(
   }
 }
 
+async function authMiddleware(
+  req: NextApiRequest,
+  res: NextApiResponse<any>,
+  next: NextHandler) {
+  const s = await getServerSession({ req });
+
+  if (!s) {
+    if (!res.headersSent) {
+      return res.status(401).json({ error: 'Unauthorized', code: 0 });
+    }
+  }
+
+  return next();
+}
+
 export function handler(
-  options?: Options<NextApiRequest, NextApiResponse>,
-  onError = defaultOnError
+  {
+    options,
+    auth = true,
+    onError = defaultOnError,
+  }: {
+    options?: Options<NextApiRequest, NextApiResponse>
+    auth?: boolean,
+    onError?: typeof defaultOnError
+  } = {}
 ) {
-  return nextConnect<NextApiRequest, NextApiResponse>({
+  let h = nextConnect<NextApiRequest, NextApiResponse>({
     onError,
     ...options,
   }).use(Cors(corsOptions));
+
+  if (auth) {
+    h = h.use(authMiddleware);
+  }
+
+  return h
 }
 
 const serverQueryClient = new QueryClient({
