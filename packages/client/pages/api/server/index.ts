@@ -68,7 +68,9 @@ export function createImageHandler(path_type: string) {
       }
     }
 
-    if (pixie.isLocal && pixie.connected && t && Object.keys(rest ?? {}).length) {
+    const hostPaths = THUMB_STATIC_FOLDER && ITEM_THUMB_STATIC_FOLDER && PAGE_STATIC_FOLDER;
+
+    if (hostPaths && pixie.isLocal && pixie.connected && t && Object.keys(rest ?? {}).length) {
       if (t === 'g' || (rest?.l1 && rest?.l2 && rest?.l3)) {
         try {
           const b = await pixie.image({ t, ...(rest as any) });
